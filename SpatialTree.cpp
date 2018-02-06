@@ -202,7 +202,7 @@ void SpatialTree::checkFolders()
 	bool bFineMap, bCoarseMap, bFineMapPristine, bCoarseMapPristine, bSampleMask, bOutputFolder;
 	try
 	{
-		bFineMap = doesExistNull(sim_parameters.finemapfile);
+		bFineMap = doesExistNull(sim_parameters.fine_map_file);
 	}
 	catch(FatalException& fe)
 	{
@@ -211,7 +211,7 @@ void SpatialTree::checkFolders()
 	}
 	try
 	{
-		bCoarseMap = doesExistNull(sim_parameters.coarsemapfile);
+		bCoarseMap = doesExistNull(sim_parameters.coarse_map_file);
 	}
 	catch(FatalException& fe)
 	{
@@ -220,7 +220,7 @@ void SpatialTree::checkFolders()
 	}
 	try
 	{
-		bFineMapPristine = doesExistNull(sim_parameters.pristinefinemapfile);
+		bFineMapPristine = doesExistNull(sim_parameters.pristine_fine_map_file);
 	}
 	catch(FatalException& fe)
 	{
@@ -229,7 +229,7 @@ void SpatialTree::checkFolders()
 	}
 	try
 	{
-		bCoarseMapPristine = doesExistNull(sim_parameters.pristinecoarsemapfile);
+		bCoarseMapPristine = doesExistNull(sim_parameters.pristine_coarse_map_file);
 	}
 	catch(FatalException& fe)
 	{
@@ -239,7 +239,7 @@ void SpatialTree::checkFolders()
 	bOutputFolder = checkOutputDirectory();
 	try
 	{
-		bSampleMask = doesExistNull(sim_parameters.samplemaskfile);
+		bSampleMask = doesExistNull(sim_parameters.sample_mask_file);
 	}
 	catch(FatalException& fe)
 	{
@@ -265,27 +265,27 @@ void SpatialTree::setParameters()
 	{
 		Tree::setParameters();
 		// Set the variables equal to the value from the Mapvars object.
-		fine_map_input = sim_parameters.finemapfile;
-		coarse_map_input = sim_parameters.coarsemapfile;
-		grid_x_size = sim_parameters.vargridxsize;
-		grid_y_size = sim_parameters.vargridysize;
+		fine_map_input = sim_parameters.fine_map_file;
+		coarse_map_input = sim_parameters.coarse_map_file;
+		grid_x_size = sim_parameters.grid_x_size;
+		grid_y_size = sim_parameters.grid_y_size;
 
-		fine_map_x_size = sim_parameters.varfinemapxsize;
-		fine_map_y_size = sim_parameters.varfinemapysize;
-		fine_map_x_offset = sim_parameters.varfinemapxoffset;
-		fine_map_y_offset = sim_parameters.varfinemapyoffset;
+		fine_map_x_size = sim_parameters.fine_map_x_size;
+		fine_map_y_size = sim_parameters.fine_map_y_size;
+		fine_map_x_offset = sim_parameters.fine_map_x_offset;
+		fine_map_y_offset = sim_parameters.fine_map_y_offset;
 
-		coarse_map_x_size = sim_parameters.varcoarsemapxsize;
-		coarse_map_y_size = sim_parameters.varcoarsemapysize;
-		coarse_map_x_offset = sim_parameters.varcoarsemapxoffset;
-		coarse_map_y_offset = sim_parameters.varcoarsemapyoffset;
-		coarse_map_scale = sim_parameters.varcoarsemapscale;
+		coarse_map_x_size = sim_parameters.coarse_map_x_size;
+		coarse_map_y_size = sim_parameters.coarse_map_y_size;
+		coarse_map_x_offset = sim_parameters.coarse_map_x_offset;
+		coarse_map_y_offset = sim_parameters.coarse_map_y_offset;
+		coarse_map_scale = sim_parameters.coarse_map_scale;
 		dispersal_relative_cost = sim_parameters.dispersal_relative_cost;
 
 
 		// pristine map information
-		pristine_fine_map_input = sim_parameters.pristinefinemapfile;
-		pristine_coarse_map_input = sim_parameters.pristinecoarsemapfile;
+		pristine_fine_map_input = sim_parameters.pristine_fine_map_file;
+		pristine_coarse_map_input = sim_parameters.pristine_coarse_map_file;
 		gen_since_pristine = sim_parameters.gen_since_pristine;
 		habitat_change_rate = sim_parameters.habitat_change_rate;
 		desired_specnum = sim_parameters.desired_specnum;
@@ -349,9 +349,9 @@ void SpatialTree::importMaps()
 void SpatialTree::importReproductionMap()
 {
 	rep_map.import(sim_parameters.reproduction_file,
-				   sim_parameters.varfinemapxsize, sim_parameters.varfinemapysize);
-	rep_map.setOffsets(sim_parameters.varcoarsemapxoffset, sim_parameters.varfinemapyoffset,
-					   sim_parameters.vargridxsize, sim_parameters.vargridysize);
+				   sim_parameters.fine_map_x_size, sim_parameters.fine_map_y_size);
+	rep_map.setOffsets(sim_parameters.coarse_map_x_offset, sim_parameters.fine_map_y_offset,
+					   sim_parameters.grid_x_size, sim_parameters.grid_y_size);
 	// Now verify that the reproduction map is always non-zero when the density is non-zero.
 	verifyReproductionMap();
 }
@@ -359,14 +359,6 @@ void SpatialTree::importReproductionMap()
 
 unsigned long SpatialTree::getInitialCount()
 {
-	if(sim_parameters.uses_spatial_sampling)
-	{
-		long x = 1;
-		long y = 1;
-		long xwrap = 0;
-		long ywrap = 0;
-		samplegrid.recalculate_coordinates(x, y, xwrap, ywrap);
-	}
 	unsigned long initcount = 0;
 	// Get a count of the number of individuals on the grid.
 	try
@@ -374,8 +366,8 @@ unsigned long SpatialTree::getInitialCount()
 		long max_x, max_y;
 		if(samplegrid.getDefault())
 		{
-			max_x = sim_parameters.varfinemapxsize;
-			max_y = sim_parameters.varfinemapysize;
+			max_x = sim_parameters.fine_map_x_size;
+			max_y = sim_parameters.fine_map_y_size;
 		}
 		else
 		{
@@ -431,7 +423,7 @@ void SpatialTree::setupDispersalCoordinator()
 	dispersal_coordinator.setRandomNumber(&NR);
 	dispersal_coordinator.setGenerationPtr(&generation);
 	dispersal_coordinator.setDispersal(sim_parameters.dispersal_method, sim_parameters.dispersal_file,
-										sim_parameters.varfinemapxsize, sim_parameters.varfinemapysize,
+										sim_parameters.fine_map_x_size, sim_parameters.fine_map_y_size,
 										sim_parameters.m_prob, sim_parameters.cutoff, sim_parameters.sigma,
 										sim_parameters.tau, sim_parameters.restrict_self);
 }
@@ -476,9 +468,9 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 	{
 		long x, y;
 		long x_wrap, y_wrap;
-		for(unsigned long i = 0; i < sim_parameters.varsamplexsize; i++)
+		for(unsigned long i = 0; i < sim_parameters.sample_x_size; i++)
 		{
-			for(unsigned long j = 0; j < sim_parameters.varsampleysize; j++)
+			for(unsigned long j = 0; j < sim_parameters.sample_y_size; j++)
 			{
 
 				x = i;
@@ -1300,9 +1292,9 @@ void SpatialTree::addLineages(double generation_in)
 	{
 		samplegrid.convertBoolean(habitat_map, deme_sample, generation_in);
 	}
-	for(unsigned long i = 0; i < sim_parameters.varsamplexsize; i++)
+	for(unsigned long i = 0; i < sim_parameters.sample_x_size; i++)
 	{
-		for(unsigned long j = 0; j < sim_parameters.varsampleysize; j++)
+		for(unsigned long j = 0; j < sim_parameters.sample_y_size; j++)
 		{
 			long x, y;
 			x = i;
@@ -1323,9 +1315,9 @@ void SpatialTree::addLineages(double generation_in)
 	// now resize data and active if necessary
 	checkSimSize(added_data, added_active);
 	// Add the new lineages and modify the existing lineages within our sample area
-	for(unsigned long i = 0; i < sim_parameters.varsamplexsize; i++)
+	for(unsigned long i = 0; i < sim_parameters.sample_x_size; i++)
 	{
-		for(unsigned long j = 0; j < sim_parameters.varsampleysize; j++)
+		for(unsigned long j = 0; j < sim_parameters.sample_y_size; j++)
 		{
 			long x, y;
 			x = i;
@@ -1375,11 +1367,11 @@ string SpatialTree::simulationParametersSqlInsertion()
 	to_execute += to_string((long long)coarse_map_y_offset) + "," + to_string((long long)coarse_map_scale) + ",'";
 	to_execute += fine_map_input + "'," + to_string((long long)fine_map_x_size) + "," + to_string((long long)fine_map_y_size);
 	to_execute += "," + to_string((long long)fine_map_x_offset) + "," + to_string((long long)fine_map_y_offset) + ",'";
-	to_execute += sim_parameters.samplemaskfile + "'," + to_string((long long)grid_x_size) + "," +
-				  to_string((long long) grid_y_size) + "," + to_string((long long) sim_parameters.varsamplexsize) + ", ";
-	to_execute += to_string((long long) sim_parameters.varsampleysize) + ", ";
-	to_execute += to_string((long long) sim_parameters.varsamplexoffset) + ", ";
-	to_execute += to_string((long long) sim_parameters.varsampleyoffset) + ", '";
+	to_execute += sim_parameters.sample_mask_file + "'," + to_string((long long)grid_x_size) + "," +
+				  to_string((long long) grid_y_size) + "," + to_string((long long) sim_parameters.sample_x_size) + ", ";
+	to_execute += to_string((long long) sim_parameters.sample_y_size) + ", ";
+	to_execute += to_string((long long) sim_parameters.sample_x_offset) + ", ";
+	to_execute += to_string((long long) sim_parameters.sample_y_offset) + ", '";
 	to_execute += pristine_coarse_map_input + "','" + pristine_fine_map_input + "'," + to_string(sim_complete);
 	to_execute += ", '" + sim_parameters.dispersal_method + "', ";
 	to_execute += boost::lexical_cast<std::string>(sim_parameters.m_prob) + ", ";
@@ -1526,9 +1518,9 @@ void SpatialTree::verifyReproductionMap()
 {
 	if(!(sim_parameters.reproduction_file == "none" || sim_parameters.reproduction_file == "null"))
 	{
-		for(unsigned long i = 0; i < sim_parameters.varfinemapysize; i++)
+		for(unsigned long i = 0; i < sim_parameters.fine_map_y_size; i++)
 		{
-			for(unsigned long j = 0; j < sim_parameters.varfinemapxsize; j ++)
+			for(unsigned long j = 0; j < sim_parameters.fine_map_x_size; j ++)
 			{
 				if(rep_map[i][j] == 0.0 && habitat_map.getValFine(j, i, 0.0) != 0)
 				{

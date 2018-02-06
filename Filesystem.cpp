@@ -22,7 +22,19 @@
 
 void openSQLiteDatabase(const string &database_name, sqlite3 * &database)
 {
-	int rc = sqlite3_open_v2(database_name.c_str(), &database, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, "unix-dotfile");
+	int rc;
+	if(database_name == ":memory:")
+	{
+		rc = sqlite3_open(":memory:", &database);
+		if(rc != SQLITE_OK && rc != SQLITE_DONE)
+		{
+			stringstream ss;
+			ss << "Could not connect to in-memory database. Error: " << rc << endl;
+			ss << " (" << sqlite3_errmsg(database) << ")" << endl;
+			throw FatalException(ss.str());
+		}
+	}
+	rc = sqlite3_open_v2(database_name.c_str(), &database, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, "unix-dotfile");
 	if(rc != SQLITE_OK && rc != SQLITE_DONE)
 	{
 		int i = 0;

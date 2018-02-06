@@ -76,8 +76,8 @@ void DataMask::doImport()
 
 void DataMask::importSampleMask(SimParameters &mapvarin)
 {
-	if(!setup(mapvarin.samplemaskfile, mapvarin.vargridxsize, mapvarin.vargridysize,
-			 mapvarin.varsamplexsize, mapvarin.varsampleysize, mapvarin.varsamplexoffset, mapvarin.varsampleyoffset))
+	if(!setup(mapvarin.sample_mask_file, mapvarin.grid_x_size, mapvarin.grid_y_size,
+			 mapvarin.sample_x_size, mapvarin.sample_y_size, mapvarin.sample_x_offset, mapvarin.sample_y_offset))
 	{
 		if(mapvarin.uses_spatial_sampling)
 		{

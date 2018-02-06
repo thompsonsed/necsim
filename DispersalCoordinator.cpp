@@ -31,7 +31,7 @@ void DispersalCoordinator::setRandomNumber(NRrand * NR_ptr)
 void DispersalCoordinator::setHabitatMap(Map *map_ptr)
 {
 	habitat_map = map_ptr;
-	xdim = habitat_map->getSimParameters().varfinemapxsize;
+	xdim = habitat_map->getSimParameters().fine_map_x_size;
 }
 
 void DispersalCoordinator::setGenerationPtr(double * generation_ptr)

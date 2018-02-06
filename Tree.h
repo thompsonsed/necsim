@@ -58,7 +58,7 @@ protected:
 	// the maximum simulated number of individuals in the present day.
 	unsigned long maxsimsize;
 	// for create the link to the speciationcounter object which handles everything.
-	Community tl;
+	Community community;
 	// This might need to be updated for simulations that have large changes in maximum population size over time.
 	// number of simulation num_steps
 	long steps;
@@ -105,7 +105,7 @@ protected:
 	unsigned long count_dispersal_fails, count_density_fails;
 #endif
 public:
-	Tree() : tl(&data), this_step()
+	Tree() : community(&data), this_step()
 	{
 		has_imported_vars = false;
 		enddata = 0;
@@ -144,7 +144,7 @@ public:
 		pause_sim_directory = "null";
 	}
 
-	~Tree()
+	virtual ~Tree()
 	{
 		sqlite3_close_v2(database);
 #ifdef sql_ram
@@ -170,7 +170,7 @@ public:
 	 * Intended for usage with metacommunity application. No output directory is expected.
 	 * @param sim_parameters_in the simulation parameters to set up the simulation with
 	 */
-	void internal_setup(const SimParameters &sim_parameters_in);
+	void internalSetup(const SimParameters &sim_parameters_in);
 
 	/**
 	 * @brief Asserts that the output directory is not null and exists. If it doesn't exist, it attempts to create it.
@@ -311,7 +311,7 @@ public:
 	 * simulation.
 	 * At the end of the simulation, returns true if the simulation is complete, false otherwise.
 	 */
-	bool runSimulation();
+	 virtual bool runSimulation();
 
 	/**
 	 * @brief Writes to the console that the simulation is beginning
@@ -478,6 +478,7 @@ public:
 	 * @return
 	 */
 	virtual bool getProtracted();
+
 	/**
 	 * @brief Gets the protracted variables and returns them as a single, newline separated string.
 	 * This method is intended to be overridden in derived classes.
@@ -501,6 +502,7 @@ public:
 	 * @return double the number of generations a lineage must exist
 	 */
 	virtual double getProtractedGenerationMax();
+
 
 	/**
 	 * @brief Copy the in-memory database to file.

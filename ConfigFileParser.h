@@ -139,6 +139,14 @@ public:
 	vector<SectionOption> getSectionOptions();
 
 	/**
+	 * @brief Sets the section option with the provided section, key and value.
+	 * @param section the section name
+	 * @param reference the reference key for the parameter
+	 * @param value the value of the key
+	 */
+	void setSectionOption(string section, string reference, string value);
+
+	/**
 	 * @brief Gets the SectionOption at the provided index
 	 * @param index the index of the SectionOption to obtain, must be less than configs.size()
 	 * @return the section option at the index
@@ -162,7 +170,7 @@ public:
 	 * @param sec the section name to check for
 	 * @return true if the section has been found
 	 */
-	bool hasSection(string sec);
+	bool hasSection(const string &sec);
 
 	/**
 	 * @brief Gets all values within a section.

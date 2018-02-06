@@ -18,9 +18,9 @@ void Map::setDims(SimParameters mapvarsin)
 	{
 		mapvars = mapvarsin;
 		deme = mapvarsin.deme;
-		x_dim = mapvarsin.vargridxsize;
-		y_dim = mapvarsin.vargridysize;
-		scale = mapvarsin.varcoarsemapscale;
+		x_dim = mapvarsin.grid_x_size;
+		y_dim = mapvarsin.grid_y_size;
+		scale = mapvarsin.coarse_map_scale;
 		nUpdate = 0;
 		check_set_dim = true;
 		update_time = 0;
@@ -55,9 +55,9 @@ bool Map::checkMapExists()
 
 void Map::calcFineMap()
 {
-	string fileinput = mapvars.finemapfile;
-	unsigned long mapxsize = mapvars.varfinemapxsize;
-	unsigned long mapysize = mapvars.varfinemapysize;
+	string fileinput = mapvars.fine_map_file;
+	unsigned long mapxsize = mapvars.fine_map_x_size;
+	unsigned long mapysize = mapvars.fine_map_y_size;
 	if(!check_set_dim)  // checks that the dimensions have been set.
 	{
 		throw FatalException("ERROR_MAP_002: dimensions not set.");
@@ -109,9 +109,9 @@ void Map::calcFineMap()
 
 void Map::calcPristineFineMap()
 {
-	string fileinput = mapvars.pristinefinemapfile;
-	unsigned long mapxsize = mapvars.varfinemapxsize;
-	unsigned long mapysize = mapvars.varfinemapysize;
+	string fileinput = mapvars.pristine_fine_map_file;
+	unsigned long mapxsize = mapvars.fine_map_x_size;
+	unsigned long mapysize = mapvars.fine_map_y_size;
 	if(!check_set_dim)  // checks that the dimensions have been set.
 	{
 		throw FatalException("ERROR_MAP_002: dimensions not set.");
@@ -168,9 +168,9 @@ void Map::calcPristineFineMap()
 
 void Map::calcCoarseMap()
 {
-	string fileinput = mapvars.coarsemapfile;
-	unsigned long mapxsize = mapvars.varcoarsemapxsize;
-	unsigned long mapysize = mapvars.varcoarsemapysize;
+	string fileinput = mapvars.coarse_map_file;
+	unsigned long mapxsize = mapvars.coarse_map_x_size;
+	unsigned long mapysize = mapvars.coarse_map_y_size;
 	if(!check_set_dim)  // checks that the dimensions have been set.
 	{
 		throw FatalException("ERROR_MAP_003: dimensions not set.");
@@ -227,10 +227,10 @@ void Map::calcCoarseMap()
 
 void Map::calcPristineCoarseMap()
 {
-	//	os << "pristine coarse map file: " << mapvars.pristinecoarsemapfile << endl;
-	string fileinput = mapvars.pristinecoarsemapfile;
-	unsigned long mapxsize = mapvars.varcoarsemapxsize;
-	unsigned long mapysize = mapvars.varcoarsemapysize;
+	//	os << "pristine coarse map file: " << mapvars.pristine_coarse_map_file << endl;
+	string fileinput = mapvars.pristine_coarse_map_file;
+	unsigned long mapxsize = mapvars.coarse_map_x_size;
+	unsigned long mapysize = mapvars.coarse_map_y_size;
 	if(!check_set_dim)  // checks that the dimensions have been set.
 	{
 		throw FatalException("ERROR_MAP_003: dimensions not set.");
@@ -312,11 +312,11 @@ void Map::calcOffset()
 		}
 		//		throw FatalException("ERROR_MAP_004: coarse map not set.");
 	}
-	fine_x_offset = mapvars.varfinemapxoffset + mapvars.varsamplexoffset;
-	fine_y_offset = mapvars.varfinemapyoffset + mapvars.varsampleyoffset;
-	coarse_x_offset = mapvars.varcoarsemapxoffset;
-	coarse_y_offset = mapvars.varcoarsemapyoffset;
-	scale = mapvars.varcoarsemapscale;
+	fine_x_offset = mapvars.fine_map_x_offset + mapvars.sample_x_offset;
+	fine_y_offset = mapvars.fine_map_y_offset + mapvars.sample_y_offset;
+	coarse_x_offset = mapvars.coarse_map_x_offset;
+	coarse_y_offset = mapvars.coarse_map_y_offset;
+	scale = mapvars.coarse_map_scale;
 	// this is the location of the top left (or north west) corner of the respective map
 	// and the x and y distance from the top left of the grid object that contains the initial lineages.
 	fine_x_min = -fine_x_offset;
@@ -452,8 +452,8 @@ void Map::updateMap(double generation)
 			if(mapvars.setPristine(nUpdate+1))
 			{
 				nUpdate++;
-				// pristine_fine_map = mapvars.pristinefinemapfile;
-				// pristine_coarse_map = mapvars.pristinecoarsemapfile;
+				// pristine_fine_map = mapvars.pristine_fine_map_file;
+				// pristine_coarse_map = mapvars.pristine_coarse_map_file;
 				current_map_time = gen_since_pristine;
 				gen_since_pristine = mapvars.gen_since_pristine;
 				if(gen_since_pristine == 0)

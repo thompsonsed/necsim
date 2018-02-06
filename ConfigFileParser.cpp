@@ -193,45 +193,67 @@ vector<SectionOption> ConfigOption::getSectionOptions()
 	return configs;
 }
 
+void ConfigOption::setSectionOption(string section, string reference, string value)
+{
+	SectionOption *section_option = nullptr;
+	for(auto &option : configs)
+	{
+		if(option.section == section)
+		{
+			section_option = &option;
+			break;
+		}
+	}
+	if(!section_option)
+	{
+		SectionOption tmp;
+		tmp.section = section;
+		configs.emplace_back(tmp);
+		section_option = &configs.back();
+	}
+	section_option->refs.emplace_back(reference);
+	section_option->val.emplace_back(value);
+}
+
 SectionOption ConfigOption::operator[](int index)
 {
-	return (configs[index]);
+	return configs[index];
 }
 
 unsigned int ConfigOption::getSectionOptionsSize()
 {
-	return (configs.size());
+	return configs.size();
 }
 
 vector<string> ConfigOption::getSections()
 {
 	vector<string> toret;
-	for(unsigned i = 0; i < configs.size(); i++)
+	for(auto &config : configs)
 	{
-		toret.push_back(configs[i].section);
+		toret.push_back(config.section);
 	}
-	return (toret);
+	return toret;
 }
 
-bool ConfigOption::hasSection(string sec)
+bool ConfigOption::hasSection(const string &sec)
 {
-	for(unsigned i = 0; i < configs.size(); i++)
+	for(auto &config : configs)
 	{
-		if(configs[i].section == sec)
+		if(config.section == sec)
 		{
 			return (true);
 		}
 	}
-	return (false);
+	return false;
 }
 
 vector<string> ConfigOption::getSectionValues(string sec)
 {
-	for(unsigned i = 0; i < configs.size(); i++)
+	for(auto &config : configs)
 	{
-		if(configs[i].section == sec)
+		if(config.section == sec)
 		{
-			return (configs[i].val);
+			return (config.val);
 		}
 	}
 	throw ConfigException("Section not found in config file: " + sec);
@@ -239,15 +261,15 @@ vector<string> ConfigOption::getSectionValues(string sec)
 
 string ConfigOption::getSectionOptions(string section, string ref)
 {
-	for(unsigned int i = 0; i < configs.size(); i++)
+	for(auto &config : configs)
 	{
-		if(configs[i].section == section)
+		if(config.section == section)
 		{
-			for(unsigned int j = 0; j < configs[i].refs.size(); j++)
+			for(unsigned int j = 0; j < config.refs.size(); j++)
 			{
-				if(configs[i].refs[j] == ref)
+				if(config.refs[j] == ref)
 				{
-					return (configs[i].val[j]);
+					return (config.val[j]);
 				}
 			}
 		}
@@ -255,20 +277,20 @@ string ConfigOption::getSectionOptions(string section, string ref)
 #ifdef DEBUG
 	writeWarning("No reference found for " + section + ", ");
 #endif
-	return ("null");
+	return "null";
 }
 
 string ConfigOption::getSectionOptions(string section, string ref, string def)
 {
-	for(unsigned int i = 0; i < configs.size(); i++)
+	for(auto &config : configs)
 	{
-		if(configs[i].section == section)
+		if(config.section == section)
 		{
-			for(unsigned int j = 0; j < configs[i].refs.size(); j++)
+			for(unsigned int j = 0; j < config.refs.size(); j++)
 			{
-				if(configs[i].refs[j] == ref)
+				if(config.refs[j] == ref)
 				{
-					return (configs[i].val[j]);
+					return (config.val[j]);
 				}
 			}
 		}
@@ -324,9 +346,9 @@ int ConfigOption::importConfig(vector<string> &comargs)
 						writeWarning(os.str());
 						throw ConfigException("ERROR_CONF_001: Read error in config file.");
 					}
-					char *tmp = new char[value.length() + 1];
+					auto *tmp = new char[value.length() + 1];
 					strcpy(tmp, value.c_str());
-					comargs.push_back(tmp);
+					comargs.emplace_back(tmp);
 				}
 			}
 		}
@@ -356,9 +378,9 @@ ostream &operator<<(ostream &os, const ConfigOption &c)
 {
 	os << c.configfile << "\n" << c.bConfig << "\n" << c.bMain << "\n" << c.bFullParse << "\n" << c.configs.size()
 	   << "\n";
-	for(unsigned int i = 0; i < c.configs.size(); i++)
+	for(const auto &config : c.configs)
 	{
-		os << c.configs[i];
+		os << config;
 	}
 	return os;
 }
@@ -369,14 +391,7 @@ istream &operator>>(istream &is, ConfigOption &c)
 	is.ignore();
 	getline(is, c.configfile);
 	is >> c.bConfig >> c.bMain >> c.bFullParse >> configsize;
-//		os << "file: " << c.configfile << endl;
-//		os << "bconf: " << c.bConfig << endl;
-//		os << "bmain: " << c.bMain << endl;
-//		os << "fullp: " << c.bFullParse << endl;
 	SectionOption tmpoption;
-//		 os << "configsize: " << configsize << endl;
-//		cout << os.str() << endl;
-	// check that the config size isn't completely stupid!
 	if(configsize > 10000)
 	{
 		throw runtime_error("Config size extremely large, check file: " + to_string(configsize));

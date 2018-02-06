@@ -83,7 +83,7 @@ void Metacommunity::createMetacommunityNSENeutralModel()
 	// First set up a non-spatial coalescence simulation to generate our metacommunity
 	SimParameters temp_parameters;
 	temp_parameters.setMetacommunityParameters(community_size, speciation_rate, seed, task);
-	metacommunity_tree.internal_setup(temp_parameters);
+	metacommunity_tree.internalSetup(temp_parameters);
 	// Run our simulation and calculate the species abundance distribution (as this is all that needs to be stored).
 	if(!metacommunity_tree.runSimulation())
 	{
@@ -91,7 +91,7 @@ void Metacommunity::createMetacommunityNSENeutralModel()
 									 "to create the metacommunity did not finish in time.");
 	}
 	metacommunity_tree.applySpecRateInternal(speciation_rate, 0.0);
-	// rOut now contains the number of individuals per species
+	// row_out now contains the number of individuals per species
 	// Make it cumulative to increase the speed of indexing using binary search.
 	metacommunity_cumulative_abundances = metacommunity_tree.getCumulativeAbundances();
 #ifdef DEBUG
@@ -149,7 +149,8 @@ void Metacommunity::apply(SpecSimParameters *sp)
 	writeLog(10, "********************");
 	writeLog(10, "Metacommunity application");
 #endif //DEBUG
-	time_t tStart, tEnd;
+	time_t tStart{};
+	time_t tEnd{};
 	// Start the clock
 	time(&tStart);
 	setCommunityParameters(sp->metacommunity_size, sp->metacommunity_speciation_rate, sp->filename);
@@ -161,6 +162,7 @@ void Metacommunity::apply(SpecSimParameters *sp)
 	writeLog(10, "Creating coalescence tree from metacommunity...");
 #endif //DEBUG
 	doApplication(sp);
+	output();
 	printEndTimes(tStart, tEnd);
 
 }

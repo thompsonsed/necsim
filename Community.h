@@ -368,7 +368,7 @@ protected:
 	sqlite3 *outdatabase; // stores the file database connection
 	bool bSqlConnection; // true if the data connection has been established.
 	Row<TreeNode> *nodes; // in older versions this was called list. Changed to avoid confusion with the built-in class.
-	Row<unsigned long> rOut;
+	Row<unsigned long> row_out;
 	unsigned long iSpecies;
 	bool bSample; // checks whether the samplemask has already been imported.
 	bool bDataImport; // checks whether the main sim data has been imported.
@@ -531,6 +531,10 @@ public:
 	 * @param inputfile the sql database output from a NECSim simulation.
 	 */
 	void openSqlConnection(string inputfile);
+	/**
+	 * @brief Opens a connection to an in-memory database. This will eventually be written to the output file.
+	 */
+	void setInternalDatabase();
 
 	/**
 	 * @brief Internally sets the file referencing, data import and sql connection flags to true, for allowing checks
@@ -540,7 +544,9 @@ public:
 
 	/**
 	 * @brief Imports the data from the desired SQL database object into the array.
-	 * Note this function opens the sql connection if it has not already been opened.
+	 * @note Opens the sql connection if it has not already been opened.
+	 * @note If nodes is not of length 0, this function does nothing. This is so that any in-memory data is not
+	 * overwritten.
 	 * @param inputfile the path to the input SQLite database.
 	 */
 	void importData(string inputfile);
@@ -550,7 +556,9 @@ public:
 	 * This imports the grid_x_size, grid_y_size (which should also be the sample map dimensions) and the minimum 
 	 * speciation rate.
 	 * 
-	 * Note this function opens the sql connection if it has not already been opened.
+	 * @note Opens the sql connection if it has not already been opened.
+	 *
+	 * @note If bDataImport has already been set, no operation is performed.
 	 * 
 	 * @param file the sqlite database simulation output which will be used for coalescence tree generation.
 	 */
@@ -570,6 +578,21 @@ public:
 	 * @return pointer to sorted Row of species abundances
 	 */
 	Row<unsigned long> * getCumulativeAbundances();
+
+	/**
+	 * @brief Returns the row_out object, which should contain species abundances or cumulative abundances
+	 * @note Does not recalculate species abundances, so if getCumulativeAbundances has been called, will return the
+	 * cumulative species abundances instead.
+	 * @note Returns a copy, so could cause problems for extremely large simulations with immense numbers of species.
+	 * @return row_out, the species abundances, or the cumulative abundances if getCumulativeAbundances has been called
+	 */
+	Row<unsigned long> getRowOut();
+
+	/**
+	 * @brief Gets the number of species in the most recent calculation.
+	 * @return the number of species in the most recent calculation
+	 */
+	unsigned long getSpeciesNumber();
 
 	/**
 	 * @brief Gets the maximum fragment abundance ID from the database and stores it in the max_fragment_id variable.
@@ -768,10 +791,25 @@ public:
 	virtual void apply(SpecSimParameters *sp);
 
 	/**
-	 * @brief Performs creation of the coalescence tree for the given speciation parameters.
+	 * @brief Creates the coalescence tree for the given speciation parameters.
 	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
 	 */
 	void doApplication(SpecSimParameters *sp);
+
+	/**
+	 * @brief Creates the coalescence tree for the given speciation parameters.
+	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
+	 * @param data the Row of TreeNodes that contains the coalescence tree.
+	 */
+	void doApplication(SpecSimParameters *sp, Row<TreeNode> *data);
+
+	/**
+	 * @brief Creates the coalescence tree for the given speciation parameters, using internal file referencing
+	 * to avoid any actual file creation.
+	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
+	 * @param data the Row of TreeNodes that contains the coalescence tree.
+	 */
+	void doApplicationInternal(SpecSimParameters *sp, Row<TreeNode> *data);
 
 };
 

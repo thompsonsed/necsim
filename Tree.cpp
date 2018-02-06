@@ -11,7 +11,7 @@ void Tree::importSimulationVariables(const string &configfile)
 	checkSims();
 }
 
-void Tree::internal_setup(const SimParameters &sim_parameters_in)
+void Tree::internalSetup(const SimParameters &sim_parameters_in)
 {
 	sim_parameters = sim_parameters_in;
 	setup();
@@ -19,16 +19,16 @@ void Tree::internal_setup(const SimParameters &sim_parameters_in)
 
 bool Tree::checkOutputDirectory()
 {
-	if(sim_parameters.outdirectory != "null")
+	if(sim_parameters.output_directory != "null")
 	{
 		try
 		{
-			doesExist(sim_parameters.outdirectory);
+			doesExist(sim_parameters.output_directory);
 		}
 		catch(runtime_error &re)
 		{
 			cerr << "Output folder does not exist... creating..." << flush;
-			bool bOutputFolder = boost::filesystem::create_directory(sim_parameters.outdirectory);
+			bool bOutputFolder = boost::filesystem::create_directory(sim_parameters.output_directory);
 			if( bOutputFolder)
 			{
 				cerr << "done!" << endl;
@@ -49,7 +49,7 @@ bool Tree::checkOutputDirectory()
 
 void Tree::checkSims()
 {
-	checkSims(sim_parameters.outdirectory, sim_parameters.the_seed, sim_parameters.the_task);
+	checkSims(sim_parameters.output_directory, sim_parameters.the_seed, sim_parameters.the_task);
 }
 
 void Tree::checkSims(string output_dir, long seed_in, long task_in)
@@ -69,8 +69,8 @@ void Tree::checkSims(string output_dir, long seed_in, long task_in)
 		writeInfo(os.str());
 		if(!has_imported_pause)
 		{
-			setResumeParameters(sim_parameters.outdirectory, sim_parameters.outdirectory, sim_parameters.the_seed,
-								sim_parameters.the_task, sim_parameters.maxtime);
+			setResumeParameters(sim_parameters.output_directory, sim_parameters.output_directory, sim_parameters.the_seed,
+								sim_parameters.the_task, sim_parameters.max_time);
 		}
 		has_paused = true;
 	}
@@ -86,7 +86,7 @@ void Tree::setParameters()
 {
 	if(!has_imported_vars)
 	{
-		out_directory = sim_parameters.outdirectory;
+		out_directory = sim_parameters.output_directory;
 
 		the_task = sim_parameters.the_task;
 		the_seed = sim_parameters.the_seed;
@@ -94,7 +94,7 @@ void Tree::setParameters()
 		deme = sim_parameters.deme;
 		deme_sample = sim_parameters.deme_sample;
 		spec = sim_parameters.spec;
-		maxtime = sim_parameters.maxtime;
+		maxtime = sim_parameters.max_time;
 		times_file = sim_parameters.times_file;
 		setProtractedVariables(sim_parameters.min_speciation_gen, sim_parameters.max_speciation_gen);
 		has_imported_vars = true;
@@ -217,11 +217,7 @@ void Tree::printSetup()
 
 void Tree::setTimes()
 {
-	if(times_file == "null")
-	{
-		has_times_file = false;
-	}
-	else
+	if(times_file != "null" && !has_times_file)
 	{
 		// Import the time sample points
 		has_times_file = true;
@@ -709,35 +705,35 @@ void Tree::convertTip(unsigned long i, double generationin)
 void Tree::applySpecRate(long double sr, double t)
 {
 	setupTreeGeneration(sr, t);
-	tl.createDatabase();
+	community.createDatabase();
 #ifdef record_space
-	tl.recordSpatial();
+	community.recordSpatial();
 #endif
 }
 
 void Tree::applySpecRateInternal(long double sr, double t)
 {
 	setupTreeGeneration(sr, t);
-	tl.calcSpecies();
-	tl.calcSpeciesAbundance();
+	community.calcSpecies();
+	community.calcSpeciesAbundance();
 }
 
 Row<unsigned long> * Tree::getCumulativeAbundances()
 {
-	return tl.getCumulativeAbundances();
+	return community.getCumulativeAbundances();
 }
 
 void Tree::setupTreeGeneration(long double sr, double t)
 {
-	if(!tl.hasImportedData())
+	if(!community.hasImportedData())
 	{
-		tl.setDatabase(database);
+		community.setDatabase(database);
 	}
-	tl.resetTree();
-	tl.internalOption();
-	tl.overrideProtractedParameters(getProtractedGenerationMin(), getProtractedGenerationMax());
-	tl.setProtracted(getProtracted());
-	tl.addCalculationPerformed(sr, t, false, 0, 0.0);
+	community.resetTree();
+	community.internalOption();
+	community.overrideProtractedParameters(getProtractedGenerationMin(), getProtractedGenerationMax());
+	community.setProtracted(getProtracted());
+	community.addCalculationPerformed(sr, t, false, 0, 0.0);
 }
 
 void Tree::applySpecRate(long double sr)
@@ -823,7 +819,7 @@ void Tree::applyMultipleRates()
 			}
 		}
 	}
-	tl.writeNewCommunityParameters();
+	community.writeNewCommunityParameters();
 	outputData(spec_upto);
 }
 
@@ -897,6 +893,7 @@ void Tree::sqlOutput()
 void Tree::outputData()
 {
 	unsigned long species_richness = sortData();
+	sqlCreate();
 	outputData(species_richness);
 }
 
@@ -1295,15 +1292,15 @@ void Tree::dumpMain(string pause_folder)
 		// Saving the initial data to one file.
 		out << enddata << "\n" << seeded << "\n" << the_seed << "\n" << the_task << "\n" << times_file << "\n"
 			<< has_times_file << "\n";
-		out << sim_parameters.finemapfile << "\n" << sim_parameters.coarsemapfile << "\n" << out_directory << "\n";
-		out << sim_parameters.pristinefinemapfile << "\n" << sim_parameters.pristinecoarsemapfile << "\n";
+		out << sim_parameters.fine_map_file << "\n" << sim_parameters.coarse_map_file << "\n" << out_directory << "\n";
+		out << sim_parameters.pristine_fine_map_file << "\n" << sim_parameters.pristine_coarse_map_file << "\n";
 		out << sim_parameters.gen_since_pristine << "\n" << sim_parameters.habitat_change_rate << "\n";
-		out << sim_parameters.vargridxsize << "\n" << sim_parameters.vargridysize << "\n";
-		out << sim_parameters.varfinemapxsize << "\n" << sim_parameters.varfinemapysize << "\n";
-		out << sim_parameters.varfinemapxoffset << "\n" << sim_parameters.varfinemapyoffset << "\n";
-		out << sim_parameters.varcoarsemapxsize << "\n" << sim_parameters.varcoarsemapysize << "\n";
-		out << sim_parameters.varcoarsemapxoffset << "\n" << sim_parameters.varcoarsemapyoffset << "\n";
-		out << sim_parameters.varcoarsemapscale << "\n" << has_imported_vars << "\n" << start << "\n" << sim_start;
+		out << sim_parameters.grid_x_size << "\n" << sim_parameters.grid_y_size << "\n";
+		out << sim_parameters.fine_map_x_size << "\n" << sim_parameters.fine_map_y_size << "\n";
+		out << sim_parameters.fine_map_x_offset << "\n" << sim_parameters.fine_map_y_offset << "\n";
+		out << sim_parameters.coarse_map_x_size << "\n" << sim_parameters.coarse_map_y_size << "\n";
+		out << sim_parameters.coarse_map_x_offset << "\n" << sim_parameters.coarse_map_y_offset << "\n";
+		out << sim_parameters.coarse_map_scale << "\n" << has_imported_vars << "\n" << start << "\n" << sim_start;
 		out << "\n" << sim_end << "\n" << now << "\n" << time_taken << "\n" << sim_finish << "\n" << out_finish << "\n";
 		out << endactive << "\n" << startendactive << "\n" << maxsimsize << "\n" << steps << "\n";
 		out << generation << "\n" << sim_parameters.sigma << "\n" << sim_parameters.tau << "\n" << maxtime << "\n";
@@ -1418,17 +1415,17 @@ void Tree::loadMainSave()
 		getline(in1, times_file);
 		in1 >> has_times_file;
 		in1.ignore();
-		getline(in1, sim_parameters.finemapfile);
-		getline(in1, sim_parameters.coarsemapfile);
+		getline(in1, sim_parameters.fine_map_file);
+		getline(in1, sim_parameters.coarse_map_file);
 		getline(in1, string1);
-		getline(in1, sim_parameters.pristinefinemapfile);
-		getline(in1, sim_parameters.pristinecoarsemapfile);
-		in1 >> sim_parameters.gen_since_pristine >> sim_parameters.habitat_change_rate >> sim_parameters.vargridxsize;
-		in1 >> sim_parameters.vargridysize >> sim_parameters.varfinemapxsize >> sim_parameters.varfinemapysize;
-		in1 >> sim_parameters.varfinemapxoffset >> sim_parameters.varfinemapyoffset >> sim_parameters.varcoarsemapxsize;
-		in1 >> sim_parameters.varcoarsemapysize >> sim_parameters.varcoarsemapxoffset;
+		getline(in1, sim_parameters.pristine_fine_map_file);
+		getline(in1, sim_parameters.pristine_coarse_map_file);
+		in1 >> sim_parameters.gen_since_pristine >> sim_parameters.habitat_change_rate >> sim_parameters.grid_x_size;
+		in1 >> sim_parameters.grid_y_size >> sim_parameters.fine_map_x_size >> sim_parameters.fine_map_y_size;
+		in1 >> sim_parameters.fine_map_x_offset >> sim_parameters.fine_map_y_offset >> sim_parameters.coarse_map_x_size;
+		in1 >> sim_parameters.coarse_map_y_size >> sim_parameters.coarse_map_x_offset;
 		time_t tmp_time;
-		in1 >> sim_parameters.varcoarsemapyoffset >> sim_parameters.varcoarsemapscale >> has_imported_vars >> tmp_time;
+		in1 >> sim_parameters.coarse_map_y_offset >> sim_parameters.coarse_map_scale >> has_imported_vars >> tmp_time;
 		in1 >> sim_start >> sim_end >> now;
 		in1 >> time_taken >> sim_finish >> out_finish >> endactive >> startendactive >> maxsimsize >> steps;
 		unsigned long tempmaxtime = maxtime;
@@ -1443,10 +1440,10 @@ void Tree::loadMainSave()
 		in1 >> sim_parameters;
 		if(maxtime == 0)
 		{
-			sim_parameters.maxtime = tempmaxtime;
+			sim_parameters.max_time = tempmaxtime;
 		}
 #ifdef DEBUG
-		if(maxtime == 0 && tempmaxtime == 0)
+		if(max_time == 0 && tempmaxtime == 0)
 		{
 			throw FatalException("Time set to 0 on resume!");
 		}
@@ -1454,7 +1451,7 @@ void Tree::loadMainSave()
 		NR.setDispersalMethod(sim_parameters.dispersal_method, sim_parameters.m_prob, sim_parameters.cutoff);
 		if(has_imported_pause)
 		{
-			sim_parameters.outdirectory = out_directory;
+			sim_parameters.output_directory = out_directory;
 		}
 		setParameters();
 		double tmp1, tmp2;
@@ -1567,7 +1564,7 @@ void Tree::initiateResume()
 	writeLog(10, "Output directory: " + out_directory);
 	writeLog(10, "Seed: " + to_string(the_seed));
 	writeLog(10, "Task: " + to_string(the_task));
-	writeLog(10, "Max time: " + to_string(maxtime));
+	writeLog(10, "Max time: " + to_string(max_time));
 #endif // DEBUG
 	os << "Resuming simulation..." << endl << "Loading data from temp file..." << flush;
 	writeInfo(os.str());

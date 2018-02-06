@@ -14,6 +14,7 @@
 #include <set>
 #include <unordered_map>
 #include "Community.h"
+#include "Filesystem.h"
 
 bool checkSpeciation(const long double &random_number, const long double &speciation_rate,
 					 const unsigned long &no_generations)
@@ -569,11 +570,11 @@ void Community::addSpecies(unsigned long &species_count, TreeNode *tree_node, se
 
 void Community::calcSpeciesAbundance()
 {
-	rOut.setSize(iSpecies + 1);
+	row_out.setSize(iSpecies + 1);
 	//		os << "iSpecies: " << iSpecies << endl;
-	for(unsigned long i = 0; i < rOut.size(); i++)
+	for(unsigned long i = 0; i < row_out.size(); i++)
 	{
-		rOut[i] = 0;
+		row_out[i] = 0;
 	}
 	for(unsigned long i = 1; i < nodes->size(); i++)
 	{
@@ -583,13 +584,13 @@ void Community::calcSpeciesAbundance()
 		   this_node->getExistence())
 		{
 #ifdef DEBUG
-			if(this_node->getSpeciesID() >= rOut.size())
+			if(this_node->getSpeciesID() >= row_out.size())
 			{
 				throw out_of_range("Node index out of range of abundances size. Please report this bug.");
 			}
 #endif // DEBUG
 			// The line that counts the number of individuals
-			rOut[this_node->getSpeciesID()]++;
+			row_out[this_node->getSpeciesID()]++;
 #ifdef DEBUG
 			if(!samplemask.getMaskVal(this_node->getXpos(), this_node->getYpos(),
 									  this_node->getXwrap(), this_node->getYwrap()) &&
@@ -667,38 +668,10 @@ void Community::openSqlConnection(string inputfile)
 	// open the database objects
 	sqlite3_backup *backupdb;
 	// open one db in memory and one from the file.
-	int o1 = sqlite3_open(":memory:", &database);
-	int o2 = -1;
-	// Check the outdatabase exists
-	if(!boost::filesystem::exists(inputfile))
+	try
 	{
-		throw SpeciesException("ERROR_SQL_015: FATAL. Source file does not exist.");
-	}
-	o2 = sqlite3_open_v2(inputfile.c_str(), &outdatabase, SQLITE_OPEN_READWRITE, "unix-dotfile");
-	// os << "o2: " << o2 << endl;
-	if(o2 != SQLITE_OK && o2 != SQLITE_DONE)
-	{
-		throw SpeciesException("ERROR_SQL_002: FATAL. Source file cannot be opened.");
-	}
-	if(sqlite3_errcode(database) != 0)
-	{
-		writeWarning("Can't open in-memory database. Writing to file instead (this will be slower).\n");
-		bMem = false;
-		sqlite3_close(database);
-		sqlite3_close(outdatabase);
-		int rc = sqlite3_open_v2(inputfile.c_str(), &database, SQLITE_OPEN_READWRITE, "unix-dotfile");
-		// Revert to different VFS file opening method if the backup hasn't started properly.
-		// Two different versions will be attempted before an error will be thrown.
-		// A different way of assigning the VFS method and opening the file correctly could be implemented later.
-		// Currently "unix-dotfile" works for HPC runs and "unix" works for PC runs.
-		if(rc != SQLITE_OK)
-		{
-			throw SpeciesException("ERROR_SQL_002: FATAL. Source file cannot be opened. Error codes: " + to_string(o1) +
-								   " and " + to_string(rc));
-		}
-	}
-	else
-	{
+		openSQLiteDatabase(":memory:", database);
+		openSQLiteDatabase(inputfile, outdatabase);
 		bMem = true;
 		// copy the db from file into memory.
 		backupdb = sqlite3_backup_init(database, "main", outdatabase, "main");
@@ -720,7 +693,38 @@ void Community::openSqlConnection(string inputfile)
 		}
 		sqlite3_close(outdatabase);
 	}
+	catch(FatalException &fe)
+	{
+		writeWarning("Can't open in-memory database. Writing to file instead (this will be slower).\n");
+		bMem = false;
+		sqlite3_close(database);
+		int rc = sqlite3_open_v2(inputfile.c_str(), &database, SQLITE_OPEN_READWRITE, "unix-dotfile");
+		// Revert to different VFS file opening method if the backup hasn't started properly.
+		// Two different versions will be attempted before an error will be thrown.
+		// A different way of assigning the VFS method and opening the file correctly could be implemented later.
+		// Currently "unix-dotfile" works for HPC runs and "unix" works for PC runs.
+		if(rc != SQLITE_OK)
+		{
+			throw SpeciesException("ERROR_SQL_002: FATAL. Source file cannot be opened. Error: " + string(fe.what()) +
+								   " and " + to_string(rc));
+		}
+	}
 	bSqlConnection = true;
+}
+
+void Community::setInternalDatabase()
+{
+	{
+		openSQLiteDatabase(":memory:", database);
+		internalOption();
+	}
+}
+
+void Community::internalOption()
+{
+	bDataImport = true;
+	bSqlConnection = true;
+	bFileSet = true;
 }
 
 void Community::importData(string inputfile)
@@ -732,6 +736,10 @@ void Community::importData(string inputfile)
 	if(!bDataImport)
 	{
 		importSimParameters(inputfile);
+	}
+	if(nodes->size() != 0)
+	{
+		return;
 	}
 	writeInfo("Beginning data import...");
 	// The sql statement to store the sql statement message object
@@ -845,14 +853,23 @@ void Community::getMaxSpeciesAbundancesID()
 Row<unsigned long> * Community::getCumulativeAbundances()
 {
 	unsigned long total = 0;
-	for(unsigned long i = 0; i < rOut.size(); i ++)
+	for(unsigned long i = 0; i < row_out.size(); i ++)
 	{
-		total += rOut[i];
-		rOut[i] = total;
+		total += row_out[i];
+		row_out[i] = total;
 	}
-	return &rOut;
+	return &row_out;
 }
 
+Row<unsigned long> Community::getRowOut()
+{
+	return row_out;
+}
+
+unsigned long Community::getSpeciesNumber()
+{
+	return iSpecies;
+}
 void Community::getMaxSpeciesLocationsID()
 {
 	if(!bSqlConnection)
@@ -962,16 +979,16 @@ void Community::outputSpeciesAbundances()
 
 		// Start the transaction
 		sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
-		for(unsigned long i = 0; i < rOut.size(); i++)
+		for(unsigned long i = 0; i < row_out.size(); i++)
 		{
 			// only do all the export itself if the value of i is not 0
-			// if(rOut[i] != 0)
+			// if(row_out[i] != 0)
 			//{
 
 			// fixed precision problem - lexical cast allows for printing of very small doubles.
 			sqlite3_bind_int(stmt, 1, static_cast<int>(max_species_id++));
 			sqlite3_bind_int(stmt, 2, static_cast<int>(i));
-			sqlite3_bind_int(stmt, 3, rOut[i]);
+			sqlite3_bind_int(stmt, 3, row_out[i]);
 			sqlite3_bind_int(stmt, 4, static_cast<int>(current_community_parameters->reference));
 			int step = sqlite3_step(stmt);
 			// makes sure the while loop doesn't go forever.
@@ -1076,9 +1093,9 @@ void Community::createFragmentDatabase(const Fragment &f)
 
 	// Start the transaction
 	sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
-	for(unsigned long i = 0; i < rOut.size(); i++)
+	for(unsigned long i = 0; i < row_out.size(); i++)
 	{
-		if(rOut[i] != 0)
+		if(row_out[i] != 0)
 		{
 			// fixed precision problem - lexical cast allows for printing of very small doubles.
 			sqlite3_bind_int(stmt, 1, static_cast<int>(max_fragment_id++));
@@ -1086,7 +1103,7 @@ void Community::createFragmentDatabase(const Fragment &f)
 			sqlite3_bind_double(stmt, 3, f.area);
 			sqlite3_bind_int(stmt, 4, static_cast<int>(f.num));
 			sqlite3_bind_int(stmt, 5, static_cast<int>(i));
-			sqlite3_bind_int(stmt, 6, rOut[i]);
+			sqlite3_bind_int(stmt, 6, row_out[i]);
 			sqlite3_bind_int(stmt, 7, static_cast<int>(current_community_parameters->reference));
 			int step = sqlite3_step(stmt);
 			// makes sure the while loop doesn't go forever.
@@ -1132,6 +1149,7 @@ void Community::exportDatabase()
 {
 	if(bMem)
 	{
+		stringstream ss;
 		stringstream os;
 		os << "Writing out to " << spec_sim_parameters->filename << "..." << flush;
 		// Now write the database to the file object.
@@ -1146,9 +1164,10 @@ void Community::exportDatabase()
 			rc = sqlite3_open(spec_sim_parameters->filename.c_str(), &outdatabase2);
 			if(rc != SQLITE_OK && rc != SQLITE_DONE)
 			{
-				cerr << "ERROR_SQL_016: Connection to output database cannot be opened. Check write access "
+				ss << "ERROR_SQL_016: Connection to output database cannot be opened. Check write access "
 						"on output folder. Error code: "
 					 << rc << "." << endl;
+				throw FatalException(ss.str());
 			}
 		}
 
@@ -1158,37 +1177,36 @@ void Community::exportDatabase()
 		backupdb = sqlite3_backup_init(outdatabase2, "main", database, "main");
 		if(!backupdb)
 		{
-			cerr << "ERROR_SQL_003: Could not backup to SQL database. Check destination file has not been "
+			ss << "ERROR_SQL_003: Could not backup to SQL database. Check destination file has not been "
 					"moved or deleted."
 				 << endl;
+			throw FatalException(ss.str());
 		}
 		// Perform the backup
 		rc = sqlite3_backup_step(backupdb, -1);
 		if(rc != SQLITE_OK && rc != SQLITE_DONE)
 		{
-			cerr << "ERROR_SQL_016: Connection to output database cannot be opened. Check write access on "
+			ss << "ERROR_SQL_016: Connection to output database cannot be opened. Check write access on "
 					"output folder. Error code: "
 				 << rc << "." << endl;
+			throw FatalException(ss.str());
 		}
 		rc = sqlite3_backup_finish(backupdb);
 		if(rc != SQLITE_OK && rc != SQLITE_DONE)
 		{
-			cerr << "ERROR_SQL_016: Connection to output database cannot be opened. Check write access on "
+			ss << "ERROR_SQL_016: Connection to output database cannot be opened. Check write access on "
 					"output folder. Error code: "
 				 << rc << "." << endl;
+			throw FatalException(ss.str());
 		}
-		//			os << "rc: " << rc << endl;
 		sqlite3_close(outdatabase2);
 		sqlite3_close(database);
 		writeInfo("done!\n");
 	}
 	else
 	{
-//		os << "Closing file..." << flush;
 		sqlite3_close(database);
-//		os << "\rClosing file...done!" << endl;
 	}
-	//		database
 }
 
 bool Community::checkSpeciesLocationsReference()
@@ -1338,15 +1356,7 @@ void Community::calcFragments(string fragment_file)
 					if(i > 0 && j > 0)
 					{
 						// Perform the check
-						if(samplemask.sample_mask[j][i - 1] || samplemask.sample_mask[j - 1][i])
-						{
-							// then it is not a fragment
-							in_fragment = false;
-						}
-						else
-						{
-							in_fragment = true;
-						}
+						in_fragment = !(samplemask.sample_mask[j][i - 1] || samplemask.sample_mask[j - 1][i]);
 					}
 						// if it is on an edge, we need to check the fragment
 					else
@@ -1583,6 +1593,10 @@ void Community::applyFragments()
 
 void Community::importSimParameters(string file)
 {
+	if(bDataImport)
+	{
+		return;
+	}
 	if(!bSqlConnection)
 	{
 #ifdef DEBUG
@@ -1696,12 +1710,6 @@ void Community::setProtracted(bool protracted_in)
 	protracted = protracted_in;
 }
 
-void Community::internalOption()
-{
-	bDataImport = true;
-	bSqlConnection = true;
-	bFileSet = true;
-}
 
 void Community::getPreviousCalcs()
 {
@@ -1718,7 +1726,7 @@ void Community::getPreviousCalcs()
 		//				exit(EXIT_FAILURE);
 	}
 	sqlite3_step(stmt1);
-	bool has_community_parameters = static_cast<bool>(sqlite3_column_int(stmt1, 0));
+	auto has_community_parameters = static_cast<bool>(sqlite3_column_int(stmt1, 0));
 	sqlite3_step(stmt1);
 	sqlite3_finalize(stmt1);
 	// Read the speciation rates from the community_parameters table
@@ -1737,7 +1745,6 @@ void Community::getPreviousCalcs()
 								   to_string(rc));
 		}
 		rc = sqlite3_step(stmt2);
-		int i = 0;
 		while(rc == SQLITE_ROW)
 		{
 			auto row_val = sqlite3_column_int(stmt2, 0);
@@ -2233,21 +2240,28 @@ void Community::printEndTimes(time_t tStart, time_t tEnd)
 
 void Community::apply(SpecSimParameters *sp)
 {
-	time_t tStart, tEnd;
+	time_t tStart{};
+	time_t tEnd{};
 	// Start the clock
 	time(&tStart);
 	// First print the variables
 	doApplication(sp);
+	output();
 	printEndTimes(tStart, tEnd);
 }
 
 void Community::doApplication(SpecSimParameters *sp)
 {
+	Row<TreeNode> data;
+	doApplication(sp, &data);
+}
+
+void Community::doApplication(SpecSimParameters *sp, Row<TreeNode> *data)
+{
 	spec_sim_parameters = sp;
 	writeSpeciationRates();
 	// Set up the objects
-	Row<TreeNode> data;
-	setList(&data);
+	setList(data);
 	importSimParameters(sp->filename);
 	setProtractedParameters(sp->min_speciation_gen, sp->max_speciation_gen);
 	importSamplemask(sp->samplemask);
@@ -2258,6 +2272,12 @@ void Community::doApplication(SpecSimParameters *sp)
 		calcFragments(sp->fragment_config_file);
 	}
 	calculateTree();
-	output();
+}
+
+void Community::doApplicationInternal(SpecSimParameters *sp, Row<TreeNode> *data)
+{
+	setInternalDatabase();
+	doApplication(sp, data);
+
 }
 

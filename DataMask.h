@@ -1,16 +1,18 @@
+// This file is part of NECSim project which is released under BSD-3 license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+
+
 /**
  * @author Samuel Thompson
  * @file DataMask.h
- * @brief  Contains the DataMask class for describing the spatial sampling pattern on a landscape.
+ * @brief  Contains DataMask for describing the spatial sampling pattern on a landscape.
  *
  * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
  */
 #ifndef SPECIATIONCOUNTER_DataMask_H
 #define SPECIATIONCOUNTER_DataMask_H
 
-/**
- * @brief Forward declaration for the Map class
- */
+// Forward declaration of map
 class Map;
 
 #include <string>
@@ -21,7 +23,6 @@ class Map;
 
 // Class which contains the DataMask object, telling us where to sample from within the habitat map.
 /**
- * @class DataMask
  * @brief Contains the DataMask object, a Matrix of booleans describing the spatial sampling pattern.
  */
 class DataMask

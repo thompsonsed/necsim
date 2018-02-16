@@ -46,8 +46,7 @@ using namespace std;
 const int gdal_data_sizes[] = {0, 8, 16, 16, 32, 32, 32, 64};
 
 /**
- * @class Row
- * @brief Contains a tempate Row class and basic operations.
+ * @brief Contains a template Row class and basic operations.
  * Uses an array to store the row.
  */
 template<class T>
@@ -220,7 +219,6 @@ public:
 
 
 /**
- * @class Matrix
  * @brief A class containing the Matrix object, set up as an array of Row objects.
  * Includes basic operations, as well as the importCsv() function for more advanced reading from file.
  */
@@ -667,7 +665,6 @@ public:
 		GDALDataType dt = poBand->GetRasterDataType();
 		const char *dt_name = GDALGetDataTypeName(dt);
 		CPLErr r;
-		unsigned int number_printed = 0;
 		// Check the data types are support
 		if(dt == 0 || dt > 7)
 		{

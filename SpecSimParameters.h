@@ -1,7 +1,14 @@
-//
-// Created by Sam Thompson on 08/01/2018.
-//
+//This file is part of NECSim project which is released under BSD-3 license.
+//See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
 
+/**
+ * @author Sam Thompson
+ * @file SpecSimParameters.h
+ * @brief Contains parameters for applying speciation rates post-simulation.
+ *
+ * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
+ * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ */
 #ifndef SPECIATIONCOUNTER_SPECSIMPARAMETERS_H
 #define SPECIATIONCOUNTER_SPECSIMPARAMETERS_H
 

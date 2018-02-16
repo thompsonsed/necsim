@@ -3,8 +3,8 @@
 //
 /**
  * @author Sam Thompson
- * @file ProtractedTree.h
- * @brief Contains the ProtractedTree class for running simulations and outputting the phylogenetic trees using
+ * @file ProtractedSpatialTree.h
+ * @brief Contains the ProtractedSpatialTree class for running simulations and outputting the phylogenetic trees using
  * protracted speciation.
  *
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com

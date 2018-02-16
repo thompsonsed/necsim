@@ -26,7 +26,6 @@
 #include "Map.h"
 
 /**
- * @class DispersalCoordinator
  * @brief Class for generating dispersal distances and provide routines for reading dispersal distance maps
  * as a unwound map-of-maps. This class also handles reading density maps for rejection sampling.
  * 

@@ -4,17 +4,15 @@
 /**
  * @author Sam Thompson
  * @date 31/08/2016
- * @file Config.h
- * @brief Config classes for importing command line parameters from a config text file, originally designed for usage
- * within coalescence simulations on a cluster.
- * Note, as of v1.0, ordering within the file matters.
+ * @file ConfigFileParser.h
+ * @brief ConfigOption and SectionOption classes for importing command line parameters from a config text file,
+ * originally designed for usage within coalescence simulations on a cluster.
  *
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
  * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
  *
  */
-// Header guard
-//
+
 #ifndef CONFIGCLASS
 #define CONFIGCLASS
 
@@ -91,7 +89,6 @@ struct SectionOption
 };
 
 /**
- * @class ConfigOption
  * @brief Config option class to store and import options from a file.
  */
 class ConfigOption

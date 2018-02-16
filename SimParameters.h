@@ -1,6 +1,13 @@
-//
-// Created by Sam Thompson on 10/09/2017.
-//
+// This file is part of NECSim project which is released under BSD-3 license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+/**
+ * @author Sam Thompson
+ * @file SimParameters.h
+ * @brief Stores and parses simulation parameters from the command line or a config file.
+ *
+ * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
+ * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ */
 
 #ifndef SPECIATIONCOUNTER_SIMPARAMETERS_H
 #define SPECIATIONCOUNTER_SIMPARAMETERS_H

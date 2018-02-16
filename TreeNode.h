@@ -2,10 +2,10 @@
 //See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
 /**
  * @author Samuel Thompson
- * @file Treenode.h
- * @brief Contains the Treenode class for storing the coalescence tree. 
+ * @file TreeNode.h
+ * @brief Contains the TreeNode class for storing the coalescence tree.
  * 
- * Treenode objects are used both during simulation runs and afterwards, when different calculations need to be performed on the coalescence tree.
+ * TreeNode objects are used both during simulation runs and afterwards, when different calculations need to be performed on the coalescence tree.
  */
 #ifndef TREENODE
 #define TREENODE
@@ -16,10 +16,11 @@
 
 using namespace std;
 /**
- * @class Treenode
- * @brief The Treenode class that acts as a data storage object for the phylogenetic tree.
+ * @class TreeNode
+ * @brief The TreeNode class that acts as a data storage object for the phylogenetic tree.
  * 
- * Also contains all the necessary routines for changes to a lineage's attributes, called by Treelist objects when generating new coalescence trees.
+ * Also contains all the necessary routines for changes to a lineage's attributes, called by TreeList objects when
+ * generating new coalescence trees.
  */
 class TreeNode
 {

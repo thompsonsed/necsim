@@ -2,7 +2,6 @@
 //See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
 
 /**
- * @class Step
  * @author Sam Thompson
  * @date 09/08/2017
  * @file Step.h

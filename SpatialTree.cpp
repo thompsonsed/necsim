@@ -4,9 +4,9 @@
 /**
  * @author Samuel Thompson
  * @date 24/03/17
- * @file Tree.cpp
+ * @file SpatialTree.cpp
  *
- * @brief  Contains the Tree class implementation as the main simulation object for spatially-explicit
+ * @brief  Contains the SpatialTree class implementation as the main simulation object for spatially-explicit
  * coalescence simulations.
  * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
  */
@@ -33,7 +33,9 @@ void SpatialTree::parseArgs(vector<string> & comargs)
 		comargs.emplace_back("-e");
 		if(comargs.size()!=2)
 		{
-			cerr << "ERROR_MAIN_010: Incorrect command line parsing." << endl;
+			stringstream ss;
+			ss << "ERROR_MAIN_010: Incorrect command line parsing." << endl;
+			throw FatalException(ss.str());
 		}
 	}
 	if(comargs[1]=="-h"||comargs[1]=="-H"||argc==1||comargs[1]=="-help" || comargs[1] == "-e")
@@ -125,8 +127,7 @@ void SpatialTree::parseArgs(vector<string> & comargs)
 			os << "-dl/-DL: Run with default large parameters." << endl;
 			os << "-dx/-DX: Run with the default very large parameters." << endl;
 			os << "-c/-config: Run with the supplied config file." << endl;
-			writeWarning(os.str());
-			exit(1); // exit the program right away as there is no need to continue if there is no simulation to run!
+			throw FatalException(os.str()); // exit the program right away as there is no need to continue if there is no simulation to run!
 		}
 	}
 	
@@ -135,13 +136,14 @@ void SpatialTree::parseArgs(vector<string> & comargs)
 		comargs[1] = "resuming";
 		if(argc != 6)
 		{
-			cerr << "Incorrect number of parameters provided for resuming simulation. Expecting:" << endl;
-			cerr << "1: -r flag" << endl;
-			cerr << "2: the folder containing the paused simulation (should hold a 'Pause' folder)" << endl;
-			cerr << "3: the simulation seed" << endl;
-			cerr << "4: the simulation task" << endl;
-			cerr << "5: the time to run the simulation for" << endl;
-			exit(-1);
+			stringstream ss;
+			ss << "Incorrect number of parameters provided for resuming simulation. Expecting:" << endl;
+			ss << "1: -r flag" << endl;
+			ss << "2: the folder containing the paused simulation (should hold a 'Pause' folder)" << endl;
+			ss << "3: the simulation seed" << endl;
+			ss << "4: the simulation task" << endl;
+			ss << "5: the time to run the simulation for" << endl;
+			throw FatalException(ss.str());
 		}
 		bResume = true;
 		has_paused = true;
@@ -206,7 +208,7 @@ void SpatialTree::checkFolders()
 	}
 	catch(FatalException& fe)
 	{
-		cerr << fe.what() << endl;
+		writeError(fe.what());
 		bFineMap = false;
 	}
 	try
@@ -215,7 +217,7 @@ void SpatialTree::checkFolders()
 	}
 	catch(FatalException& fe)
 	{
-		cerr << fe.what() << endl;
+		writeError(fe.what());
 		bCoarseMap = false;
 	}
 	try
@@ -224,7 +226,7 @@ void SpatialTree::checkFolders()
 	}
 	catch(FatalException& fe)
 	{
-		cerr << fe.what() << endl;
+		writeError(fe.what());
 		bFineMapPristine = false;
 	}
 	try
@@ -233,7 +235,7 @@ void SpatialTree::checkFolders()
 	}
 	catch(FatalException& fe)
 	{
-		cerr << fe.what() << endl;
+		writeError(fe.what());
 		bCoarseMapPristine = false;
 	}
 	bOutputFolder = checkOutputDirectory();
@@ -243,7 +245,7 @@ void SpatialTree::checkFolders()
 	}
 	catch(FatalException& fe)
 	{
-		cerr << fe.what() << endl;
+		writeError(fe.what());
 		bSampleMask = false;
 	}
 	if(bFineMap && bCoarseMap && bFineMapPristine && bCoarseMapPristine && bOutputFolder && bSampleMask)
@@ -632,7 +634,9 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
 #ifdef pristine_mode
 		if(grid[oldy][oldx].getMaxsize() < active[chosen].getListpos())
 		{
-			cerr << "grid maxsize: " << grid[oldy][oldx].getMaxsize() << endl;
+			stringstream ss;
+			ss << "grid maxsize: " << grid[oldy][oldx].getMaxsize() << endl;
+			writeCritical(ss.str());
 			throw FatalException("ERROR_MOVE_001: Listpos outside maxsize. Check move programming function.");
 		}
 #endif

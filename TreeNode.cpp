@@ -2,10 +2,11 @@
 //See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
 /**
  * @author Samuel Thompson
- * @file Treenode.h
- * @brief Contains the Treenode class for storing the coalescence tree.
+ * @file TreeNode.cpp
+ * @brief Contains the TreeNode class for storing the coalescence tree.
  *
- * Treenode objects are used both during simulation runs and afterwards, when different calculations need to be performed on the coalescence tree.
+ * TreeNode objects are used both during simulation runs and afterwards, when different calculations need to be
+ * performed on the coalescence tree.
  */
 #include "TreeNode.h"
 #include "Logging.h"

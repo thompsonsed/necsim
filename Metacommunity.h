@@ -3,13 +3,13 @@
 
 /**
  * @author Samuel Thompson
- * @file Metacommunity.cpp
+ * @file Metacommunity.h
  *
  * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
- * @brief Contains the Metacommunity class for generating a neutral metacommunity.
+ * @brief Generates a neutral metacommunity.
  *
- * For use with completed simulations from NECSim, using the SpeciationCounter program. Individuals will be drawn from
- * the metacommunity for each speciation event, instead of creating a new species each time.
+ * Individuals will be drawn from the metacommunity for each speciation event, instead of creating a new species each
+ * time. The metacommunity itself is generated using spatially-implicit neutral simulations.
  *
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
  */
@@ -27,7 +27,9 @@
 
 using namespace std;
 /**
- * @brief Contains routines for importing a metacommunity from a database, saving to a database and
+ * @class Metacommunity
+ * @brief Generates a metacommunity using spatially-implicit neutral simulations, which is used to draw individuals
+ * from a community.
  */
 class Metacommunity : public virtual Community
 {

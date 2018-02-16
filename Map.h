@@ -27,16 +27,22 @@
 
 using namespace std;
 
-
-/************************************************************
-					MAP OBJECT
- ************************************************************/
 /**
  * @class Map
- * @brief Contains all maps and provides the functions for accessing a grid cell in the correct temporal and spacial location.
- * The function runDispersal() also provides the move routine, provided two alternative methods for moving individuals.
+ * @brief Contains all maps and provides the functions for accessing a grid cell in the correct temporal and spacial
+ * location.
+ *
+ * @details The function runDispersal() also provides the move routine, provided two alternative methods for moving
+ * individuals. Contains routines for easy setting up and switching between the different coordinate systems required.
+ * Set the map parameters with setDims(), import the map files with calcFineMap(), calcCoarseMap() etc, then set up
+ * the landscape type using setLandscape() and setPristine().
+ * Usage is then by runDispersal() for running a dispersal kernel on the landscape, and then getVal() to obtain the
+ * density at the desired coordinates. All coordinates should be given in reference to the simulation grid, and offsets
+ * for the fine and coarse map are calculated automatically.
+ *
  */
-// Object containing both the maps (the coarse and fine version) and routines for easy setting up and switching between the different coordinate systems.
+// Object containing both the maps (the coarse and fine version) and routines for easy setting up and switching between
+// the different coordinate systems.
 class Map
 {
 protected:
@@ -452,19 +458,18 @@ public:
 	 */
 	void convertCoordinates(double &x, double &y, long &xwrap, long &ywrap);
 
-	/********************************************
-	 * MAIN DISPERSAL FUNCTION
-	 ********************************************/
 	/**
 	 * @brief The function that actually performs the dispersal. 
-	 * It is included here for easier  programming and efficiency as the function doesn't need to perform all the checks until the edge of the fine grid.
+	 * It is included here for easier  programming and efficiency as the function doesn't need to perform all the checks
+	 * until the edge of the fine grid.
 	 * @param dist the distance travelled (or "distance energy" if dispersal_relative_cost is not 1).
 	 * @param angle the angle of movement.
 	 * @param startx the start x position.
 	 * @param starty the start y position.
 	 * @param startxwrap the start number of wraps in the x dimension.
 	 * @param startywrap the start number of wraps in the y dimension.
-	 * @param disp_comp a boolean of whether the dispersal was complete or not. This value is returned true if dispersal is to habitat, false otherwise.
+	 * @param disp_comp a boolean of whether the dispersal was complete or not. This value is returned true if dispersal
+	 * is to habitat, false otherwise.
 	 * @param generation the time in generations since the start of the simulation.
 	 * @return the density value at the end dispersal point
 	 */

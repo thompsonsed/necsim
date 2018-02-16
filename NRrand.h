@@ -41,7 +41,6 @@
 using namespace std;
 
 /**
- * @class NRrand
  * @brief Contains the functions for random number generation.
  */
 class NRrand

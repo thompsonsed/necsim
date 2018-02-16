@@ -1,6 +1,17 @@
-//
-// Created by Sam Thompson on 18/12/2017.
-//
+// This file is part of NECSim project which is released under BSD-3 license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+
+/**
+ * @author Samuel Thompson
+ * @date 24/03/17
+ * @file Tree.cpp
+ *
+ * @brief  Contains the Tree class implementation as the main simulation object for spatially-implicit
+ * coalescence simulations.
+ * Provides the basis for spatially-explicit versions in SpatialTree, and protracted speciation versions in
+ * ProtractedTree and ProtractedSpatialTree.
+ * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ */
 
 #include "Tree.h"
 void Tree::importSimulationVariables(const string &configfile)
@@ -133,12 +144,12 @@ long long Tree::getSeed()
 	return the_seed;
 }
 
-void Tree::setSeed(long long theseedin)
+void Tree::setSeed(long long seed_in)
 {
 	if(!seeded)
 	{
-		NR.setSeed(theseedin);
-		the_seed = theseedin;
+		NR.setSeed(seed_in);
+		the_seed = seed_in;
 		seeded = true;
 	}
 }

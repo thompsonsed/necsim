@@ -4,8 +4,8 @@
 /**
  * @author Sam Thompson
  * @date 31/08/2016
- * @file Config.cpp
- * @brief Contains implementation of the Config.h functions.
+ * @file ConfigFileParser.cpp
+ * @brief Contains implementation of the ConfigFileParser.h functions.
  * 
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
  * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>

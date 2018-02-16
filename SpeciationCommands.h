@@ -4,10 +4,10 @@
 /**
  * @author Samuel Thompson
  * @date 19/07/2017
- * @file ApplySpeciation.h
+ * @file SpeciationCommands.h
  *
  * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
- * @brief Contains the ApplySpec class for performing calculations of the coalescence tree structure and generating
+ * @brief Contains the SpeciationCommands class for performing calculations of the coalescence tree structure and generating
  *  the SQL database objects.
  * 
  * For use on the SQL database outputs of NECSim v3.1+. It requires command line parameters and generates a data object from them.
@@ -21,6 +21,10 @@
 #include "TreeNode.h"
 #include "SpecSimParameters.h"
 
+/**
+ * @brief Routines for parsing command-line arguments to apply speciation rates to a necsim output
+ * post-simulation.
+ */
 class SpeciationCommands
 {
 private:
@@ -37,7 +41,7 @@ private:
 public:
 	
 	/**
-	 * @brief Default constructor for ApplySpec class.
+	 * @brief Default constructor for SpeciationCommands class.
 	 */
 	SpeciationCommands()
 	{

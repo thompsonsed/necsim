@@ -1,4 +1,16 @@
+// This file is part of NECSim project which is released under BSD-3 license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
 
+/**
+ * @author Samuel Thompson
+ * @date 24/03/17
+ * @file Tree.h
+ * @brief  Contains the Tree class implementation as the main simulation object for spatially-implicit
+ * coalescence simulations.
+ * Provides the basis for spatially-explicit versions in SpatialTree, and protracted speciation versions in
+ * ProtractedTree and ProtractedSpatialTree.
+ * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ */
 #ifndef TREE_H
 #define TREE_H
 #ifndef sql_ram
@@ -174,7 +186,7 @@ public:
 
 	/**
 	 * @brief Asserts that the output directory is not null and exists. If it doesn't exist, it attempts to create it.
-	 * @raises Fatal_Exception if the output directory creation fails
+	 * @throws Fatal_Exception if the output directory creation fails
 	 * @return true if output creates successfully
 	 */
 	bool checkOutputDirectory();
@@ -233,13 +245,13 @@ public:
 	/**
 	 * @brief Sets the simulation seed for the random number generator.
 	 *
-	 * This funtion should only be called once.
+	 * This function should only be called once.
 	 *
 	 * The seed is set within the NR  object. This will be fixed for the simulation and is only performed once.
 	 *
-	 * @param theseedin the desired seed to set for the simulation
+	 * @param seed_in the desired seed to set for the simulation
 	 */
-	void setSeed(long long theseedin);
+	void setSeed(long long seed_in);
 
 	/**
 	 * @brief Gets the initial number of individuals
@@ -433,7 +445,7 @@ public:
 	/**
 	 * @brief Applies the given speciation rate to the tree.
 	 * @param sr the required speciation rate
-	 * @param the required time of speciation
+	 * @param t the required time of speciation
 	 */
 	void applySpecRate(long double sr, double t);
 
@@ -441,7 +453,7 @@ public:
 	 * @brief Applies the given speciation rate to the tree, but does not output to a file. Instead returns a pointer
 	 * to the nodes object.
 	 * @param sr the required speciation rate
-	 * @param the required time of speciation
+	 * @param t the required time of speciation
 	 */
 	void applySpecRateInternal(long double sr, double t);
 
@@ -455,7 +467,7 @@ public:
 	/**
 	 * @brief Sets up the generation of the tree object.
 	 * @param sr the required speciation rate
-	 * @param the required time of speciation
+	 * @param t the required time of speciation
 	 */
 	void setupTreeGeneration(long double sr, double t);
 

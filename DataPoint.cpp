@@ -1,17 +1,9 @@
 //This file is part of NECSim project which is released under BSD-3 license.
 //See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
-// DataPoint.cpp version 3.1
-// Author - Samuel Thompson - Imperial College London
-// with large use of code supplied by James Rosindell (Imperial College London)
-// This file contains the datapoint class for usage in coalescence simulations.
-// Version 2.01 removes any references to matrix vs grid x and y coordinates, instead simplifying to a single coordinate system.
-
-
-# define version1_01
 /**
  * @author Samuel Thompson
  * @date 30/08/2016
- * @file Datapoint.h
+ * @file Datapoint.cpp
  *
  * @brief Contains the Datapoint class for storing objects during simulation run time.
  * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>

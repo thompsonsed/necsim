@@ -3,11 +3,11 @@
 /**
  * @author Samuel Thompson
  * @date 31/08/16
- * @file Community.cpp
+ * @file Community.h
  *
- * @brief Contains the Community object, which is used for reconstructing the coalescence tree after simulations are complete.
+ * @brief Contains the Community object, which is used for reconstructing the coalescence tree after simulations are
+ * complete.
  *
- * For use with Coal_sim 3.1 and above.
  * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
  */
 
@@ -76,6 +76,7 @@ bool doubleCompare(long double d1, long double d2, long double epsilon);
 bool doubleCompare(long double d1, long double d2, double epsilon);
 
 /**
+ * @struct CommunityParameters
  * @brief A struct for containing pairs of previous calculations to make sure that aren't repeated.
  */
 struct CommunityParameters
@@ -151,6 +152,7 @@ struct CommunityParameters
 };
 
 /**
+ * @class CommunitiesArray
  * @brief A structure for containing an array of previous calculation information, including which fragments have been 
  * already calculated for.
  */
@@ -198,6 +200,12 @@ struct CommunitiesArray
 
 };
 
+/**
+ * @struct MetacommunityParameters
+ * @brief Contains a set of metacommunity parameters that have been applied, or are to be applied, to the coalescence
+ * tree.
+ *
+ */
 struct MetacommunityParameters
 {
 	unsigned long reference;
@@ -229,6 +237,10 @@ struct MetacommunityParameters
 	bool compare(unsigned long reference_in);
 };
 
+/**
+ * @struct MetacommunitiesArray
+ * @brief Contains an array of MetacommunityParameters that have been applied to the coalescence tree.
+ */
 struct MetacommunitiesArray
 {
 	vector<MetacommunityParameters> calc_array;
@@ -281,7 +293,7 @@ struct MetacommunitiesArray
 	unsigned long getReference(long double speciation_rate, unsigned long metacommunity_size);
 };
 
-// A class containing the fragment limits as x,y coordinates.
+
 /**
  * @struct Fragment
  * @brief Contains the information needed for defining a fragment.
@@ -299,7 +311,6 @@ struct Fragment
 	double area;
 };
 
-// Class for creating the sample matrix object for easy referencing
 
 /**
  * @class Samplematrix

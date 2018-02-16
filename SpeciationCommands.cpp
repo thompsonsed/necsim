@@ -4,7 +4,7 @@
 /**
  * @author Samuel Thompson
  * @date 19/07/2017
- * @file ApplySpeciation.cpp
+ * @file SpeciationCommands.cpp
  *
  * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
  * @brief Contains the ApplySpec class for performing calculations of the coalescence tree structure and generating
@@ -137,7 +137,7 @@ void SpeciationCommands::parseArgs()
 		else
 		{
 			bRunDefault = false;
-			exit(0);
+			throw FatalException("Nothing to do!");
 		}
 	}
 	if(comargs[1] == "-d" || bRunDefault)

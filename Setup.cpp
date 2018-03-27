@@ -19,54 +19,6 @@ string log_name = "null";
 int saved_stdout;
 
 
-#ifndef verbose
-
-void openLogFile(bool append)
-{
-	// If verbose mode is not defined, we output to a log file instead of to the terminal
-	// Get the current time
-	saved_stdout = dup(fileno(stdout));
-	//dup2(stdout, 1);
-	auto t = time(nullptr);
-	auto tp = *localtime(&t);
-	// get the time string
-	ostringstream oss;
-	oss << std::put_time(&tp, "%d-%m-%Y-%H:%M:%S");
-	if(log_name == "null")
-	{
-		log_name = "Logs/Log_"+oss.str() + ".txt";
-	}
-	// Check that the Log folder exists, and create if necessary.
-	if(!boost::filesystem::exists("Logs"))
-	{
-		if(!boost::filesystem::create_directory("Logs"))
-		{
-			cerr << "Cannot create log directory (check write access) - defaulting to terminal." << endl;
-		}
-	}
-	if(boost::filesystem::exists("Logs"))
-	{
-		// Open the log file for writing to.
-		FILE * tmpfileptr;
-		if(append)
-		{
-			tmpfileptr = freopen(log_name.c_str(), "a", stdout);
-		}
-		else
-		{
-			tmpfileptr = freopen(log_name.c_str(), "w", stdout);
-		}
-		if(stdout == nullptr || tmpfileptr == nullptr)
-		{
-			cerr << "Cannot create log file (check write access) - defaulting to terminal." << endl;
-			dup2(saved_stdout, fileno(stdout));
-			close(saved_stdout);
-		}
-	}
-	//cerr<< "logfile2 : " << log_name << endl;
-}
-#endif /* verbose */
-
 #ifdef PROFILE
 
 ofstream csv_output;

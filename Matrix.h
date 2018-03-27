@@ -15,9 +15,9 @@
 
 
 #ifndef MATRIX
-# define MATRIX
-# define null 0
-# include <cstdio>
+#define MATRIX
+#define null 0
+#include <cstdio>
 #include <iostream>
 #include <sstream>
 #include <fstream>
@@ -29,12 +29,6 @@
 #include<cmath>
 #include <stdexcept>
 #include "fast-cpp-csv-parser/csv.h"
-#endif
-#ifdef with_gdal
-
-#include <gdal_priv.h>
-#include <cpl_conv.h> // for CPLMalloc()
-
 #endif
 
 #include <cstdint>
@@ -242,7 +236,7 @@ public:
 	 */
 	explicit Matrix(unsigned long rows = 0, unsigned long cols = 0) : matrix(null)
 	{
-		SetSize(rows, cols);
+		setSize(rows, cols);
 	}
 
 	/**
@@ -251,7 +245,7 @@ public:
 	 */
 	Matrix(const Matrix &m) : matrix(null)
 	{
-		SetSize(m.numRows, m.numCols);
+		setSize(m.numRows, m.numCols);
 		copy(&m.matrix[0][0], &m.matrix[numRows][numCols], matrix);
 	}
 
@@ -272,7 +266,7 @@ public:
 	 * @param rows the number of rows.
 	 * @param cols the number of columns.
 	 */
-	void SetSize(unsigned long rows, unsigned long cols)
+	void setSize(unsigned long rows, unsigned long cols)
 	{
 		if(matrix)
 		{
@@ -298,7 +292,7 @@ public:
 	 * @brief Getter for the number of columns.
 	 * @return the number of columns.
 	 */
-	unsigned long GetCols() const
+	unsigned long getCols() const
 	{
 		return numCols;
 	}
@@ -307,7 +301,7 @@ public:
 	 * @brief Getter for the number of rows.
 	 * @return the number of rows.
 	 */
-	unsigned long GetRows() const
+	unsigned long getRows() const
 	{
 		return numRows;
 	}
@@ -341,7 +335,7 @@ public:
 	 */
 	Matrix &operator=(const Matrix &m)
 	{
-		SetSize(m.numRows, m.numCols);
+		setSize(m.numRows, m.numCols);
 		for(unsigned long r = 0; r < numRows; r++)
 		{
 			matrix[r] = Row<T>(m.matrix[r]);
@@ -541,13 +535,12 @@ public:
 	}
 
 	/**
-	 * @brief Overloading the << operator for outputting to an output stream.
-	 * This can be used for writing to console or storing to file.
-	 * @param os the output stream.
-	 * @param m the matrix to output.
-	 * @return the output stream.
+	 * @brief Writes the object to the output stream.
+	 * @param os the output stream to write to
+	 * @param m the object to write out
+	 * @return the output stream
 	 */
-	friend ostream &operator<<(ostream &os, const Matrix &m)
+	friend ostream& writeOut(ostream &os, const Matrix &m)
 	{
 		for(unsigned long r = 0; r < m.numRows; r++)
 		{
@@ -561,13 +554,12 @@ public:
 	}
 
 	/**
-	 * @brief Overloading the >> operator for inputting from an input stream.
-	 * This can be used for writing to console or storing to file.
-	 * @param is the input stream.
-	 * @param m the matrix to input to.
-	 * @return the input stream.
+	 * @brief Reads in from the input stream.
+	 * @param is the input stream to read from
+	 * @param m the object to read into
+	 * @return
 	 */
-	friend istream &operator>>(istream &is, Matrix &m)
+	friend istream& readIn(istream & is, Matrix &m)
 	{
 		char delim;
 		for(unsigned long r = 0; r < m.numRows; r++)
@@ -578,7 +570,30 @@ public:
 				is >> delim;
 			}
 		}
-		return is;
+	}
+
+	/**
+	 * @brief Overloading the << operator for outputting to an output stream.
+	 * This can be used for writing to console or storing to file.
+	 * @param os the output stream.
+	 * @param m the matrix to output.
+	 * @return the output stream.
+	 */
+	friend ostream &operator<<(ostream &os, const Matrix &m)
+	{
+		return writeOut(os, m);
+	}
+
+	/**
+	 * @brief Overloading the >> operator for inputting from an input stream.
+	 * This can be used for writing to console or storing to file.
+	 * @param is the input stream.
+	 * @param m the matrix to input to.
+	 * @return the input stream.
+	 */
+	friend istream &operator>>(istream &is, Matrix &m)
+	{
+		return readIn(is, m);
 	}
 
 	/**
@@ -594,333 +609,94 @@ public:
 	}
 
 	/**
-	 * @brief Imports the matrix from either a csv or tif file.
-	 * Calls either importCsv() or importTif() dependent on the provided file type.
+	 * @brief Imports the matrix from a csv file.
+	 *
+	 * @throws runtime_error: if type detection for the filename fails.
 	 * @param filename the file to import.
 	 */
-	void import(const string &filename)
+	virtual void import(const string &filename)
 	{
-		if(filename.find(".csv") != string::npos)
+		if(!importCsv(filename))
 		{
-			importCsv(filename);
-		}
-#ifdef with_gdal
-		else if(filename.find(".tif") != string::npos)
-		{
-			importTif(filename);
-			return;
-		}
-#endif
-		string s = "Type detection failed for " + filename + ". Check filename is correct.";
-		throw runtime_error(s);
-	}
-
-	/**
-	 * @brief Imports the matrix from a tif file using the gdal library functions.
-	 * Currently supports importing from
-	 * @param filename the path to the file to import.
-	 */
-#ifdef with_gdal
-	void importTif(const string &filename)
-	{
-		stringstream ss;
-		ss << "Importing " << filename << " " << flush;
-		writeInfo(ss.str());
-		GDALDataset *poDataset;
-		GDALAllRegister();
-		poDataset = (GDALDataset *) GDALOpen(filename.c_str(), GA_ReadOnly);
-		if(poDataset == nullptr)
-		{
-			string s = "File " + filename + " not found.";
+			string s = "Type detection failed for " + filename + ". Check filename is correct.";
 			throw runtime_error(s);
 		}
-		GDALRasterBand *poBand;
-		int nBlockXSize, nBlockYSize;
-		// Import the raster band 1
-		poBand = poDataset->GetRasterBand(1);
-		nBlockXSize = poDataset->GetRasterXSize();
-		nBlockYSize = poDataset->GetRasterYSize();
-		double noDataValue;
-		try
-		{
-			noDataValue = poBand->GetNoDataValue();
-		}
-		catch(out_of_range)
-		{
-			noDataValue = 0;
-		}
-		// Check sizes
-		if((numCols != (unsigned long) nBlockXSize || numRows != (unsigned long) nBlockYSize) || numCols == 0 ||
-		   numRows == 0)
-		{
-			stringstream ss;
-			ss << "Raster data size does not match inputted dimensions for " << filename << ". Using raster sizes."
-				 << endl;
-			ss << "Old dimensions: " << numCols << ", " << numRows << endl;
-			ss << "New dimensions: " << nBlockXSize << ", " << nBlockYSize << endl;
-			writeWarning(ss.str());
-			SetSize(static_cast<unsigned long>(nBlockYSize), static_cast<unsigned long>(nBlockXSize));
-		}
-		// Check sizes match
-		GDALDataType dt = poBand->GetRasterDataType();
-		const char *dt_name = GDALGetDataTypeName(dt);
-		CPLErr r;
-		// Check the data types are support
-		if(dt == 0 || dt > 7)
-		{
-			throw FatalException("Data type of " + string(dt_name) + "is not supported.");
-		}
-#ifdef DEBUG
-		if(sizeof(T) * 8 != gdal_data_sizes[dt])
-		{
-			stringstream ss;
-			ss << "Object data size: " << sizeof(T) * 8 << endl;
-			ss << "Tif data type: " << dt_name << ": " << gdal_data_sizes[dt] << " bytes" << endl;
-			ss << "Tif data type does not match object data size in " << filename << endl;
-			writeWarning(ss.str());
-		}
-#endif
-		// Just use the overloaded method for importing between types
-		internalImport(filename, poBand, nBlockXSize, dt, r, noDataValue);
-		GDALClose(poDataset);
-		writeInfo("done!\n");
 	}
-
-	/**
-	 * @brief Default importer when we rely on the default gdal method of converting between values.
-	 * Note that importing doubles to ints results in the values being rounded down.
-	 * @tparam T1 the type of the matrix to import into
-	 * @param filename the path to the filename
-	 * @param poBand the GDALRasterBand pointer to import from
-	 * @param nBlockXSize the number of elements per row
-	 * @param dt the datatype
-	 * @param r the error reference object
-	 * @param ndv the no data value
-	 */
-	void internalImport(const string &filename, GDALRasterBand *poBand, int nBlockXSize,
-													 GDALDataType dt, CPLErr &r, const double &ndv)
-	{
-		writeWarning("No type detected for matrix type. Attempting default importing (undefined behaviour).");
-		defaultImport(filename, poBand, nBlockXSize, dt, r, ndv);
-	}
-
-	/**
-	 * @brief Default import routine for any type. Provided as a separate function so implementation can be called from
-	 * any template class type.
-	 * @param filename the path to the filename
-	 * @param poBand the GDALRasterBand pointer to import from
-	 * @param nBlockXSize the number of elements per row
-	 * @param dt the datatype
-	 * @param r the error reference object
-	 * @param ndv the no data value
-	 */
-	void defaultImport(const string &filename, GDALRasterBand *poBand, int nBlockXSize,
-					   GDALDataType dt, CPLErr &r, const double &ndv)
-	{
-		unsigned int number_printed = 0;
-		for(uint32_t j = 0; j < numRows; j++)
-		{
-			printNumberComplete(j, number_printed, filename);
-			r = poBand->RasterIO(GF_Read, 0, j, nBlockXSize, 1, &matrix[j][0], nBlockXSize, 1, dt, 0, 0);
-			checkRasterBandFailure(r);
-			// Now convert the no data values to 0
-			for(uint32_t i = 0; i < numCols; i++)
-			{
-				if(matrix[j][i] == ndv)
-				{
-					matrix[j][i] = 0;
-				}
-			}
-		}
-	}
-
-	/**
-	 * @brief Imports from the supplied filename into the matrix object, converting doubles to booleans.
-	 * The threshold for conversion is x>0.5 -> true, false otherwise.
-	 * @param filename the path to the filename
-	 * @param poBand the GDALRasterBand pointer to import from
-	 * @param nBlockXSize the number of elements per row
-	 * @param dt the datatype of the buffer
-	 * @param r the error reference object
-	 * @param ndv the no data value
-	 */
-	void importFromDoubleAndMakeBool(const string &filename, GDALRasterBand * poBand, int nBlockXSize,
-								   GDALDataType dt, CPLErr & r, const double & ndv)
-	{
-		unsigned int number_printed = 0;
-		// create an empty row of type float
-		double * t1;
-		t1 = (double *) CPLMalloc(sizeof(double) * numCols);
-		// importSpatialParameters the data a row at a time, using our template row.
-		for(uint32_t j = 0; j < numRows; j++)
-		{
-			printNumberComplete(j, number_printed, filename);
-			r = poBand->RasterIO(GF_Read, 0, j, nBlockXSize, 1, &t1[0], nBlockXSize, 1, GDT_Float64, 0, 0);
-			checkRasterBandFailure(r);
-			// now copy the data to our matrix, converting float to int. Round or floor...? hmm, floor?
-			for(unsigned long i = 0; i < numCols; i++)
-			{
-				if(t1[i] == ndv)
-				{
-					matrix[j][i] = false;
-				}
-				else
-				{
-					matrix[j][i] = t1[i] >= 0.5;
-				}
-			}
-		}
-		CPLFree(t1);
-	};
-	/**
-	 * @brief Imports from the supplied filename into the matrix object, converting doubles to booleans.
-	 * The threshold for conversion is x>0.5 -> true, false otherwise.
-	 * @param filename the path to the filename
-	 * @param poBand the GDALRasterBand pointer to import from
-	 * @param nBlockXSize the number of elements per row
-	 * @param dt the datatype of the buffer
-	 * @param r the error reference object
-	 * @param ndv the no data value
-	 */
-	template<typename T2> void importUsingBuffer(const string &filename, GDALRasterBand * poBand, int nBlockXSize,
-						   GDALDataType dt, CPLErr & r, const double & ndv)
-	{
-		unsigned int number_printed = 0;
-		// create an empty row of type float
-		T2 * t1;
-		t1 = (T2 *) CPLMalloc(sizeof(T2) * numCols);
-		// importSpatialParameters the data a row at a time, using our template row.
-		for(uint32_t j = 0; j < numRows; j++)
-		{
-			printNumberComplete(j, number_printed, filename);
-			r = poBand->RasterIO(GF_Read, 0, j, nBlockXSize, 1, &t1[0], nBlockXSize, 1, dt, 0, 0);
-			checkRasterBandFailure(r);
-			// now copy the data to our matrix, converting float to int. Round or floor...? hmm, floor?
-			for(unsigned long i = 0; i < numCols; i++)
-			{
-				if(t1[i] == ndv)
-				{
-					matrix[j][i] = static_cast<T>(0);
-				}
-				else
-				{
-					matrix[j][i] = static_cast<T>(t1[i]);
-				}
-			}
-		}
-		CPLFree(t1);
-	};
-
-	/**
-	 * @brief Print the percentage complete during import
-	 * @param j the reference for the counter
-	 * @param number_printed the number of previously printed lines
-	 * @param filename the file being imported
-	 */
-	void printNumberComplete(const uint32_t &j, unsigned int & number_printed, const string & filename)
-	{
-		double dComplete = ((double) j / (double) numRows) * 20;
-		if(number_printed < dComplete)
-		{
-			stringstream os;
-			os << "\rImporting " << filename << " ";
-			number_printed = 0;
-			while(number_printed < dComplete)
-			{
-				os << ".";
-				number_printed++;
-			}
-			os << flush;
-			writeInfo(os.str());
-		}
-	}
-
-	/**
-	 * @brief Checks the error code of the CPLErr object and formats the error
-	 * @param r the error object to check
-	 */
-	void checkRasterBandFailure(const CPLErr & r)
-	{
-		if(r == CE_Failure)
-		{
-			char *fmt = nullptr;
-			CPLError(r, CPLGetLastErrorNo(), "%s\n", fmt);
-			throw runtime_error("CPL error during tif importSpatialParameters: CE_Failure: " + string(fmt));
-		}
-	}
-
-#endif
-
 
 	/**
 	 * @brief Imports the matrix from a csv file using the fast-csv-parser method.
 	 * @param filename the path to the file to import.
 	 */
 #ifdef use_csv
-	void importCsv(const string &filename)
+	bool importCsv(const string &filename)
 	{
-		stringstream os;
-		os  << "Importing " << filename << " " << flush;
-		writeInfo(os.str());
-		// LineReader option
-		io::LineReader in(filename);
-		// Keep track of whether we've printed to terminal or not.
-		bool bPrint = false;
-		// Initialies empty variable so that the setValue operator overloading works properly.
-		unsigned int number_printed = 0;
-		for(unsigned long i =0; i<numRows; i++)
+	if(filename.find(".csv") != string::npos)
 		{
-			char* line = in.next_line();
-			if(line == nullptr)
+			stringstream os;
+			os  << "Importing " << filename << " " << flush;
+			writeInfo(os.str());
+			// LineReader option
+			io::LineReader in(filename);
+			// Keep track of whether we've printed to terminal or not.
+			bool bPrint = false;
+			// Initialies empty variable so that the setValue operator overloading works properly.
+			unsigned int number_printed = 0;
+			for(unsigned long i =0; i<numRows; i++)
 			{
-				if(!bPrint)
+				char* line = in.next_line();
+				if(line == nullptr)
 				{
-					cerr << "Input dimensions incorrect - read past end of file." << endl;
-					bPrint = true;
-				}
-				break;
-			}
-			else
-			{
-				char *dToken;
-				dToken = strtok(line,",");
-				for(unsigned long j = 0; j<numCols; j++)
-				{
-					if(dToken == nullptr)
+					if(!bPrint)
 					{
-						if(!bPrint)
+						writeError("Input dimensions incorrect - read past end of file.");
+						bPrint = true;
+					}
+					break;
+				}
+				else
+				{
+					char *dToken;
+					dToken = strtok(line,",");
+					for(unsigned long j = 0; j<numCols; j++)
+					{
+						if(dToken == nullptr)
 						{
-							cerr << "Input dimensions incorrect - read past end of file." << endl;
-							bPrint = true;
+							if(!bPrint)
+							{
+							writeError("Input dimensions incorrect - read past end of file.");
+								bPrint = true;
+							}
+							break;
 						}
-						break;
+						else
+						{
+							// This function is overloaded to correctly determine the type of the template
+							setValue(j,i,dToken);
+							dToken = strtok(NULL,",");
+						}
 					}
-					else
+					// output the percentage complete
+					double dComplete = ((double)i/(double)numRows)*20;
+					if( number_printed < dComplete)
 					{
-						// This function is overloaded to correctly determine the type of the template
-						setValue(j,i,dToken);
-						dToken = strtok(NULL,",");
+						stringstream os;
+						os  << "\rImporting " << filename << " ";
+						number_printed = 0;
+						while(number_printed < dComplete)
+						{
+							os << ".";
+							number_printed ++;
+						}
+						os << flush;
+						writeInfo(os.str());
 					}
+
 				}
-				// output the percentage complete
-				double dComplete = ((double)i/(double)numRows)*20;
-				if( number_printed < dComplete)
-				{
-					stringstream os;
-					os  << "\rImporting " << filename << " ";
-					number_printed = 0;
-					while(number_printed < dComplete)
-					{
-						os << ".";
-						number_printed ++;
-					}
-					os << flush;
-					writeInfo(os.str());
-				}
-				
 			}
+			writeInfo("done!\n");
+			return true;
 		}
-		writeInfo("done!\n");
+		return false;
 	}
 #endif
 #ifndef use_csv
@@ -928,127 +704,54 @@ public:
 	 * @brief Imports the matrix from a csv file using the standard, slower method.
 	 * @deprecated this function should not be used any more as it is much slower.
 	 * @param filename the path to the file to import.
+	 * @return true if the csv can be imported.
 	 */
-	void importCsv(const string &filename)
+	bool importCsv(const string &filename)
 	{
-		stringstream os;
-		os << "Importing" << filename << " " << flush;
-		ifstream inputstream;
-		inputstream.open(filename.c_str());
-		unsigned long number_printed = 0;
-		for(uint32_t j = 0; j < numRows; j++)
+		if(filename.find(".csv") != string::npos)
 		{
-			string line;
-			getline(inputstream, line);
-			istringstream iss(line);
-			for(uint32_t i = 0; i < numCols; i++)
+			stringstream os;
+			os << "Importing" << filename << " " << flush;
+			ifstream inputstream;
+			inputstream.open(filename.c_str());
+			unsigned long number_printed = 0;
+			for(uint32_t j = 0; j < numRows; j++)
 			{
-				char delim;
-				T val;
-				iss >> val >> delim;
-				matrix[j][i] = val;
-			}
-			double dComplete = ((double) j / (double) numRows) * 5;
-			if(number_printed < dComplete)
-			{
-				os << "\rImporting " << filename << " " << flush;
-				while(number_printed < dComplete)
+				string line;
+				getline(inputstream, line);
+				istringstream iss(line);
+				for(uint32_t i = 0; i < numCols; i++)
 				{
-					os << ".";
-					number_printed++;
+					char delim;
+					T val;
+					iss >> val >> delim;
+					matrix[j][i] = val;
 				}
-				os << flush;
-				writeInfo(os.str());
+				double dComplete = ((double) j / (double) numRows) * 5;
+				if(number_printed < dComplete)
+				{
+					os << "\rImporting " << filename << " " << flush;
+					while(number_printed < dComplete)
+					{
+						os << ".";
+						number_printed++;
+					}
+					os << flush;
+					writeInfo(os.str());
 
+				}
 			}
+			stringstream os2;
+			os2 << "\rImporting" << filename << "..." << "done!" << "                          " << endl;
+			inputstream.close();
+			writeInfo(os2.str());
+			return true;
 		}
-		stringstream os2;
-		os2 << "\rImporting" << filename << "..." << "done!" << "                          " << endl;
-		inputstream.close();
-		writeInfo(os2.str());
+		return false;
 	}
 
-#endif
+#endif // use_csv
 };
 
-#ifdef with_gdal
-/**
- * @brief Overloaded imported for handling conversion of types to boolean. This function should only be once
- * elsewhere, so inlining is fine, allowing this file to remain header only.
- * @param filename the path to the filename
- * @param poBand the GDALRasterBand pointer to import from
- * @param nBlockXSize the number of elements per row
- * @param dt the datatype
- * @param r the error reference object
- * @param ndv the no data value
- */
-template<> inline void Matrix<bool>::internalImport(const string &filename, GDALRasterBand *poBand, int nBlockXSize,
-					GDALDataType dt, CPLErr &r, const double &ndv)
-{
-	if(dt <=7)
-	{
-		// Then the tif file type is an int/byte
-		// we can just import as it is
-		importUsingBuffer<uint8_t>(filename, poBand, nBlockXSize, GDT_Byte, r, ndv);
-	}
-	else
-	{
-		// Conversion from double to boolean
-		importFromDoubleAndMakeBool(filename, poBand, nBlockXSize, dt, r, ndv);
-	}
-}
-/**
- * @brief Overloaded functions for importing from tifs and matching between gdal and C types.
- * @param filename the path to the filename
- * @param poBand the GDALRasterBand pointer to import from
- * @param nBlockXSize the number of elements per row
- * @param dt the datatype (not required, exists for function overloading)
- * @param r the error reference object
- * @param ndv the no data value
- */
-template <>inline void Matrix<int8_t>::internalImport(const string &filename, GDALRasterBand *poBand, int nBlockXSize,
-												   GDALDataType dt, CPLErr &r, const double &ndv)
-{
-	importUsingBuffer<int16_t>(filename, poBand, nBlockXSize, GDT_Int16, r, ndv);
-}
 
-template <>inline void Matrix<uint8_t>::internalImport(const string &filename, GDALRasterBand *poBand, int nBlockXSize,
-												   GDALDataType dt, CPLErr &r, const double &ndv)
-{
-	defaultImport(filename, poBand, nBlockXSize, GDT_Byte, r, ndv);
-}
-
-template <>inline void Matrix<int16_t>::internalImport(const string &filename, GDALRasterBand *poBand, int nBlockXSize,
-															 GDALDataType dt, CPLErr &r, const double &ndv)
-{
-	defaultImport(filename, poBand, nBlockXSize, GDT_Int16, r, ndv);
-}
-template <>inline void Matrix<uint16_t>::internalImport(const string &filename, GDALRasterBand *poBand, int nBlockXSize,
-															 GDALDataType dt, CPLErr &r, const double &ndv)
-{
-	defaultImport(filename, poBand, nBlockXSize, GDT_UInt16, r, ndv);
-}
-template <>inline void Matrix<uint32_t>::internalImport(const string &filename, GDALRasterBand *poBand, int nBlockXSize,
-															  GDALDataType dt, CPLErr &r, const double &ndv)
-{
-	defaultImport(filename, poBand, nBlockXSize, GDT_UInt32, r, ndv);
-}
-template <>inline void Matrix<int32_t>::internalImport(const string &filename, GDALRasterBand *poBand, int nBlockXSize,
-														GDALDataType dt, CPLErr &r, const double &ndv)
-{
-	defaultImport(filename, poBand, nBlockXSize, GDT_Int32, r, ndv);
-}
-template <>inline void Matrix<float>::internalImport(const string &filename, GDALRasterBand *poBand, int nBlockXSize,
-															  GDALDataType dt, CPLErr &r, const double &ndv)
-{
-	defaultImport(filename, poBand, nBlockXSize, GDT_Float32, r, ndv);
-}
-
-template <>inline void Matrix<double>::internalImport(const string &filename, GDALRasterBand *poBand, int nBlockXSize,
-															  GDALDataType dt, CPLErr &r, const double &ndv)
-{
-	defaultImport(filename, poBand, nBlockXSize, GDT_Float64, r, ndv);
-}
-
-#endif // gdal
 #endif // MATRIX

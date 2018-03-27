@@ -30,7 +30,7 @@
 #include <cmath>
 #include <cctype>
 #include <algorithm>
-
+//#include "StpdToString.h" TODO remove this
 
 using namespace std;
 using std::string;
@@ -96,7 +96,7 @@ class ConfigOption
 private:
 	string configfile;
 	bool bConfig;
-	bool bMain;  // is true if this is the main command line importSpatialParameters (and therefore we want to delete the first few
+	bool bMain;  // is true if this is the main command line import (and therefore we want to delete the first few
 	// command line options)
 	bool bFullParse;  // if this is true, each KeyOption structure will be returned after each read.
 	vector<SectionOption> configs;  // all config data if full parse is true.

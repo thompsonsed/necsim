@@ -18,6 +18,7 @@
 #endif
 
 #include <sqlite3.h>
+#include <string>
 #include "TreeNode.h"
 #include "Matrix.h"
 #include "SimParameters.h"
@@ -28,8 +29,10 @@
 #include "CustomExceptions.h"
 #include "Step.h"
 
+
 /**
  * @class Tree
+ * @file Tree.h
  * @brief Main simulation class for performing a non-spatial neutral simulation and generating the phylogenetic tree of
  * the individuals.
  */
@@ -158,9 +161,9 @@ public:
 
 	virtual ~Tree()
 	{
-		sqlite3_close_v2(database);
+		sqlite3_close(database);
 #ifdef sql_ram
-		sqlite3_close_v2(outdatabase);
+		sqlite3_close(outdatabase);
 #endif
 	}
 

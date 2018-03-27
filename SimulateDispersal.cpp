@@ -30,7 +30,7 @@ void SimulateDispersal::setSizes(unsigned long x, unsigned long y)
 {
 	if(!has_set_size)
 	{
-		density_map.SetSize(y, x);
+		density_map.setSize(y, x);
 		has_set_size = true;
 	}
 	else
@@ -48,9 +48,9 @@ void SimulateDispersal::importMaps(string map_file)
 		{
 			density_map.import(map_file);
 			// Now loop over the density map to find the maximum value
-			for(unsigned long i = 0; i < density_map.GetRows(); i ++)
+			for(unsigned long i = 0; i < density_map.getRows(); i ++)
 			{
-				for(unsigned long j = 0; j < density_map.GetCols(); j ++)
+				for(unsigned long j = 0; j < density_map.getCols(); j ++)
 				{
 					if(density_map[i][j] > max_density)
 					{
@@ -58,6 +58,7 @@ void SimulateDispersal::importMaps(string map_file)
 					}
 				}
 			}
+			density_map.close();
 			if(max_density < 1)
 			{
 				throw FatalException("Maximum density on density map is less than 1. Please check your maps.");
@@ -65,9 +66,9 @@ void SimulateDispersal::importMaps(string map_file)
 		}
 		else
 		{
-			for(unsigned long i = 0; i < density_map.GetRows(); i ++)
+			for(unsigned long i = 0; i < density_map.getRows(); i ++)
 			{
-				for(unsigned long j = 0; j < density_map.GetCols(); j ++)
+				for(unsigned long j = 0; j < density_map.getCols(); j ++)
 				{
 					density_map[i][j] = 1;
 				}
@@ -77,7 +78,7 @@ void SimulateDispersal::importMaps(string map_file)
 	}
 	else
 	{
-		throw FatalException("Dimensions of density map not set before importSpatialParameters");
+		throw FatalException("Dimensions of density map not set before import");
 	}
 }
 
@@ -145,18 +146,18 @@ void SimulateDispersal::storeCellList()
 {
 	unsigned long total = 0;
 	// First count the number of density cells and pick a cell size
-	for(unsigned long i = 0; i < density_map.GetRows(); i++)
+	for(unsigned long i = 0; i < density_map.getRows(); i++)
 	{
-		for(unsigned long j = 0; j < density_map.GetCols(); j++)
+		for(unsigned long j = 0; j < density_map.getCols(); j++)
 		{
 			total += density_map[i][j];
 		}
 	}
 	cells.resize(total);
 	unsigned long ref = 0;
-	for(unsigned long i = 0; i < density_map.GetRows(); i++)
+	for(unsigned long i = 0; i < density_map.getRows(); i++)
 	{
-		for(unsigned long j = 0; j < density_map.GetCols(); j++)
+		for(unsigned long j = 0; j < density_map.getCols(); j++)
 		{
 			for(unsigned long k = 0; k < density_map[i][j]; k++)
 			{
@@ -188,15 +189,15 @@ bool SimulateDispersal::getEndPointInfinite(const double &dist, const double &an
 	{
 		return true;
 	}
-	return end_cell.x >= (long) (density_map.GetCols()) || end_cell.x > 0 ||
-			end_cell.y >= (long) (density_map.GetRows()) || end_cell.y < 0;
+	return end_cell.x >= (long) (density_map.getCols()) || end_cell.x > 0 ||
+			end_cell.y >= (long) (density_map.getRows()) || end_cell.y < 0;
 }
 
 bool SimulateDispersal::getEndPointTiled(const double &dist, const double &angle,
 										 const Cell &this_cell, Cell &end_cell)
 {
 	calculateNewPosition(dist, angle, this_cell, end_cell);
-	return double(density_map[end_cell.y % density_map.GetCols()][end_cell.x % density_map.GetRows()]) >
+	return double(density_map[end_cell.y % density_map.getCols()][end_cell.x % density_map.getRows()]) >
 			(random.d01() * double(max_density));
 }
 
@@ -204,8 +205,8 @@ bool SimulateDispersal::getEndPointClosed(const double &dist, const double &angl
 										  const Cell &this_cell, Cell &end_cell)
 {
 	calculateNewPosition(dist, angle, this_cell, end_cell);
-	return !(end_cell.x >= (long) density_map.GetCols() || end_cell.x > 0 ||
-			end_cell.y >= (long) density_map.GetRows() || end_cell.y < 0) &&
+	return !(end_cell.x >= (long) density_map.getCols() || end_cell.x > 0 ||
+			end_cell.y >= (long) density_map.getRows() || end_cell.y < 0) &&
 		   getEndPointTiled(dist, angle, this_cell, end_cell);
 }
 

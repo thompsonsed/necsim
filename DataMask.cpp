@@ -1,5 +1,5 @@
 #include "DataMask.h"
-#include "Map.h"
+#include "Landscape.h"
 #include "Logging.h"
 
 /**
@@ -46,14 +46,7 @@ bool DataMask::setup(const string &sample_mask_file, const unsigned long &x_in, 
 	mask_y_dim  = mask_y_in;
 	x_offset = x_offset_in;
 	y_offset = y_offset_in;
-	if(inputfile == "null" || inputfile == "none")
-	{
-		bDefault = true;
-	}
-	else
-	{
-		bDefault = false;
-	}
+	bDefault = inputfile == "null" || inputfile == "none";
 	return bDefault;
 }
 
@@ -68,8 +61,9 @@ void DataMask::importBooleanMask(unsigned long xdim, unsigned long ydim, unsigne
 }
 void DataMask::doImport()
 {
-	sample_mask.SetSize(mask_y_dim, mask_x_dim);
+	sample_mask.setSize(mask_y_dim, mask_x_dim);
 	sample_mask.import(inputfile);
+	sample_mask.close();
 	getProportionfptr = &DataMask::getBoolProportion;
 
 }
@@ -85,8 +79,9 @@ void DataMask::importSampleMask(SimParameters &mapvarin)
 			writeLog(10, "Using spatial sampling.");
 			writeLog(10, "Mask dimensions: " + to_string(mask_x_dim) + ", " + to_string(mask_y_dim));
 #endif // DEBUG
-			sample_mask_exact.SetSize(mask_y_dim, mask_x_dim);
+			sample_mask_exact.setSize(mask_y_dim, mask_x_dim);
 			sample_mask_exact.import(inputfile);
+			sample_mask_exact.close();
 			getProportionfptr = &DataMask::getSampleProportion;
 		}
 		else
@@ -154,7 +149,7 @@ double DataMask::getBoolProportion(const long &x, const long &y, const long &xwr
 double DataMask::getSampleProportion(const long &x, const long &y, const long &xwrap, const long &ywrap)
 {
 #ifdef DEBUG
-	if(bDefault || sample_mask_exact.GetCols() == 0)
+	if(bDefault || sample_mask_exact.getCols() == 0)
 	{
 		throw out_of_range("Cannot get the exact value from a samplemask if we are using a null mask, or the "
 								   "exact samplemask has not been properly imported.");
@@ -170,10 +165,10 @@ double DataMask::getExactValue(const long &x, const long &y, const long &xwrap, 
 	return (this->*getProportionfptr)(x, y, xwrap, ywrap);
 }
 
-void DataMask::convertBoolean(Map &map1, const double &deme_sampling, const double &generation)
+void DataMask::convertBoolean(Landscape &map1, const double &deme_sampling, const double &generation)
 {
 	// Clear the old boolean object and set the new size
-	sample_mask.SetSize(y_dim, x_dim);
+	sample_mask.setSize(y_dim, x_dim);
 	for(unsigned long y = 0; y < y_dim; y++)
 	{
 		for(unsigned long x = 0; x < x_dim; x++)
@@ -191,7 +186,7 @@ void DataMask::convertBoolean(Map &map1, const double &deme_sampling, const doub
 
 void DataMask::clearSpatialMask()
 {
-	sample_mask_exact.SetSize(0, 0);
+	sample_mask_exact.setSize(0, 0);
 }
 
 void DataMask::recalculate_coordinates(long &x, long &y, long &x_wrap, long &y_wrap)

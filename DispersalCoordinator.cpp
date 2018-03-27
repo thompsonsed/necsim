@@ -12,6 +12,7 @@
  */
 #include "DispersalCoordinator.h"
 #include "CustomExceptions.h"
+#include "Logging.h"
 
 DispersalCoordinator::DispersalCoordinator()
 {
@@ -28,7 +29,7 @@ void DispersalCoordinator::setRandomNumber(NRrand * NR_ptr)
 }
 
 
-void DispersalCoordinator::setHabitatMap(Map *map_ptr)
+void DispersalCoordinator::setHabitatMap(Landscape *map_ptr)
 {
 	habitat_map = map_ptr;
 	xdim = habitat_map->getSimParameters().fine_map_x_size;
@@ -68,8 +69,9 @@ void DispersalCoordinator::setDispersal(const string &dispersal_method, const st
 			throw FatalException(msg);
 		}
 		infile.close();
-		dispersal_prob_map.SetSize(dispersal_x * dispersal_y, dispersal_x * dispersal_y);
+		dispersal_prob_map.setSize(dispersal_x * dispersal_y, dispersal_x * dispersal_y);
 		dispersal_prob_map.import(dispersal_file);
+		dispersal_prob_map.close();
 	}
 }
 
@@ -89,7 +91,7 @@ void DispersalCoordinator::disperseDispersalMap(Step &this_step)
 	unsigned long row_ref = calculateCellReference(this_step);
 	// Interval bisection on the cells to get the dispersal value
 	unsigned long min_col = 0;
-	unsigned long max_col = dispersal_prob_map.GetCols() - 1;
+	unsigned long max_col = dispersal_prob_map.getCols() - 1;
 	while(max_col - min_col > 1)
 	{
 		unsigned long to_check = floor(double(max_col-min_col)/2.0) + min_col;

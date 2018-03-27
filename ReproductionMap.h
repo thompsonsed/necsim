@@ -15,11 +15,11 @@
 
 #include <cstring>
 #include <string>
-#include <stdio.h>
+#include <cstdio>
 #include <iostream>
 #include <fstream>
 
-#include "Matrix.h"
+#include "Map.h"
 #include "NRrand.h"
 
 
@@ -30,7 +30,7 @@ class ReproductionMap
 {
 protected:
 	// Matrix containing the relative reproduction probabilities
-	Matrix<double> reproduction_map;
+	Map<double> reproduction_map;
 	// Path to the map file
 	string map_file;
 	// Maximum value across the map
@@ -145,8 +145,8 @@ public:
 	friend ostream& operator<<(ostream& os, ReproductionMap&r)
 	{
 		os << r.map_file << "\n";
-		os << r.reproduction_map.GetCols() << "\n";
-		os << r.reproduction_map.GetRows() << "\n";
+		os << r.reproduction_map.getCols() << "\n";
+		os << r.reproduction_map.getRows() << "\n";
 		os << r.offset_x << "\n";
 		os << r.offset_y << "\n";
 		os << r.x_dim << "\n";

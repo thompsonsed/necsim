@@ -20,14 +20,15 @@
 #include <string>
 #include <sqlite3.h>
 #include <set>
-#include "Tree.h"
 #include "Community.h"
+#include "Tree.h"
 #include "NRrand.h"
 #include "SpecSimParameters.h"
 
 using namespace std;
 /**
  * @class Metacommunity
+ * @file Metacommunity.h
  * @brief Generates a metacommunity using spatially-implicit neutral simulations, which is used to draw individuals
  * from a community.
  */

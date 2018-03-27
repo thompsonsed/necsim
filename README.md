@@ -172,7 +172,7 @@ A brief description of the important classes is given below. Some classes also c
 	- `endactive` refers to the number of lineages currently being simulated. After each coalescence or speciation event this will decrease.
 * The `NRrand` class
 	- Contains the random number generator, as written by James Rosindell (j.rosindell@imperial.ac.uk).
-* The `Map` class
+* The `Landscape` class
 	- Contains the routines for importing and calling values from the map objects.
 	- The `getVal()` and `runDispersal()` functions can be modified to produce altered dispersal behaviour, or alterations to the structure of the map.
 * The `Matrix` and `Row` classes

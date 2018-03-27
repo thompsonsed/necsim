@@ -22,11 +22,11 @@ void ReproductionMap::import(string file_name, unsigned long size_x, unsigned lo
 	else
 	{
 		null_map = false;
-		reproduction_map.SetSize(size_y, size_x);
+		reproduction_map.setSize(size_y, size_x);
 		reproduction_map.import(file_name);
-		for(unsigned long y = 0; y < reproduction_map.GetRows(); y++)
+		for(unsigned long y = 0; y < reproduction_map.getRows(); y++)
 		{
-			for(unsigned long x = 0; x < reproduction_map.GetCols(); x++)
+			for(unsigned long x = 0; x < reproduction_map.getCols(); x++)
 			{
 				if(reproduction_map[y][x] > max_val)
 				{
@@ -34,6 +34,7 @@ void ReproductionMap::import(string file_name, unsigned long size_x, unsigned lo
 				}
 			}
 		}
+		reproduction_map.close();
 	}
 	setReproductionFunction();
 }

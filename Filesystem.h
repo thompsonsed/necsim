@@ -66,4 +66,12 @@ bool doesExistNull(string testfile);
  */
 unsigned long cantorPairing(unsigned long x1, unsigned long x2);
 
+/**
+ * @brief Gets the next line from a csv filestream and splits the row into a vector of strings, where each string is the
+ * value from the csv file, delimited by a comma (i.e. each column of the row).
+ * @param str the input stream from the csv file.
+ * @return a vector where each element corresponds to the respective row from the csv.
+ */
+vector<string> getCsvLineAndSplitIntoTokens(istream& str);
+
 #endif //SPECIATIONCOUNTER_FILESYSTEM_H

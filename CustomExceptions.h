@@ -10,8 +10,8 @@
  * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
  */
 
-#ifndef EXCEPTION
-#define EXCEPTION
+#ifndef CUSTOM_EXCEPTION_H
+#define CUSTOM_EXCEPTION_H
 
 #include <stdexcept>
 #include "Logging.h"
@@ -66,4 +66,5 @@ struct SpeciesException : public FatalException
 	explicit SpeciesException(string msg) : FatalException(msg){}
 };
 
-#endif
+
+#endif // CUSTOM_EXCEPTION_H

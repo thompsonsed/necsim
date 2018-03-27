@@ -1,554 +1,522 @@
-//This file is part of NECSim project which is released under BSD-3 license.
-//See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details
+// This file is part of NECSim project which is released under BSD-3 license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details
 /**
  * @author Samuel Thompson
- * @date 31/08/16
  * @file Map.h
+ * @brief Contains the Map class for importing .tif files and obtaining a variety of information from them.
  *
- * @brief Contains the Map object for easy referencing of the respective coarse and fine map within the same coordinate system.
  * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
  */
+#ifndef MAP_H
+#define MAP_H
+#ifdef with_gdal
 
-#ifndef MAP
-#define MAP
-
-# include <string>
-# include <stdio.h>
-#include <vector>
-# include <iostream>
-# include <fstream>
-# include <math.h>
-# include <stdexcept>
-# include <boost/filesystem.hpp>
-
+#include <string>
+#include <cstring>
+#include <sstream>
+#include "Logging.h"
+#include <gdal_priv.h>
+#include <cpl_conv.h> // for CPLMalloc()
+#include <sstream>
 #include "Matrix.h"
-#include "DataMask.h"
-#include "SimParameters.h"
+#include "Logging.h"
+#include "CustomExceptions.h"
 
 using namespace std;
+#ifdef DEBUG
+#include "CustomExceptions.h"
+#endif // DEBUG
 
-/**
- * @class Map
- * @brief Contains all maps and provides the functions for accessing a grid cell in the correct temporal and spacial
- * location.
- *
- * @details The function runDispersal() also provides the move routine, provided two alternative methods for moving
- * individuals. Contains routines for easy setting up and switching between the different coordinate systems required.
- * Set the map parameters with setDims(), import the map files with calcFineMap(), calcCoarseMap() etc, then set up
- * the landscape type using setLandscape() and setPristine().
- * Usage is then by runDispersal() for running a dispersal kernel on the landscape, and then getVal() to obtain the
- * density at the desired coordinates. All coordinates should be given in reference to the simulation grid, and offsets
- * for the fine and coarse map are calculated automatically.
- *
- */
-// Object containing both the maps (the coarse and fine version) and routines for easy setting up and switching between
-// the different coordinate systems.
-class Map
+template<typename T>
+class Map : public virtual Matrix<T>
 {
 protected:
-	// The map files which are read in (or generated if running with "null" as the map file".
-	// Pristine maps are meant for before any deforestation occured, whereas the other maps are intended for modern day maps.
-	// A linear transformation from modern to pristine maps is used, approaching the habitat_change_rate variable times the difference between the pristine and modern maps.
-	// Once the gen_since_pristine number of generations has been reached, the map will jump to the pristine condition.
-	// the finer grid for the area around the sample area.
-	Matrix<uint32_t> fine_map;
-	// the pristine finer map.
-	Matrix<uint32_t> pristine_fine_map;
-	// the coarser grid for the wider zone.
-	Matrix<uint32_t> coarse_map;
-	// the pristine coarser map.
-	Matrix<uint32_t> pristine_coarse_map;
-	// for importing and storing the simulation set-up options.
-	SimParameters mapvars;
-	// the minimum values for each dimension for offsetting.
-	long fine_x_min, fine_y_min, coarse_x_min, coarse_y_min;
-	// the maximum values for each dimension for offsetting.
-	long fine_x_max, fine_y_max, coarse_x_max, coarse_y_max;
-	// the offsetting of the map in FINE map units.
-	long fine_x_offset, fine_y_offset, coarse_x_offset, coarse_y_offset;
-	// the scale of the coarse map compared with the smaller map.
-	unsigned long scale{};
-	// the length of the grid where the species start.
-	long x_dim;
-	// the height of the grid where the species start.
-	long y_dim;
-	unsigned long deme{};
-	// for checking that the dimensions have been set before attempting to importSpatialParameters the maps.
-	bool check_set_dim;
-	// for setting the movement cost through forest.
-	double dispersal_relative_cost{};
-	// the last time the map was updated, in generations.
-	double update_time;
-	// the rate at which the habitat transforms from the modern forest map to the pristine habitat map.
-	// A value of 1 will give a smooth curve from the present day to pristine habitat.
-	double habitat_change_rate;
-	// the number of generations at which point the habitat becomes entirely pristine.
-	double gen_since_pristine;
-	// the time the current map was updated.
-	double current_map_time;
-	// checks whether the simulation has already been set to the pristine state.
-	bool is_pristine;
-	// flag of whether the simulation has a pristine state or not.
-	bool has_pristine;
-	// the maximum value for habitat
-	unsigned long habitat_max;
-	// the maximum value on the fine map file
-	unsigned long fine_max;
-	// the maximum value on the coarse map file
-	unsigned long coarse_max;
-	// the maximum value on the pristine fine map file
-	unsigned long pristine_fine_max;
-	// the maximum value on the pristine coarse map file
-	unsigned long pristine_coarse_max;
-	// if true, dispersal is possible from anywhere, only the fine map spatial structure is preserved
-	string landscape_type;
-	string NextMap;
-	// If this is false, there is no coarse map defined, so ignore the boundaries.
-	bool bCoarse;
-	// the number of updates to have occured.
-	unsigned int nUpdate{};
-	// Typedef for single application of the infinite landscape verses bounded landscape.
-	typedef unsigned long (Map::*fptr)(const double &x, const double &y, const long &xwrap, const long &ywrap,
-									   const double &dCurrentGen);
-
-	fptr getValFunc;
+	GDALDataset *poDataset;
+	GDALRasterBand *poBand;
+	unsigned long blockXSize, blockYSize;
+	double noDataValue;
+	string filename;
+	GDALDataType dt{};
+	// Contains the error object to check for any gdal issues
+	CPLErr cplErr{CE_None};
+	double upper_left_x{}, upper_left_y{}, x_res{}, y_res{};
+	using Matrix<T>::matrix;
+	using Matrix<T>::numCols;
+	using Matrix<T>::numRows;
 public:
-	/**
-	 * @brief The default constructor.
-	 */
-	Map()
+	using Matrix<T>::setSize;
+	using Matrix<T>::getCols;
+	using Matrix<T>::getRows;
+	using Matrix<T>::operator*;
+	using Matrix<T>::operator+;
+	using Matrix<T>::operator-;
+	using Matrix<T>::operator-=;
+	using Matrix<T>::operator+=;
+	using Matrix<T>::operator[];
+
+	Map() : Matrix<T>()
 	{
-		check_set_dim = false; // sets the check to false.
-		is_pristine = false;
-		current_map_time = 0;
-		habitat_max = 1;
-		getValFunc = nullptr;
-		bCoarse = false;
-		has_pristine = false;
-		landscape_type = "closed";
-		fine_max = 0;
-		coarse_max = 0;
-		pristine_fine_max = 0;
-		pristine_coarse_max = 0;
+		GDALAllRegister();
+		poDataset = nullptr;
+		poBand = nullptr;
+		filename = "";
+		blockXSize = 0;
+		blockYSize = 0;
+		noDataValue = 0.0;
+		CPLSetErrorHandler(cplCustomErrorHandler);
+	}
+
+	~Map()
+	{
+		close();
 	}
 
 	/**
-	 * @brief Gets the maximum habitat value from any map
-	 * @return the maximum habitat value
+	 * @brief Opens the provided filename to the poDataset object.
+	 * @param filename file to open in read-only mode.
 	 */
-	unsigned long getHabitatMax();
-
-	/**
-	 * @brief Sets the dimensions of the grid, the area where the species are initially sampled from.
-	 * This function must be run before any of the calc map functions to allow for the correct deme allocation.
-	 * 
-	 * @param mapvarsin the SimParameters object containing the map variables to import
-	 */
-	void setDims(SimParameters mapvarsin);
-
-	bool checkMapExists();
-
-	/********************************************
-	 * CALC MAP FUNCTIONS
-	 ********************************************/
-
-	/**
-	 * @brief Imports the fine map object from file and calculates the correct values at each point.
-	 * Without a map to input, the fine map will simply be a matrix of 1s.
-	 */
-	void calcFineMap();
-
-	/**
-	  * @brief Imports the pristine fine map object from file and calculates the correct values at each point.
-	  * Without a map to input, the pristine fine map will simply be a matrix of 1s.
-	  * This has the potential to be changed easily in future versions.
-	  */
-	void calcPristineFineMap();
-
-	/**
-	  * @brief Imports the coarse map object from file and calculates the correct values at each point.
-	  * Without a map to input, the coarse map will simply be a matrix of 1s.
-	  * This has the potential to be changed easily in future versions.
-	  */
-	void calcCoarseMap();
-
-	/**
-	  * @brief Imports the pristine coarse map object from file and calculates the correct values at each point.
-	  * Without a map to input, the pristine coarse map will simply be a matrix of 1s.
-	  * This has the potential to be changed easily in future versions.
-	  */
-	void calcPristineCoarseMap();
-
-	/**
-	 * @brief Sets the time variables.
-	 * @param gen_since_pristine_in the time (in generations) since a pristine habitat state was achieved.
-	 * @param habitat_change_rate_in the rate of transform of the habitat up until the pristine time.
-	 * A value of 0.2 would mean 20% of the change occurs linearlly up until the pristine time and the remaining 80%
-	 * occurs in a jump to the pristine state.
-	 */
-	void setTimeVars(double gen_since_pristine_in, double habitat_change_rate_in);
-
-
-	/**
-	 * @brief Calculates the offset and extremeties of the fine map.
-	 * 
-	 * Note that setting dispersal_relative_cost to a value other than 1 can massively increase simulation time.
-	 * 
-	 */
-	void calcOffset();
-	/********************************************
-	 * VALIDATE MAPS
-	 ********************************************/
-
-	/**
-	 * @brief Checks that the map file sizes are correct and that each value on the fragmented maps is less than the pristine maps.
-	 * This should be disabled in simulations where habitat sizes are expected to shrink as well as grow.
-	 */
-	void validateMaps();
-
-	/********************************************
-	 * CHANGE MAP FUNCTIONS
-	 ********************************************/
-
-	/**
-	 * @brief Updates the maps to the newer map.
-	 */
-	void updateMap(double generation);
-
-	/**
-	 * @brief Gets the pristine boolean.
-	 * @return the pristine map state.
-	 */
-	bool isPristine()
+	void open(const string &filename_in)
 	{
-		if(has_pristine)
+		if(!poDataset)
 		{
-			return is_pristine;
+			filename = filename_in;
+			poDataset = (GDALDataset *) GDALOpen(filename.c_str(), GA_ReadOnly);
 		}
-		return true;
-	}
-
-	/**
-	 * @brief Sets the pristine state of the system.
-	 * @param bPristinein the pristine state.
-	 */
-	void setPristine(const bool &bPristinein)
-	{
-		is_pristine = bPristinein;
-	}
-
-	/**
-	 * @brief Get the pristine map time
-	 * @return double the pristine map time
-	 */
-	double getPristine()
-	{
-		return gen_since_pristine;
-	}
-
-	string getLandscapeType()
-	{
-		return landscape_type;
-	}
-
-	/**
-	 * @brief Checks if the pristine state has been reached.
-	 * 
-	 * If there are no pristine maps, this function will do nothing.
-	 * @param generation the time to check at.
-	 */
-	void checkPristine(double generation)
-	{
-		if(has_pristine)
+		else
 		{
-			if(generation >= gen_since_pristine)
+			throw FatalException("File already open at " + filename);
+		}
+		if(!poDataset)
+		{
+			string s = "File " + filename + " not found.";
+			throw runtime_error(s);
+		}
+	}
+
+	/**
+	 * @brief Overloaded open for using the preset file name.
+	 */
+	void open()
+	{
+		open(filename);
+	}
+
+	/**
+	 * @brief Destroys the connection to the dataset.
+	 */
+	void close()
+	{
+		if(poDataset)
+		{
+			GDALClose(poDataset);
+//			if(poDataset)
+//			{
+//				throw FatalException("poDataset not nullptr after closing, please report this bug.");
+//			}
+			poDataset = nullptr;
+			poBand = nullptr;
+		}
+	}
+
+	/**
+	 * @brief Sets the raster band to the first raster.
+	 */
+	void getRasterBand()
+	{
+		poBand = poDataset->GetRasterBand(1);
+	}
+
+	/**
+	 * @brief Obtains the x and y dimensions from the tif file for reading in blocks.
+	 */
+	void getBlockSizes()
+	{
+		blockXSize = static_cast<unsigned long>(poDataset->GetRasterXSize());
+		blockYSize = static_cast<unsigned long>(poDataset->GetRasterYSize());
+	}
+
+	/**
+	 * @brief Sets the no data, data type and data type name values from the tif file.
+	 */
+	void getMetaData()
+	{
+		try
+		{
+			noDataValue = poBand->GetNoDataValue();
+		}
+		catch(out_of_range &out_of_range1)
+		{
+			noDataValue = 0;
+		}
+		// Check sizes match
+		dt = poBand->GetRasterDataType();
+		double geoTransform[6];
+		cplErr = poDataset->GetGeoTransform(geoTransform);
+		if(cplErr >= CE_Warning)
+		{
+			CPLError(cplErr, 6, "No transform present in dataset for %s.", filename.c_str());
+			CPLErrorReset();
+		}
+		upper_left_x = geoTransform[0];
+		upper_left_y = geoTransform[3];
+		x_res = geoTransform[1];
+		y_res = -geoTransform[5];
+//		checkTifImportFailure();
+#ifdef DEBUG
+		printMetaData();
+#endif // DEBUG
+	}
+
+#ifdef DEBUG
+	void printMetaData()
+	{
+		stringstream ss;
+		const char *dt_name = GDALGetDataTypeName(dt);
+		ss << "Filename: " << filename << endl;
+		writeLog(10, ss.str());
+		ss.str("");
+		ss << "data type: " << dt << "(" << dt_name << ")" << endl;
+		writeLog(10, ss.str());
+		ss.str("");
+		ss << "Geo-transform (ulx, uly, x res, y res): " << upper_left_x << ", " << upper_left_y << ", ";
+		ss << x_res << ", " << y_res << ", " <<endl;
+		writeLog(10, ss.str());
+		ss.str("");
+		ss << "No data value: " << noDataValue << endl;
+		writeLog(10, ss.str());
+
+	}
+#endif //DEBUG
+
+	/**
+	 * @brief Imports the matrix from a csv file.
+	 *
+	 * @throws runtime_error: if type detection for the filename fails.
+	 * @param filename the file to import.
+	 */
+	void import(const string &filename) override
+	{
+		if(!importTif(filename))
+		{
+			Matrix<T>::import(filename);
+		}
+	}
+
+	/**
+	 * @brief Imports the matrix from a tif file using the gdal library functions.
+	 * @note Opens a connection to the file object, which should be closed.
+	 * @param filename the path to the file to import.
+	 */
+	bool importTif(const string &filename)
+	{
+
+		if(filename.find(".tif") != string::npos)
+		{
+			stringstream ss;
+			ss << "Importing " << filename << " " << flush;
+			writeInfo(ss.str());
+			open(filename);
+			getRasterBand();
+			getBlockSizes();
+			getMetaData();
+			// If the sizes are 0 then use the raster sizes
+			if(numCols == 0 || numRows == 0)
 			{
-				is_pristine = true;
+				setSize(blockYSize, blockXSize);
+			}
+			// Check sizes
+			if((numCols != blockXSize || numRows != blockYSize) || numCols == 0 ||
+			   numRows == 0)
+			{
+				stringstream stringstream1;
+				stringstream1 << "Raster data size does not match inputted dimensions for " << filename
+							  << ". Using raster sizes."
+							  << endl;
+				stringstream1 << "Old dimensions: " << numCols << ", " << numRows << endl;
+				stringstream1 << "New dimensions: " << blockXSize << ", " << blockYSize << endl;
+				writeWarning(stringstream1.str());
+				setSize(blockYSize, blockXSize);
+			}
+			// Check the data types are support
+			const char *dt_name = GDALGetDataTypeName(dt);
+			if(dt == 0 || dt > 7)
+			{
+				throw FatalException("Data type of " + string(dt_name) + " is not supported.");
+			}
+#ifdef DEBUG
+			if(sizeof(T) * 8 != gdal_data_sizes[dt])
+			{
+				stringstream ss2;
+				ss2 << "Object data size: " << sizeof(T) * 8 << endl;
+				ss2 << "Tif data type: " << dt_name << ": " << gdal_data_sizes[dt] << " bytes" << endl;
+				ss2 << "Tif data type does not match object data size in " << filename << endl;
+				writeWarning(ss2.str());
+			}
+#endif
+			// Just use the overloaded method for importing between types
+			internalImport();
+			writeInfo("done!\n");
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * @brief Calculates the offset between the two maps.
+	 *
+	 * The offset_map should be larger and contain this map, otherwise returned values will be negative
+	 *
+	 * @note Opens a connection to the tif file (if it has not already been opened), which should be closed.
+	 *
+	 * @param offset_map the offset map to read from
+	 * @param offset_x the x offset variable to fill
+	 * @param offset_y the y offset variable to fill
+	 */
+	void calculateOffset(Map &offset_map, long &offset_x, long &offset_y)
+	{
+		offset_map.open();
+		offset_map.getMetaData();
+		offset_x = static_cast<long>(round(offset_map.upper_left_x - upper_left_x / x_res));
+		offset_y = static_cast<long>(round(offset_map.upper_left_y - upper_left_y / y_res));
+	}
+
+	/**
+	 * @brief Default importer when we rely on the default gdal method of converting between values.
+	 * Note that importing doubles to ints results in the values being rounded down.
+	 * @return true if a tif file exists and can be imported, false otherwise.
+	 */
+	void internalImport()
+	{
+		writeWarning("No type detected for Map type. Attempting default importing (potentially undefined behaviour).");
+		defaultImport();
+	}
+
+	/**
+	 * @brief Default import routine for any type. Provided as a separate function so implementation can be called from
+	 * any template class type.
+	 */
+	void defaultImport()
+	{
+		unsigned int number_printed = 0;
+		for(uint32_t j = 0; j < numRows; j++)
+		{
+			printNumberComplete(j, number_printed);
+			cplErr = poBand->RasterIO(GF_Read, 0, j, static_cast<int>(blockXSize), 1, &matrix[j][0],
+									  static_cast<int>(blockXSize), 1, dt, 0, 0);
+			checkTifImportFailure();
+			// Now convert the no data values to 0
+			for(uint32_t i = 0; i < numCols; i++)
+			{
+				if(matrix[j][i] == noDataValue)
+				{
+					matrix[j][i] = 0;
+				}
 			}
 		}
 	}
-	// 
-	/********************************************
-	 * GET VAL FUNCTIONS
-	 ********************************************/
-
-
-	// Function for getting the val at a particular coordinate from either the coarse or fine map
-	// altered to use the current generation as well to determine the value.
-
 
 	/**
-	 * @brief Sets the landscape functions to either infinite or finite
-	 * @param is_infinite a string of either closed, infinite, tiled_fine or tiled_coarse,
-	 * corresponding to the relevant landscape type.
-	 * 
-	 * 
+	 * @brief Imports from the supplied filename into the GeoTiff object, converting doubles to booleans.
+	 * The threshold for conversion is x>0.5 -> true, false otherwise.
 	 */
-	void setLandscape(string is_infinite);
-
-	/**
-	 * @brief Gets the value at a particular coordinate from the correct map.
-	 * Takes in to account temporal and spatial referencing.
-	 * This version involves a call to the function pointer, *getValFunc, so that the correct call to either
-	 * getValFinite() or getValInfinite is made.
-	 * @param x the x position on the grid.
-	 * @param y the y position on the grid.
-	 * @param xwrap the number of wraps in the x dimension..
-	 * @param ywrap the number of wraps in the y dimension..
-	 * @param current_generation the current generation time.
-	 * @return the value on the correct map at the correct space.
-	 */
-	unsigned long getVal(const double &x, const double &y,
-						 const long &xwrap, const long &ywrap, const double &current_generation);
-
-	/**
-	 * @brief Gets the value from the coarse maps, including linear interpolating between the pristine and present maps
-	 * @param xval the x coordinate
-	 * @param yval the y coordinate
-	 * @param current_generation the current generation timer
-	 * @return the value of the map at the given coordinates and time
-	 */
-	unsigned long getValCoarse(const double &xval, const double &yval, const double &current_generation);
-
-	/**
-	 * @brief Gets the value from the fine maps, including linear interpolating between the pristine and present maps
-	 * @param xval the x coordinate
-	 * @param yval the y coordinate
-	 * @param current_generation the current generation timer
-	 * @return the value of the map at the given coordinates and time
-	 */
-	unsigned long getValFine(const double &xval, const double &yval, const double &current_generation);
-
-	/**
-	 * @brief Gets the value at a particular coordinate from the correct map.
-	 * Takes in to account temporal and spatial referencing. This version assumes finite landscape.
-	 * @param x the x position on the grid.
-	 * @param y the y position on the grid.
-	 * @param xwrap the number of wraps in the x dimension..
-	 * @param ywrap the number of wraps in the y dimension..
-	 * @param current_generation the current generation time.
-	 * @return the value on the correct map at the correct space.
-	 */
-	unsigned long
-	getValFinite(const double &x, const double &y, const long &xwrap, const long &ywrap, const double &current_generation);
-
-
-	/**
-	 * @brief Gets the value at a particular coordinate from the correct map.
-	 * Takes in to account temporal and spatial referencing. This version assumes an infinite landscape.
-	 * @param x the x position on the grid.
-	 * @param y the y position on the grid.
-	 * @param xwrap the number of wraps in the x dimension..
-	 * @param ywrap the number of wraps in the y dimension..
-	 * @param current_generation the current generation time.
-	 * @return the value on the correct map at the correct space.
-	 */
-	unsigned long
-	getValInfinite(const double &x, const double &y, const long &xwrap, const long &ywrap, const double &current_generation);
-
-
-	/**
-	 * @brief Gets the value at a particular coordinate from the correct map.
-	 * Takes in to account temporal and spatial referencing.
-	 * This version assumes an infinite landscape of tiled coarse maps.
-	 * @param x the x position on the grid.
-	 * @param y the y position on the grid.
-	 * @param xwrap the number of wraps in the x dimension..
-	 * @param ywrap the number of wraps in the y dimension..
-	 * @param current_generation the current generation time.
-	 * @return the value on the correct map at the correct space.
-	 */
-	unsigned long getValCoarseTiled(const double &x, const double &y, const long &xwrap, const long &ywrap,
-									const double &current_generation);
-
-
-	/**
-	 * @brief Gets the value at a particular coordinate from the correct map.
-	 * Takes in to account temporal and spatial referencing. 
-	 * This version assumes an infinite landscape of tiled fine maps.
-	 * @param x the x position on the grid.
-	 * @param y the y position on the grid.
-	 * @param xwrap the number of wraps in the x dimension..
-	 * @param ywrap the number of wraps in the y dimension..
-	 * @param current_generation the current generation time.
-	 * @return the value on the correct map at the correct space.
-	 */
-	unsigned long getValFineTiled(const double &x, const double &y, const long &xwrap, const long &ywrap,
-								  const double &current_generation);
-
-	/**
-	 * @brief Gets the x position on the fine map, given an x and x wrapping.
-	 * 
-	 * Note that this function will not check if the value is actually within bounds of the fine map, 
-	 * and an error will likely be thrown by the matrix referencing if this is the case.
-	 * @param x the x coordinate on the sample mask
-	 * @param xwrap the x wrapping of the sample mask.
-	 * @return the x location on the fine map
-	 */
-	unsigned long convertSampleXToFineX(const unsigned long &x, const long &xwrap);
-
-	/**
-	 * @brief Gets the y position on the fine map, given a y and y wrapping.
-	 * 
-	 * Note that this function will not check if the value is actually within bounds of the fine map, 
-	 * and an error will likely be thrown by the matrix referencing if this is the case.
-	 * @param y the y coordinate on the sample mask
-	 * @param ywrap the y wrapping of the sample mask.
-	 * @return the y location on the fine map
-	 */
-	unsigned long convertSampleYToFineY(const unsigned long &y, const long &ywrap);
-
-	/**
-	 * @brief Converts the fine map coordinates to the sample grid coordinates.
-	 * Main conversion is in a call to convertCoordinates, but also makes sure the returned types are long integers.
-	 * @param x the x coordinate to modify
-	 * @param xwrap the x wrapping to modify
-	 * @param y the y coordinate to modify
-	 * @param ywrap the y wrapping to modify
-	 */
-	void convertFineToSample(long &x, long &xwrap, long &y, long &ywrap);
-
-
-	/**
-	 * @brief Counts the number of spaces available in the initial species space. Requires the samplemask to check the sampling area.
-	 * @param dSample the sample proportion (from 0 to 1).
-	 * @param samplemask the DataMask object to sample from.
-	 * @return the total number of individuals predicted to initially exist on the map.
-	 */
-	unsigned long getInitialCount(double dSample, DataMask &samplemask);
-
-	/**
-	 * @brief Gets the mapvars object for referencing simulation parameters.
-	 * @return 
-	 */
-	SimParameters getSimParameters();
-
-	/********************************************
-	 * CHECK MAP FUNCTIONS
-	 ********************************************/
-	/**
-	 * @brief Checks whether the point is habitat or non-habitat.
-	 *@param x the x position on the grid.
-	 * @param y the y position on the grid.
-	 * @param xwrap the number of wraps in the x dimension.
-	 * @param ywrap the number of wraps in the y dimension.
-	 * @param generation the current generation time.
-	 * @return a boolean of whether the map is habitat or non-habitat.
-	 */
-	bool checkMap(const double &x, const double &y, const long &xwrap, const long &ywrap, const double generation);
-
-
-	/**
-	 * @brief  Checks whether the point comes from the fine grid.
-	 * @param x the x position.
-	 * @param y the y position.
-	 * @param xwrap the number of wraps in the x dimension.
-	 * @param ywrap the number of wraps in the y dimension.
-	 * @return a boolean of whether the location is on the fine map.
-	 */
-	bool checkFine(const double &x, const double &y, const long &xwrap, const long &ywrap);
-
-
-	/**
-	 * @brief Converts the coordinates to within the original grid, altering the xwrap and ywrap consequently.
-	 * @param x the x position.
-	 * @param y the y position.
-	 * @param xwrap the number of wraps in the x dimension.
-	 * @param ywrap the number of wraps in the y dimension.
-	 */
-	void convertCoordinates(double &x, double &y, long &xwrap, long &ywrap);
-
-	/**
-	 * @brief The function that actually performs the dispersal. 
-	 * It is included here for easier  programming and efficiency as the function doesn't need to perform all the checks
-	 * until the edge of the fine grid.
-	 * @param dist the distance travelled (or "distance energy" if dispersal_relative_cost is not 1).
-	 * @param angle the angle of movement.
-	 * @param startx the start x position.
-	 * @param starty the start y position.
-	 * @param startxwrap the start number of wraps in the x dimension.
-	 * @param startywrap the start number of wraps in the y dimension.
-	 * @param disp_comp a boolean of whether the dispersal was complete or not. This value is returned true if dispersal
-	 * is to habitat, false otherwise.
-	 * @param generation the time in generations since the start of the simulation.
-	 * @return the density value at the end dispersal point
-	 */
-	unsigned long runDispersal(const double &dist, const double &angle, long &startx, long &starty, long &startxwrap,
-							   long &startywrap, bool &disp_comp, const double &generation);
-
-
-	/**
-	 * @brief Operator for outputting the Map object variables to an output stream.
-	 * This is used for storing the Map object to file.
-	 * @param os the output stream.
-	 * @param r the Map object to output.
-	 * @return the output stream.
-	 */
-	friend ostream &operator<<(ostream &os, const Map &r)
+	void importFromDoubleAndMakeBool()
 	{
-		os << r.mapvars << "\n" << r.fine_x_min << "\n" << r.fine_x_max << "\n" << r.coarse_x_min << "\n" << r.coarse_x_max;
-		os << "\n" << r.fine_y_min << "\n" << r.fine_y_max << "\n" << r.coarse_y_min << "\n" << r.coarse_y_max << "\n";
-		os << r.fine_x_offset << "\n" << r.fine_y_offset << "\n" << r.coarse_x_offset << "\n" << r.coarse_y_offset << "\n";
-		os << r.scale << "\n" << r.x_dim << "\n" << r.y_dim << "\n" << r.deme << "\n" << r.check_set_dim << "\n"
-		   << r.dispersal_relative_cost << "\n";
-		os << r.update_time << "\n" << r.habitat_change_rate << "\n" << r.gen_since_pristine << "\n" << r.current_map_time << "\n"
-		   << r.is_pristine << "\n";
-		os << r.NextMap << "\n" << r.nUpdate << "\n" << r.landscape_type << "\n" << r.fine_max << "\n"
-		   << r.coarse_max << "\n";
-		os << r.pristine_fine_max << "\n" << r.pristine_coarse_max << "\n" << r.habitat_max << "\n"
-		   << r.bCoarse << "\n" << r.has_pristine << "\n";
-		return os;
+		unsigned int number_printed = 0;
+		// create an empty row of type float
+		double *t1;
+		t1 = (double *) CPLMalloc(sizeof(double) * numCols);
+		// import the data a row at a time, using our template row.
+		for(uint32_t j = 0; j < numRows; j++)
+		{
+			printNumberComplete(j, number_printed);
+			cplErr = poBand->RasterIO(GF_Read, 0, j, static_cast<int>(blockXSize), 1, &t1[0],
+									  static_cast<int>(blockXSize), 1, GDT_Float64, 0, 0);
+			checkTifImportFailure();
+			// now copy the data to our Map, converting float to int. Round or floor...? hmm, floor?
+			for(unsigned long i = 0; i < numCols; i++)
+			{
+				if(t1[i] == noDataValue)
+				{
+					matrix[j][i] = false;
+				}
+				else
+				{
+					matrix[j][i] = t1[i] >= 0.5;
+				}
+			}
+		}
+		CPLFree(t1);
 	}
 
 	/**
-	 * @brief Operator for inputting the Map object variables from an input stream.
-	 * This is used for reading the Map object from file.
-	 * @param is the input stream.
-	 * @param r the Map object to input to.
-	 * @return the input stream.
+	 * @brief Imports from the supplied filename into the GeoTiff object, converting doubles to booleans.
+	 * The threshold for conversion is x>0.5 -> true, false otherwise.
+	 *
+	 * @param dt_buff: the buffer type for the data
+	 * @tparam T2 the template type for data reading.
 	 */
-	friend istream &operator>>(istream &is, Map &r)
+	template<typename T2>
+	void importUsingBuffer(GDALDataType dt_buff)
 	{
-		is >> r.mapvars >> r.fine_x_min;
-		is >> r.fine_x_max >> r.coarse_x_min;
-		is >> r.coarse_x_max >> r.fine_y_min >> r.fine_y_max;
-		is >> r.coarse_y_min >> r.coarse_y_max;
-		is >> r.fine_x_offset >> r.fine_y_offset >> r.coarse_x_offset >> r.coarse_y_offset >> r.scale >> r.x_dim >> r.y_dim
-		   >> r.deme >> r.check_set_dim >> r.dispersal_relative_cost;
-		is >> r.update_time >> r.habitat_change_rate >> r.gen_since_pristine >> r.current_map_time >> r.is_pristine;
-		getline(is, r.NextMap);
-		is >> r.nUpdate;
-		is >> r.landscape_type;
-		is >> r.fine_max >> r.coarse_max;
-		is >> r.pristine_fine_max >> r.pristine_coarse_max;
-		is >> r.habitat_max >> r.bCoarse >> r.has_pristine;
-		r.setLandscape(r.mapvars.landscape_type);
-		r.calcFineMap();
-		r.calcCoarseMap();
-		r.calcPristineFineMap();
-		r.calcPristineCoarseMap();
-		r.recalculateHabitatMax();
-		return is;
+		unsigned int number_printed = 0;
+		// create an empty row of type float
+		T2 *t1;
+		t1 = (T2 *) CPLMalloc(sizeof(T2) * numCols);
+		// import the data a row at a time, using our template row.
+		for(uint32_t j = 0; j < numRows; j++)
+		{
+			printNumberComplete(j, number_printed);
+			cplErr = poBand->RasterIO(GF_Read, 0, j, static_cast<int>(blockXSize), 1, &t1[0],
+									  static_cast<int>(blockXSize), 1, dt_buff, 0, 0);
+			checkTifImportFailure();
+			// now copy the data to our Map, converting float to int. Round or floor...? hmm, floor?
+			for(unsigned long i = 0; i < numCols; i++)
+			{
+				if(t1[i] == noDataValue)
+				{
+					matrix[j][i] = static_cast<T>(0);
+				}
+				else
+				{
+					matrix[j][i] = static_cast<T>(t1[i]);
+				}
+			}
+		}
+		CPLFree(t1);
 	}
 
 	/**
-	 * @brief Prints some selected Map variables to the terminal.
-	 * @return the string containing the map variables to print
+	 * @brief Print the percentage complete during import
+	 * @param j the reference for the counter
+	 * @param number_printed the number of previously printed lines
 	 */
-	string printVars();
+	void printNumberComplete(const uint32_t &j, unsigned int &number_printed)
+	{
+		double dComplete = ((double) j / (double) numRows) * 20;
+		if(number_printed < dComplete)
+		{
+			stringstream os;
+			os << "\rImporting " << filename << " ";
+			number_printed = 0;
+			while(number_printed < dComplete)
+			{
+				os << ".";
+				number_printed++;
+			}
+			os << flush;
+			writeInfo(os.str());
+		}
+	}
 
 	/**
-	 * @brief Wipes the map of all variables. Only really useful for testing purposes.
+	 * @brief Checks the error code of the CPLErr object and formats the error
 	 */
-	void clearMap();
+	void checkTifImportFailure()
+	{
+		if(cplErr >= CE_Warning)
+		{
+			CPLError(cplErr, 3, "CPL error thrown during import of %s\n", filename.c_str());
+			CPLErrorReset();
+		}
+	}
 
-	/**
-	 * @brief Recalculates the habitat map maximum by checking the maximums for each of the relevant map files
-	 * (fine, coarse and pristines).
-	 */
-	void recalculateHabitatMax();
+	friend ostream &operator>>(ostream& os, const Map &m)
+	{
+		return Matrix<T>::writeOut(os, m);
+	}
+
+	friend istream &operator<<(istream& is, Map &m)
+	{
+		return Matrix<T>::readIn(is, m);
+	}
 
 };
 
-#endif // MAP
- 
+/**
+ * @brief Overloaded imported for handling conversion of types to boolean. This function should only be once
+ * elsewhere, so inlining is fine, allowing this file to remain header only.
+ */
+template<>
+inline void Map<bool>::internalImport()
+{
+	if(dt <= 7)
+	{
+		// Then the tif file type is an int/byte
+		// we can just import as it is
+		importUsingBuffer<uint8_t>(GDT_Byte);
+	}
+	else
+	{
+		// Conversion from double to boolean
+		importFromDoubleAndMakeBool();
+	}
+}
+
+/**
+ * @brief Overloaded functions for importing from tifs and matching between gdal and C types.
+ * @param filename the path to the filename
+ * @param poBand the GDALRasterBand pointer to import from
+ * @param nBlockXSize the number of elements per row
+ * @param dt the datatype (not required, exists for function overloading)
+ * @param r the error reference object
+ * @param ndv the no data value
+ */
+template<>
+inline void Map<int8_t>::internalImport()
+{
+	importUsingBuffer<int16_t>(GDT_Int16);
+}
+
+template<>
+inline void Map<uint8_t>::internalImport()
+{
+	dt = GDT_Byte;
+	defaultImport();
+}
+
+template<>
+inline void Map<int16_t>::internalImport()
+{
+	dt = GDT_Int16;
+	defaultImport();
+}
+
+template<>
+inline void Map<uint16_t>::internalImport()
+{
+	dt = GDT_UInt16;
+	defaultImport();
+}
+
+template<>
+inline void Map<int32_t>::internalImport()
+{
+	dt = GDT_Int32;
+	defaultImport();
+}
+
+template<>
+inline void Map<uint32_t>::internalImport()
+{
+	dt = GDT_UInt32;
+	defaultImport();
+}
+
+
+
+template<>
+inline void Map<float>::internalImport()
+{
+	dt = GDT_Float32;
+	defaultImport();
+}
+
+template<>
+inline void Map<double>::internalImport()
+{
+	dt = GDT_Float64;
+	defaultImport();
+}
+
+#endif // with_gdal
+#endif //MAP_H

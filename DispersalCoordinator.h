@@ -21,9 +21,9 @@
 #include <cmath>
 
 #include "NRrand.h"
-#include "Matrix.h"
-#include "Step.h"
 #include "Map.h"
+#include "Step.h"
+#include "Landscape.h"
 
 /**
  * @brief Class for generating dispersal distances and provide routines for reading dispersal distance maps
@@ -40,14 +40,14 @@ protected:
 	
 	// Our map of dispersal probabilities (if required)
 	// This will contain cummulative probabilities across rows
-	Matrix<double> dispersal_prob_map;
+	Map<double> dispersal_prob_map;
 	// Our random number generator for dispersal distances
 	// This is a pointer so that the random number generator is the same
 	// across the program.
 	
 	NRrand * NR;
 	// Pointer to the habitat map object for getting density values.
-	Map * habitat_map;
+	Landscape * habitat_map;
 	// Pointer to the generation counter for the simulation
 	double * generation;
 	
@@ -78,7 +78,7 @@ public:
 	 * @brief Sets the pointer to the Map object
 	 * @param map_ptr pointer to a Map object
 	 */
-	void setHabitatMap(Map *map_ptr);
+	void setHabitatMap(Landscape *map_ptr);
 	
 	/**
 	 * @brief Sets the generation pointer to the provided double

@@ -103,3 +103,25 @@ unsigned long cantorPairing(unsigned long x1, unsigned long x2)
 {
 	return ((x1 + x2) * (x1 + x2 + 1)/2) + x2;
 }
+
+vector<string> getCsvLineAndSplitIntoTokens(istream &str)
+{
+	vector<string> result;
+	string line;
+	getline(str,line);
+
+	stringstream lineStream(line);
+	string cell;
+
+	while(getline(lineStream,cell, ','))
+	{
+		result.push_back(cell);
+	}
+	// This checks for a trailing comma with no data after it.
+	if (!lineStream && cell.empty())
+	{
+		// If there was a trailing comma then add an empty element.
+		result.emplace_back("");
+	}
+	return result;
+}

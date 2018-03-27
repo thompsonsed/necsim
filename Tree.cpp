@@ -14,6 +14,8 @@
  */
 
 #include "Tree.h"
+#include "Logging.h"
+
 void Tree::importSimulationVariables(const string &configfile)
 {
 	sim_parameters.importParameters(configfile);
@@ -38,15 +40,15 @@ bool Tree::checkOutputDirectory()
 		}
 		catch(runtime_error &re)
 		{
-			cerr << "Output folder does not exist... creating..." << flush;
+			writeInfo("Output folder does not exist... creating...");
 			bool bOutputFolder = boost::filesystem::create_directory(sim_parameters.output_directory);
 			if( bOutputFolder)
 			{
-				cerr << "done!" << endl;
+				writeInfo("done!\n");
 			}
 			else
 			{
-				cerr << endl << re.what() << endl;
+				writeError(re.what());
 			}
 		}
 	}
@@ -275,19 +277,21 @@ void Tree::generateObjects()
 	maxsimsize = enddata;
 	if(active.size() < endactive || endactive == 0)
 	{
-		cerr << "endactive: " << endactive << endl;
-		cerr << "active.size: " << active.size() << endl;
-		cerr << "initial_count: " << initial_count << endl;
-		cerr << "number_start: " << number_start << endl;
+
 		if(endactive == 0)
 		{
 			throw runtime_error("No individuals to simulate! Check set up. Exiting...");
 		}
 		else
 		{
-			throw FatalException(
-					"ERROR_MAIN_007: FATAL. Sizing error - endactive is greater than the size of active. "
-							"Please report this bug");
+			stringstream ss;
+			ss <<"ERROR_MAIN_007: FATAL. Sizing error - endactive is greater than the size of active. ";
+			ss << "Please report this bug" << endl;
+			ss << "endactive: " << endactive << endl;
+			ss << "active.size: " << active.size() << endl;
+			ss << "initial_count: " << initial_count << endl;
+			ss << "number_start: " << number_start << endl;
+			throw FatalException(ss.str());
 		}
 	}
 	startendactive = endactive;
@@ -870,7 +874,7 @@ void Tree::sqlOutput()
 	backupdb = sqlite3_backup_init(outdatabase, "main", database, "main");
 	if(!backupdb)
 	{
-		cerr << "ERROR_SQL_011: Could not write to the backup database. Check the file exists." << endl;
+		writeError("ERROR_SQL_011: Could not write to the backup database. Check the file exists");
 	}
 	// Perform the backup
 	int rc = sqlite3_backup_step(backupdb, -1);
@@ -882,7 +886,6 @@ void Tree::sqlOutput()
 			i++;
 			sleep(1);
 			rc = sqlite3_backup_step(backupdb, -1);
-			//				cerr << "Attempt " << i << " failed..." << endl;
 		}
 		if(rc != SQLITE_OK && rc != SQLITE_DONE)
 		{
@@ -1094,8 +1097,7 @@ void Tree::sqlCreate()
 	rc = sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, &sErrMsg);
 	if(rc != SQLITE_OK)
 	{
-		cerr << "ERROR_SQL_008: Cannot start SQL transaction. Check memory database assignment and SQL commands."
-			 << endl;
+		writeError("ERROR_SQL_008: Cannot start SQL transaction. Check memory database assignment and SQL commands.");
 	}
 	for(unsigned int i = 0; i <= enddata; i++)
 	{
@@ -1123,10 +1125,11 @@ void Tree::sqlCreate()
 	rc = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, &sErrMsg);
 	if(rc != SQLITE_OK)
 	{
-		cerr << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
+		stringstream ss;
+		ss << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
 				"commands. Ensure SQL statements are properly cleared."
 			 << endl;
-		cerr << "Error code: " << rc << endl;
+		ss << "Error code: " << rc << endl;
 		// try again
 		int i = 0;
 		while((rc != SQLITE_OK && rc != SQLITE_DONE) && i < 10)
@@ -1134,28 +1137,30 @@ void Tree::sqlCreate()
 			sleep(1);
 			i++;
 			rc = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, &sErrMsg);
-			cerr << "Attempt " << i << " failed..." << endl;
-			cerr << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
-					"commands. Ensure SQL statements are properly cleared."
-				 << endl;
+			ss << "Attempt " << i << " failed..." << endl;
+			ss << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
+					"commands. Ensure SQL statements are properly cleared." << endl;
 		}
+		writeError(ss.str());
 	}
 	// Need to finalise the statement
 	rc = sqlite3_finalize(stmt);
 	if(rc != SQLITE_OK)
 	{
-		cerr << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
+		stringstream ss;
+		ss << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
 				"commands. Ensure SQL statements are properly cleared."
 			 << endl;
-		cerr << "Error code: " << rc << endl;
+		ss << "Error code: " << rc << endl;
 	}
 	// Vacuum the file so that the file size is reduced (reduces by around 3%)
 	rc = sqlite3_exec(database, "VACUUM;", nullptr, nullptr, &sErrMsg);
 	if(rc != SQLITE_OK)
 	{
-		cerr << "ERROR_SQL_014: Cannot vacuum the database. Error message: " << sErrMsg << endl;
+		stringstream ss;
+		ss << "ERROR_SQL_014: Cannot vacuum the database. Error message: " << sErrMsg << endl;
+		writeError(ss.str());
 	}
-
 	sqlCreateSimulationParameters();
 	writeInfo("done!\n");
 }
@@ -1184,9 +1189,11 @@ void Tree::sqlCreateSimulationParameters()
 	int rc = sqlite3_exec(database, to_execute.c_str(), nullptr, nullptr, &sErrMsg);
 	if(rc != SQLITE_OK)
 	{
-		cerr << "ERROR_SQL_008: Cannot start SQL transaction. Check memory database assignment and SQL commands."
+		stringstream ss;
+		ss << "ERROR_SQL_008: Cannot start SQL transaction. Check memory database assignment and SQL commands."
 			 << endl;
-		cerr << "Error code: " << rc << endl;
+		ss << "Error code: " << rc << endl;
+		writeError(ss.str());
 	}
 	to_execute = simulationParametersSqlInsertion();
 	rc = sqlite3_exec(database, to_execute.c_str(), nullptr, nullptr, &sErrMsg);
@@ -1264,10 +1271,12 @@ string Tree::initiatePause()
 		}
 		catch(exception& e)
 		{
-			cerr << "Failure to create " << out_directory << "/Pause/"
+			stringstream ss;
+			ss << "Failure to create " << out_directory << "/Pause/"
 				 << "." << endl;
-			cerr << e.what() << endl;
-			cerr << "Writing directly to output directory." << endl;
+			ss << e.what() << endl;
+			ss << "Writing directly to output directory." << endl;
+			writeError(ss.str());
 			pause_folder = out_directory;
 		}
 	}
@@ -1323,8 +1332,10 @@ void Tree::dumpMain(string pause_folder)
 	}
 	catch(exception& e)
 	{
-		cerr << e.what() << endl;
-		cerr << "Failed to perform main dump to " << pause_folder << endl;
+		stringstream ss;
+		ss << e.what() << endl;
+		ss << "Failed to perform main dump to " << pause_folder << endl;
+		writeError(ss.str());
 	}
 }
 
@@ -1342,8 +1353,10 @@ void Tree::dumpActive(string pause_folder)
 	}
 	catch(exception& e)
 	{
-		cerr << e.what() << endl;
-		cerr << "Failed to perform active dump to " << pause_folder << endl;
+		stringstream ss;
+		ss << e.what() << endl;
+		ss << "Failed to perform active dump to " << pause_folder << endl;
+		writeError(ss.str());
 	}
 }
 
@@ -1361,8 +1374,10 @@ void Tree::dumpData(string pause_folder)
 	}
 	catch(exception& e)
 	{
-		cerr << e.what() << endl;
-		cerr << "Failed to perform data dump to " << pause_folder << endl;
+		stringstream ss;
+		ss << e.what() << endl;
+		ss << "Failed to perform data dump to " << pause_folder << endl;
+		writeError(ss.str());
 	}
 }
 
@@ -1454,7 +1469,7 @@ void Tree::loadMainSave()
 			sim_parameters.max_time = tempmaxtime;
 		}
 #ifdef DEBUG
-		if(max_time == 0 && tempmaxtime == 0)
+		if(maxtime == 0 && tempmaxtime == 0)
 		{
 			throw FatalException("Time set to 0 on resume!");
 		}
@@ -1469,35 +1484,28 @@ void Tree::loadMainSave()
 		in1 >> tmp1 >> tmp2;
 		setProtractedVariables(tmp1, tmp2);
 		in1.close();
-		try
+		if(times_file == "null")
 		{
-			if(times_file == "null")
+			if(has_times_file)
 			{
-				if(has_times_file)
-				{
-					throw runtime_error("has_times_file should not be true");
-				}
-			}
-			else
-			{
-				if(!has_times_file)
-				{
-					throw runtime_error("has_times_file should not be false");
-				}
-				vector<string> tmpimport;
-				ConfigOption tmpconfig;
-				tmpconfig.setConfig(times_file, false);
-				tmpconfig.importConfig(tmpimport);
-				for(const auto &i : tmpimport)
-				{
-					reference_times.push_back(stod(i));
-					//					os << "t_i: " << reference_times[i] << endl;
-				}
+				throw runtime_error("has_times_file should not be true");
 			}
 		}
-		catch(ConfigException& ce)
+		else
 		{
-			cerr << ce.what() << endl;
+			if(!has_times_file)
+			{
+				throw runtime_error("has_times_file should not be false");
+			}
+			vector<string> tmpimport;
+			ConfigOption tmpconfig;
+			tmpconfig.setConfig(times_file, false);
+			tmpconfig.importConfig(tmpimport);
+			for(const auto &i : tmpimport)
+			{
+				reference_times.push_back(stod(i));
+				//					os << "t_i: " << reference_times[i] << endl;
+			}
 		}
 	}
 	catch(exception& e)
@@ -1575,7 +1583,7 @@ void Tree::initiateResume()
 	writeLog(10, "Output directory: " + out_directory);
 	writeLog(10, "Seed: " + to_string(the_seed));
 	writeLog(10, "Task: " + to_string(the_task));
-	writeLog(10, "Max time: " + to_string(max_time));
+	writeLog(10, "Max time: " + to_string(maxtime));
 #endif // DEBUG
 	os << "Resuming simulation..." << endl << "Loading data from temp file..." << flush;
 	writeInfo(os.str());

@@ -319,7 +319,7 @@ void Community::importSamplemask(string sSamplemask)
 	if(!bDataImport)
 	{
 		throw SpeciesException(
-				"ERROR_SPEC_003: Attempt to importSpatialParameters samplemask object before simulation parameters: dimensions not known");
+				"ERROR_SPEC_003: Attempt to import samplemask object before simulation parameters: dimensions not known");
 	}
 	// Check that the main data has been imported already, otherwise the dimensions of the samplemask will not be correct
 	if(!bSample)
@@ -330,9 +330,9 @@ void Community::importSamplemask(string sSamplemask)
 			samplemask.importBooleanMask(grid_x_size, grid_y_size, samplemask_x_size, samplemask_y_size,
 										 samplemask_x_offset, samplemask_y_offset, sSamplemask);
 			unsigned long total = 0;
-			for(unsigned long i = 0; i < samplemask.sample_mask.GetCols(); i++)
+			for(unsigned long i = 0; i < samplemask.sample_mask.getCols(); i++)
 			{
-				for(unsigned long j = 0; j < samplemask.sample_mask.GetRows(); j++)
+				for(unsigned long j = 0; j < samplemask.sample_mask.getRows(); j++)
 				{
 					if(samplemask.sample_mask[j][i])
 					{
@@ -602,7 +602,7 @@ void Community::calcSpeciesAbundance()
 					 << " samplemask: " << samplemask.getMaskVal(this_node->getXpos(), this_node->getYpos(),
 																 this_node->getXwrap(), this_node->getYwrap()) << endl;
 				ss
-						<< "ERROR_SQL_005: Tip doesn't exist. Something went wrong either in the importSpatialParameters or "
+						<< "ERROR_SQL_005: Tip doesn't exist. Something went wrong either in the import or "
 								"main simulation running."
 						<< endl;
 				writeWarning(ss.str());
@@ -653,13 +653,14 @@ void Community::detectDimensions(string db)
 	rc = sqlite3_step(stmt);
 	xvalmax = static_cast<unsigned long>(sqlite3_column_int(stmt, 0) + 1);
 	yvalmax = static_cast<unsigned long>(sqlite3_column_int(stmt, 1) + 1);
-	samplemask.sample_mask.SetSize(xvalmax, yvalmax);
+	samplemask.sample_mask.setSize(xvalmax, yvalmax);
 	// close the old statement
 	rc = sqlite3_finalize(stmt);
 	if(rc != SQLITE_OK && rc != SQLITE_DONE)
 	{
-		cerr << "rc: " << rc << endl;
-		throw SpeciesException("Could not detect dimensions");
+		stringstream ss;
+		ss << "Could not detect dimensions: " << rc << " (" << sqlite3_errmsg(tmpdb) << ")" << endl;
+		throw SpeciesException(ss.str());
 	}
 }
 
@@ -804,8 +805,10 @@ void Community::importData(string inputfile)
 		(*nodes)[index].setParent(parent - ignored_lineages);
 		if(index == parent && parent != 0)
 		{
-			cerr << " i: " << index << " parent: " << parent << endl;
-			cerr << "ERROR_SQL_001: Import failed as parent is self. Check importSpatialParameters function." << endl;
+			stringstream ss;
+			ss << "ERROR_SQL_001: Import failed as parent is self. Please report this bug." << endl;
+			ss << " i: " << index << " parent: " << parent << endl;
+			throw SpeciesException(ss.str());
 		}
 		(*nodes)[index].setSpeciation(speciation);
 		sqlite3_step(stmt);
@@ -1022,10 +1025,9 @@ void Community::outputSpeciesAbundances()
 		int rc2 = sqlite3_finalize(stmt);
 		if(rc1 != SQLITE_OK || rc2 != SQLITE_OK)
 		{
-			cerr << "ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and "
+			writeError("ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and "
 					"SQL commands. Ensure SQL statements are properly cleared and that you are not attempting "
-					"to insert repeat IDs into the database."
-				 << endl;
+					"to insert repeat IDs into the database.");
 		}
 		else
 		{
@@ -1118,10 +1120,10 @@ void Community::createFragmentDatabase(const Fragment &f)
 			if(step != SQLITE_DONE)
 			{
 				stringstream ss;
-				ss << "SQLITE error code: " << step << endl;
-				cerr << "ERROR_SQL_004e: Could not insert into database. Check destination file has not "
+				ss << "ERROR_SQL_004e: Could not insert into database. Check destination file has not "
 						"been moved or deleted and that an entry doesn't already exist with the same ID."
 					 << endl;
+				ss << "SQLITE error code: " << step << endl;
 				ss << sqlite3_errmsg(database) << endl;
 				writeWarning(ss.str());
 				sqlite3_clear_bindings(stmt);
@@ -1138,10 +1140,9 @@ void Community::createFragmentDatabase(const Fragment &f)
 	int rc2 = sqlite3_finalize(stmt);
 	if(rc1 != SQLITE_OK || rc2 != SQLITE_OK)
 	{
-		cerr << "ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and SQL "
+		writeError("ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and SQL "
 				"commands. Ensure SQL statements are properly cleared and that you are not attempting to insert "
-				"repeat IDs into the database."
-			 << endl;
+				"repeat IDs into the database.");
 	}
 }
 
@@ -1328,10 +1329,9 @@ void Community::recordSpatial()
 	int rc2 = sqlite3_finalize(stmt);
 	if(rc1 != SQLITE_OK || rc2 != SQLITE_OK)
 	{
-		cerr << "ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and SQL "
+		writeError("ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and SQL "
 				"commands. Ensure SQL statements are properly cleared and that you are not attempting to insert "
-				"repeat IDs into the database."
-			 << endl;
+				"repeat IDs into the database.");
 	}
 }
 
@@ -1345,9 +1345,9 @@ void Community::calcFragments(string fragment_file)
 	if(fragment_file == "null")
 	{
 		unsigned long fragment_number = 0;
-		for(unsigned long i = 0; i < samplemask.sample_mask.GetCols(); i++)
+		for(unsigned long i = 0; i < samplemask.sample_mask.getCols(); i++)
 		{
-			for(unsigned long j = 0; j < samplemask.sample_mask.GetRows(); j++)
+			for(unsigned long j = 0; j < samplemask.sample_mask.getRows(); j++)
 			{
 				bool in_fragment = false;
 				// Make sure is isn't on the top or left edge
@@ -1460,11 +1460,12 @@ void Community::calcFragments(string fragment_file)
 	}
 	else
 	{
-#ifdef use_csv
 		stringstream os;
 		os << "Importing fragments from " << fragment_file << endl;
 		writeInfo(os.str());
-		// There is a config file to import - here we use a specific piece of importSpatialParameters code to parse the csv file.
+#ifdef use_csv
+		// Then use the fast-cpp-csv-parser
+		// There is a config file to import - here we use a specific piece of import code to parse the csv file.
 		// first count the number of lines
 		int number_of_lines = 0;
 		string line;
@@ -1482,15 +1483,12 @@ void Community::calcFragments(string fragment_file)
 //		os << "size: "  << fragments.capacity() << endl;
 		for(int i = 0; i < number_of_lines; i++)
 		{
-
-			//				os << i << endl;
 			char *line = in.next_line();
-//			os << line << endl;
 			if(line == nullptr)
 			{
 				if(!bPrint)
 				{
-					cerr << "Input dimensions incorrect - read past end of file." << endl;
+					writeError("Input dimensions incorrect - read past end of file.");
 					bPrint = true;
 				}
 				break;
@@ -1506,8 +1504,7 @@ void Community::calcFragments(string fragment_file)
 					{
 						if(!bPrint)
 						{
-							cerr << "Input dimensions incorrect - read past end of file."
-								 << endl;
+							writeError("Input dimensions incorrect - read past end of file.");
 							bPrint = true;
 						}
 						break;
@@ -1543,8 +1540,52 @@ void Community::calcFragments(string fragment_file)
 		}
 #endif
 #ifndef use_csv
-		cerr << "Cannot importSpatialParameters fragments from " << fragment_file << " without fast-cpp-csv-parser." << endl;
-		cerr << "Make sure the program has been compiled with -D use_csv." << endl;
+		ifstream fragment_configs(fragment_file);
+		vector<vector<string>> tmp_raw_read;
+		while(fragment_configs.good())
+		{
+			tmp_raw_read.push_back(getCsvLineAndSplitIntoTokens(fragment_configs));
+		}
+		fragments.resize(tmp_raw_read.size());
+		for(unsigned long i = 0; i < tmp_raw_read.size(); i ++)
+		{
+			vector<string> * this_fragment = &tmp_raw_read[i];
+			if(this_fragment->size() != 6)
+			{
+				// Only throw an error if the size is not 1 (which usually means that there is an extra line
+				// at the end of the file)
+				if(this_fragment->size() != 1)
+				{
+					stringstream ss;
+					ss << "Could not parse fragments file, " << this_fragment->size() << " columns detected";
+					ss << ", requires 6 (name, x_west, y_north, x_east, y_south, area)." << endl;
+					throw FatalException(ss.str());
+				}
+				break;
+			}
+			// Fragment name and dimensions
+			try
+			{
+				fragments[i].name = (*this_fragment)[0];
+				fragments[i].x_west = stoi((*this_fragment)[1]);
+				fragments[i].y_north = stoi((*this_fragment)[2]);
+				fragments[i].x_east = stoi((*this_fragment)[3]);
+				fragments[i].y_south = stoi((*this_fragment)[4]);
+				fragments[i].area = stof((*this_fragment)[5]);
+			}
+			catch(invalid_argument &argument)
+			{
+				stringstream ss;
+				ss << "Could not convert row arguments: ";
+				for(auto &n : (*this_fragment))
+				{
+					ss << n << ", ";
+				}
+				ss << " should be str, int, int, int, int, float." << endl;
+				throw FatalException(ss.str());
+			}
+		}
+		fragment_configs.close();
 #endif
 	}
 //	os << "Completed fragmentation analysis: " << fragments.size() << " fragments identified." << endl;

@@ -13,20 +13,22 @@
  */
 #ifndef FATTAIL_H
 #define FATTAIL_H
-#define IM1 2147483563
-#define IM2 2147483399
-#define AM (1.0/IM1)
-#define IMM1 (IM1-1)
-#define IA1 40014
-#define IA2 40692
-#define IQ1 53668
-#define IQ2 5277
-#define IR1 12211
-#define IR2 3791
-#define NTAB 32
-#define NDIV (1+IMM1/NTAB)
-#define EPS 1.2e-8
-#define RNMX (1.0-EPS)
+
+//
+//#define IM1 2147483563
+//#define IM2 2147483399
+//#define AM (1.0/IM1)
+//#define IMM1 (IM1-1)
+//#define IA1 40014
+//#define IA2 40692
+//#define IQ1 53668
+//#define IQ2 5277
+//#define IR1 12211
+//#define IR2 3791
+//#define NTAB 32
+//#define NDIV (1+IMM1/NTAB)
+//#define EPS 1.2e-8
+//#define RNMX (1.0-EPS)
 
 # include <cstdio>
 # include <string>
@@ -39,7 +41,23 @@
 #include "Logging.h"
 
 using namespace std;
-
+/**
+ * @brief These variables contain the special numbers for random number generation.
+ */
+const long IM1 = 2147483563;
+const long IM2 = 2147483399;
+const double AM = (1.0/IM1);
+const long IMM1 = (IM1 - 1);
+const long IA1 = 40014;
+const long IA2 = 40692;
+const long IQ1 = 53668;
+const long IQ2 = 5277;
+const long IR1 = 12211;
+const long IR2 = 3791;
+const long NTAB = 32;
+const double NDIV = (1+IMM1/NTAB);
+const double EPS = 1.2e-8;
+const double RNMX (1.0-EPS);
 /**
  * @brief Contains the functions for random number generation.
  */

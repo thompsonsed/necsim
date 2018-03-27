@@ -12,6 +12,7 @@
  *
  */
 
+#include <boost/filesystem/operations.hpp>
 #include "ConfigFileParser.h"
 #include "CustomExceptions.h"
 #include "Logging.h"
@@ -98,6 +99,12 @@ void ConfigOption::setConfig(const string &file, bool main, bool full_parse)
 void ConfigOption::parseConfig()
 {
 	ifstream is_file;
+	if(!boost::filesystem::exists(configfile))
+	{
+		stringstream ss;
+		ss << "No config file found at " << configfile << ". Check file exists." << endl;
+		throw ConfigException(ss.str());
+	}
 	try
 	{
 		is_file.open(configfile);
@@ -184,7 +191,7 @@ void ConfigOption::parseConfig()
 	}
 	else
 	{
-		throw ConfigException("ERROR_CONF_002: End of file not reached. Check input file formating.");
+		throw ConfigException("ERROR_CONF_002: End of file not reached. Check input file formatting.");
 	}
 }
 
@@ -306,7 +313,7 @@ int ConfigOption::importConfig(vector<string> &comargs)
 		if(comargs.size() != 3)
 		{
 			throw ConfigException(
-					"ERROR_CONF_003: Number of command line arguments not correct before importSpatialParameters.");
+					"ERROR_CONF_003: Number of command line arguments not correct before import.");
 		}
 	}
 	ifstream is_file;

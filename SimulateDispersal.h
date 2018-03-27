@@ -14,15 +14,15 @@
 #ifndef PYTHON_COMPILE
 #define PYTHON_COMPILE
 #endif
-#include <string>
-#include <stdio.h>
+#include<string>
+#include <cstdio>
 #include <vector>
 #include <iostream>
 #include <fstream>
 #include <cmath>
 #include <stdexcept>
 #include <sqlite3.h>
-#include "Matrix.h"
+#include "Map.h"
 #include "NRrand.h"
 /**
  * @class Cell
@@ -59,7 +59,7 @@ class SimulateDispersal
 {
 protected:
 	// The density map object
-	Matrix<uint32_t> density_map;
+	Map<uint32_t> density_map;
 	// Set to true when the size of the density map has been set
 	bool has_set_size;
 	// The random number generator object

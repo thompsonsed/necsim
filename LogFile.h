@@ -14,7 +14,6 @@
 #include <fstream>
 #include <ctime>
 #include <map>
-#include "CustomExceptions.h"
 #define LOGNAME_FORMAT "%d%m%Y_%H%M%S"
 
 using namespace std;

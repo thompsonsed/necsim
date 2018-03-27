@@ -70,7 +70,7 @@
 #include "DataPoint.h"
 #include "TreeNode.h"
 #include "SpeciesList.h"
-#include "Map.h"
+#include "Landscape.h"
 #include "Community.h"
 #include "Setup.h"
 #include "DispersalCoordinator.h"
@@ -88,7 +88,7 @@ using namespace std;
 class SpatialTree : public virtual Tree
 {
 protected:
-	// Our dispersal coordinator for getting dispersal distances and managing calls from the habitat_map
+	// Our dispersal coordinator for getting dispersal distances and managing calls from the landscape
 	DispersalCoordinator dispersal_coordinator;
 	// The reproduction map object
 	ReproductionMap rep_map;
@@ -104,15 +104,15 @@ protected:
 	// the coarse map variables at a scaled resolution of the fine map.
 	long fine_map_x_size, fine_map_y_size, fine_map_x_offset, fine_map_y_offset;
 	long coarse_map_x_size, coarse_map_y_size, coarse_map_x_offset, coarse_map_y_offset, coarse_map_scale;
-	// Map object containing both the coarse and fine maps for checking whether or not there is forest at a particular
-	// location.
-	Map habitat_map;
+	// Landscape object containing both the coarse and fine maps for checking whether or not there is habitat at a
+	// particular location.
+	Landscape landscape;
 	// An indexing spatial positioning of the lineages
 	Matrix<SpeciesList> grid;
 	// dispersal and sigma references
 	double sigma, tau;
-	// the cost for moving through non-forest. 1.0 means there is no cost. 10 means that movement is 10x
-	// slower through forest.
+	// the cost for moving through non-habitat. 1.0 means there is no cost. 10 means that movement is 10x
+	// slower through habitat.
 	double dispersal_relative_cost;
 	// the desired number of species we are aiming for. If it is 0, we will carry on forever.
 	unsigned long desired_specnum;
@@ -147,7 +147,7 @@ public:
 		desired_specnum = 1;
 	}
 
-	~SpatialTree() = default;
+	~SpatialTree() override = default;
 	/**
 	 * @brief Imports the simulation variables from the config file.
 	 *

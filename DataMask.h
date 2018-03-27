@@ -13,12 +13,12 @@
 #define SPECIATIONCOUNTER_DataMask_H
 
 // Forward declaration of map
-class Map;
+class Landscape;
 
 #include <string>
 
-#include "Matrix.h"
 #include "SimParameters.h"
+#include "Map.h"
 
 
 // Class which contains the DataMask object, telling us where to sample from within the habitat map.
@@ -40,9 +40,9 @@ protected:
 	typedef double (DataMask::*fptr)(const long &x, const long &y, const long &xwrap, const long &ywrap);
 	fptr getProportionfptr;
 public:
-	Matrix<bool> sample_mask; /** A binary grid telling whether or not the cell should be sampled.*/
+	Map<bool> sample_mask; /** A binary grid telling whether or not the cell should be sampled.*/
 	// Stores the exact values from the input tif file.
-	Matrix<double> sample_mask_exact; /** Exact grid for determining sampling proportion.*/
+	Map<double> sample_mask_exact; /** Exact grid for determining sampling proportion.*/
 
 	/**
 	 * @brief The DataMask constructor.
@@ -168,7 +168,7 @@ public:
 	 * @param deme_sampling the proportion of individuals to sample
 	 * @param generation the generation individuals are added at
 	 */
-	void convertBoolean(Map &map1, const double &deme_sampling, const double &generation);
+	void convertBoolean(Landscape &map1, const double &deme_sampling, const double &generation);
 
 	/**
 	 * @brief Removes the spatial mask from memory. This should be performed if no more map expansions are required.

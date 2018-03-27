@@ -2,17 +2,69 @@
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details
 /**
  * @author Samuel Thompson
- * @file Map.cpp
- * @brief Contains the Map class implementation for easy referencing of the respective coarse and fine map within the
+ * @file Landscape.cpp
+ * @brief Contains the Landscape class implementation for easy referencing of the respective coarse and fine map within the
  * same coordinate system.
  * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
  */
 
-#include "Map.h"
+#include "Landscape.h"
 #include "Filesystem.h"
-#include "CustomExceptions.h"
 
-void Map::setDims(SimParameters mapvarsin)
+uint32_t importToMapAndRound(string map_file, Map<uint32_t> &matrix_in, unsigned long matrix_x,
+							 unsigned long matrix_y,
+							 unsigned long scalar)
+{
+#ifndef SIZE_LIMIT
+	if(matrix_x > 1000000 || matrix_y > 1000000)
+	{
+		throw runtime_error("Extremely large map sizes set for " + map_file + ": " + to_string(matrix_x) + ", " +
+									to_string(matrix_y) + "\n");
+	}
+#endif
+
+	Map<float> temp_matrix;
+//	temp_matrix.open(map_file);
+	temp_matrix.setSize(matrix_y, matrix_x);
+#ifdef DEBUG
+	writeInfo("Calculating fine map");
+#endif
+	if(map_file == "null")
+	{
+		for(unsigned long i = 0; i < matrix_y; i++)
+		{
+			for(unsigned long j = 0; j < matrix_x; j++)
+			{
+				temp_matrix[i][j] = 1.0;
+			}
+		}
+	}
+	else  // There is a map to read in.
+	{
+		temp_matrix.import(map_file);
+	}
+#ifdef DEBUG
+	writeInfo("import complete");
+#endif
+	uint32_t max_value = 0;
+	matrix_in.setSize(temp_matrix.getRows(), temp_matrix.getCols());
+	for(unsigned long i = 0; i < matrix_y; i++)
+	{
+		for(unsigned long j = 0; j < matrix_x; j++)
+		{
+			matrix_in[i][j] = (uint32_t)(max(round(temp_matrix[i][j] * (double)scalar), 0.0));
+			if(matrix_in[i][j] > max_value)
+			{
+				max_value = matrix_in[i][j];
+			}
+		}
+	}
+	temp_matrix.close();
+	return max_value;
+}
+
+
+void Landscape::setDims(SimParameters mapvarsin)
 {
 	if(!check_set_dim)  // checks to make sure it hasn't been run already.
 	{
@@ -34,26 +86,24 @@ void Map::setDims(SimParameters mapvarsin)
 	}
 	else
 	{
-		cerr << "ERROR_MAP_001: Dimensions have already been set" << endl;
-		return;
+		writeError("ERROR_MAP_001: Dimensions have already been set");
 	}
-	return;
 }
 
-bool Map::checkMapExists()
+bool Landscape::checkMapExists()
 {
 	for(unsigned int i = 0; i < mapvars.configs.getSectionOptionsSize(); i++)
 	{
 		string tmppath = mapvars.configs[i].getOption("path");
 		if(!doesExistNull(tmppath))
 		{
-			return (false);
+			return false;
 		}
 	}
-	return (true);
+	return true;
 }
 
-void Map::calcFineMap()
+void Landscape::calcFineMap()
 {
 	string fileinput = mapvars.fine_map_file;
 	unsigned long mapxsize = mapvars.fine_map_x_size;
@@ -63,285 +113,101 @@ void Map::calcFineMap()
 		throw FatalException("ERROR_MAP_002: dimensions not set.");
 	}
 	// Note that the default "null" type is to have 100% forest cover in every cell.
-	#ifndef SIZE_LIMIT
-	if(mapxsize > 1000000 || mapysize > 1000000)
-	{
-		throw runtime_error("Extremely large map sizes set for " + fileinput + ": " + to_string(mapxsize) + ", " + to_string(mapysize) + "\n");
-	}
-	#endif
-	Matrix<float> toret;
-	toret.SetSize(mapysize, mapxsize);
-	fine_map.SetSize(mapysize, mapxsize);
-#ifdef DEBUG
-	writeInfo("Calculating fine map");
-#endif
-	if(fileinput == "null")
-	{
-		for(unsigned long i = 0; i < mapysize; i++)
-		{
-			for(unsigned long j = 0; j < mapxsize; j++)
-			{
-				toret[i][j] = 1.0;
-			}
-		}
-	}
-	else  // There is a map to read in.
-	{
-		toret.import(fileinput);
-	}
-#ifdef DEBUG
-	writeInfo("import complete");
-#endif
-	fine_max = 0;
-
-	for(unsigned long i = 0; i < mapysize; i++)
-	{
-		for(unsigned long j = 0; j < mapxsize; j++)
-		{
-			fine_map[i][j] = (unsigned long)(max((double)round(toret[i][j] * deme), 0.0));
-			if(fine_map[i][j] > fine_max)
-			{
-				fine_max = fine_map[i][j];
-			}
-		}
-	}
+	fine_max = importToMapAndRound(fileinput, fine_map, mapxsize, mapysize, deme);
 }
 
-void Map::calcPristineFineMap()
+void Landscape::calcPristineFineMap()
 {
-	string fileinput = mapvars.pristine_fine_map_file;
-	unsigned long mapxsize = mapvars.fine_map_x_size;
-	unsigned long mapysize = mapvars.fine_map_y_size;
+	string file_input = mapvars.pristine_fine_map_file;
+	unsigned long map_x_size = mapvars.fine_map_x_size;
+	unsigned long map_y_size = mapvars.fine_map_y_size;
 	if(!check_set_dim)  // checks that the dimensions have been set.
 	{
 		throw FatalException("ERROR_MAP_002: dimensions not set.");
 	}
-	#ifndef SIZE_LIMIT
-	if(mapxsize > 1000000 || mapysize > 1000000)
-	{
-		throw runtime_error("Extremely large map sizes set for " + fileinput + ": " + to_string(mapxsize) + ", " + to_string(mapysize) + "\n");
-	}
-	#endif
-	// Note that the default "null" type is to have 100% forest cover in every cell.
-	Matrix<float> toret;
-	has_pristine = true;
+	has_pristine = file_input != "none";
 	pristine_fine_max = 0;
-	if(fileinput == "null")
-	{
-		toret.SetSize(mapysize, mapxsize);
-		pristine_fine_map.SetSize(mapysize, mapxsize);
-		for(unsigned long i = 0; i < mapxsize; i++)
-		{
-			for(unsigned long j = 0; j < mapysize; j++)
-			{
-				toret[j][i] = 1.0;
-			}
-		}
-	}
-	else if(fileinput == "none")
-	{
-		has_pristine = false;
-	}
-	else  // There is a map to read in.
-	{
-		toret.SetSize(mapysize, mapxsize);
-		pristine_fine_map.SetSize(mapysize, mapxsize);
-		toret.import(fileinput);
-	}
-	// os << toret << endl;
 	if(has_pristine)
 	{
-		for(unsigned long i = 0; i < mapysize; i++)
-		{
-			for(unsigned long j = 0; j < mapxsize; j++)
-			{
-				pristine_fine_map[i][j] = (unsigned long)(max((double)round(toret[i][j] * deme), 0.0));
-				if(pristine_fine_map[i][j] > pristine_fine_max)
-				{
-					pristine_fine_max = pristine_fine_map[i][j];
-				}
-			}
-		}
+		pristine_fine_max = importToMapAndRound(file_input, pristine_fine_map, map_x_size, map_y_size, deme);
 	}
-	return;
 }
 
-void Map::calcCoarseMap()
+void Landscape::calcCoarseMap()
 {
-	string fileinput = mapvars.coarse_map_file;
-	unsigned long mapxsize = mapvars.coarse_map_x_size;
-	unsigned long mapysize = mapvars.coarse_map_y_size;
+	string file_input = mapvars.coarse_map_file;
+	unsigned long map_x_size = mapvars.coarse_map_x_size;
+	unsigned long map_y_size = mapvars.coarse_map_y_size;
 	if(!check_set_dim)  // checks that the dimensions have been set.
 	{
 		throw FatalException("ERROR_MAP_003: dimensions not set.");
 	}
-	#ifndef SIZE_LIMIT
-	if(mapxsize > 1000000 || mapysize > 1000000)
-	{
-		throw runtime_error("Extremely large map sizes set for " + fileinput + ": " + to_string(mapxsize) + ", " + to_string(mapysize) + "\n");
-	}
-	#endif
-	// Note that the default "null" type for the coarse type is to have a density of 1 in every cell. "none" defaults to no
-	// pristine map
-	Matrix<float> toret;
-	bCoarse = true;
+	has_coarse = file_input != "none";
 	coarse_max = 0;
-	if(fileinput == "null")
+	if(has_coarse)
 	{
-		toret.SetSize(mapysize, mapxsize);
-		coarse_map.SetSize(mapysize, mapxsize);
-		for(unsigned long i = 0; i < mapxsize; i++)
-		{
-			for(unsigned long j = 0; j < mapysize; j++)
-			{
-				toret[j][i] = 1.0;
-			}
-		}
+		coarse_max = importToMapAndRound(file_input, coarse_map, map_x_size, map_y_size, deme);
 	}
-	else if(fileinput == "none")
-	{
-		bCoarse = false;
-	}
-	else  // There is a map to read in.
-	{
-		toret.SetSize(mapysize, mapxsize);
-		coarse_map.SetSize(mapysize, mapxsize);
-		toret.import(fileinput);
-	}
-	if(bCoarse)
-	{
-		for(unsigned long i = 0; i < mapysize; i++)
-		{
-			for(unsigned long j = 0; j < mapxsize; j++)
-			{
-				coarse_map[i][j] = (unsigned long)(max((double)round(toret[i][j] * deme), 0.0));
-				if(coarse_map[i][j] > coarse_max)
-				{
-					coarse_max = coarse_map[i][j];
-				}
-			}
-		}
-	}
-	return;
 }
 
-void Map::calcPristineCoarseMap()
+void Landscape::calcPristineCoarseMap()
 {
-	//	os << "pristine coarse map file: " << mapvars.pristine_coarse_map_file << endl;
-	string fileinput = mapvars.pristine_coarse_map_file;
-	unsigned long mapxsize = mapvars.coarse_map_x_size;
-	unsigned long mapysize = mapvars.coarse_map_y_size;
+	string file_input = mapvars.pristine_coarse_map_file;
+	unsigned long map_x_size = mapvars.coarse_map_x_size;
+	unsigned long map_y_size = mapvars.coarse_map_y_size;
 	if(!check_set_dim)  // checks that the dimensions have been set.
 	{
 		throw FatalException("ERROR_MAP_003: dimensions not set.");
 	}
-	#ifndef SIZE_LIMIT
-	if(mapxsize > 1000000 || mapysize > 1000000)
-	{
-		throw runtime_error("Extremely large map sizes set for " + fileinput + ": " + to_string(mapxsize) + ", " + to_string(mapysize) + "\n");
-	}
-	#endif
-	// Note that the default "null" type for the coarse type is to have non-forest in every cell.
-	Matrix<float> toret;
 	pristine_coarse_max = 0;
-	if(bCoarse)
+	if(has_coarse)
 	{
-		if(fileinput == "null")
+		has_pristine = file_input != "none";
+		if(has_pristine)
 		{
-			toret.SetSize(mapysize, mapxsize);
-			pristine_coarse_map.SetSize(mapysize, mapxsize);
-			for(unsigned long i = 0; i < mapxsize; i++)
-			{
-				for(unsigned long j = 0; j < mapysize; j++)
-				{
-					toret[j][i] = 1.0;
-				}
-			}
-		}
-		else if(fileinput == "none")
-		{
-			has_pristine = false;
-		}
-		else  // There is a map to read in.
-		{
-			toret.SetSize(mapysize, mapxsize);
-			pristine_coarse_map.SetSize(mapysize, mapxsize);
-			toret.import(fileinput);
+			pristine_coarse_max = importToMapAndRound(file_input, pristine_coarse_map, map_x_size, map_y_size, deme);
 		}
 	}
-	if(bCoarse && has_pristine)
-	{
-		for(unsigned long i = 0; i < mapysize; i++)
-		{
-			for(unsigned long j = 0; j < mapxsize; j++)
-			{
-				pristine_coarse_map[i][j] = (unsigned long)(max((double)round(toret[i][j] * deme), 0.0));
-				if(pristine_coarse_map[i][j] > pristine_coarse_max)
-				{
-					pristine_coarse_max = pristine_coarse_map[i][j];
-				}
-			}
-		}
-	}
-	return;
 }
 
-void Map::setTimeVars(double gen_since_pristine_in, double habitat_change_rate_in)
+void Landscape::setTimeVars(double gen_since_pristine_in, double habitat_change_rate_in)
 {
 	update_time = 0;
 	gen_since_pristine = gen_since_pristine_in;
 	habitat_change_rate = habitat_change_rate_in;
 }
 
-void Map::calcOffset()
+void Landscape::calcOffset()
 {
 	if(mapvars.times_file != "null")
 	{
 		mapvars.setPristine(0);
 	}
 	//	os << mapvars.times_file << endl;
-	if(fine_map.GetCols() == 0 || fine_map.GetRows() == 0)
+	if(fine_map.getCols() == 0 || fine_map.getRows() == 0)
 	{
 		throw FatalException("ERROR_MAP_004: fine map not set.");
 	}
-	if(coarse_map.GetCols() == 0 || coarse_map.GetRows() == 0)
+	if(coarse_map.getCols() == 0 || coarse_map.getRows() == 0)
 	{
-		if(bCoarse)
+		if(has_coarse)
 		{
-			coarse_map.SetSize(fine_map.GetRows(), fine_map.GetCols());
+			coarse_map.setSize(fine_map.getRows(), fine_map.getCols());
 		}
 		//		throw FatalException("ERROR_MAP_004: coarse map not set.");
 	}
-	fine_x_offset = mapvars.fine_map_x_offset + mapvars.sample_x_offset;
-	fine_y_offset = mapvars.fine_map_y_offset + mapvars.sample_y_offset;
-	coarse_x_offset = mapvars.coarse_map_x_offset;
-	coarse_y_offset = mapvars.coarse_map_y_offset;
-	scale = mapvars.coarse_map_scale;
-	// this is the location of the top left (or north west) corner of the respective map
-	// and the x and y distance from the top left of the grid object that contains the initial lineages.
-	fine_x_min = -fine_x_offset;
-	fine_y_min = -fine_y_offset;
-	fine_x_max = fine_x_min + (fine_map.GetCols());
-	fine_y_max = fine_y_min + (fine_map.GetRows());
-	if(bCoarse) // Check if there is a coarse map
+	if(checkAllDimensionsZero())
 	{
-		coarse_x_min = -coarse_x_offset - fine_x_offset;
-		coarse_y_min = -coarse_y_offset - fine_y_offset;
-		coarse_x_max = coarse_x_min + scale * (coarse_map.GetCols());
-		coarse_y_max = coarse_y_min + scale * (coarse_map.GetRows());
+		calculateOffsetsFromMaps();
 	}
-	else // Just set the offsets to the same as the fine map
+	else
 	{
-		coarse_x_min = fine_x_min;
-		coarse_y_min = fine_y_min;
-		coarse_x_max = fine_x_max;
-		coarse_y_max = fine_y_max;
-		scale = 1;
+		calculateOffsetsFromParameters();
 	}
 	dispersal_relative_cost = mapvars.dispersal_relative_cost;
 #ifdef DEBUG
 	stringstream os;
-	os << "finex: " << fine_x_min << "," << fine_x_max << endl;
+	os << "\nfinex: " << fine_x_min << "," << fine_x_max << endl;
 	os << "finey: " << fine_y_min << "," << fine_y_max << endl;
 	os << "coarsex: " << coarse_x_min << "," << coarse_x_max << endl;
 	os << "coarsey: " << coarse_y_min << "," << coarse_y_max << endl;
@@ -358,19 +224,65 @@ void Map::calcOffset()
 		throw FatalException(
 			"ERROR_MAP_006: FATAL - fine map extremes outside coarse map or sample grid larger than fine map");
 	}
-	return;
 }
 
-void Map::validateMaps()
+bool Landscape::checkAllDimensionsZero()
+{
+	return mapvars.fine_map_x_offset == 0 && mapvars.fine_map_y_offset == 0 && mapvars.coarse_map_x_offset == 0 &&
+			mapvars.coarse_map_y_offset == 0 && mapvars.sample_x_offset == 0 && mapvars.sample_y_offset == 0 &&
+			mapvars.fine_map_x_size == 0 && mapvars.fine_map_y_size == 0 && mapvars.coarse_map_x_size == 0 &&
+			mapvars.coarse_map_y_size == 0;
+}
+
+void Landscape::calculateOffsetsFromMaps()
+{
+	// TODO complete this functionality - required for rcoalescence
+
+}
+
+void Landscape::calculateOffsetsFromParameters()
+{
+	fine_x_offset = mapvars.fine_map_x_offset + mapvars.sample_x_offset;
+	fine_y_offset = mapvars.fine_map_y_offset + mapvars.sample_y_offset;
+	coarse_x_offset = mapvars.coarse_map_x_offset;
+	coarse_y_offset = mapvars.coarse_map_y_offset;
+	scale = mapvars.coarse_map_scale;
+	// this is the location of the top left (or north west) corner of the respective map
+	// and the x and y distance from the top left of the grid object that contains the initial lineages.
+	fine_x_min = -fine_x_offset;
+	fine_y_min = -fine_y_offset;
+	fine_x_max = fine_x_min + (fine_map.getCols());
+	fine_y_max = fine_y_min + (fine_map.getRows());
+	if(has_coarse) // Check if there is a coarse map
+	{
+		coarse_x_min = -coarse_x_offset - fine_x_offset;
+		coarse_y_min = -coarse_y_offset - fine_y_offset;
+		coarse_x_max = coarse_x_min + scale * (coarse_map.getCols());
+		coarse_y_max = coarse_y_min + scale * (coarse_map.getRows());
+	}
+	else // Just set the offsets to the same as the fine map
+	{
+		coarse_x_min = fine_x_min;
+		coarse_y_min = fine_y_min;
+		coarse_x_max = fine_x_max;
+		coarse_y_max = fine_y_max;
+		scale = 1;
+	}
+}
+
+
+
+void Landscape::validateMaps()
 {
 	stringstream os;
 	os << "\rValidating maps..." << flush;
-	double dTotal = fine_map.GetCols() + coarse_map.GetCols();
+	double dTotal = fine_map.getCols() + coarse_map.getCols();
 	unsigned long iCounter = 0;
 	if(has_pristine)
 	{
-		if(fine_map.GetCols() == pristine_fine_map.GetCols() && fine_map.GetRows() == pristine_fine_map.GetRows() &&
-		   coarse_map.GetCols() == pristine_coarse_map.GetCols() && coarse_map.GetRows() == pristine_coarse_map.GetRows())
+		if(fine_map.getCols() == pristine_fine_map.getCols() && fine_map.getRows() == pristine_fine_map.getRows() &&
+				coarse_map.getCols() == pristine_coarse_map.getCols() && coarse_map.getRows() ==
+																			pristine_coarse_map.getRows())
 		{
 			os << "\rValidating maps...map sizes okay" << flush;
 			writeInfo(os.str());
@@ -378,11 +290,11 @@ void Map::validateMaps()
 		else
 		{
 			throw FatalException(
-					"ERROR_MAP_009: Map validation failed - modern and pristine maps are not the same dimensions.");
+					"ERROR_MAP_009: Landscape validation failed - modern and pristine maps are not the same dimensions.");
 		}
-		for(unsigned long i = 0; i < fine_map.GetCols(); i++)
+		for(unsigned long i = 0; i < fine_map.getCols(); i++)
 		{
-			for(unsigned long j = 0; j < fine_map.GetRows(); j++)
+			for(unsigned long j = 0; j < fine_map.getRows(); j++)
 			{
 				if(fine_map[j][i] > pristine_fine_map[j][i])
 				{
@@ -392,7 +304,7 @@ void Map::validateMaps()
 					ss << " x,y: " << i << "," << j << endl;
 					writeLog(50, ss);
 #endif //DEBUG
-					throw FatalException("ERROR_MAP_007: Map validation failed - fine map value larger "
+					throw FatalException("ERROR_MAP_007: Landscape validation failed - fine map value larger "
 											  "than pristine fine map value.");
 				}
 			}
@@ -405,12 +317,12 @@ void Map::validateMaps()
 			}
 		}
 	}
-	iCounter = fine_map.GetCols();
+	iCounter = fine_map.getCols();
 	if(has_pristine)
 	{
-		for(unsigned long i = 0; i < coarse_map.GetCols(); i++)
+		for(unsigned long i = 0; i < coarse_map.getCols(); i++)
 		{
-			for(unsigned long j = 0; j < coarse_map.GetRows(); j++)
+			for(unsigned long j = 0; j < coarse_map.getRows(); j++)
 			{
 				if(coarse_map[j][i] > pristine_coarse_map[j][i])
 				{
@@ -422,7 +334,7 @@ void Map::validateMaps()
 					ss << " x,y: " << i << "," << j;
 					writeLog(50, ss);
 #endif // DEBUG
-					throw FatalException("ERROR_MAP_008: Map validation failed - coarse map value larger "
+					throw FatalException("ERROR_MAP_008: Landscape validation failed - coarse map value larger "
 											  "than pristine coarse map value.");
 				}
 			}
@@ -441,7 +353,7 @@ void Map::validateMaps()
 	writeInfo(os.str());
 }
 
-void Map::updateMap(double generation)
+void Landscape::updateMap(double generation)
 {
 	// only update the map if the pristine state has not been reached.
 	if(!mapvars.is_pristine && has_pristine)
@@ -479,26 +391,26 @@ void Map::updateMap(double generation)
 	}
 }
 
-void Map::setLandscape(string landscape_type)
+void Landscape::setLandscape(string landscape_type)
 {
 	if(landscape_type == "infinite")
 	{
 		writeInfo("Setting infinite landscape.\n");
-		getValFunc = &Map::getValInfinite;
+		getValFunc = &Landscape::getValInfinite;
 	}
 	else if(landscape_type == "tiled_coarse")
 	{
 		writeInfo("Setting tiled coarse infinite landscape.\n");
-		getValFunc = &Map::getValCoarseTiled;
+		getValFunc = &Landscape::getValCoarseTiled;
 	}
 	else if(landscape_type == "tiled_fine")
 	{
 		writeInfo("Setting tiled fine infinite landscape.\n");
-		getValFunc = &Map::getValFineTiled;
+		getValFunc = &Landscape::getValFineTiled;
 	}
 	else if(landscape_type == "closed")
 	{
-		getValFunc = &Map::getValFinite;
+		getValFunc = &Landscape::getValFinite;
 	}
 	else
 	{
@@ -506,13 +418,13 @@ void Map::setLandscape(string landscape_type)
 	}
 }
 
-unsigned long Map::getVal(const double& x, const double& y,
+unsigned long Landscape::getVal(const double& x, const double& y,
 						  const long& xwrap, const long& ywrap, const double& current_generation)
 {
 	return (this->*getValFunc)(x, y, xwrap, ywrap, current_generation);
 }
 
-unsigned long Map::getValInfinite(
+unsigned long Landscape::getValInfinite(
 	const double& x, const double& y, const long& xwrap, const long& ywrap, const double& current_generation)
 {
 	double xval, yval;
@@ -526,51 +438,51 @@ unsigned long Map::getValInfinite(
 	return getValFinite(x, y, xwrap, ywrap, current_generation);
 }
 
-unsigned long Map::getValCoarseTiled(
+unsigned long Landscape::getValCoarseTiled(
 	const double& x, const double& y, const long& xwrap, const long& ywrap, const double& current_generation)
 {
-	double newx = fmod(x + (xwrap * x_dim) + fine_x_offset + coarse_x_offset, coarse_map.GetCols());
-	double newy = fmod(y + (ywrap * y_dim) + fine_x_offset + coarse_x_offset, coarse_map.GetRows());
+	double newx = fmod(x + (xwrap * x_dim) + fine_x_offset + coarse_x_offset, coarse_map.getCols());
+	double newy = fmod(y + (ywrap * y_dim) + fine_x_offset + coarse_x_offset, coarse_map.getRows());
 	if(newx < 0)
 	{
-		newx += coarse_map.GetCols();
+		newx += coarse_map.getCols();
 	}
 	if(newy < 0)
 	{
-		newy += coarse_map.GetRows();
+		newy += coarse_map.getRows();
 	}
 	return getValCoarse(newx, newy, current_generation);
 }
 
-unsigned long Map::getValFineTiled(
+unsigned long Landscape::getValFineTiled(
 	const double& x, const double& y, const long& xwrap, const long& ywrap, const double& current_generation)
 {
 
-	double newx = fmod(x + (xwrap * x_dim) + fine_x_offset, fine_map.GetCols());
-	double newy = fmod(y + (ywrap * y_dim) + fine_y_offset, fine_map.GetRows());
+	double newx = fmod(x + (xwrap * x_dim) + fine_x_offset, fine_map.getCols());
+	double newy = fmod(y + (ywrap * y_dim) + fine_y_offset, fine_map.getRows());
 	// Now adjust for incorrect wrapping behaviour of fmod
 	if(newx < 0)
 	{
-		newx += fine_map.GetCols();
+		newx += fine_map.getCols();
 	}
 	if(newy < 0)
 	{
-		newy += fine_map.GetRows();
+		newy += fine_map.getRows();
 	}
 #ifdef DEBUG
-	if(newx >= fine_map.GetCols() || newx < 0 || newy >= fine_map.GetRows() || newy < 0)
+	if(newx >= fine_map.getCols() || newx < 0 || newy >= fine_map.getRows() || newy < 0)
 	{
 		stringstream ss;
 		ss << "Fine map indexing out of range of fine map." << endl;
 		ss << "x, y: " << newx << ", " << newy << endl;
-		ss << "cols, rows: " << fine_map.GetCols() << ", " << fine_map.GetRows() << endl;
+		ss << "cols, rows: " << fine_map.getCols() << ", " << fine_map.getRows() << endl;
 		throw out_of_range(ss.str());
 	}
 #endif
 	return getValFine(newx, newy, current_generation);
 }
 
-unsigned long Map::getValCoarse(const double &xval, const double &yval, const double &current_generation)
+unsigned long Landscape::getValCoarse(const double &xval, const double &yval, const double &current_generation)
 {
 	unsigned long retval = 0;
 	if(has_pristine)
@@ -608,7 +520,7 @@ unsigned long Map::getValCoarse(const double &xval, const double &yval, const do
 	return retval;
 }
 
-unsigned long Map::getValFine(const double&xval, const double &yval, const double& current_generation)
+unsigned long Landscape::getValFine(const double&xval, const double &yval, const double& current_generation)
 {
 	unsigned long retval = 0;
 	if(has_pristine)
@@ -644,7 +556,7 @@ unsigned long Map::getValFine(const double&xval, const double &yval, const doubl
 	return retval;
 }
 
-unsigned long Map::getValFinite(
+unsigned long Landscape::getValFinite(
 	const double& x, const double& y, const long& xwrap, const long& ywrap, const double& current_generation)
 {
 
@@ -657,7 +569,7 @@ unsigned long Map::getValFinite(
 		return 0;
 	}
 	if((xval < fine_x_min || xval >= fine_x_max || yval < fine_y_min ||
-	   yval >= fine_y_max) && bCoarse)  // check if the coordinate comes from the coarse resolution map.
+	   yval >= fine_y_max) && has_coarse)  // check if the coordinate comes from the coarse resolution map.
 	{
 		// take in to account the fine map offsetting
 		xval += fine_x_offset;
@@ -675,27 +587,27 @@ unsigned long Map::getValFinite(
 
 }
 
-unsigned long Map::convertSampleXToFineX(const unsigned long &x, const long &xwrap)
+unsigned long Landscape::convertSampleXToFineX(const unsigned long &x, const long &xwrap)
 {
 	return x + fine_x_offset + (xwrap * x_dim);
 }
 
-unsigned long Map::convertSampleYToFineY(const unsigned long &y, const long &ywrap)
+unsigned long Landscape::convertSampleYToFineY(const unsigned long &y, const long &ywrap)
 {
 	return y + fine_y_offset + (ywrap * y_dim);
 }
 
-void Map::convertFineToSample(long & x, long & xwrap, long &y, long &ywrap)
+void Landscape::convertFineToSample(long & x, long & xwrap, long &y, long &ywrap)
 {
 	auto tmpx = double(x);
 	auto tmpy = double(y);
 	convertCoordinates(tmpx, tmpy, xwrap, ywrap);
-	x = floor(tmpx);
-	y = floor(tmpy);
+	x = static_cast<long>(floor(tmpx));
+	y = static_cast<long>(floor(tmpy));
 }
 
 
-unsigned long Map::getInitialCount(double dSample, DataMask& samplemask)
+unsigned long Landscape::getInitialCount(double dSample, DataMask& samplemask)
 {
 	unsigned long toret;
 	toret = 0;
@@ -704,13 +616,13 @@ unsigned long Map::getInitialCount(double dSample, DataMask& samplemask)
 	unsigned long max_x, max_y;
 	if(samplemask.getDefault())
 	{
-		max_x = fine_map.GetCols();
-		max_y = fine_map.GetRows();
+		max_x = fine_map.getCols();
+		max_y = fine_map.getRows();
 	}
 	else
 	{
-		max_x = samplemask.sample_mask.GetCols();
-		max_y = samplemask.sample_mask.GetRows();
+		max_x = samplemask.sample_mask.getCols();
+		max_y = samplemask.sample_mask.getRows();
 	}
 	for(unsigned long i = 0; i < max_x; i++)
 	{
@@ -728,17 +640,17 @@ unsigned long Map::getInitialCount(double dSample, DataMask& samplemask)
 	return toret;
 }
 
-SimParameters Map::getSimParameters()
+SimParameters Landscape::getSimParameters()
 {
 	return mapvars;
 }
 
-bool Map::checkMap(const double& x, const double& y, const long& xwrap, const long& ywrap, const double generation)
+bool Landscape::checkMap(const double& x, const double& y, const long& xwrap, const long& ywrap, const double generation)
 {
 	return getVal(x, y, xwrap, ywrap, generation) != 0;
 }
 
-bool Map::checkFine(const double& x, const double& y, const long& xwrap, const long& ywrap)
+bool Landscape::checkFine(const double& x, const double& y, const long& xwrap, const long& ywrap)
 {
 	double tmpx, tmpy;
 	tmpx = x + xwrap * x_dim;
@@ -746,7 +658,7 @@ bool Map::checkFine(const double& x, const double& y, const long& xwrap, const l
 	return !(tmpx < fine_x_min || tmpx >= fine_x_max || tmpy < fine_y_min || tmpy >= fine_y_max);
 }
 
-void Map::convertCoordinates(double& x, double& y, long& xwrap, long& ywrap)
+void Landscape::convertCoordinates(double& x, double& y, long& xwrap, long& ywrap)
 {
 	xwrap += floor(x / x_dim);
 	ywrap += floor(y / y_dim);
@@ -754,7 +666,7 @@ void Map::convertCoordinates(double& x, double& y, long& xwrap, long& ywrap)
 	y = y - ywrap * y_dim;
 }
 
-unsigned long Map::runDispersal(const double& dist,
+unsigned long Landscape::runDispersal(const double& dist,
 					   const double& angle,
 					   long& startx,
 					   long& starty,
@@ -946,14 +858,14 @@ unsigned long Map::runDispersal(const double& dist,
 	return ret;
 };
 
-void Map::clearMap()
+void Landscape::clearMap()
 {
 	current_map_time = 0;
 	check_set_dim = false;
 	is_pristine = false;
 }
 
-string Map::printVars()
+string Landscape::printVars()
 {
 	stringstream os;
 	os << "fine x limits: " << fine_x_min << " , " << fine_x_max << endl;
@@ -965,12 +877,12 @@ string Map::printVars()
 	return os.str();
 }
 
-unsigned long Map::getHabitatMax()
+unsigned long Landscape::getHabitatMax()
 {
 	return habitat_max;
 }
 
-void Map::recalculateHabitatMax()
+void Landscape::recalculateHabitatMax()
 {
 	habitat_max = 0;
 	if(is_pristine && has_pristine)
@@ -1013,3 +925,4 @@ void Map::recalculateHabitatMax()
 	}
 #endif
 }
+

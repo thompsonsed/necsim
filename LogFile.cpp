@@ -12,6 +12,7 @@
 #include <boost/filesystem.hpp>
 #include "LogFile.h"
 #include "Filesystem.h"
+#include "CustomExceptions.h"
 
 string getTime()
 {

@@ -133,7 +133,7 @@ struct SimParameters
 	 */
 	void importParameters(const string &conf_in)
 	{
-		// do the importSpatialParameters of the values from combination of command-line arguments and file.
+		// do the import of the values from combination of command-line arguments and file.
 		configs.setConfig(conf_in, false, true);
 		configs.parseConfig();
 		importParameters();

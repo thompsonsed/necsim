@@ -16,7 +16,7 @@ using namespace std;
 void writeInfo(string message)
 {
 #ifdef DEBUG
-	writeLog(10, message);
+	writeLog(20, message);
 #endif // DEBUG
 	cout << message << flush;
 }
@@ -24,7 +24,7 @@ void writeInfo(string message)
 void writeWarning(string message)
 {
 #ifdef DEBUG
-	writeLog(20, message);
+	writeLog(30, message);
 #endif // DEBUG
 	cerr << message << flush;
 }
@@ -32,7 +32,7 @@ void writeWarning(string message)
 void writeError(string message)
 {
 #ifdef DEBUG
-	writeLog(30, message);
+	writeLog(40, message);
 #endif // DEBUG
 	cerr << message << flush;
 }
@@ -40,7 +40,7 @@ void writeError(string message)
 void writeCritical(string message)
 {
 #ifdef DEBUG
-	writeLog(40, message);
+	writeLog(50, message);
 #endif // DEBUG
 	cerr << message << flush;
 }
@@ -56,5 +56,5 @@ void writeLog(const int &level, stringstream &message)
 {
 	writeLog(level, message.str());
 }
-
 #endif // DEBUG
+

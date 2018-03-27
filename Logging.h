@@ -6,15 +6,18 @@
  * @brief Routines for writing to cout. Intended to be overloaded for pythonic versions with the logging module.
  * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
  */
+#ifndef LOGGING_IMPORT_H
+#define LOGGING_IMPORT_H
 #include <string>
 #include <iostream>
 #include <cstdio>
 #include <stdexcept>
+#include <sstream>
 #include "LogFile.h"
+#include "CPLCustomHandler.h"
 
 using namespace std;
-#ifndef LOGGING_IMPORT
-#define LOGGING_IMPORT
+
 /**
  * @brief Writes to cout, or to info in logging module if being compiled with python
  * @param message the message to write out
@@ -54,5 +57,5 @@ void writeLog(const int &level, string message);
  * @param message the message to pass out as a stringstream
  */
 void writeLog(const int &level, stringstream &message);
-#endif
-#endif
+#endif // DEBUG
+#endif // LOGGING_IMPORT_H

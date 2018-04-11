@@ -117,20 +117,13 @@ double DataPoint::getMinmax()
 
 void DataPoint::decreaseNwrap()
 {
-	try
+	if(nwrap==0)
 	{
-		if(nwrap==0)
-		{
-			throw out_of_range("ERROR_DATA_001: Trying to decrease  nwrap less than 0.");
-		}
-		else
-		{
-			nwrap --;
-		}
+		throw out_of_range("ERROR_DATA_001: Trying to decrease  nwrap less than 0.");
 	}
-	catch(out_of_range& oor)
+	else
 	{
-		cerr << oor.what() << endl;
+	nwrap --;
 	}
 }
 

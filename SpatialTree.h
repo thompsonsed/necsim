@@ -96,25 +96,13 @@ protected:
 	//  strings containing the file names to be imported.
 	string fine_map_input, coarse_map_input;
 	string pristine_fine_map_input, pristine_coarse_map_input;
-	// the time since pristine forest and the rate of change of the rainforest.
-	double gen_since_pristine, habitat_change_rate;
 	// the variables for the grid containing the initial individuals.
 	unsigned long grid_x_size, grid_y_size;
-	// The fine map variables at the same resolution as the grid.
-	// the coarse map variables at a scaled resolution of the fine map.
-	long fine_map_x_size, fine_map_y_size, fine_map_x_offset, fine_map_y_offset;
-	long coarse_map_x_size, coarse_map_y_size, coarse_map_x_offset, coarse_map_y_offset, coarse_map_scale;
 	// Landscape object containing both the coarse and fine maps for checking whether or not there is habitat at a
 	// particular location.
 	Landscape landscape;
 	// An indexing spatial positioning of the lineages
 	Matrix<SpeciesList> grid;
-	// dispersal and sigma references
-	double sigma, tau;
-	// the cost for moving through non-habitat. 1.0 means there is no cost. 10 means that movement is 10x
-	// slower through habitat.
-	double dispersal_relative_cost;
-	// the desired number of species we are aiming for. If it is 0, we will carry on forever.
 	unsigned long desired_specnum;
 	// contains the DataMask for where we should start lineages from.
 	DataMask samplegrid;
@@ -127,23 +115,9 @@ public:
 	 */
 	SpatialTree() : Tree()
 	{
-		sigma = 0.0;
-		tau = 0.0;
 		outdatabase = nullptr;
-		gen_since_pristine = 0.0;
-		habitat_change_rate = 0.0;
 		grid_x_size = 0;
 		grid_y_size = 0;
-		fine_map_x_size = 0;
-		fine_map_y_size = 0;
-		fine_map_x_offset = 0;
-		fine_map_y_offset = 0;
-		coarse_map_x_size = 0;
-		coarse_map_y_size = 0;
-		coarse_map_x_offset = 0;
-		coarse_map_y_offset = 0;
-		coarse_map_scale = 1;
-		dispersal_relative_cost = 1.0;
 		desired_specnum = 1;
 	}
 

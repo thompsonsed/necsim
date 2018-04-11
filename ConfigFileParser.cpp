@@ -248,7 +248,7 @@ bool ConfigOption::hasSection(const string &sec)
 	{
 		if(config.section == sec)
 		{
-			return (true);
+			return true;
 		}
 	}
 	return false;
@@ -260,7 +260,7 @@ vector<string> ConfigOption::getSectionValues(string sec)
 	{
 		if(config.section == sec)
 		{
-			return (config.val);
+			return config.val;
 		}
 	}
 	throw ConfigException("Section not found in config file: " + sec);
@@ -276,7 +276,7 @@ string ConfigOption::getSectionOptions(string section, string ref)
 			{
 				if(config.refs[j] == ref)
 				{
-					return (config.val[j]);
+					return config.val[j];
 				}
 			}
 		}
@@ -297,7 +297,7 @@ string ConfigOption::getSectionOptions(string section, string ref, string def)
 			{
 				if(config.refs[j] == ref)
 				{
-					return (config.val[j]);
+					return config.val[j];
 				}
 			}
 		}

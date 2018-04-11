@@ -40,6 +40,7 @@ protected:
 	
 	// Our map of dispersal probabilities (if required)
 	// This will contain cummulative probabilities across rows
+	// So dispersal is from the y cell to each of the x cells.
 	Map<double> dispersal_prob_map;
 	// Our random number generator for dispersal distances
 	// This is a pointer so that the random number generator is the same
@@ -75,8 +76,8 @@ public:
 	void setRandomNumber(NRrand * NR_ptr);
 	
 	/**
-	 * @brief Sets the pointer to the Map object
-	 * @param map_ptr pointer to a Map object
+	 * @brief Sets the pointer to the Landscape object
+	 * @param map_ptr pointer to a Landscape object
 	 */
 	void setHabitatMap(Landscape *map_ptr);
 	
@@ -102,7 +103,12 @@ public:
 					  const unsigned long dispersal_x, const unsigned long dispersal_y,
 					  const double &m_probin, const double &cutoffin,
 					  const double &sigmain, const double &tauin, const bool &restrict_self);
-	
+
+	/**
+	 * @brief Sets the dispersal parameters from the SimParameters object.
+	 * @param simParameters pointer to the simulation parameters to set
+	 */
+	void setDispersal(SimParameters * simParameters);
 	/**
 	 * @brief Picks a random cell from the whole map and stores the value in the step object
 	 * @param this_step the step object to store end points in
@@ -128,7 +134,7 @@ public:
 	/**
 	 * @brief Calculates the cell reference for a particular coordinate
 	 * 
-	 * The formula for this calculation is x + (y * xdim) where xdim is the dimensions of the fine map, 
+	 * The formula for this calculation is x + (y * xdim) where xdim is the x dimension of the fine map,
 	 * and x and y are the coordinates for the fine map
 	 * 
 	 * @param this_step the step object containing the x, y location, and x,y wrapping

@@ -271,28 +271,10 @@ void SpatialTree::setParameters()
 		coarse_map_input = sim_parameters.coarse_map_file;
 		grid_x_size = sim_parameters.grid_x_size;
 		grid_y_size = sim_parameters.grid_y_size;
-
-		fine_map_x_size = sim_parameters.fine_map_x_size;
-		fine_map_y_size = sim_parameters.fine_map_y_size;
-		fine_map_x_offset = sim_parameters.fine_map_x_offset;
-		fine_map_y_offset = sim_parameters.fine_map_y_offset;
-
-		coarse_map_x_size = sim_parameters.coarse_map_x_size;
-		coarse_map_y_size = sim_parameters.coarse_map_y_size;
-		coarse_map_x_offset = sim_parameters.coarse_map_x_offset;
-		coarse_map_y_offset = sim_parameters.coarse_map_y_offset;
-		coarse_map_scale = sim_parameters.coarse_map_scale;
-		dispersal_relative_cost = sim_parameters.dispersal_relative_cost;
-
-
 		// pristine map information
 		pristine_fine_map_input = sim_parameters.pristine_fine_map_file;
 		pristine_coarse_map_input = sim_parameters.pristine_coarse_map_file;
-		gen_since_pristine = sim_parameters.gen_since_pristine;
-		habitat_change_rate = sim_parameters.habitat_change_rate;
 		desired_specnum = sim_parameters.desired_specnum;
-		sigma = sim_parameters.sigma;
-		tau = sim_parameters.tau;
 		if(sim_parameters.landscape_type == "none")
 		{
 			sim_parameters.landscape_type = "closed";
@@ -315,7 +297,7 @@ void SpatialTree::importMaps()
 	if(has_imported_vars)
 	{
 		// Set the dimensions
-		landscape.setDims(sim_parameters);
+		landscape.setDims(&sim_parameters);
 		try
 		{
 			// Set the time variables
@@ -564,7 +546,7 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 
 			samplegrid.convertBoolean(landscape, deme_sample, generation);
 			// if there are no additional time points to sample at, we can remove the sample mask from memory.
-			if(!(has_times_file && this_step.time_reference < reference_times.size()))
+			if(!(uses_temporal_sampling && this_step.time_reference < reference_times.size()))
 			{
 				samplegrid.clearSpatialMask();
 			}
@@ -665,7 +647,6 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
 			active[chosen].setNwrap(0);
 			active[chosen].setNext(0);
 			active[chosen].setListPosition(0);
-			nwrap = 0;
 		}
 		else
 		{
@@ -695,7 +676,6 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
 					active[lastpos].decreaseNwrap();
 					lastpos = active[lastpos].getNext();
 				}
-
 			}
 			else
 			{
@@ -710,9 +690,8 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
 			active[chosen].setNwrap(0);
 			active[chosen].setNext(0);
 			active[chosen].setListPosition(0);
-			nwrap = 0;
-
 		}
+#ifdef DEBUG
 		unsigned long iCount = 1;
 		long pos = grid[oldy][oldx].getNext();
 		if(pos == 0)
@@ -721,30 +700,27 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
 		}
 		else
 		{
-			int c = 0;
+			unsigned long c = 0;
 			while(active[pos].getNext() != 0)
 			{
 				c++;
 				iCount++;
 				pos = active[pos].getNext();
-				if(c > 10000)
+				if(c > std::numeric_limits<unsigned long>::max())
 				{
-					//					os << pos << endl;
-					//					os << active[pos].getNext() << endl;
-					break;
+					throw FatalException("ERROR_MOVE_014: Wrapping exceeds numeric limits.");
 				}
 			}
 		}
 
 		if(iCount != grid[oldy][oldx].getNwrap())
 		{
-#ifdef DEBUG
 			stringstream ss;
 			ss << "Nwrap: " << grid[oldy][oldx].getNwrap() << " Counted lineages: " << iCount << endl;
 			writeLog(50, ss);
-#endif // DEBUG
 			throw FatalException("ERROR_MOVE_014: Nwrap not set correctly after move for grid cell");
 		}
+#endif // DEBUG
 	}
 }
 
@@ -1232,10 +1208,6 @@ void SpatialTree::pristineStepChecks()
 {
 	if(landscape.getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap, generation) == 0)
 	{
-		cerr << "x,y: " << this_step.oldx << "," << this_step.oldy << " xwrap, ywrap: " << this_step.oldxwrap;
-		cerr << "," << this_step.oldywrap << endl;
-		cerr << "listsize: " << grid[this_step.oldy][this_step.oldx].getListsize()
-			 << "maxsize: " << grid[this_step.oldy][this_step.oldx].getMaxsize() << endl;
 		throw FatalException(
 			string("ERROR_MOVE_008: Dispersal attempted from non-forest. Check dispersal function. Forest "
 				   "cover: " +
@@ -1362,19 +1334,19 @@ string SpatialTree::simulationParametersSqlInsertion()
 	to_execute = "INSERT INTO SIMULATION_PARAMETERS VALUES(" + to_string((long long)the_seed) + "," +
 				 to_string((long long)the_task);
 	to_execute += ",'" + out_directory + "'," + boost::lexical_cast<std::string>((long double)spec) + "," +
-				  to_string((long double)sigma) + ",";
-	to_execute += to_string((long double)tau) + "," + to_string((long long)deme) + ",";
-	to_execute += to_string((long double)deme_sample) + "," + to_string((long long)maxtime) + ",";
-	to_execute += to_string((long double)dispersal_relative_cost) + "," + to_string((long long)desired_specnum) + ",";
+				  to_string((long double)sim_parameters.sigma) + ",";
+	to_execute += to_string((long double)sim_parameters.tau) + "," + to_string((long long)sim_parameters.deme) + ",";
+	to_execute += to_string((long double)sim_parameters.deme_sample) + "," + to_string((long long)maxtime) + ",";
+	to_execute += to_string((long double)sim_parameters.dispersal_relative_cost) + "," + to_string((long long)desired_specnum) + ",";
 	to_execute += to_string((long double)sim_parameters.habitat_change_rate) + ",";
 	to_execute += to_string((long double)sim_parameters.gen_since_pristine) + ",'" + sim_parameters.times_file + "','";
-	to_execute += coarse_map_input + "'," + to_string((long long)coarse_map_x_size) + ",";
-	to_execute += to_string((long long)coarse_map_y_size) + "," + to_string((long long)coarse_map_x_offset) + ",";
-	to_execute += to_string((long long)coarse_map_y_offset) + "," + to_string((long long)coarse_map_scale) + ",'";
-	to_execute += fine_map_input + "'," + to_string((long long)fine_map_x_size) + "," + to_string((long long)fine_map_y_size);
-	to_execute += "," + to_string((long long)fine_map_x_offset) + "," + to_string((long long)fine_map_y_offset) + ",'";
-	to_execute += sim_parameters.sample_mask_file + "'," + to_string((long long)grid_x_size) + "," +
-				  to_string((long long) grid_y_size) + "," + to_string((long long) sim_parameters.sample_x_size) + ", ";
+	to_execute += coarse_map_input + "'," + to_string((long long)sim_parameters.coarse_map_x_size) + ",";
+	to_execute += to_string((long long)sim_parameters.coarse_map_y_size) + "," + to_string((long long)sim_parameters.coarse_map_x_offset) + ",";
+	to_execute += to_string((long long)sim_parameters.coarse_map_y_offset) + "," + to_string((long long)sim_parameters.coarse_map_scale) + ",'";
+	to_execute += fine_map_input + "'," + to_string((long long)sim_parameters.fine_map_x_size) + "," + to_string((long long)sim_parameters.fine_map_y_size);
+	to_execute += "," + to_string((long long)sim_parameters.fine_map_x_offset) + "," + to_string((long long)sim_parameters.fine_map_y_offset) + ",'";
+	to_execute += sim_parameters.sample_mask_file + "'," + to_string((long long)sim_parameters.grid_x_size) + "," +
+				  to_string((long long) sim_parameters.grid_y_size) + "," + to_string((long long) sim_parameters.sample_x_size) + ", ";
 	to_execute += to_string((long long) sim_parameters.sample_y_size) + ", ";
 	to_execute += to_string((long long) sim_parameters.sample_x_offset) + ", ";
 	to_execute += to_string((long long) sim_parameters.sample_y_offset) + ", '";
@@ -1423,8 +1395,10 @@ void SpatialTree::dumpMap(string pause_folder)
 	}
 	catch(exception& e)
 	{
-		cerr << e.what() << endl;
-		cerr << "Failed to perform map dump to " << pause_folder << endl;
+		stringstream ss;
+		ss << e.what() << endl;
+		ss << "Failed to perform map dump to " << pause_folder << endl;
+		writeCritical(ss.str());
 	}
 }
 
@@ -1508,6 +1482,7 @@ void SpatialTree::loadMapSave()
 		file_to_open = pause_sim_directory + string("/Pause/Dump_map_") + to_string(the_task) + "_" +
 					   to_string(the_seed) + string(".csv");
 		in5.open(file_to_open);
+		landscape.setDims(&sim_parameters);
 		in5 >> landscape;
 		in5.close();
 		importReproductionMap();
@@ -1786,9 +1761,6 @@ void SpatialTree::runChecks(const unsigned long& chosen, const unsigned long& co
 	if(active[chosen].getListpos() > grid[active[chosen].getYpos()][active[chosen].getXpos()].getMaxsize() &&
 	   active[chosen].getNwrap() == 0)
 	{
-		//				usleep(1);
-		cerr << "list_position: " << active[chosen].getListpos()
-			 << " maxsize: " << grid[active[chosen].getYpos()][active[chosen].getXpos()].getMaxsize() << endl;
 		throw FatalException("ERROR_MOVE_001: Listpos outside maxsize.");
 	}
 
@@ -1796,7 +1768,6 @@ void SpatialTree::runChecks(const unsigned long& chosen, const unsigned long& co
 		   grid[active[coalchosen].getYpos()][active[coalchosen].getXpos()].getMaxsize() &&
 	   active[coalchosen].getNwrap() == 0 && coalchosen != 0)
 	{
-		//				usleep(1);
 		throw FatalException("ERROR_MOVE_002: Coalchosen list_position outside maxsize.");
 	}
 #endif

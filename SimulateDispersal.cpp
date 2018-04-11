@@ -11,13 +11,14 @@
 
 
 #include "SimulateDispersal.h"
+#include "Logging.h"
 #include "CustomExceptions.h"
 #include "Filesystem.h"
 #include "Community.h"
 
 #include <utility>
 
-double distanceBetween(Cell &c1, Cell &c2)
+double distanceBetweenCells(Cell &c1, Cell &c2)
 {
 	return pow(pow(c1.x - c2.x, 2) + pow(c1.y - c2.y, 2), 0.5);
 }
@@ -26,94 +27,63 @@ void SimulateDispersal::setSequential(bool bSequential)
 	is_sequential = bSequential;
 }
 
-void SimulateDispersal::setSizes(unsigned long x, unsigned long y)
+void SimulateDispersal::setSimulationParameters(SimParameters * sim_parameters)
 {
-	if(!has_set_size)
-	{
-		density_map.setSize(y, x);
-		has_set_size = true;
-	}
-	else
-	{
-		throw FatalException("Dimensions of the density map already set.");
-	}
+	writeInfo("Setting simulation parameters...\n");
+	simParameters = sim_parameters;
+	simParameters->printSpatialVars();
 }
 
-void SimulateDispersal::importMaps(string map_file)
+void SimulateDispersal::importMaps()
 {
-	if(has_set_size)
+	writeInfo("Starting map import...\n");
+	if(!simParameters)
 	{
-		map_name = map_file;
-		if(map_file != "null")
-		{
-			density_map.import(map_file);
-			// Now loop over the density map to find the maximum value
-			for(unsigned long i = 0; i < density_map.getRows(); i ++)
-			{
-				for(unsigned long j = 0; j < density_map.getCols(); j ++)
-				{
-					if(density_map[i][j] > max_density)
-					{
-						max_density = density_map[i][j];
-					}
-				}
-			}
-			density_map.close();
-			if(max_density < 1)
-			{
-				throw FatalException("Maximum density on density map is less than 1. Please check your maps.");
-			}
-		}
-		else
-		{
-			for(unsigned long i = 0; i < density_map.getRows(); i ++)
-			{
-				for(unsigned long j = 0; j < density_map.getCols(); j ++)
-				{
-					density_map[i][j] = 1;
-				}
-			}
-			max_density = 1;
-		}
+		throw FatalException("Simulation parameters have not been set.");
 	}
-	else
-	{
-		throw FatalException("Dimensions of density map not set before import");
-	}
-}
-
-void SimulateDispersal::setDispersalParameters(
-	string dispersal_method_in, double sigma_in, double tau_in, double m_prob_in, double cutoff_in,
-	string landscape_type)
-{
-	random.setDispersalMethod(dispersal_method_in, m_prob_in, cutoff_in);
-	random.setDispersalParams(sigma_in, tau_in);
-	setLandscapeType(std::move(landscape_type));
-	dispersal_method = dispersal_method_in;
-	sigma = sigma_in;
-	tau = tau_in;
-	m_prob = m_prob_in;
-	cutoff = cutoff_in;
-}
-
-void SimulateDispersal::setLandscapeType(string landscape_type)
-{
-	if(landscape_type == "infinite")
-	{
-		getValFptr = &SimulateDispersal::getEndPointInfinite;
-	}
-	else if(landscape_type == "closed")
-	{
-		getValFptr = &SimulateDispersal::getEndPointClosed;
-	}
-	else if(landscape_type == "tiled")
-	{
-		getValFptr = &SimulateDispersal::getEndPointTiled;
-	}
-	else
-	{
-		throw FatalException("Landscape type not compatible: " + landscape_type);
-	}
+	dispersal_coordinator.setRandomNumber(&random);
+	dispersal_coordinator.setGenerationPtr(&generation);
+	dispersal_coordinator.setDispersal(simParameters);
+	density_landscape.setDims(simParameters);
+	dispersal_coordinator.setHabitatMap(&density_landscape);
+	density_landscape.calcFineMap();
+	density_landscape.calcCoarseMap();
+	density_landscape.calcOffset();
+	density_landscape.calcPristineFineMap();
+	density_landscape.calcPristineCoarseMap();
+	density_landscape.setLandscape(simParameters->landscape_type);
+	density_landscape.recalculateHabitatMax();
+//	if(fine_map_file != "null")
+//	{
+//		density_landscape.import(fine_map_file);
+//		// Now loop over the density map to find the maximum value
+//		for(unsigned long i = 0; i < density_landscape.getRows(); i ++)
+//		{
+//			for(unsigned long j = 0; j < density_landscape.getCols(); j ++)
+//			{
+//				if(density_landscape[i][j] > max_density)
+//				{
+//					max_density = density_landscape[i][j];
+//				}
+//			}
+//		}
+//		density_landscape.close();
+//		if(max_density < 1)
+//		{
+//			throw FatalException("Maximum density on density map is less than 1. Please check your maps.");
+//		}
+//	}
+//	else
+//	{
+//		for(unsigned long i = 0; i < density_landscape.getRows(); i ++)
+//		{
+//			for(unsigned long j = 0; j < density_landscape.getCols(); j ++)
+//			{
+//				density_landscape[i][j] = 1;
+//			}
+//		}
+//		max_density = 1;
+//		}
 }
 
 void SimulateDispersal::setOutputDatabase(string out_database)
@@ -146,20 +116,21 @@ void SimulateDispersal::storeCellList()
 {
 	unsigned long total = 0;
 	// First count the number of density cells and pick a cell size
-	for(unsigned long i = 0; i < density_map.getRows(); i++)
+	for(unsigned long i = 0; i < simParameters->sample_y_size; i++)
 	{
-		for(unsigned long j = 0; j < density_map.getCols(); j++)
+		for(unsigned long j = 0; j < simParameters->sample_x_size; j++)
 		{
-			total += density_map[i][j];
+			total += density_landscape.getVal(j, i, 0, 0, 0.0);
 		}
 	}
+	writeInfo("Choosing from " + to_string(total) + " cells.");
 	cells.resize(total);
 	unsigned long ref = 0;
-	for(unsigned long i = 0; i < density_map.getRows(); i++)
+	for(unsigned long i = 0; i < simParameters->sample_y_size; i++)
 	{
-		for(unsigned long j = 0; j < density_map.getCols(); j++)
+		for(unsigned long j = 0; j < simParameters->sample_x_size; j++)
 		{
-			for(unsigned long k = 0; k < density_map[i][j]; k++)
+			for(unsigned long k = 0; k < density_landscape.getVal(j, i, 0, 0, 0.0); k++)
 			{
 				cells[ref].x = j;
 				cells[ref].y = i;
@@ -175,103 +146,61 @@ const Cell& SimulateDispersal::getRandomCell()
 	return cells[index];
 }
 
-void SimulateDispersal::calculateNewPosition(const double &dist, const double &angle,
-											 const Cell &start_cell, Cell &end_cell)
+void SimulateDispersal::getEndPoint(Cell &this_cell)
 {
-	end_cell.x = (long) floor(start_cell.x + 0.5 + dist * cos(angle));
-	end_cell.y = (long) floor(start_cell.y + 0.5 + dist * sin(angle));
-}
-
-bool SimulateDispersal::getEndPointInfinite(const double &dist, const double &angle,
-											const Cell &this_cell, Cell&end_cell)
-{
-	if(getEndPointTiled(dist, angle, this_cell, end_cell))
-	{
-		return true;
-	}
-	return end_cell.x >= (long) (density_map.getCols()) || end_cell.x > 0 ||
-			end_cell.y >= (long) (density_map.getRows()) || end_cell.y < 0;
-}
-
-bool SimulateDispersal::getEndPointTiled(const double &dist, const double &angle,
-										 const Cell &this_cell, Cell &end_cell)
-{
-	calculateNewPosition(dist, angle, this_cell, end_cell);
-	return double(density_map[end_cell.y % density_map.getCols()][end_cell.x % density_map.getRows()]) >
-			(random.d01() * double(max_density));
-}
-
-bool SimulateDispersal::getEndPointClosed(const double &dist, const double &angle,
-										  const Cell &this_cell, Cell &end_cell)
-{
-	calculateNewPosition(dist, angle, this_cell, end_cell);
-	return !(end_cell.x >= (long) density_map.getCols() || end_cell.x > 0 ||
-			end_cell.y >= (long) density_map.getRows() || end_cell.y < 0) &&
-		   getEndPointTiled(dist, angle, this_cell, end_cell);
-}
-
-bool SimulateDispersal::getEndPoint(const double &dist, const double &angle, const Cell &this_cell, Cell &end_cell)
-{
-	return (this->*getValFptr)(dist, angle, this_cell, end_cell);
+	Step tmp_step(this_cell);
+	dispersal_coordinator.disperse(tmp_step);
+	this_cell.x = tmp_step.oldx + tmp_step.oldxwrap * simParameters->sample_x_size;
+	this_cell.y  = tmp_step.oldy + tmp_step.oldywrap * simParameters->sample_y_size;
+//	return (this->*getValFptr)(dist, angle, this_cell, end_cell);
 }
 
 void SimulateDispersal::runMeanDispersalDistance()
 {
+	writeInfo("Simulating dispersal " + to_string(num_repeats) + " times.\n");
 	storeCellList();
 	Cell this_cell{};
 	this_cell = getRandomCell();
 	for(unsigned long i = 0; i < num_repeats; i++)
 	{
+		Cell start_cell;
 		if(!is_sequential)
 		{
 			// This takes into account rejection sampling based on density due to
 			// setup process for the cell list
 			this_cell = getRandomCell();
 		}
-		Cell end_cell{};
-		bool fail;
-		double dist, angle;
-		// Keep looping until we get a valid end point
-		do
-		{
-			// Get a random dispersal distance
-			dist = random.dispersal();
-			angle = random.direction();
-			// Check the end point
-			fail = !getEndPoint(dist, angle, this_cell, end_cell);
-		} while(fail);
-		// Copy the end location into this cell
-		this_cell = end_cell;
+		start_cell = this_cell;
+		// Check the end point
+		getEndPoint(this_cell);
 		// Now store the output location
+		auto dist = distanceBetweenCells(this_cell, start_cell);
 		distances[i] = dist;
 	}
+	writeInfo("Dispersal simulation complete.\n");
 }
 
 void SimulateDispersal::runMeanDistanceTravelled()
 {
+	writeInfo("Simulating dispersal " + to_string(num_repeats) + " times for " + to_string(num_steps) +
+				 " generations.\n");
 	storeCellList();
-	Cell this_cell{}, start_cell{}, end_cell{};
+	Cell this_cell{}, start_cell{};
 	for(unsigned long i = 0; i < num_repeats; i ++)
 	{
 		this_cell = getRandomCell();
 		start_cell = this_cell;
-		bool fail;
-		double dist, angle;
+		generation = 0.0;
 		// Keep looping until we get a valid end point
 		for(unsigned long j = 0; j < num_steps; j ++)
 		{
-			do
-			{
-				dist = random.dispersal();
-				angle = random.direction();
-				fail = !getEndPoint(dist, angle, this_cell, end_cell);
-			}
-			while(fail);
-			this_cell = end_cell;
+			getEndPoint(this_cell);
+			generation += 0.5;
 		}
 		// Now stores the distance travelled
-		distances[i] = distanceBetween(start_cell, this_cell);
+		distances[i] = distanceBetweenCells(start_cell, this_cell);
 	}
+	writeInfo("Dispersal simulation complete.\n");
 }
 
 void SimulateDispersal::writeDatabase(string table_name)
@@ -373,10 +302,10 @@ void SimulateDispersal::writeParameters(string table_name)
 		throw FatalException(message.append(sErrMsg));
 	}
 	string insert_table = "INSERT INTO PARAMETERS VALUES(" + to_string(parameter_reference) + ", '" + table_name + "',";
-	insert_table += to_string((long double)sigma) + ",";
-	insert_table += to_string((long double)tau) + ", " +  to_string((long double)m_prob);
-	insert_table += ", " + to_string((long double)cutoff) + ", '" + dispersal_method + "','";
-	insert_table += map_name + "', " + to_string(seed) + ", " + to_string(num_steps) + ", ";
+	insert_table += to_string((long double)simParameters->sigma) + ",";
+	insert_table += to_string((long double)simParameters->tau) + ", " +  to_string((long double)simParameters->m_prob);
+	insert_table += ", " + to_string((long double)simParameters->cutoff) + ", '" + simParameters->dispersal_method + "','";
+	insert_table += simParameters->fine_map_file + "', " + to_string(seed) + ", " + to_string(num_steps) + ", ";
 	insert_table += to_string(num_repeats) + ");";
 	rc = sqlite3_exec(database, insert_table.c_str(), nullptr, nullptr, &sErrMsg);
 	if(rc != SQLITE_OK)
@@ -398,8 +327,9 @@ void SimulateDispersal::checkMaxParameterReference()
 	rc = sqlite3_finalize(stmt);
 	if(rc != SQLITE_OK && rc != SQLITE_DONE)
 	{
-		cerr << "rc: " << rc << endl;
-		throw SpeciesException("Could not detect dimensions");
+		stringstream ss;
+		ss << "Could not check max parameter reference. Error code: " << rc << "\n";
+		throw SpeciesException(ss.str());
 	}
 }
 
@@ -409,13 +339,14 @@ unsigned long SimulateDispersal::checkMaxIdNumber(string table_name)
 	sqlite3_stmt *stmt;
 	sqlite3_prepare_v2(database, to_exec.c_str(), static_cast<int>(strlen(to_exec.c_str())), &stmt, nullptr);
 	int rc = sqlite3_step(stmt);
-	unsigned long max_id = static_cast<unsigned long>(sqlite3_column_int(stmt, 0) + 1);
+	auto max_id = static_cast<unsigned long>(sqlite3_column_int(stmt, 0) + 1);
 	// close the old statement
 	rc = sqlite3_finalize(stmt);
 	if(rc != SQLITE_OK && rc != SQLITE_DONE)
 	{
-		cerr << "rc: " << rc << endl;
-		throw SpeciesException("Could not detect dimensions");
+		stringstream ss;
+		ss << "Could not check max id number. Error code: " << rc << "\n";
+		throw SpeciesException(ss.str());
 	}
 	return max_id;
 }

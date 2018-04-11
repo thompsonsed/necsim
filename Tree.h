@@ -56,11 +56,11 @@ protected:
 	// for file naming - good to know which task in a series is being executed here
 	long long the_task;
 	// The map file containing the times that we want to expand the model and record all lineages again.
-	// If this is null, has_times_file will be false and the vector will be empty.
+	// If this is null, uses_temporal_sampling will be false and the vector will be empty.
 	string times_file;
 	vector<double> reference_times;
 	// Set to true if we are recording at times other than the present day.
-	bool has_times_file;
+	bool uses_temporal_sampling;
 	// The time variables (for timing the simulation in real time)
 	time_t start, sim_start, sim_end, now, sim_finish, out_finish;
 	time_t time_taken;
@@ -135,7 +135,7 @@ public:
 		// Set the database to NULL pointers.
 		database = nullptr;
 		outdatabase = nullptr;
-		has_times_file = false;
+		uses_temporal_sampling = false;
 		start = 0;
 		sim_start = 0;
 		sim_end = 0;

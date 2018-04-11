@@ -32,7 +32,11 @@ void DispersalCoordinator::setRandomNumber(NRrand * NR_ptr)
 void DispersalCoordinator::setHabitatMap(Landscape *map_ptr)
 {
 	habitat_map = map_ptr;
-	xdim = habitat_map->getSimParameters().fine_map_x_size;
+	if(!map_ptr)
+	{
+		throw FatalException("Attempting to set map pointer to null pointer in DispersalCoordinator.");
+	}
+	xdim = habitat_map->getSimParameters()->fine_map_x_size;
 }
 
 void DispersalCoordinator::setGenerationPtr(double * generation_ptr)
@@ -49,6 +53,11 @@ void DispersalCoordinator::setDispersal(const string &dispersal_method, const st
 	// Open our file connection
 	if(dispersal_file == "none")
 	{
+		if(!NR)
+		{
+			throw FatalException("Random number generator pointer has not been set in DispersalCoordinator.");
+		}
+		writeInfo("Using dispersal kernel.\n");
 		setEndPointFptr(restrict_self);
 		NR->setDispersalParams(sigmain, tauin);
 		NR->setDispersalMethod(dispersal_method, m_probin, cutoffin);
@@ -56,10 +65,12 @@ void DispersalCoordinator::setDispersal(const string &dispersal_method, const st
 	}
 	else if(dispersal_file == "null")
 	{
+		writeInfo("Using null dispersal file.\n");
 		doDispersal = &DispersalCoordinator::disperseNullDispersalMap;
 	}
 	else
 	{
+		writeInfo("Using dispersal file.\n");
 		doDispersal = &DispersalCoordinator::disperseDispersalMap;
 		// Check file existance
 		ifstream infile(dispersal_file);
@@ -73,6 +84,17 @@ void DispersalCoordinator::setDispersal(const string &dispersal_method, const st
 		dispersal_prob_map.import(dispersal_file);
 		dispersal_prob_map.close();
 	}
+}
+
+void DispersalCoordinator::setDispersal(SimParameters * simParameters)
+{
+	if(!simParameters)
+	{
+		throw FatalException("Simulation parameters pointer has not been set for DispersalCoordinator.");
+	}
+	setDispersal(simParameters->dispersal_method, simParameters->dispersal_file,
+				 simParameters->fine_map_x_size, simParameters->fine_map_y_size, simParameters->m_prob,
+				 simParameters->cutoff, simParameters->sigma, simParameters->tau, simParameters->restrict_self);
 }
 
 void DispersalCoordinator::disperseNullDispersalMap(Step &this_step)
@@ -94,7 +116,7 @@ void DispersalCoordinator::disperseDispersalMap(Step &this_step)
 	unsigned long max_col = dispersal_prob_map.getCols() - 1;
 	while(max_col - min_col > 1)
 	{
-		unsigned long to_check = floor(double(max_col-min_col)/2.0) + min_col;
+		unsigned long to_check = static_cast<unsigned long>(floor(double(max_col - min_col) / 2.0) + min_col);
 		if(dispersal_prob_map[row_ref][to_check] > random_no)
 		{
 			min_col = to_check;

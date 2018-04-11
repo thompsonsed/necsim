@@ -22,24 +22,10 @@
 #include <cmath>
 #include <stdexcept>
 #include <sqlite3.h>
-#include "Map.h"
+#include "Landscape.h"
+#include "DispersalCoordinator.h"
 #include "NRrand.h"
-/**
- * @class Cell
- * @brief Simple structure containing the x and y positions of a cell
- */
-struct Cell
-{
-	long x;
-	long y;
-	/**
-	 * @brief Overloading equality operator
-	 * @param c the Cell containing the values to overload
-	 * @return the cell with the new values
-	 */
-	Cell &operator=(Cell const& c)
-	= default;
-};
+#include "Cell.h"
 
 /**
  * @brief Calculates the distance between two cells
@@ -48,7 +34,7 @@ struct Cell
  * @param c2 Cell containing second point
  * @return the distance between the two points
  */
-double distanceBetween(Cell &c1, Cell &c2);
+double distanceBetweenCells(Cell &c1, Cell &c2);
 
 /**
  * @class SimulateDispersal
@@ -59,25 +45,15 @@ class SimulateDispersal
 {
 protected:
 	// The density map object
-	Map<uint32_t> density_map;
-	// Set to true when the size of the density map has been set
-	bool has_set_size;
+	Landscape density_landscape;
+	// Dispersal coordinator
+	DispersalCoordinator dispersal_coordinator{};
+	// Stores all key simulation parameters for the Landscape object
+	SimParameters  * simParameters;
 	// The random number generator object
 	NRrand random;
-	// The map file path
-	string map_name;
 	// The random number seed
 	unsigned long seed;
-	// The dispersal method
-	string dispersal_method;
-	// The dispersal sigma value
-	double sigma;
-	// The dispersal nu value (for fat-tailed dispersal kernels)
-	double tau;
-	// The dispersal m_probability - chance of picking from a uniform distribution (for norm-uniform dispersal kernels)
-	double m_prob;
-	// The maximum dispersal distance for the norm-uniform dispersal distance
-	double cutoff;
 	// The sqlite3 database object for storing outputs
 	sqlite3 * database;
 	// Vector for storing successful dispersal distances
@@ -88,31 +64,23 @@ protected:
 	unsigned long num_repeats;
 	// The number of num_steps within each dispersal loop for the average distance travelled/
 	unsigned long num_steps;
-	// The maximal density value
-	unsigned long max_density;
+	// generation counter
+	double generation;
 	// If true, sequentially selects dispersal probabilities, default is true
 	bool is_sequential;
 	// Reference number for this set of parameters in the database output
 	unsigned long parameter_reference;
-	// Function pointer for the landscape function
-	typedef bool (SimulateDispersal::*landscape_fptr)(const double &dist, const double &angle,
-													  const Cell &this_cell, Cell &end_cell);
-	landscape_fptr getValFptr;
 public:
 	SimulateDispersal()
 	{
-		has_set_size = false;
-		sigma = 0.0;
-		tau = 0.0;
-		m_prob = 0.0;
-		cutoff = 0.0;
+		simParameters = nullptr;
 		num_repeats = 0;
 		num_steps = 0;
 		database = nullptr;
-		max_density = 0;
 		seed = 0;
 		is_sequential = false;
 		parameter_reference = 0;
+		generation = 0.0;
 	}
 	
 	~SimulateDispersal()
@@ -126,19 +94,27 @@ public:
 	 * distance for the start of the next move event
 	 */
 	void setSequential(bool bSequential);
-	
-	/**
-	 * @brief Sets the sizes of the density map
-	 * @param x the x dimension (number of columns) in the density map
-	 * @param y the y dimension (number of rows) in the density map
-	 */
-	void setSizes(unsigned long x, unsigned long y);
 
 	/**
-	 * @brief Import the map from the prescribed file.
-	 * @param map_file the map file to import from
+	 * @brief Sets the pointer to the simulation parameters object
+	 * @param sim_parameters pointer to the simulation parameters to use
 	 */
-	void importMaps(string map_file);
+	void setSimulationParameters(SimParameters * sim_parameters);
+
+	/**
+	 * @brief Import the maps from the prescribed files.
+	 * @param fine_map_file path to the fine map file
+	 * @param fine_map_x fine map x dimension
+	 * @param fine_map_y fine map y dimension
+	 * @param fine_map_x_offset fine map x offset
+	 * @param fine_map_y_offset fine map y offset
+	 * @param coarse_map_file file path to the coarse map file
+	 * @param coarse_map_x coarse map x dimension
+	 * @param coarse_map_y coarse map y dimension
+	 * @param coarse_map_x_offset coarse map x offset
+	 * @param coarse_map_y_offset coarse map y offset
+	 */
+	void importMaps();
 	
 	/**
 	 * @brief Sets the seed for the random number generator
@@ -149,20 +125,6 @@ public:
 		seed = s;
 		random.setSeed(s);
 	}
-	
-	/**
-	 * @brief Sets the dispersal parameters
-	 * @param dispersal_method_in the dispersal method (e.g. "normal")
-	 * @param sigma_in the sigma value for normal and fat-tailed dispersals
-	 * @param tau_in the nu value for fat-tailed dispersals
-	 * @param m_prob_in the m_prob for norm-uniform dispersals
-	 * @param cutoff_in the maximum dispersal distance for norm-uniform dispersal
-	 * @param landscape_type string containing the landscape type (one of "closed", "tiled" or "infinite").
-	 */
-	void setDispersalParameters(string dispersal_method_in, double sigma_in, double tau_in, double m_prob_in,
-								 double cutoff_in, string landscape_type);
-
-	void setLandscapeType(string landscape_type);
 
 	/**
 	 * @brief Sets the output database for writing results to
@@ -194,73 +156,13 @@ public:
 	const Cell& getRandomCell();
 
 	/**
-	 * @brief Calculates the new position from the start cell based on the distance and angle moved.
-	 * Stores the new x and y location in the end cell.
-	 * @param dist the distance to move
-	 * @param angle the direction from the start cell to move
-	 * @param start_cell the cell containing the start x and y position
-	 * @param end_cell the cell to contain the end x and y position
-	 */
-	void calculateNewPosition(const double &dist, const double &angle, const Cell &start_cell, Cell &end_cell);
-
-	/**
-	 * @brief Checks the density is greater than 0 a given distance from the start point on an infinite null landscape.
-	 *
-	 * This also takes into account the rejection sampling of density based on the maximal density value from the map.
-	 *
-	 * @param dist the distance of dispersal
-	 * @param angle the angle of dispersal
-	 * @param this_cell Cell containing the x and y coordinates of the starting position
-	 * @param end_cell Cell to store the end point in
-	 * @return true if the point has a density > 0, otherwise generates a random number between 0 and the max size and
-	 * if it is > the density, return true, false otherwise.
-	 */
-	bool getEndPointInfinite(const double &dist, const double &angle, const Cell &this_cell, Cell &end_cell);
-
-	/**
-	 * @brief Checks the density is greater than 0 a given distance from the start point on an infinite tiled landscape.
-	 *
-	 * This also takes into account the rejection sampling of density based on the maximal density value from the map.
-	 *
-	 * @param dist the distance of dispersal
-	 * @param angle the angle of dispersal
-	 * @param this_cell Cell containing the x and y coordinates of the starting position
-	 * @param end_cell Cell to store the end point in
-
-	 * @return true if the point has a density > 0, otherwise generates a random number between 0 and the max size and
-	 * if it is > the density, return true, false otherwise.
-	 */
-	bool getEndPointTiled(const double &dist, const double &angle, const Cell &this_cell, Cell &end_cell);
-
-	/**
-	 * @brief Checks the density a given distance from the start point on an closed landscape.
-	 *
-	 * This also takes into account the rejection sampling of density based on the maximal density value from the map.
-	 *
-	 * @param dist the distance of dispersal
-	 * @param angle the angle of dispersal
-	 * @param this_cell Cell containing the x and y coordinates of the starting position
-	 * @param end_cell Cell to store the end point in
-
-	 * @return true if the point has a density > 0, otherwise generates a random number between 0 and the max size and
-	 * if it is > the density, return true, false otherwise.
-	 */
-	bool getEndPointClosed(const double &dist, const double &angle, const Cell &this_cell, Cell &end_cell);
-
-	/**
 	 * @brief Checks the density a given distance from the start point, calling the relevant landscape function.
 	 * 
 	 * This also takes into account the rejection sampling of density based on the maximal density value from the map.
 	 * 
-	 * @param dist the distance of dispersal
-	 * @param angle the angle of dispersal
 	 * @param this_cell Cell containing the x and y coordinates of the starting position
-	 * @param end_cell Cell to store the end point in
-
-	 * @return true if the point has a density > 0, otherwise generates a random number between 0 and the max size and
-	 * if it is > the density, return true, false otherwise.
 	 */
-	bool getEndPoint(const double &dist, const double &angle, const Cell &this_cell, Cell &end_cell);
+	void getEndPoint(Cell &this_cell);
 	
 	/**
 	 * @brief Simulates the dispersal kernel for the set parameters, storing the mean dispersal distance

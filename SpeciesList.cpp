@@ -44,9 +44,6 @@ void SpeciesList::setSpecies(unsigned long index, unsigned long new_val)
 {
 	if(list[index] == 0)
 	{
-		cerr << "index: " << index << endl;
-		cerr << "list[index]: " <<list[index] << endl;
-		cerr << "list.maxsize(): " << maxsize << endl;
 		throw runtime_error("ERROR_MOVE_027: List position to be replaced is zero. Check list assignment.");
 	}
 	list[index] = new_val;
@@ -56,9 +53,6 @@ void SpeciesList::setSpeciesEmpty(int index, unsigned long new_val)
 {
 	if(list[index] != 0)
 	{
-		cerr << "index: " << index << endl;
-		cerr << "list[index]: " <<list[index] << endl;
-		cerr << "list.maxsize(): " << maxsize << endl;
 		throw runtime_error("ERROR_MOVE_027b: List position to be replaced is not zero. Check list assignment.");
 	}
 	list[index] = new_val;
@@ -79,7 +73,6 @@ unsigned long SpeciesList::addSpecies(unsigned long new_spec)
 #ifdef DEBUG
 	if(list_size + 1 > maxsize)
 	{
-		cerr << "maxsize: " << maxsize << endl;
 		throw out_of_range("Could not add species - no empty space");
 	}
 #endif
@@ -103,7 +96,6 @@ unsigned long SpeciesList::addSpecies(unsigned long new_spec)
 			return i;
 		}
 	}
-	cerr << "maxsize: " << maxsize << endl;
 	throw out_of_range("Could not add species - no empty space");
 }
 
@@ -173,8 +165,6 @@ void SpeciesList::changePercentCover(unsigned long newmaxsize)
 #ifdef DEBUG
 	if(list.size() > maxsize)
 		{
-			cerr << "list.size(): " << list.size() << endl;
-			cerr << "maxsize: " << maxsize << endl;
 			throw out_of_range("List size not equal to maxsize");
 		}
 #endif
@@ -199,7 +189,6 @@ unsigned long SpeciesList::getRandLineage(NRrand &rand_no)
 		}
 		catch(out_of_range &oor)
 		{
-			cerr << oor.what() << endl;
 			throw runtime_error("ERROR_MOVE_001b: Listpos outside maxsize.");
 		}
 	}

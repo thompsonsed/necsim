@@ -130,7 +130,7 @@ bool Tree::hasPaused()
 
 vector<double> Tree::getTemporalSampling()
 {
-	if(has_times_file)
+	if(uses_temporal_sampling)
 	{
 		return reference_times;
 	}
@@ -195,17 +195,17 @@ void Tree::setInitialValues()
 	generation = 0;
 	// Set the seed
 	setSeed(the_seed);
+	setTimes();
 	sim_parameters.printVars();
 	// Determine the speciation rates which will be applied after the simulation completes.
 	determineSpeciationRates();
-	setTimes();
 }
 
 void Tree::setSimStartVariables()
 {
 	this_step.bContinueSim = true;
 	this_step.time_reference = 0;
-	if(has_times_file && generation > 0.0)
+	if(uses_temporal_sampling && generation > 0.0)
 	{
 		for(unsigned int i = 0; i < reference_times.size(); i++)
 		{
@@ -230,17 +230,24 @@ void Tree::printSetup()
 
 void Tree::setTimes()
 {
-	if(times_file != "null" && !has_times_file)
+	if(!uses_temporal_sampling)
 	{
 		// Import the time sample points
-		has_times_file = true;
-		vector<string> tmpimport;
-		ConfigOption tmpconfig;
-		tmpconfig.setConfig(times_file, false);
-		tmpconfig.importConfig(tmpimport);
-		for(const auto &i : tmpimport)
+		if(reference_times.size() != 0)
 		{
-			reference_times.push_back(stod(i));
+			throw FatalException("Reference times have already been set.");
+		}
+		if(times_file == "set")
+		{
+			uses_temporal_sampling = true;
+			reference_times = sim_parameters.times;
+			sort(reference_times.begin(), reference_times.end());
+		}
+		if(reference_times.size() <= 1)
+		{
+			times_file = "null";
+			reference_times.clear();
+			reference_times.push_back(0.0);
 		}
 	}
 }
@@ -386,7 +393,7 @@ bool Tree::runSimulation()
 #ifdef DEBUG
 		debugEndStep();
 #endif
-		if(has_times_file && endactive == 1)
+		if(uses_temporal_sampling && endactive == 1)
 		{
 			// Check whether we need to continue simulating at a later time.
 			if(reference_times[this_step.time_reference] > generation)
@@ -624,7 +631,7 @@ void Tree::coalescenceEvent(const unsigned long& chosen, unsigned long& coalchos
 
 void Tree::checkTimeUpdate()
 {
-	if(has_times_file && this_step.time_reference < reference_times.size())
+	if(uses_temporal_sampling && this_step.time_reference < reference_times.size())
 	{
 		// check if we need to update
 		if(reference_times[this_step.time_reference] <= generation)
@@ -1184,7 +1191,7 @@ void Tree::sqlCreateSimulationParameters()
 	to_execute += "sample_y INT NOT NULL, sample_x_offset INT NOT NULL, sample_y_offset INT NOT NULL, ";
 	to_execute += "pristine_coarse_map TEXT NOT NULL, pristine_fine_map TEXT NOT NULL, sim_complete INT NOT NULL, ";
 	to_execute += "dispersal_method TEXT NOT NULL, m_probability DOUBLE NOT NULL, cutoff DOUBLE NOT NULL, ";
-	to_execute += "restrict_self INT NOT NULL, infinite_landscape TEXT NOT NULL, protracted INT NOT NULL, ";
+	to_execute += "restrict_self INT NOT NULL, landscape_type TEXT NOT NULL, protracted INT NOT NULL, ";
 	to_execute += "min_speciation_gen DOUBLE NOT NULL, max_speciation_gen DOUBLE NOT NULL, dispersal_map TEXT NOT NULL);";
 	int rc = sqlite3_exec(database, to_execute.c_str(), nullptr, nullptr, &sErrMsg);
 	if(rc != SQLITE_OK)
@@ -1311,21 +1318,14 @@ void Tree::dumpMain(string pause_folder)
 		out << bIsProtracted << "\n";
 		// Saving the initial data to one file.
 		out << enddata << "\n" << seeded << "\n" << the_seed << "\n" << the_task << "\n" << times_file << "\n"
-			<< has_times_file << "\n";
-		out << sim_parameters.fine_map_file << "\n" << sim_parameters.coarse_map_file << "\n" << out_directory << "\n";
-		out << sim_parameters.pristine_fine_map_file << "\n" << sim_parameters.pristine_coarse_map_file << "\n";
-		out << sim_parameters.gen_since_pristine << "\n" << sim_parameters.habitat_change_rate << "\n";
-		out << sim_parameters.grid_x_size << "\n" << sim_parameters.grid_y_size << "\n";
-		out << sim_parameters.fine_map_x_size << "\n" << sim_parameters.fine_map_y_size << "\n";
-		out << sim_parameters.fine_map_x_offset << "\n" << sim_parameters.fine_map_y_offset << "\n";
-		out << sim_parameters.coarse_map_x_size << "\n" << sim_parameters.coarse_map_y_size << "\n";
-		out << sim_parameters.coarse_map_x_offset << "\n" << sim_parameters.coarse_map_y_offset << "\n";
-		out << sim_parameters.coarse_map_scale << "\n" << has_imported_vars << "\n" << start << "\n" << sim_start;
-		out << "\n" << sim_end << "\n" << now << "\n" << time_taken << "\n" << sim_finish << "\n" << out_finish << "\n";
+			<< uses_temporal_sampling << "\n";
+		out << out_directory << "\n";
+		out << has_imported_vars << "\n" << start << "\n" << sim_start << "\n";
+		out << sim_end << "\n" << now << "\n" << time_taken << "\n" << sim_finish << "\n" << out_finish << "\n";
 		out << endactive << "\n" << startendactive << "\n" << maxsimsize << "\n" << steps << "\n";
-		out << generation << "\n" << sim_parameters.sigma << "\n" << sim_parameters.tau << "\n" << maxtime << "\n";
-		out << deme_sample << "\n" << spec << "\n" << sim_parameters.dispersal_relative_cost << "\n" << deme << "\n";
-		out << sim_parameters.desired_specnum << "\n" << sqloutname << "\n" << NR << "\n" << sim_parameters << "\n";
+		out << generation << "\n" << "\n" << maxtime << "\n";
+		out << deme_sample << "\n" << spec << "\n" << deme << "\n";
+		out << sqloutname << "\n" << NR << "\n" << sim_parameters << "\n";
 		// now output the protracted speciation variables (there should be two of these).
 		out << getProtractedVariables();
 		out.close();
@@ -1439,26 +1439,17 @@ void Tree::loadMainSave()
 		in1 >> enddata >> seeded >> the_seed >> the_task;
 		in1.ignore(); // Ignore the endline character
 		getline(in1, times_file);
-		in1 >> has_times_file;
+		in1 >> uses_temporal_sampling;
 		in1.ignore();
-		getline(in1, sim_parameters.fine_map_file);
-		getline(in1, sim_parameters.coarse_map_file);
 		getline(in1, string1);
-		getline(in1, sim_parameters.pristine_fine_map_file);
-		getline(in1, sim_parameters.pristine_coarse_map_file);
-		in1 >> sim_parameters.gen_since_pristine >> sim_parameters.habitat_change_rate >> sim_parameters.grid_x_size;
-		in1 >> sim_parameters.grid_y_size >> sim_parameters.fine_map_x_size >> sim_parameters.fine_map_y_size;
-		in1 >> sim_parameters.fine_map_x_offset >> sim_parameters.fine_map_y_offset >> sim_parameters.coarse_map_x_size;
-		in1 >> sim_parameters.coarse_map_y_size >> sim_parameters.coarse_map_x_offset;
 		time_t tmp_time;
-		in1 >> sim_parameters.coarse_map_y_offset >> sim_parameters.coarse_map_scale >> has_imported_vars >> tmp_time;
+		in1 >> has_imported_vars >> tmp_time;
 		in1 >> sim_start >> sim_end >> now;
 		in1 >> time_taken >> sim_finish >> out_finish >> endactive >> startendactive >> maxsimsize >> steps;
 		unsigned long tempmaxtime = maxtime;
-		in1 >> generation >> sim_parameters.sigma >> sim_parameters.tau >> maxtime;
+		in1 >> generation >> maxtime;
 		has_imported_vars = false;
-		in1 >> deme_sample >> spec >> sim_parameters.dispersal_relative_cost >> deme;
-		in1 >> sim_parameters.desired_specnum;
+		in1 >> deme_sample >> spec >> deme;
 		in1.ignore();
 		getline(in1, sqloutname);
 		in1 >> NR;
@@ -1486,16 +1477,16 @@ void Tree::loadMainSave()
 		in1.close();
 		if(times_file == "null")
 		{
-			if(has_times_file)
+			if(uses_temporal_sampling)
 			{
-				throw runtime_error("has_times_file should not be true");
+				throw runtime_error("uses_temporal_sampling should not be true");
 			}
 		}
 		else
 		{
-			if(!has_times_file)
+			if(!uses_temporal_sampling)
 			{
-				throw runtime_error("has_times_file should not be false");
+				throw runtime_error("uses_temporal_sampling should not be false");
 			}
 			vector<string> tmpimport;
 			ConfigOption tmpconfig;

@@ -64,25 +64,25 @@ uint32_t importToMapAndRound(string map_file, Map<uint32_t> &matrix_in, unsigned
 }
 
 
-void Landscape::setDims(SimParameters mapvarsin)
+void Landscape::setDims(SimParameters *mapvarsin)
 {
 	if(!check_set_dim)  // checks to make sure it hasn't been run already.
 	{
 		mapvars = mapvarsin;
-		deme = mapvarsin.deme;
-		x_dim = mapvarsin.grid_x_size;
-		y_dim = mapvarsin.grid_y_size;
-		scale = mapvarsin.coarse_map_scale;
+		deme = mapvars->deme;
+		x_dim = mapvars->grid_x_size;
+		y_dim = mapvars->grid_y_size;
+		scale = mapvars->coarse_map_scale;
 		nUpdate = 0;
 		check_set_dim = true;
 		update_time = 0;
-		gen_since_pristine = mapvarsin.gen_since_pristine;
+		gen_since_pristine = mapvars->gen_since_pristine;
 		if(gen_since_pristine == 0)
 		{
 			gen_since_pristine = 0.000000000000000001;
 		}
-		habitat_change_rate = mapvarsin.habitat_change_rate;
-		landscape_type = mapvarsin.landscape_type;
+		habitat_change_rate = mapvars->habitat_change_rate;
+		landscape_type = mapvars->landscape_type;
 	}
 	else
 	{
@@ -92,9 +92,9 @@ void Landscape::setDims(SimParameters mapvarsin)
 
 bool Landscape::checkMapExists()
 {
-	for(unsigned int i = 0; i < mapvars.configs.getSectionOptionsSize(); i++)
+	for(unsigned int i = 0; i < mapvars->configs.getSectionOptionsSize(); i++)
 	{
-		string tmppath = mapvars.configs[i].getOption("path");
+		string tmppath = mapvars->configs[i].getOption("path");
 		if(!doesExistNull(tmppath))
 		{
 			return false;
@@ -105,9 +105,9 @@ bool Landscape::checkMapExists()
 
 void Landscape::calcFineMap()
 {
-	string fileinput = mapvars.fine_map_file;
-	unsigned long mapxsize = mapvars.fine_map_x_size;
-	unsigned long mapysize = mapvars.fine_map_y_size;
+	string fileinput = mapvars->fine_map_file;
+	unsigned long mapxsize = mapvars->fine_map_x_size;
+	unsigned long mapysize = mapvars->fine_map_y_size;
 	if(!check_set_dim)  // checks that the dimensions have been set.
 	{
 		throw FatalException("ERROR_MAP_002: dimensions not set.");
@@ -118,9 +118,9 @@ void Landscape::calcFineMap()
 
 void Landscape::calcPristineFineMap()
 {
-	string file_input = mapvars.pristine_fine_map_file;
-	unsigned long map_x_size = mapvars.fine_map_x_size;
-	unsigned long map_y_size = mapvars.fine_map_y_size;
+	string file_input = mapvars->pristine_fine_map_file;
+	unsigned long map_x_size = mapvars->fine_map_x_size;
+	unsigned long map_y_size = mapvars->fine_map_y_size;
 	if(!check_set_dim)  // checks that the dimensions have been set.
 	{
 		throw FatalException("ERROR_MAP_002: dimensions not set.");
@@ -135,9 +135,9 @@ void Landscape::calcPristineFineMap()
 
 void Landscape::calcCoarseMap()
 {
-	string file_input = mapvars.coarse_map_file;
-	unsigned long map_x_size = mapvars.coarse_map_x_size;
-	unsigned long map_y_size = mapvars.coarse_map_y_size;
+	string file_input = mapvars->coarse_map_file;
+	unsigned long map_x_size = mapvars->coarse_map_x_size;
+	unsigned long map_y_size = mapvars->coarse_map_y_size;
 	if(!check_set_dim)  // checks that the dimensions have been set.
 	{
 		throw FatalException("ERROR_MAP_003: dimensions not set.");
@@ -152,9 +152,9 @@ void Landscape::calcCoarseMap()
 
 void Landscape::calcPristineCoarseMap()
 {
-	string file_input = mapvars.pristine_coarse_map_file;
-	unsigned long map_x_size = mapvars.coarse_map_x_size;
-	unsigned long map_y_size = mapvars.coarse_map_y_size;
+	string file_input = mapvars->pristine_coarse_map_file;
+	unsigned long map_x_size = mapvars->coarse_map_x_size;
+	unsigned long map_y_size = mapvars->coarse_map_y_size;
 	if(!check_set_dim)  // checks that the dimensions have been set.
 	{
 		throw FatalException("ERROR_MAP_003: dimensions not set.");
@@ -179,11 +179,10 @@ void Landscape::setTimeVars(double gen_since_pristine_in, double habitat_change_
 
 void Landscape::calcOffset()
 {
-	if(mapvars.times_file != "null")
+	if(mapvars->times_file != "null")
 	{
-		mapvars.setPristine(0);
+		mapvars->setPristine(0);
 	}
-	//	os << mapvars.times_file << endl;
 	if(fine_map.getCols() == 0 || fine_map.getRows() == 0)
 	{
 		throw FatalException("ERROR_MAP_004: fine map not set.");
@@ -194,7 +193,6 @@ void Landscape::calcOffset()
 		{
 			coarse_map.setSize(fine_map.getRows(), fine_map.getCols());
 		}
-		//		throw FatalException("ERROR_MAP_004: coarse map not set.");
 	}
 	if(checkAllDimensionsZero())
 	{
@@ -204,7 +202,7 @@ void Landscape::calcOffset()
 	{
 		calculateOffsetsFromParameters();
 	}
-	dispersal_relative_cost = mapvars.dispersal_relative_cost;
+	dispersal_relative_cost = mapvars->dispersal_relative_cost;
 #ifdef DEBUG
 	stringstream os;
 	os << "\nfinex: " << fine_x_min << "," << fine_x_max << endl;
@@ -228,25 +226,55 @@ void Landscape::calcOffset()
 
 bool Landscape::checkAllDimensionsZero()
 {
-	return mapvars.fine_map_x_offset == 0 && mapvars.fine_map_y_offset == 0 && mapvars.coarse_map_x_offset == 0 &&
-			mapvars.coarse_map_y_offset == 0 && mapvars.sample_x_offset == 0 && mapvars.sample_y_offset == 0 &&
-			mapvars.fine_map_x_size == 0 && mapvars.fine_map_y_size == 0 && mapvars.coarse_map_x_size == 0 &&
-			mapvars.coarse_map_y_size == 0;
+	return mapvars->fine_map_x_offset == 0 && mapvars->fine_map_y_offset == 0 && mapvars->coarse_map_x_offset == 0 &&
+			mapvars->coarse_map_y_offset == 0 && mapvars->sample_x_offset == 0 && mapvars->sample_y_offset == 0 &&
+			mapvars->fine_map_x_size == 0 && mapvars->fine_map_y_size == 0 && mapvars->coarse_map_x_size == 0 &&
+			mapvars->coarse_map_y_size == 0;
 }
 
 void Landscape::calculateOffsetsFromMaps()
 {
+	long x_offset, y_offset;
 	// TODO complete this functionality - required for rcoalescence
-
+	if(mapvars->sample_mask_file != "null" && mapvars->sample_mask_file != "none")
+	{
+		// Opens an empty map object for the sample mask file and then calculates the offsets.
+		Map<uint32_t> tmp_sample_map;
+		tmp_sample_map.open(mapvars->sample_mask_file);
+		tmp_sample_map.calculateOffset(fine_map, x_offset, y_offset);
+		if(tmp_sample_map.roundedScale(fine_map) != 1)
+		{
+			writeInfo("Sample map resolution does not match fine map resolution.");
+		}
+		tmp_sample_map.close();
+		if(x_offset < 0 || y_offset < 0)
+		{
+			stringstream ss;
+			ss << "Offsets of " << mapvars->fine_map_file << " from " << mapvars->sample_mask_file << " are negative: ";
+			ss << "check map files are set correctly." << endl;
+			throw FatalException(ss.str());
+		}
+		mapvars->fine_map_x_offset = static_cast<unsigned long>(x_offset);
+		mapvars->fine_map_y_offset = static_cast<unsigned long>(y_offset);
+	}
+	fine_map.calculateOffset(coarse_map, x_offset, y_offset);
+	scale = fine_map.roundedScale(coarse_map);
+	if(x_offset < 0 || y_offset < 0)
+	{
+		stringstream ss;
+		ss << "Offsets of " << mapvars->fine_map_file << " from " << mapvars->sample_mask_file << " are negative: ";
+		ss << "check map files are set correctly." << endl;
+		throw FatalException(ss.str());
+	}
 }
 
 void Landscape::calculateOffsetsFromParameters()
 {
-	fine_x_offset = mapvars.fine_map_x_offset + mapvars.sample_x_offset;
-	fine_y_offset = mapvars.fine_map_y_offset + mapvars.sample_y_offset;
-	coarse_x_offset = mapvars.coarse_map_x_offset;
-	coarse_y_offset = mapvars.coarse_map_y_offset;
-	scale = mapvars.coarse_map_scale;
+	fine_x_offset = mapvars->fine_map_x_offset + mapvars->sample_x_offset;
+	fine_y_offset = mapvars->fine_map_y_offset + mapvars->sample_y_offset;
+	coarse_x_offset = mapvars->coarse_map_x_offset;
+	coarse_y_offset = mapvars->coarse_map_y_offset;
+	scale = mapvars->coarse_map_scale;
 	// this is the location of the top left (or north west) corner of the respective map
 	// and the x and y distance from the top left of the grid object that contains the initial lineages.
 	fine_x_min = -fine_x_offset;
@@ -356,23 +384,23 @@ void Landscape::validateMaps()
 void Landscape::updateMap(double generation)
 {
 	// only update the map if the pristine state has not been reached.
-	if(!mapvars.is_pristine && has_pristine)
+	if(!mapvars->is_pristine && has_pristine)
 	{
-		if(mapvars.gen_since_pristine < generation)
+		if(mapvars->gen_since_pristine < generation)
 		{
 			// Only update the map if the maps have actually changed
-			if(mapvars.setPristine(nUpdate+1))
+			if(mapvars->setPristine(nUpdate+1))
 			{
 				nUpdate++;
-				// pristine_fine_map = mapvars.pristine_fine_map_file;
-				// pristine_coarse_map = mapvars.pristine_coarse_map_file;
+				// pristine_fine_map = mapvars->pristine_fine_map_file;
+				// pristine_coarse_map = mapvars->pristine_coarse_map_file;
 				current_map_time = gen_since_pristine;
-				gen_since_pristine = mapvars.gen_since_pristine;
+				gen_since_pristine = mapvars->gen_since_pristine;
 				if(gen_since_pristine == 0)
 				{
 					gen_since_pristine = 0.000000000000000001;
 				}
-				habitat_change_rate = mapvars.habitat_change_rate;
+				habitat_change_rate = mapvars->habitat_change_rate;
 				fine_max = pristine_fine_max;
 				fine_map = pristine_fine_map;
 				coarse_max = pristine_coarse_max;
@@ -381,7 +409,7 @@ void Landscape::updateMap(double generation)
 				calcPristineFineMap();
 				if(has_pristine)
 				{
-					is_pristine = mapvars.is_pristine;
+					is_pristine = mapvars->is_pristine;
 				}
 				recalculateHabitatMax();
 				
@@ -640,8 +668,12 @@ unsigned long Landscape::getInitialCount(double dSample, DataMask& samplemask)
 	return toret;
 }
 
-SimParameters Landscape::getSimParameters()
+SimParameters * Landscape::getSimParameters()
 {
+	if(!mapvars)
+	{
+		throw FatalException("Simulation parameters have not yet been set.");
+	}
 	return mapvars;
 }
 

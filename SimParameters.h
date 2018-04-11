@@ -69,8 +69,10 @@ struct SimParameters
 	bool restrict_self{};
 	// file containing the points to record data from
 	string times_file;
+	// vector of times
+	vector<double> times{};
 	// Stores the full list of configs imported from file
-	ConfigOption configs;
+	ConfigOption configs{};
 	// Set to true if the completely pristine state has been reached.
 	bool is_pristine{};
 	// if the sample file is not null, this variable tells us whether different points in space require different
@@ -179,7 +181,7 @@ struct SimParameters
 		cutoff = stod(configs.getSectionOptions("dispersal", "cutoff", "0.0"));
 		// quick and dirty conversion for string to bool
 		restrict_self = static_cast<bool>(stoi(configs.getSectionOptions("dispersal", "restrict_self", "0")));
-		landscape_type = configs.getSectionOptions("dispersal", "infinite_landscape", "none");
+		landscape_type = configs.getSectionOptions("dispersal", "landscape_type", "none");
 		dispersal_file = configs.getSectionOptions("dispersal", "dispersal_file", "none");
 		reproduction_file = configs.getSectionOptions("reproduction", "map", "none");
 		output_directory = configs.getSectionOptions("main", "output_directory", "Default");
@@ -191,15 +193,27 @@ struct SimParameters
 		deme_sample = stod(configs.getSectionOptions("main", "sample_size"));
 		max_time = stoul(configs.getSectionOptions("main", "max_time"));
 		dispersal_relative_cost = stod(configs.getSectionOptions("main", "dispersal_relative_cost", "0"));
-		times_file = configs.getSectionOptions("main", "time_config");
 		spec = stod(configs.getSectionOptions("main", "min_spec_rate"));
 		desired_specnum = stoul(configs.getSectionOptions("main", "min_species", "1"));
 		if(configs.hasSection("protracted"))
 		{
-			is_protracted = static_cast<bool>(stoi(
-					configs.getSectionOptions("protracted", "has_protracted", "0")));
+			is_protracted = static_cast<bool>(stoi(configs.getSectionOptions("protracted", "has_protracted", "0")));
 			min_speciation_gen = stod(configs.getSectionOptions("protracted", "min_speciation_gen", "0.0"));
 			max_speciation_gen = stod(configs.getSectionOptions("protracted", "max_speciation_gen"));
+		}
+		if(configs.hasSection("times"))
+		{
+
+			times_file = "set";
+			auto times_str = configs.getSectionValues("times");
+			for(auto i : times_str)
+			{
+				times.push_back(stod(i));
+			}
+			if(times.size() == 0)
+			{
+				times_file = "null";
+			}
 		}
 		setPristine(0);
 	}
@@ -392,7 +406,7 @@ struct SimParameters
 						// check matches
 						if(habitat_change_rate != stod(configs[i].getOption("rate")) || gen_since_pristine != stod(configs[i].getOption("time")))
 						{
-							cerr << "Forest transform values do not match between fine and coarse maps. Using fine values." << endl;
+							writeWarning("Forest transform values do not match between fine and coarse maps. Using fine values.");
 						}
 					}
 				}
@@ -417,18 +431,48 @@ struct SimParameters
 		stringstream os;
 		os << "Seed: " << the_seed << endl;
 		os << "Speciation rate: " << spec << endl;
-		os << "Dispersal (tau, sigma): " << tau << ", " << sigma << endl;
-		os << "Dispersal method: " << dispersal_method << endl;
-		if(dispersal_method == "norm-uniform")
-		{
-			os << "Dispersal (m, cutoff): " << m_prob << ", " << cutoff << endl;
-		}
 		if(is_protracted)
 		{
 			os << "Protracted variables: " << min_speciation_gen << ", " << max_speciation_gen << endl;
 		}
 		os << "Job Type: " << the_task << endl;
 		os << "Max time: " << max_time << endl;
+		printSpatialVars();
+		os << "-deme sample: " << deme_sample << endl;
+		os << "Output directory: " << output_directory << endl;
+		os << "Disp Rel Cost: " << dispersal_relative_cost << endl;
+		os << "Times: ";
+		if(times_file == "set")
+		{
+			for(unsigned long i = 0; i < times.size(); i++)
+			{
+				os << times[i];
+				if(i != times.size() - 1)
+				{
+					os << ", ";
+				}
+			}
+		}
+		else
+		{
+			os << " 0.0";
+		}
+		os << endl;
+		writeInfo(os.str());
+	}
+
+	/**
+	 * @brief Prints the spatial variables.
+	 */
+	void printSpatialVars()
+	{
+		stringstream os;
+		os << "Dispersal (tau, sigma): " << tau << ", " << sigma << endl;
+		os << "Dispersal method: " << dispersal_method << endl;
+		if(dispersal_method == "norm-uniform")
+		{
+			os << "Dispersal (m, cutoff): " << m_prob << ", " << cutoff << endl;
+		}
 		os << "Fine input file: " << fine_map_file  << endl;
 		os << "-dimensions: (" << fine_map_x_size << ", " << fine_map_y_size <<")"<< endl;
 		os << "-offset: (" << fine_map_x_offset << ", " << fine_map_y_offset << ")" << endl;
@@ -441,9 +485,6 @@ struct SimParameters
 		os << "-optimised area: (" << grid_x_size << ", " << grid_y_size << ")" << endl;
 		os << "-optimised offsets: (" << sample_x_offset << ", " << sample_y_offset << ")" << endl;
 		os << "-deme: " << deme << endl;
-		os << "-deme sample: " << deme_sample << endl;
-		os << "Output directory: " << output_directory << endl;
-		os << "Disp Rel Cost: " << dispersal_relative_cost << endl;
 		writeInfo(os.str());
 	}
 
@@ -486,6 +527,11 @@ struct SimParameters
 		os << "\n" << m.dispersal_method << "\n";
 		os << m.m_prob << "\n" << m.cutoff << "\n" << m.restrict_self <<"\n" << m.landscape_type << "\n" << m.times_file << "\n";
 		os << m.dispersal_file << "\n" << m.uses_spatial_sampling << "\n";
+		os << m.times.size() << "\n";
+		for(const auto & each : m.times)
+		{
+			os << each << "\n";
+		}
 		os << m.configs;
 		return os;
 	}
@@ -516,10 +562,17 @@ struct SimParameters
 		getline(is, m.times_file);
 		getline(is, m.dispersal_file);
 		is >> m.uses_spatial_sampling;
+		unsigned long tmp_size;
+		double tmp_time;
+		is >> tmp_size;
+		for(unsigned long i = 0; i < tmp_size; i ++)
+		{
+			is >> tmp_time;
+			m.times.push_back(tmp_time);
+		}
 		is >> m.configs;
 		return is;
 	}
 };
-
 
 #endif //SPECIATIONCOUNTER_SIMPARAMETERS_H

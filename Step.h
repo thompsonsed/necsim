@@ -10,6 +10,9 @@
  */
 #ifndef STEP_H
 #define STEP_H
+
+#include "Cell.h"
+
 /**
  * @class Step
  * @brief Stores the elements associated with a single step in a coalescence simulation.
@@ -23,8 +26,6 @@ struct Step
 	long oldx, oldy, oldxwrap, oldywrap;
 	bool coal, bContinueSim;
 	unsigned int time_reference;
-	double distance;
-	double angle;
 #ifdef verbose
 	long number_printed;
 #endif
@@ -44,11 +45,19 @@ struct Step
 		coal = false;
 		bContinueSim = true;
 		time_reference = 0;
-		distance = 0.0;
-		angle = 0.0;
 #ifdef verbose
 		number_printed =0;
 #endif
+	}
+
+	Step(const Cell & cell)
+	{
+		oldx = cell.x;
+		oldy = cell.y;
+		oldxwrap = 0;
+		oldywrap = 0;
+		coal = false;
+		bContinueSim = true;
 	}
 	
 	
@@ -65,8 +74,6 @@ struct Step
 		oldxwrap = 0;
 		oldywrap = 0;
 		coal = false;
-		distance = 0.0;
-		angle = 0.0;
 	}
 	
 	

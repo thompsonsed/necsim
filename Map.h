@@ -102,6 +102,17 @@ public:
 	}
 
 	/**
+	 * @brief Checks if the connection to the map file has already been opened.
+	 *
+	 * All this does is check if poDataset is a null pointer.
+	 * @return true if poDataset is a null pointer.
+	 */
+	bool isOpen()
+	{
+		return poDataset != nullptr;
+	}
+
+	/**
 	 * @brief Destroys the connection to the dataset.
 	 */
 	void close()
@@ -262,11 +273,39 @@ public:
 	}
 
 	/**
+	 * @brief Opens the offset map and fetches the metadata.
+	 * @param offset_map the offset map to open (should be the larger map).
+	 * @return true if the offset map is opened within this function
+	 */
+	bool openOffsetMap(Map &offset_map)
+	{
+		bool opened_here = false;
+		if(!offset_map.isOpen())
+		{
+			opened_here = true;
+			offset_map.open();
+		}
+		offset_map.getMetaData();
+		return opened_here;
+	}
+
+	void closeOffsetMap(Map &offset_map, const bool &opened_here)
+	{
+		if(opened_here)
+		{
+			offset_map.close();
+		}
+	}
+
+	/**
 	 * @brief Calculates the offset between the two maps.
 	 *
 	 * The offset_map should be larger and contain this map, otherwise returned values will be negative
 	 *
-	 * @note Opens a connection to the tif file (if it has not already been opened), which should be closed.
+	 * @note Opens a connection to the tif file (if it has not already been opened), which is then closed. If the
+	 * 		 connection is already open, then it will not be closed and it is assumed logic elsewhere achieves this.
+	 *
+	 * @note Offsets are returned as rounded integers at the resolution of the smaller map.
 	 *
 	 * @param offset_map the offset map to read from
 	 * @param offset_x the x offset variable to fill
@@ -274,10 +313,29 @@ public:
 	 */
 	void calculateOffset(Map &offset_map, long &offset_x, long &offset_y)
 	{
-		offset_map.open();
-		offset_map.getMetaData();
+		auto opened_here = openOffsetMap(offset_map);
 		offset_x = static_cast<long>(round(offset_map.upper_left_x - upper_left_x / x_res));
 		offset_y = static_cast<long>(round(offset_map.upper_left_y - upper_left_y / y_res));
+		closeOffsetMap(offset_map, opened_here);
+	}
+
+	/**
+	 * @brief Calculates the relative scale of this map compared to the offset map.
+	 *
+	 * The offset map should be larger and contain this map.
+	 *
+	 * @note Only the x resolution is checked, it is assumed the x and y resolutions of both maps is the same (i.e. each
+	 * 		 cell on the map is a square.
+	 *
+	 * @param offset_map the offset map object to read from
+	 * @return the relative scale of the offset map
+	 */
+	unsigned long roundedScale(Map &offset_map)
+	{
+		auto opened_here = openOffsetMap(offset_map);
+		double offset_scale = offset_map.x_res;
+		closeOffsetMap(offset_map, opened_here);
+		return static_cast<unsigned long>(floor(offset_map.x_res / x_res));
 	}
 
 	/**

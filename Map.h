@@ -1,11 +1,11 @@
-// This file is part of NECSim project which is released under BSD-3 license.
-// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details
+// This file is part of NECSim project which is released under MIT license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details
 /**
  * @author Samuel Thompson
  * @file Map.h
  * @brief Contains the Map class for importing .tif files and obtaining a variety of information from them.
  *
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 #ifndef MAP_H
 #define MAP_H
@@ -200,6 +200,24 @@ public:
 #endif //DEBUG
 
 	/**
+	 * @brief Gets the upper left x (longitude) coordinate
+	 * @return upper left x of the map
+	 */
+	double getUpperLeftX()
+	{
+		return upper_left_x;
+	}
+
+	/**
+	 * @brief Gets the upper left y (latitude) coordinate
+	 * @return upper left y of the map
+	 */
+	double getUpperLeftY()
+	{
+		return upper_left_y;
+	}
+
+	/**
 	 * @brief Imports the matrix from a csv file.
 	 *
 	 * @throws runtime_error: if type detection for the filename fails.
@@ -285,6 +303,7 @@ public:
 			opened_here = true;
 			offset_map.open();
 		}
+		offset_map.getRasterBand();
 		offset_map.getMetaData();
 		return opened_here;
 	}
@@ -314,8 +333,8 @@ public:
 	void calculateOffset(Map &offset_map, long &offset_x, long &offset_y)
 	{
 		auto opened_here = openOffsetMap(offset_map);
-		offset_x = static_cast<long>(round(offset_map.upper_left_x - upper_left_x / x_res));
-		offset_y = static_cast<long>(round(offset_map.upper_left_y - upper_left_y / y_res));
+		offset_x = static_cast<long>(round((upper_left_x - offset_map.upper_left_x) / x_res));
+		offset_y = static_cast<long>(round((offset_map.upper_left_y - upper_left_y )/ y_res));
 		closeOffsetMap(offset_map, opened_here);
 	}
 
@@ -333,7 +352,6 @@ public:
 	unsigned long roundedScale(Map &offset_map)
 	{
 		auto opened_here = openOffsetMap(offset_map);
-		double offset_scale = offset_map.x_res;
 		closeOffsetMap(offset_map, opened_here);
 		return static_cast<unsigned long>(floor(offset_map.x_res / x_res));
 	}
@@ -478,12 +496,12 @@ public:
 		}
 	}
 
-	friend ostream &operator>>(ostream& os, const Map &m)
+	friend ostream &operator>>(ostream &os, const Map &m)
 	{
 		return Matrix<T>::writeOut(os, m);
 	}
 
-	friend istream &operator<<(istream& is, Map &m)
+	friend istream &operator<<(istream &is, Map &m)
 	{
 		return Matrix<T>::readIn(is, m);
 	}
@@ -559,8 +577,6 @@ inline void Map<uint32_t>::internalImport()
 	dt = GDT_UInt32;
 	defaultImport();
 }
-
-
 
 template<>
 inline void Map<float>::internalImport()

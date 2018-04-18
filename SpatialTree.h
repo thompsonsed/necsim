@@ -1,5 +1,5 @@
-// This file is part of NECSim project which is released under BSD-3 license.
-// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+// This file is part of NECSim project which is released under MIT license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 //
 /**
  * @author Sam Thompson
@@ -8,7 +8,7 @@
  * @brief Contains the SpatialTree class for running simulations and outputting the phylogenetic tree.
  *
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  *
  */
 #ifndef SPATIALTREE_H
@@ -95,9 +95,7 @@ protected:
 	// A list of new variables which will contain the relevant information for maps and grids.
 	//  strings containing the file names to be imported.
 	string fine_map_input, coarse_map_input;
-	string pristine_fine_map_input, pristine_coarse_map_input;
-	// the variables for the grid containing the initial individuals.
-	unsigned long grid_x_size, grid_y_size;
+	string historical_fine_map_input, historical_coarse_map_input;
 	// Landscape object containing both the coarse and fine maps for checking whether or not there is habitat at a
 	// particular location.
 	Landscape landscape;
@@ -116,8 +114,6 @@ public:
 	SpatialTree() : Tree()
 	{
 		outdatabase = nullptr;
-		grid_x_size = 0;
-		grid_y_size = 0;
 		desired_specnum = 1;
 	}
 
@@ -186,7 +182,7 @@ public:
 	 * It also checks for paused simulations and imports data if necessary from paused files.
 	 * importMaps() is called for importing the map files
 	 *
-	 * @bug For values of dispersal, forest transform rate and time since pristine (and any other double values),
+	 * @bug For values of dispersal, forest transform rate and time since historical (and any other double values),
 	 * they will not be correctly outputted to the SIMULATION_PARAMETERS table if the value is smaller than 10e-6.
 	 * The solution is to implement string output mechanisms using boost::lexical_cast(),
 	 * but this has so far only been deemed necessary for the speciation rate (which is intrinsically very small).
@@ -285,11 +281,11 @@ public:
 	 */
 	unsigned long estSpecnum();
 
-#ifdef pristine_mode
+#ifdef historical_mode
 	/**
-	 * @brief Checks that pristine maps make sense. Only relevant for pristine mode.
+	 * @brief Checks that historical maps make sense. Only relevant for historical mode.
 	 */
-	void pristineStepChecks();
+	void historicalStepChecks();
 #endif
 
 
@@ -342,11 +338,15 @@ public:
 
 	/**
 	 * @brief Loads the grid from the save file into memory.
+	 *
+	 * @note Requires that both the simulation parameters and the maps have already been loaded.
 	 */
 	void loadGridSave();
 
 	/**
 	 * @brief Loads the map from the save file into memory.
+	 *
+	 * @note Requires that the simulation parameters have already been loaded.
 	 */
 	void loadMapSave();
 

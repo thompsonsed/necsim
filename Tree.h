@@ -1,5 +1,5 @@
-// This file is part of NECSim project which is released under BSD-3 license.
-// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+// This file is part of NECSim project which is released under MIT license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
  * @author Samuel Thompson
@@ -9,7 +9,7 @@
  * coalescence simulations.
  * Provides the basis for spatially-explicit versions in SpatialTree, and protracted speciation versions in
  * ProtractedTree and ProtractedSpatialTree.
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 #ifndef TREE_H
 #define TREE_H
@@ -102,7 +102,7 @@ protected:
 	// Create the step object that will be retained for the whole simulation.
 	// Does not need saving on simulation pause.
 	Step this_step;
-	string sqloutname;
+	string sql_output_database;
 	// If true, means the command-line imports were under the (deprecated) fullmode.
 	bool bFullmode;
 	// If true, the simulation is to be resumed.
@@ -128,7 +128,7 @@ public:
 		the_seed = -10;
 		// set this equal to true if you want to log every 5 seconds to a logfile.
 		the_task = -1;
-		sqloutname = "null";
+		sql_output_database = "null";
 		sim_complete = false;
 		time_taken = 0;  // the time taken starts at 0, unless imported from file.
 		maxtime = 0;
@@ -551,6 +551,11 @@ public:
 	 */
 	void writeTimes();
 
+	/**
+	 * @brief Opens a connection to the in-memory database, or the on-disk database, depending on the compilation
+	 * options.
+	 */
+	void openSQLDatabase();
 
 	/**
 	 * @brief Generates the SQL database file from the full simulation data. This allows for greater analysis of the

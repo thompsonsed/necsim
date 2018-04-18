@@ -1,5 +1,5 @@
-// This file is part of NECSim project which is released under BSD-3 license.
-// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+// This file is part of NECSim project which is released under MIT license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
  * @author Samuel Thompson
@@ -10,7 +10,7 @@
  * coalescence simulations.
  * Provides the basis for spatially-explicit versions in SpatialTree, and protracted speciation versions in
  * ProtractedTree and ProtractedSpatialTree.
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 
 #include "Tree.h"
@@ -230,25 +230,22 @@ void Tree::printSetup()
 
 void Tree::setTimes()
 {
-	if(!uses_temporal_sampling)
+	// Import the time sample points
+	if(!reference_times.empty())
 	{
-		// Import the time sample points
-		if(reference_times.size() != 0)
-		{
-			throw FatalException("Reference times have already been set.");
-		}
-		if(times_file == "set")
-		{
-			uses_temporal_sampling = true;
-			reference_times = sim_parameters.times;
-			sort(reference_times.begin(), reference_times.end());
-		}
-		if(reference_times.size() <= 1)
-		{
-			times_file = "null";
-			reference_times.clear();
-			reference_times.push_back(0.0);
-		}
+		throw FatalException("Reference times have already been set.");
+	}
+	if(times_file == "set")
+	{
+		uses_temporal_sampling = true;
+		reference_times = sim_parameters.times;
+		sort(reference_times.begin(), reference_times.end());
+	}
+	if(reference_times.size() <= 1)
+	{
+		times_file = "null";
+		reference_times.clear();
+		reference_times.push_back(0.0);
 	}
 }
 
@@ -871,11 +868,11 @@ void Tree::sqlOutput()
 {
 #ifdef sql_ram
 	// open connection to the database file
-	remove(sqloutname.c_str());
+	remove(sql_output_database.c_str());
 	stringstream os;
-	os << "\r    Writing to " << sqloutname << " ....     " << flush;
+	os << "\r    Writing to " << sql_output_database << " ....     " << flush;
 	writeInfo(os.str());
-	openSQLiteDatabase(sqloutname, outdatabase);
+	openSQLiteDatabase(sql_output_database, outdatabase);
 	// create the backup object to write data to the file from memory.
 	sqlite3_backup* backupdb;
 	backupdb = sqlite3_backup_init(outdatabase, "main", database, "main");
@@ -906,7 +903,7 @@ void Tree::sqlOutput()
 	}
 	sqlite3_backup_finish(backupdb);
 	os.str("");
-	os << "\r    Writing to " << sqloutname << " ....  done!              " << endl;
+	os << "\r    Writing to " << sql_output_database << " ....  done!              " << endl;
 	writeInfo(os.str());
 #endif
 }
@@ -1028,6 +1025,18 @@ void Tree::writeTimes()
 	writeInfo(os.str());
 }
 
+void Tree::openSQLDatabase()
+{
+	if(!database)
+	{
+#ifdef sql_ram
+		sqlite3_open(":memory:", &database);
+#endif
+#ifndef sql_ram
+		openSQLiteDatabase(sql_output_database, database);
+#endif
+	}
+}
 
 void Tree::sqlCreate()
 {
@@ -1038,19 +1047,19 @@ void Tree::sqlCreate()
 	writeInfo(os.str());
 	os.str("");
 	// Create the folder if it doesn't exist
-	sqloutname = out_directory;
+	sql_output_database = out_directory;
 	string sqlfolder = out_directory + "/SQL_data/";
 	try
 	{
 		createParent(sqlfolder);
-		sqloutname += string("/SQL_data/data_") + to_string(the_task) + "_" + to_string(the_seed) + ".db";
+		sql_output_database += string("/SQL_data/data_") + to_string(the_task) + "_" + to_string(the_seed) + ".db";
 	}
 	catch(FatalException &fe)
 	{
 		writeWarning(fe.what());
-		sqloutname = string("data_") + to_string(the_task) + "_" + to_string(the_seed) + ".db";
+		sql_output_database = string("data_") + to_string(the_task) + "_" + to_string(the_seed) + ".db";
 	}
-	remove(sqloutname.c_str());
+	remove(sql_output_database.c_str());
 	os.str("");
 	os << "\r    Generating species list....              " << flush;
 	writeInfo(os.str());
@@ -1060,12 +1069,7 @@ void Tree::sqlCreate()
 	int rc = 0;
 // Open a SQL database in memory. This will be written to disk later.
 // A check here can be done to write to disc directly instead to massively reduce RAM consumption
-#ifdef sql_ram
-	sqlite3_open(":memory:", &database);
-#endif
-#ifndef sql_ram
-	openSQLiteDatabase(sqloutname, database);
-#endif
+	openSQLDatabase();
 	// Create the command to be executed by adding to the string.
 	string all_commands;
 	all_commands =
@@ -1082,8 +1086,8 @@ void Tree::sqlCreate()
 		sqlite3_close(database);
 		// delete any old database files - this is risky, but there isn't a better way of ensuring that the file
 		// actually gets created.
-		remove(sqloutname.c_str());
-		rc = sqlite3_open(sqloutname.c_str(), &database);
+		remove(sql_output_database.c_str());
+		rc = sqlite3_open(sql_output_database.c_str(), &database);
 		rc = sqlite3_exec(database, all_commands.c_str(), nullptr, nullptr, &sErrMsg);
 		if(rc != SQLITE_OK)
 		{
@@ -1181,7 +1185,7 @@ void Tree::sqlCreateSimulationParameters()
 			"NULL, deme INT NOT NULL, ";
 	to_execute += "sample_size DOUBLE NOT NULL, max_time INT NOT NULL, dispersal_relative_cost DOUBLE NOT NULL, "
 			"min_num_species ";
-	to_execute += "INT NOT NULL, habitat_change_rate DOUBLE NOT NULL, gen_since_pristine DOUBLE NOT NULL, ";
+	to_execute += "INT NOT NULL, habitat_change_rate DOUBLE NOT NULL, gen_since_historical DOUBLE NOT NULL, ";
 	to_execute += "time_config_file TEXT NOT NULL, coarse_map_file TEXT NOT NULL, coarse_map_x INT NOT NULL, "
 			"coarse_map_y INT NOT NULL,";
 	to_execute += "coarse_map_x_offset INT NOT NULL, coarse_map_y_offset INT NOT NULL, coarse_map_scale DOUBLE NOT "
@@ -1189,7 +1193,7 @@ void Tree::sqlCreateSimulationParameters()
 	to_execute += "fine_map_y INT NOT NULL, fine_map_x_offset INT NOT NULL, fine_map_y_offset INT NOT NULL, ";
 	to_execute += "sample_file TEXT NOT NULL, grid_x INT NOT NULL, grid_y INT NOT NULL, sample_x INT NOT NULL, ";
 	to_execute += "sample_y INT NOT NULL, sample_x_offset INT NOT NULL, sample_y_offset INT NOT NULL, ";
-	to_execute += "pristine_coarse_map TEXT NOT NULL, pristine_fine_map TEXT NOT NULL, sim_complete INT NOT NULL, ";
+	to_execute += "historical_coarse_map TEXT NOT NULL, historical_fine_map TEXT NOT NULL, sim_complete INT NOT NULL, ";
 	to_execute += "dispersal_method TEXT NOT NULL, m_probability DOUBLE NOT NULL, cutoff DOUBLE NOT NULL, ";
 	to_execute += "restrict_self INT NOT NULL, landscape_type TEXT NOT NULL, protracted INT NOT NULL, ";
 	to_execute += "min_speciation_gen DOUBLE NOT NULL, max_speciation_gen DOUBLE NOT NULL, dispersal_map TEXT NOT NULL);";
@@ -1225,7 +1229,7 @@ string Tree::simulationParametersSqlInsertion()
 	to_execute += to_string((long double)deme_sample) + "," + to_string((long long)maxtime) + ",";
 	to_execute += to_string(0.0) + "," + to_string(0.0) + ",";
 	to_execute += to_string((long double)sim_parameters.habitat_change_rate) + ",";
-	to_execute += to_string((long double)sim_parameters.gen_since_pristine) + ",'" + sim_parameters.times_file + "','";
+	to_execute += to_string((long double)sim_parameters.gen_since_historical) + ",'" + sim_parameters.times_file + "','";
 	to_execute += "none', 0, 0, 0, 0, 0, 'null', 0, 0, 0, 0, 'none', 1, 1, 1, 1, 0, 0, 'none', 'none',";
 	to_execute += to_string(sim_complete);
 	to_execute += ", 'none', 0.0, 0, 0, 'none', ";
@@ -1325,7 +1329,7 @@ void Tree::dumpMain(string pause_folder)
 		out << endactive << "\n" << startendactive << "\n" << maxsimsize << "\n" << steps << "\n";
 		out << generation << "\n" << "\n" << maxtime << "\n";
 		out << deme_sample << "\n" << spec << "\n" << deme << "\n";
-		out << sqloutname << "\n" << NR << "\n" << sim_parameters << "\n";
+		out << sql_output_database << "\n" << NR << "\n" << sim_parameters << "\n";
 		// now output the protracted speciation variables (there should be two of these).
 		out << getProtractedVariables();
 		out.close();
@@ -1451,7 +1455,7 @@ void Tree::loadMainSave()
 		has_imported_vars = false;
 		in1 >> deme_sample >> spec >> deme;
 		in1.ignore();
-		getline(in1, sqloutname);
+		getline(in1, sql_output_database);
 		in1 >> NR;
 		in1.ignore();
 		in1 >> sim_parameters;
@@ -1510,20 +1514,16 @@ void Tree::loadMainSave()
 void Tree::loadDataSave()
 {
 	string file_to_open;
-	// Input the data object
 	try
 	{
 		stringstream os;
 		os << "\rLoading data from temp file...data..." << flush;
 		writeInfo(os.str());
 		ifstream in4;
-		//		sprintf(file_to_open,"%s/Pause/Data_%i_data.csv",out_directory,int(the_task));
 		file_to_open = pause_sim_directory + string("/Pause/Dump_data_") + to_string(the_task) + "_" +
 					   to_string(the_seed) + string(".csv");
 		in4.open(file_to_open);
 		in4 >> data;
-		//			os << data[0] << endl;
-		//			os << data[1] << endl;
 		in4.close();
 	}
 	catch(exception& e)

@@ -1,11 +1,11 @@
-//This file is part of NECSim project which is released under BSD-3 license.
-//See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+//This file is part of NECSim project which is released under MIT license.
+//See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
  * @author Samuel Thompson
  * @file SpeciesList.h
  * @brief  Contains the SpeciesList class for usage in coalescence simulations.
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 #include <iostream>
 #include "SpeciesList.h"
@@ -49,7 +49,7 @@ void SpeciesList::setSpecies(unsigned long index, unsigned long new_val)
 	list[index] = new_val;
 }
 
-void SpeciesList::setSpeciesEmpty(int index, unsigned long new_val)
+void SpeciesList::setSpeciesEmpty(unsigned long index, unsigned long new_val)
 {
 	if(list[index] != 0)
 	{

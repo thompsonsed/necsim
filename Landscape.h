@@ -1,12 +1,12 @@
-//This file is part of NECSim project which is released under BSD-3 license.
-//See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details
+//This file is part of NECSim project which is released under MIT license.
+//See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details
 /**
  * @author Samuel Thompson
  * @date 31/08/16
  * @file Landscape.h
  *
  * @brief Contains the Landscape object for easy referencing of the respective coarse and fine map within the same coordinate system.
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 
 #ifndef LANDSCAPE_H
@@ -32,14 +32,14 @@ using namespace std;
  * The integer value in the final matrix is multiplied by the scalar to generate the final matrix. Note that this
  * doubles the memory usage.
  * @param map_file the path to the map file to import
- * @param matrix_in the matrix to change the values of
- * @param matrix_x the x dimension of the matrix
- * @param matrix_y the y dimension of the matrix
+ * @param map_in the matrix to change the values of
+ * @param map_x the x dimension of the matrix
+ * @param map_y the y dimension of the matrix
  * @param scalar the scalar to multiply all values in the final matrix by (before rounding to integer)
  * @return the maximum value from the imported matrix
  */
-uint32_t importToMapAndRound(string map_file, Map<uint32_t> &matrix_in, unsigned long matrix_x,
-							 unsigned long matrix_y, unsigned long scalar);
+uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned long map_x,
+							 unsigned long map_y, unsigned long scalar);
 
 /**
  * @class Landscape
@@ -49,7 +49,7 @@ uint32_t importToMapAndRound(string map_file, Map<uint32_t> &matrix_in, unsigned
  * @details The function runDispersal() also provides the move routine, provided two alternative methods for moving
  * individuals. Contains routines for easy setting up and switching between the different coordinate systems required.
  * Set the map parameters with setDims(), import the map files with calcFineMap(), calcCoarseMap() etc, then set up
- * the landscape type using setLandscape() and setPristine().
+ * the landscape type using setLandscape() and sethistorical().
  * Usage is then by runDispersal() for running a dispersal kernel on the landscape, and then getVal() to obtain the
  * density at the desired coordinates. All coordinates should be given in reference to the simulation grid, and offsets
  * for the fine and coarse map are calculated automatically.
@@ -59,17 +59,17 @@ class Landscape
 {
 protected:
 	// The map files which are read in (or generated if running with "null" as the map file".
-	// Pristine maps are meant for before any deforestation occured, whereas the other maps are intended for modern day maps.
-	// A linear transformation from modern to pristine maps is used, approaching the habitat_change_rate variable times the difference between the pristine and modern maps.
-	// Once the gen_since_pristine number of generations has been reached, the map will jump to the pristine condition.
+	// historical maps are meant for before any deforestation occured, whereas the other maps are intended for modern day maps.
+	// A linear transformation from modern to historical maps is used, approaching the habitat_change_rate variable times the difference between the historical and modern maps.
+	// Once the gen_since_historical number of generations has been reached, the map will jump to the historical condition.
 	// the finer grid for the area around the sample area.
 	Map<uint32_t> fine_map;
-	// the pristine finer map.
-	Map<uint32_t> pristine_fine_map;
+	// the historical finer map.
+	Map<uint32_t> historical_fine_map;
 	// the coarser grid for the wider zone.
 	Map<uint32_t> coarse_map;
-	// the pristine coarser map.
-	Map<uint32_t> pristine_coarse_map;
+	// the historical coarser map.
+	Map<uint32_t> historical_coarse_map;
 	// for importing and storing the simulation set-up options.
 	SimParameters * mapvars;
 	// the minimum values for each dimension for offsetting.
@@ -91,27 +91,27 @@ protected:
 	double dispersal_relative_cost{};
 	// the last time the map was updated, in generations.
 	double update_time{};
-	// the rate at which the habitat transforms from the modern forest map to the pristine habitat map.
-	// A value of 1 will give a smooth curve from the present day to pristine habitat.
+	// the rate at which the habitat transforms from the modern forest map to the historical habitat map.
+	// A value of 1 will give a smooth curve from the present day to historical habitat.
 	double habitat_change_rate{};
-	// the number of generations at which point the habitat becomes entirely pristine.
-	double gen_since_pristine{};
+	// the number of generations at which point the habitat becomes entirely historical.
+	double gen_since_historical{};
 	// the time the current map was updated.
 	double current_map_time;
-	// checks whether the simulation has already been set to the pristine state.
-	bool is_pristine;
-	// flag of whether the simulation has a pristine state or not.
-	bool has_pristine;
+	// checks whether the simulation has already been set to the historical state.
+	bool is_historical;
+	// flag of whether the simulation has a historical state or not.
+	bool has_historical;
 	// the maximum value for habitat
 	unsigned long habitat_max;
 	// the maximum value on the fine map file
 	unsigned long fine_max;
 	// the maximum value on the coarse map file
 	unsigned long coarse_max;
-	// the maximum value on the pristine fine map file
-	unsigned long pristine_fine_max;
-	// the maximum value on the pristine coarse map file
-	unsigned long pristine_coarse_max;
+	// the maximum value on the historical fine map file
+	unsigned long historical_fine_max;
+	// the maximum value on the historical coarse map file
+	unsigned long historical_coarse_max;
 	// if true, dispersal is possible from anywhere, only the fine map spatial structure is preserved
 	string landscape_type;
 	string NextMap;
@@ -133,17 +133,17 @@ public:
 	{
 		mapvars = nullptr;
 		check_set_dim = false; // sets the check to false.
-		is_pristine = false;
+		is_historical = false;
 		current_map_time = 0;
 		habitat_max = 1;
 		getValFunc = nullptr;
 		has_coarse = false;
-		has_pristine = false;
+		has_historical = false;
 		landscape_type = "closed";
 		fine_max = 0;
 		coarse_max = 0;
-		pristine_fine_max = 0;
-		pristine_coarse_max = 0;
+		historical_fine_max = 0;
+		historical_coarse_max = 0;
 	}
 
 	/**
@@ -152,6 +152,11 @@ public:
 	 */
 	unsigned long getHabitatMax();
 
+	/**
+	 * @brief Returns if the simulation is using historical maps.
+	 * @return true if using historical maps
+	 */
+	bool hasHistorical();
 	/**
 	 * @brief Sets the dimensions of the grid, the area where the species are initially sampled from.
 	 * This function must be run before any of the calc map functions to allow for the correct deme allocation.
@@ -174,11 +179,11 @@ public:
 	void calcFineMap();
 
 	/**
-	  * @brief Imports the pristine fine map object from file and calculates the correct values at each point.
-	  * Without a map to input, the pristine fine map will simply be a matrix of 1s.
+	  * @brief Imports the historical fine map object from file and calculates the correct values at each point.
+	  * Without a map to input, the historical fine map will simply be a matrix of 1s.
 	  * This has the potential to be changed easily in future versions.
 	  */
-	void calcPristineFineMap();
+	void calcHistoricalFineMap();
 
 	/**
 	  * @brief Imports the coarse map object from file and calculates the correct values at each point.
@@ -188,20 +193,20 @@ public:
 	void calcCoarseMap();
 
 	/**
-	  * @brief Imports the pristine coarse map object from file and calculates the correct values at each point.
-	  * Without a map to input, the pristine coarse map will simply be a matrix of 1s.
+	  * @brief Imports the historical coarse map object from file and calculates the correct values at each point.
+	  * Without a map to input, the historical coarse map will simply be a matrix of 1s.
 	  * This has the potential to be changed easily in future versions.
 	  */
-	void calcPristineCoarseMap();
+	void calcHistoricalCoarseMap();
 
 	/**
 	 * @brief Sets the time variables.
-	 * @param gen_since_pristine_in the time (in generations) since a pristine habitat state was achieved.
-	 * @param habitat_change_rate_in the rate of transform of the habitat up until the pristine time.
-	 * A value of 0.2 would mean 20% of the change occurs linearlly up until the pristine time and the remaining 80%
-	 * occurs in a jump to the pristine state.
+	 * @param gen_since_historical_in the time (in generations) since a historical habitat state was achieved.
+	 * @param habitat_change_rate_in the rate of transform of the habitat up until the historical time.
+	 * A value of 0.2 would mean 20% of the change occurs linearlly up until the historical time and the remaining 80%
+	 * occurs in a jump to the historical state.
 	 */
-	void setTimeVars(double gen_since_pristine_in, double habitat_change_rate_in);
+	void setTimeVars(double gen_since_historical_in, double habitat_change_rate_in);
 
 	/**
 	 * @brief Calculates the offset and extremeties of the fine map.
@@ -234,45 +239,58 @@ public:
 	void calculateOffsetsFromParameters();
 
 	/**
-	 * @brief Checks that the map file sizes are correct and that each value on the fragmented maps is less than the pristine maps.
+	 * @brief Checks that the map file sizes are correct and that each value on the fragmented maps is less than the historical maps.
 	 * This should be disabled in simulations where habitat sizes are expected to shrink as well as grow.
 	 */
 	void validateMaps();
 
-	/**
-	 * @brief Updates the maps to the newer map.
-	 */
+	 /**
+	  * @brief Checks if an update needs to be performed to the map configuration, and if it does, performs the update.
+	  * @param generation the current generation timer
+	  */
 	void updateMap(double generation);
 
 	/**
-	 * @brief Gets the pristine boolean.
-	 * @return the pristine map state.
+	 * @brief Updates the historical map configuration.
+	 * @param generation the current generation timer
 	 */
-	bool isPristine()
+	void doUpdate();
+	/**
+	 * @brief Resets the historical variables to recalculate historical maps.
+	 *
+	 * Required for rcoalescence compatability.
+	 */
+	void resetHistorical();
+
+	/**
+	 * @brief Gets the historical boolean.
+	 * @return the historical map state.
+	 */
+	bool isHistorical()
 	{
-		if(has_pristine)
+		if(has_historical)
 		{
-			return is_pristine;
+			return is_historical;
 		}
 		return true;
 	}
 
 	/**
-	 * @brief Sets the pristine state of the system.
-	 * @param bPristinein the pristine state.
+	 * @brief Sets the historical state of the system.
+	 * @param historical_in the historical state.
 	 */
-	void setPristine(const bool &bPristinein)
+	void setHistorical(const bool &historical_in)
 	{
-		is_pristine = bPristinein;
+		is_historical = historical_in;
 	}
 
 	/**
-	 * @brief Get the pristine map time
-	 * @return double the pristine map time
+	 * @brief Get the historical map time
+	 * @return double the historical map time
 	 */
-	double getPristine()
+	double getHistorical()
 	{
-		return gen_since_pristine;
+		return gen_since_historical;
 	}
 
 	string getLandscapeType()
@@ -281,18 +299,18 @@ public:
 	}
 
 	/**
-	 * @brief Checks if the pristine state has been reached.
+	 * @brief Checks if the historical state has been reached.
 	 * 
-	 * If there are no pristine maps, this function will do nothing.
+	 * If there are no historical maps, this function will do nothing.
 	 * @param generation the time to check at.
 	 */
-	void checkPristine(double generation)
+	void checkHistorical(double generation)
 	{
-		if(has_pristine)
+		if(has_historical)
 		{
-			if(generation >= gen_since_pristine)
+			if(generation >= gen_since_historical)
 			{
-				is_pristine = true;
+				is_historical = true;
 			}
 		}
 	}
@@ -322,7 +340,7 @@ public:
 						 const long &xwrap, const long &ywrap, const double &current_generation);
 
 	/**
-	 * @brief Gets the value from the coarse maps, including linear interpolating between the pristine and present maps
+	 * @brief Gets the value from the coarse maps, including linear interpolating between the historical and present maps
 	 * @param xval the x coordinate
 	 * @param yval the y coordinate
 	 * @param current_generation the current generation timer
@@ -331,7 +349,7 @@ public:
 	unsigned long getValCoarse(const double &xval, const double &yval, const double &current_generation);
 
 	/**
-	 * @brief Gets the value from the fine maps, including linear interpolating between the pristine and present maps
+	 * @brief Gets the value from the fine maps, including linear interpolating between the historical and present maps
 	 * @param xval the x coordinate
 	 * @param yval the y coordinate
 	 * @param current_generation the current generation timer
@@ -503,13 +521,13 @@ public:
 		   << "\n";
 		os << r.scale << "\n" << r.x_dim << "\n" << r.y_dim << "\n" << r.deme << "\n" << r.check_set_dim << "\n"
 		   << r.dispersal_relative_cost << "\n";
-		os << r.update_time << "\n" << r.habitat_change_rate << "\n" << r.gen_since_pristine << "\n"
+		os << r.update_time << "\n" << r.habitat_change_rate << "\n" << r.gen_since_historical << "\n"
 		   << r.current_map_time << "\n"
-		   << r.is_pristine << "\n";
+		   << r.is_historical << "\n";
 		os << r.NextMap << "\n" << r.nUpdate << "\n" << r.landscape_type << "\n" << r.fine_max << "\n"
 		   << r.coarse_max << "\n";
-		os << r.pristine_fine_max << "\n" << r.pristine_coarse_max << "\n" << r.habitat_max << "\n"
-		   << r.has_coarse << "\n" << r.has_pristine << "\n";
+		os << r.historical_fine_max << "\n" << r.historical_coarse_max << "\n" << r.habitat_max << "\n"
+		   << r.has_coarse << "\n" << r.has_historical << "\n";
 		return os;
 	}
 
@@ -529,18 +547,18 @@ public:
 		is >> r.fine_x_offset >> r.fine_y_offset >> r.coarse_x_offset >> r.coarse_y_offset >> r.scale >> r.x_dim
 		   >> r.y_dim
 		   >> r.deme >> r.check_set_dim >> r.dispersal_relative_cost;
-		is >> r.update_time >> r.habitat_change_rate >> r.gen_since_pristine >> r.current_map_time >> r.is_pristine;
+		is >> r.update_time >> r.habitat_change_rate >> r.gen_since_historical >> r.current_map_time >> r.is_historical;
 		getline(is, r.NextMap);
 		is >> r.nUpdate;
 		is >> r.landscape_type;
 		is >> r.fine_max >> r.coarse_max;
-		is >> r.pristine_fine_max >> r.pristine_coarse_max;
-		is >> r.habitat_max >> r.has_coarse >> r.has_pristine;
+		is >> r.historical_fine_max >> r.historical_coarse_max;
+		is >> r.habitat_max >> r.has_coarse >> r.has_historical;
 		r.setLandscape(r.mapvars->landscape_type);
 		r.calcFineMap();
 		r.calcCoarseMap();
-		r.calcPristineFineMap();
-		r.calcPristineCoarseMap();
+		r.calcHistoricalFineMap();
+		r.calcHistoricalCoarseMap();
 		r.recalculateHabitatMax();
 		return is;
 	}
@@ -558,7 +576,7 @@ public:
 
 	/**
 	 * @brief Recalculates the habitat map maximum by checking the maximums for each of the relevant map files
-	 * (fine, coarse and pristines).
+	 * (fine, coarse and historicals).
 	 */
 	void recalculateHabitatMax();
 

@@ -1,12 +1,12 @@
-// This file is part of NECSim project which is released under BSD-3 license.
-// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+// This file is part of NECSim project which is released under MIT license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
  * @author Samuel Thompson
  * @file SimulateDispersal.cpp
  * @brief Contains the ability to simulate a given dispersal kernel on a specified density map, outputting the effect
  * dispersal distance distribution to an SQL file after n number of dispersal events (specified by the user).
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 
 
@@ -49,8 +49,8 @@ void SimulateDispersal::importMaps()
 	density_landscape.calcFineMap();
 	density_landscape.calcCoarseMap();
 	density_landscape.calcOffset();
-	density_landscape.calcPristineFineMap();
-	density_landscape.calcPristineCoarseMap();
+	density_landscape.calcHistoricalFineMap();
+	density_landscape.calcHistoricalCoarseMap();
 	density_landscape.setLandscape(simParameters->landscape_type);
 	density_landscape.recalculateHabitatMax();
 //	if(fine_map_file != "null")

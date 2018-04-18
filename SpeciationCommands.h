@@ -1,12 +1,12 @@
-//This file is part of NECSim project which is released under BSD-3 license.
-//See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+//This file is part of NECSim project which is released under MIT license.
+//See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
  * @author Samuel Thompson
  * @date 19/07/2017
  * @file SpeciationCommands.h
  *
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  * @brief Contains the SpeciationCommands class for performing calculations of the coalescence tree structure and generating
  *  the SQL database objects.
  * 

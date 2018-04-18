@@ -1,5 +1,5 @@
-//This file is part of NECSim project which is released under BSD-3 license.
-//See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+//This file is part of NECSim project which is released under MIT license.
+//See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 /**
  * @author Samuel Thompson
  * @date 31/08/16
@@ -8,7 +8,7 @@
  * @brief Contains the Community object, which is used for reconstructing the coalescence tree after simulations are
  * complete.
  *
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 
 #ifndef TREELIST
@@ -373,16 +373,16 @@ public:
 class Community
 {
 protected:
-	bool bMem; // boolean for whether the database is in memory or not.
-	bool bFileSet; // boolean for whether the database has been set already.
+	bool in_mem; // boolean for whether the database is in memory or not.
+	bool database_set; // boolean for whether the database has been set already.
 	sqlite3 *database; // stores the in-memory database connection.
 	sqlite3 *outdatabase; // stores the file database connection
 	bool bSqlConnection; // true if the data connection has been established.
 	Row<TreeNode> *nodes; // in older versions this was called list. Changed to avoid confusion with the built-in class.
 	Row<unsigned long> row_out;
 	unsigned long iSpecies;
-	bool bSample; // checks whether the samplemask has already been imported.
-	bool bDataImport; // checks whether the main sim data has been imported.
+	bool has_imported_samplemask; // checks whether the samplemask has already been imported.
+	bool has_imported_data; // checks whether the main sim data has been imported.
 	Samplematrix samplemask; // the samplemask object for defining the areas we want to sample from.
 	vector<Fragment> fragments; // a vector of fragments for storing each fragment's coordinates.
 	CommunityParameters *current_community_parameters;
@@ -409,12 +409,12 @@ public:
 	 */
 	Community(Row<TreeNode> *r) : nodes(r)
 	{
-		bMem = false;
+		in_mem = false;
 		iSpecies = 0;
-		bSample = false;
+		has_imported_samplemask = false;
 		bSqlConnection = false;
-		bFileSet = false;
-		bDataImport = false;
+		database_set = false;
+		has_imported_data = false;
 		min_speciation_gen = 0.0;
 		max_speciation_gen = 0.0;
 		applied_max_speciation_gen = 0.0;
@@ -430,12 +430,12 @@ public:
 	 */
 	Community()
 	{
-		bMem = false;
+		in_mem = false;
 		iSpecies = 0;
-		bSample = false;
+		has_imported_samplemask = false;
 		bSqlConnection = false;
-		bFileSet = false;
-		bDataImport = false;
+		database_set = false;
+		has_imported_data = false;
 		min_speciation_gen = 0.0;
 		max_speciation_gen = 0.0;
 		applied_max_speciation_gen = 0.0;
@@ -563,6 +563,12 @@ public:
 	void importData(string inputfile);
 
 	/**
+	 * @brief Sets the simulation parameters from a SimParameters object.
+	 * @param sim_parameters pointer to the SimParameters object to set from
+	 */
+	void setSimParameters(const SimParameters * sim_parameters);
+
+	/**
 	 * @brief Imports the simulation parameters by reading the SIMULATION_PARAMETERS table in the provided file.
 	 * This imports the grid_x_size, grid_y_size (which should also be the sample map dimensions) and the minimum 
 	 * speciation rate.
@@ -574,6 +580,12 @@ public:
 	 * @param file the sqlite database simulation output which will be used for coalescence tree generation.
 	 */
 	void importSimParameters(string file);
+
+	/**
+	 * @brief Gets if the database has been set yet.
+	 * @return true if the database is already set
+	 */
+	bool isSetDatabase();
 
 	/**
 	 * @brief Gets the maximum species abundance ID from the database and stores it in the max_species_id variable.

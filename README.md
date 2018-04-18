@@ -1,8 +1,8 @@
 # necsim #
 
 Version: 1.0
-This project is released under BSD-3 
-See file **LICENSE.txt** or go to [here](https://opensource.org/licenses/BSD-3-Clause) for full license details.
+This project is released under MIT licence
+See file **LICENSE.txt** or go to [here](https://opensource.org/licenses/MIT) for full license details.
 
 ## CONTENTS ##
 * **INTRODUCTION**
@@ -61,7 +61,7 @@ In this set up, the map config file contains a file on each line, with tab separ
 
 ref=sample_grid	path=/path/to/file	x=100	y=200	mask=/path/to/mask
 ref=fine_map	path=/path/to/file	x=100	y=200	x_off=10	y_off=20
-ref=pristine_fine	path=/path/to/file	number=n	rate=r	time=g
+ref=historical_fine	path=/path/to/file	number=n	rate=r	time=g
 
 Alternatively, by specifying the -f flag, (full mode) as the first argument, the program can read in extended command line arguments, which are as followed.
 
@@ -88,10 +88,10 @@ Alternatively, by specifying the -f flag, (full mode) as the first argument, the
 21. lambda - the relative cost of moving through non-forest
 22. the_task - for referencing the specific task later on.
 23. the minimum number of species the system is known to contain.
-24. the pristine fine map file to use
-25. the pristine coarse map file to use
-26. the rate of forest change from pristine
-27. the time (in generations) since the pristine forest was seen.
+24. the historical fine map file to use
+25. the historical coarse map file to use
+26. the rate of forest change from historical
+27. the time (in generations) since the historical forest was seen.
 28. the dispersal tau value (the width of the kernel.
 29. the sample mask, with binary 1:0 values for areas that we want to sample from. If this is not provided then this will default to mapping the whole area.
 30.  the link to the file containing every generation that the list should be expanded. This should be in the format of a list.
@@ -123,8 +123,8 @@ wall_time = i
 lambda = 1
 job_num = i
 est_spec = i
-pristine_fine_source = /path/to/pristine/fine.csv
-pristine_coarse_source = /path/to/pristine/coarse.csv
+historical_fine_source = /path/to/historical/fine.csv
+historical_coarse_source = /path/to/historical/coarse.csv
 forest_change = d
 time_since = f
 dispersal = f

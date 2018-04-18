@@ -1,5 +1,5 @@
-//This file is part of NECSim project which is released under BSD-3 license.
-//See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+//This file is part of NECSim project which is released under MIT license.
+//See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
  * @author Samuel Thompson
@@ -8,7 +8,7 @@
  * @brief Contains the DispersalCoordinator, which contains all routines related to dispersal
  * including utilisation of density maps and dispersal probability maps.
  * 
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 #include "DispersalCoordinator.h"
 #include "CustomExceptions.h"

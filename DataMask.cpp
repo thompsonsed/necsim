@@ -1,14 +1,16 @@
-#include "DataMask.h"
-#include "Landscape.h"
-#include "Logging.h"
 
 /**
  * @author Samuel Thompson
  * @file DataMask.cpp
  * @brief  Contains the DataMask class for describing the spatial sampling pattern on a landscape.
  *
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
+
+#include "DataMask.h"
+#include "Landscape.h"
+#include "Logging.h"
+
 
 DataMask::DataMask()
 {
@@ -63,6 +65,8 @@ void DataMask::doImport()
 {
 	sample_mask.setSize(mask_y_dim, mask_x_dim);
 	sample_mask.import(inputfile);
+	mask_x_dim = sample_mask.getCols();
+	mask_y_dim = sample_mask.getRows();
 	sample_mask.close();
 	getProportionfptr = &DataMask::getBoolProportion;
 
@@ -81,6 +85,8 @@ void DataMask::importSampleMask(SimParameters &mapvarin)
 #endif // DEBUG
 			sample_mask_exact.setSize(mask_y_dim, mask_x_dim);
 			sample_mask_exact.import(inputfile);
+			mask_x_dim = sample_mask_exact.getCols();
+			mask_y_dim = sample_mask_exact.getRows();
 			sample_mask_exact.close();
 			getProportionfptr = &DataMask::getSampleProportion;
 		}

@@ -1,5 +1,5 @@
-// This file is part of NECSim project which is released under BSD-3 license.
-// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+// This file is part of NECSim project which is released under MIT license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
  * @author Samuel Thompson
@@ -7,7 +7,7 @@
  * @brief Contains the Community class implementation, which is used for reconstructing the coalescence tree after
  * simulations are complete.
  *
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 //#define use_csv
 #include <algorithm>
@@ -292,7 +292,7 @@ void Community::setList(Row<TreeNode> *l)
 
 void Community::setDatabase(sqlite3 *dbin)
 {
-	if(!bFileSet)
+	if(!database_set)
 	{
 		database = dbin;
 	}
@@ -300,12 +300,12 @@ void Community::setDatabase(sqlite3 *dbin)
 	{
 		throw SpeciesException("ERROR_SPEC_002: Attempt to set database - database link has already been set");
 	}
-	bFileSet = true;  // this just specifies that the database has been created in memory.
+	database_set = true;  // this just specifies that the database has been created in memory.
 }
 
 bool Community::hasImportedData()
 {
-	return bDataImport;
+	return has_imported_data;
 }
 
 long double Community::getMinimumSpeciation()
@@ -316,13 +316,13 @@ long double Community::getMinimumSpeciation()
 void Community::importSamplemask(string sSamplemask)
 {
 	// Check that the sim data has been imported.
-	if(!bDataImport)
+	if(!has_imported_data)
 	{
 		throw SpeciesException(
 				"ERROR_SPEC_003: Attempt to import samplemask object before simulation parameters: dimensions not known");
 	}
 	// Check that the main data has been imported already, otherwise the dimensions of the samplemask will not be correct
-	if(!bSample)
+	if(!has_imported_samplemask)
 	{
 		stringstream os;
 		if(sSamplemask != "null")
@@ -351,7 +351,7 @@ void Community::importSamplemask(string sSamplemask)
 #endif
 		}
 		writeInfo(os.str());
-		bSample = true;
+		has_imported_samplemask = true;
 	}
 }
 
@@ -371,7 +371,7 @@ unsigned long Community::countSpecies()
 unsigned long Community::calcSpecies()
 {
 	resetTree();
-	if(!bSample)
+	if(!has_imported_samplemask)
 	{
 #ifdef DEBUG
 		writeInfo("No samplemask imported. Defaulting to null.\n");
@@ -673,7 +673,7 @@ void Community::openSqlConnection(string inputfile)
 	{
 		openSQLiteDatabase(":memory:", database);
 		openSQLiteDatabase(inputfile, outdatabase);
-		bMem = true;
+		in_mem = true;
 		// copy the db from file into memory.
 		backupdb = sqlite3_backup_init(database, "main", outdatabase, "main");
 		int rc = sqlite3_backup_step(backupdb, -1);
@@ -697,7 +697,7 @@ void Community::openSqlConnection(string inputfile)
 	catch(FatalException &fe)
 	{
 		writeWarning("Can't open in-memory database. Writing to file instead (this will be slower).\n");
-		bMem = false;
+		in_mem = false;
 		sqlite3_close(database);
 		int rc = sqlite3_open_v2(inputfile.c_str(), &database, SQLITE_OPEN_READWRITE, "unix-dotfile");
 		// Revert to different VFS file opening method if the backup hasn't started properly.
@@ -716,16 +716,20 @@ void Community::openSqlConnection(string inputfile)
 void Community::setInternalDatabase()
 {
 	{
-		openSQLiteDatabase(":memory:", database);
+		if(!database_set)
+		{
+			openSQLiteDatabase(":memory:", database);
+		}
 		internalOption();
 	}
 }
 
 void Community::internalOption()
 {
-	bDataImport = true;
+	has_imported_data = true;
 	bSqlConnection = true;
-	bFileSet = true;
+	database_set = true;
+	in_mem = true;
 }
 
 void Community::importData(string inputfile)
@@ -734,7 +738,7 @@ void Community::importData(string inputfile)
 	{
 		openSqlConnection(inputfile);
 	}
-	if(!bDataImport)
+	if(!has_imported_data)
 	{
 		importSimParameters(inputfile);
 	}
@@ -1148,7 +1152,7 @@ void Community::createFragmentDatabase(const Fragment &f)
 
 void Community::exportDatabase()
 {
-	if(bMem)
+	if(in_mem)
 	{
 		stringstream ss;
 		stringstream os;
@@ -1632,9 +1636,38 @@ void Community::applyFragments()
 	writeInfo("done!\n");
 }
 
+void Community::setSimParameters(const SimParameters *sim_parameters)
+{
+	if(!has_imported_data)
+	{
+		min_spec_rate = sim_parameters->spec;
+		grid_x_size = sim_parameters->grid_x_size;
+		grid_y_size = sim_parameters->grid_y_size;
+		protracted = sim_parameters->is_protracted;
+		min_speciation_gen = sim_parameters->min_speciation_gen;
+		max_speciation_gen = sim_parameters->max_speciation_gen;
+		samplemask_x_offset = sim_parameters->sample_x_offset;
+		samplemask_y_offset = sim_parameters->sample_y_offset;
+		samplemask_x_size = sim_parameters->sample_x_size;
+		samplemask_y_size = sim_parameters->sample_y_size;
+		if(protracted)
+		{
+			if(max_speciation_gen == 0.0)
+			{
+				throw SpeciesException("Protracted speciation does not make sense when maximum speciation gen is 0.0.");
+			}
+			if(min_speciation_gen > max_speciation_gen)
+			{
+				throw SpeciesException("Cannot have simulation with minimum speciation generation less than maximum!");
+			}
+		}
+	}
+	has_imported_data = true;
+}
+
 void Community::importSimParameters(string file)
 {
-	if(bDataImport)
+	if(has_imported_data)
 	{
 		return;
 	}
@@ -1703,7 +1736,12 @@ void Community::importSimParameters(string file)
 	{
 		throw SpeciesException(er.what());
 	}
-	bDataImport = true;
+	has_imported_data = true;
+}
+
+bool Community::isSetDatabase()
+{
+	return database_set;
 }
 
 void Community::setProtractedParameters(double max_speciation_gen_in)

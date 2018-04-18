@@ -1,5 +1,5 @@
-// This file is part of NECSim project which is released under BSD-3 license.
-// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+// This file is part of NECSim project which is released under MIT license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
  * @author Samuel Thompson
@@ -8,7 +8,7 @@
  *
  * @brief  Contains the SpatialTree class implementation as the main simulation object for spatially-explicit
  * coalescence simulations.
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 
 #include <algorithm>
@@ -99,10 +99,10 @@ void SpatialTree::parseArgs(vector<string> & comargs)
 			os << "21: dispersal_relative_cost - the relative cost of moving through non-forest." << endl;
 			os << "22: the_task - for referencing the specific task later on." << endl;
 			os << "23: the minimum number of species the system is known to contain." << endl;
-			os << "24: the pristine fine map file to use." << endl;
-			os << "25: the pristine coarse map file to use." << endl;
-			os << "26: the rate of forest change from pristine." << endl;
-			os << "27: the time (in generations) since the pristine forest was seen." << endl;
+			os << "24: the historical fine map file to use." << endl;
+			os << "25: the historical coarse map file to use." << endl;
+			os << "26: the rate of forest change from historical." << endl;
+			os << "27: the time (in generations) since the historical forest was seen." << endl;
 			os << "28: the dispersal sigma value." << endl;
 			os << "29: the sample mask, with binary 1:0 values for areas that we want to sample from. If this is not provided then this will default to mapping the entire grid." << endl;
 			os << "30: a file containing a tab-separated list of sample points in time (in generations). If this is null then only the present day will be sampled." << endl;
@@ -201,7 +201,7 @@ void SpatialTree::checkFolders()
 	
 	stringstream os;
 	os << "Checking folder existance..." << flush;
-	bool bFineMap, bCoarseMap, bFineMapPristine, bCoarseMapPristine, bSampleMask, bOutputFolder;
+	bool bFineMap, bCoarseMap, bFineMapHistorical, bCoarseMapHistorical, bSampleMask, bOutputFolder;
 	try
 	{
 		bFineMap = doesExistNull(sim_parameters.fine_map_file);
@@ -222,21 +222,21 @@ void SpatialTree::checkFolders()
 	}
 	try
 	{
-		bFineMapPristine = doesExistNull(sim_parameters.pristine_fine_map_file);
+		bFineMapHistorical = doesExistNull(sim_parameters.historical_fine_map_file);
 	}
 	catch(FatalException& fe)
 	{
 		writeError(fe.what());
-		bFineMapPristine = false;
+		bFineMapHistorical = false;
 	}
 	try
 	{
-		bCoarseMapPristine = doesExistNull(sim_parameters.pristine_coarse_map_file);
+		bCoarseMapHistorical = doesExistNull(sim_parameters.historical_coarse_map_file);
 	}
 	catch(FatalException& fe)
 	{
 		writeError(fe.what());
-		bCoarseMapPristine = false;
+		bCoarseMapHistorical = false;
 	}
 	bOutputFolder = checkOutputDirectory();
 	try
@@ -248,7 +248,7 @@ void SpatialTree::checkFolders()
 		writeError(fe.what());
 		bSampleMask = false;
 	}
-	if(bFineMap && bCoarseMap && bFineMapPristine && bCoarseMapPristine && bOutputFolder && bSampleMask)
+	if(bFineMap && bCoarseMap && bFineMapHistorical && bCoarseMapHistorical && bOutputFolder && bSampleMask)
 	{
 		os << "\rChecking folder existance...done!                                                                " << endl;
 		writeInfo(os.str());
@@ -269,11 +269,9 @@ void SpatialTree::setParameters()
 		// Set the variables equal to the value from the Mapvars object.
 		fine_map_input = sim_parameters.fine_map_file;
 		coarse_map_input = sim_parameters.coarse_map_file;
-		grid_x_size = sim_parameters.grid_x_size;
-		grid_y_size = sim_parameters.grid_y_size;
-		// pristine map information
-		pristine_fine_map_input = sim_parameters.pristine_fine_map_file;
-		pristine_coarse_map_input = sim_parameters.pristine_coarse_map_file;
+		// historical map information
+		historical_fine_map_input = sim_parameters.historical_fine_map_file;
+		historical_coarse_map_input = sim_parameters.historical_coarse_map_file;
 		desired_specnum = sim_parameters.desired_specnum;
 		if(sim_parameters.landscape_type == "none")
 		{
@@ -302,16 +300,16 @@ void SpatialTree::importMaps()
 		{
 			// Set the time variables
 			landscape.checkMapExists();
-			// landscape.setTimeVars(gen_since_pristine,habitat_change_rate);
+			// landscape.setTimeVars(gen_since_historical,habitat_change_rate);
 			// Import the fine map
 			landscape.calcFineMap();
 			// Import the coarse map
 			landscape.calcCoarseMap();
 			// Calculate the offset for the extremeties of each map
 			landscape.calcOffset();
-			// Import the pristine maps;
-			landscape.calcPristineFineMap();
-			landscape.calcPristineCoarseMap();
+			// Import the historical maps;
+			landscape.calcHistoricalFineMap();
+			landscape.calcHistoricalCoarseMap();
 			// Calculate the maximum values
 			landscape.recalculateHabitatMax();
 			importReproductionMap();
@@ -441,7 +439,7 @@ void SpatialTree::setup()
 unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 {
 	active[0].setup(0, 0, 0, 0, 0, 0, 0);
-	grid.setSize(grid_y_size, grid_x_size);
+	grid.setSize(sim_parameters.grid_y_size, sim_parameters.grid_x_size);
 	unsigned long number_start = 0;
 	stringstream os;
 	os << "\rSetting up simulation...filling grid                           " << flush;
@@ -613,7 +611,7 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
 #endif // DEBUG
 // Then the lineage exists in the main list;
 // debug (can be removed later)
-#ifdef pristine_mode
+#ifdef historical_mode
 		if(grid[oldy][oldx].getMaxsize() < active[chosen].getListpos())
 		{
 			stringstream ss;
@@ -803,7 +801,7 @@ void SpatialTree::calcNewPos(bool& coal,
 				throw FatalException("ERROR_MOVE_005: Grid index not set correctly for species. Check "
 									  "move programming function.");
 			}
-#ifdef pristine_mode
+#ifdef historical_mode
 			if(grid[oldy][oldx].getListsize() > grid[oldy][oldx].getMaxsize())
 			{
 				throw FatalException(
@@ -895,7 +893,7 @@ void SpatialTree::calcNewPos(bool& coal,
 // Get the random reference from the match list.
 // If the movement is to an empty space, then we can update the chain to include the new
 // lineage.
-#ifdef pristine_mode
+#ifdef historical_mode
 				if(randwrap > landscape.getVal(oldx, oldy, oldxwrap, oldywrap, generation))
 				{
 					throw FatalException(
@@ -933,7 +931,7 @@ void SpatialTree::calcNewPos(bool& coal,
 					}
 				}
 			}
-#ifdef pristine_mode
+#ifdef historical_mode
 			if(grid[oldy][oldx].getMaxsize() < active[chosen].getListpos())
 			{
 				throw FatalException(
@@ -1203,8 +1201,8 @@ unsigned long SpatialTree::estSpecnum()
 	return iSpecies;
 }
 
-#ifdef pristine_mode
-void SpatialTree::pristineStepChecks()
+#ifdef historical_mode
+void SpatialTree::historicalStepChecks()
 {
 	if(landscape.getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap, generation) == 0)
 	{
@@ -1223,8 +1221,8 @@ void SpatialTree::incrementGeneration()
 	Tree::incrementGeneration();
 	landscape.updateMap(generation);
 	checkTimeUpdate();
-	// check if the map is pristine yet
-	landscape.checkPristine(generation);
+	// check if the map is historical yet
+	landscape.checkHistorical(generation);
 
 }
 #ifdef DEBUG
@@ -1255,8 +1253,8 @@ void SpatialTree::updateStepCoalescenceVariables()
 	this_step.oldy = active[this_step.chosen].getYpos();
 	this_step.oldxwrap = active[this_step.chosen].getXwrap();
 	this_step.oldywrap = active[this_step.chosen].getYwrap();
-#ifdef pristine_mode
-	pristineStepChecks();
+#ifdef historical_mode
+	historicalStepChecks();
 #endif
 }
 
@@ -1339,7 +1337,7 @@ string SpatialTree::simulationParametersSqlInsertion()
 	to_execute += to_string((long double)sim_parameters.deme_sample) + "," + to_string((long long)maxtime) + ",";
 	to_execute += to_string((long double)sim_parameters.dispersal_relative_cost) + "," + to_string((long long)desired_specnum) + ",";
 	to_execute += to_string((long double)sim_parameters.habitat_change_rate) + ",";
-	to_execute += to_string((long double)sim_parameters.gen_since_pristine) + ",'" + sim_parameters.times_file + "','";
+	to_execute += to_string((long double)sim_parameters.gen_since_historical) + ",'" + sim_parameters.times_file + "','";
 	to_execute += coarse_map_input + "'," + to_string((long long)sim_parameters.coarse_map_x_size) + ",";
 	to_execute += to_string((long long)sim_parameters.coarse_map_y_size) + "," + to_string((long long)sim_parameters.coarse_map_x_offset) + ",";
 	to_execute += to_string((long long)sim_parameters.coarse_map_y_offset) + "," + to_string((long long)sim_parameters.coarse_map_scale) + ",'";
@@ -1350,7 +1348,7 @@ string SpatialTree::simulationParametersSqlInsertion()
 	to_execute += to_string((long long) sim_parameters.sample_y_size) + ", ";
 	to_execute += to_string((long long) sim_parameters.sample_x_offset) + ", ";
 	to_execute += to_string((long long) sim_parameters.sample_y_offset) + ", '";
-	to_execute += pristine_coarse_map_input + "','" + pristine_fine_map_input + "'," + to_string(sim_complete);
+	to_execute += historical_coarse_map_input + "','" + historical_fine_map_input + "'," + to_string(sim_complete);
 	to_execute += ", '" + sim_parameters.dispersal_method + "', ";
 	to_execute += boost::lexical_cast<std::string>(sim_parameters.m_prob) + ", ";
 	to_execute += to_string((long double)sim_parameters.cutoff) + ", ";
@@ -1421,7 +1419,7 @@ void SpatialTree::simResume()
 
 void SpatialTree::loadGridSave()
 {
-	grid.setSize(grid_x_size, grid_y_size);
+	grid.setSize(sim_parameters.grid_y_size, sim_parameters.grid_x_size);
 	string file_to_open;
 	try
 	{
@@ -1430,9 +1428,9 @@ void SpatialTree::loadGridSave()
 		// New method for re-creating grid data from active lineages
 		// First initialise the empty grid object
 		writeInfo(os.str());
-		for(unsigned long i = 0; i < grid_y_size; i++)
+		for(unsigned long i = 0; i < sim_parameters.grid_y_size; i++)
 		{
-			for(unsigned long j = 0; j < grid_x_size; j++)
+			for(unsigned long j = 0; j < sim_parameters.grid_x_size; j++)
 			{
 				grid[i][j].initialise(landscape.getVal(j, i, 0, 0, generation));
 				grid[i][j].fillList();
@@ -1757,7 +1755,7 @@ void SpatialTree::debugAddingLineage(unsigned long numstart, long x, long y)
 void SpatialTree::runChecks(const unsigned long& chosen, const unsigned long& coalchosen)
 {
 // final checks
-#ifdef pristine_mode
+#ifdef historical_mode
 	if(active[chosen].getListpos() > grid[active[chosen].getYpos()][active[chosen].getXpos()].getMaxsize() &&
 	   active[chosen].getNwrap() == 0)
 	{

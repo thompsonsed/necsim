@@ -1,15 +1,14 @@
-// This file is part of NECSim project which is released under BSD-3 license.
-// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+// This file is part of NECSim project which is released under MIT license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 //
 /**
  * @author Sam Thompson
- * @date 31/08/2016
  * @file ConfigFileParser.h
  * @brief ConfigOption and SectionOption classes for importing command line parameters from a config text file,
  * originally designed for usage within coalescence simulations on a cluster.
  *
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  *
  */
 
@@ -30,7 +29,6 @@
 #include <cmath>
 #include <cctype>
 #include <algorithm>
-//#include "StpdToString.h" TODO remove this
 
 using namespace std;
 using std::string;

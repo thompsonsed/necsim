@@ -1,10 +1,10 @@
-// This file is part of NECSim project which is released under BSD-3 license.
-// See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+// This file is part of NECSim project which is released under MIT license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 /**
  * @author Sam Thompson
  * @file Logging.h
  * @brief Routines for writing to cout. Intended to be overloaded for pythonic versions with the logging module.
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 #ifndef LOGGING_IMPORT_H
 #define LOGGING_IMPORT_H

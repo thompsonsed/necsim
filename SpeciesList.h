@@ -1,18 +1,16 @@
-//This file is part of NECSim project which is released under BSD-3 license.
-//See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+//This file is part of NECSim project which is released under MIT license.
+//See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
  * @author Samuel Thompson
  * @file SpeciesList.h
  * @brief  Contains the SpeciesList class for usage in coalescence simulations.
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 
  #ifndef SPECIESLIST
  #define SPECIESLIST
 
-
-using namespace std;
 /**
  * @class SpeciesList
  * @brief Contains a list of the species that exist at one location.
@@ -24,7 +22,7 @@ using namespace std;
  */
 #include "Matrix.h"
 #include "NRrand.h"
-
+using namespace std;
 class SpeciesList
 {
 private:
@@ -81,7 +79,7 @@ public:
 	 * 
 	 * Note this version will throw a runtime_error if the space is not empty
 	 */
-	void setSpeciesEmpty(int index, unsigned long new_val);
+	void setSpeciesEmpty(unsigned long index, unsigned long new_val);
 	
 	/**
 	 * @brief Set the next active lineage (for wrapping purposes).

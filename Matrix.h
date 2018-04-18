@@ -1,7 +1,7 @@
 /**
  * @author Samuel Thompson
  * @file Matrix.h
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  * @brief Contains a template for a matrix with all the basic matrix operations overloaded.
  *
  * @details Code supplied by James Rosindell with large usage of

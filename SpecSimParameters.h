@@ -1,5 +1,5 @@
-//This file is part of NECSim project which is released under BSD-3 license.
-//See file **LICENSE.txt** or visit https://opensource.org/licenses/BSD-3-Clause) for full license details.
+// This file is part of NECSim project which is released under MIT license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
  * @author Sam Thompson
@@ -7,7 +7,7 @@
  * @brief Contains parameters for applying speciation rates post-simulation.
  *
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
- * @copyright <a href="https://opensource.org/licenses/BSD-3-Clause">BSD-3 Licence.</a>
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 #ifndef SPECIATIONCOUNTER_SPECSIMPARAMETERS_H
 #define SPECIATIONCOUNTER_SPECSIMPARAMETERS_H
@@ -119,6 +119,26 @@ struct SpecSimParameters
 				//					os << "t_i: " << sp.reference_times[i] << endl;
 			}
 		}
+	}
+
+	/**
+	 * @brief Deletes all the parameters.
+	 */
+	void wipe()
+	{
+		use_spatial = false;
+		bMultiRun = false;
+		use_fragments = false;
+		filename = "";
+		all_speciation_rates.clear();
+		samplemask = "";
+		times_file = "";
+		all_times.clear();
+		fragment_config_file = "";
+		min_speciation_gen = 0.0;
+		max_speciation_gen = 0.0;
+		metacommunity_size = 0;
+		metacommunity_speciation_rate = 0.0;
 	}
 };
 

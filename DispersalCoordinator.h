@@ -47,8 +47,8 @@ protected:
 	// across the program.
 	
 	NRrand * NR;
-	// Pointer to the habitat map object for getting density values.
-	Landscape * habitat_map;
+	// Pointer to the landscape object for getting density values.
+	Landscape * landscape;
 	// Pointer to the generation counter for the simulation
 	double * generation;
 	
@@ -109,6 +109,39 @@ public:
 	 * @param simParameters pointer to the simulation parameters to set
 	 */
 	void setDispersal(SimParameters * simParameters);
+
+	/**
+	 * @brief Fixes the dispersal map by generating cumulative probability distributions across each row.
+	 */
+	void fixDispersal();
+
+	/**
+	 * @brief Sums probabilities across the given row and divides by the total probability, so that the cumulative
+	 * probabilities sum to one.
+	 * @param row the row index to check over
+	 */
+	void fixDispersalRow(unsigned long row);
+
+	/**
+	 * @brief Checks if the provided row index requires re-scaling to a cumulative probability in the dispersal map.
+	 * @param row the row index to check
+	 * @return true if re-scaling of the row is required
+	 */
+	bool checkDispersalRow(unsigned long row);
+
+	/**
+	 * @brief Checks that the dispersal map makes sense with dispersal to and from only cells which have a non-zero
+	 * density.
+	 */
+	void verifyDispersalMap();
+
+//#ifdef DEBUG
+	/**
+	 * @brief Asserts that the cell reference is correct for the provided coordinates.
+	 * @param expected the expected cell reference.
+	 */
+	void assertReferenceMatches(unsigned long expected);
+//#endif // DEBUG
 	/**
 	 * @brief Picks a random cell from the whole map and stores the value in the step object
 	 * @param this_step the step object to store end points in

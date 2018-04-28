@@ -173,13 +173,13 @@ public:
 	 * @brief Getter for the list size.
 	 * @return the number of lineages currently directly within the SpeciesList.
 	 */
-	unsigned long getListsize();
+	unsigned long getListSize();
 	
 	/**
 	 * @brief Getter for the maximum size of the SpeciesList object.
 	 * @return the maximum number of lineages that can exist currently.
 	 */
-	unsigned long getMaxsize();
+	unsigned long getMaxSize();
 	
 	/**
 	 * @brief Empties the list of any data and fills the list with zeros.

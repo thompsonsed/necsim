@@ -408,6 +408,7 @@ void SpatialTree::setupDispersalCoordinator()
 										sim_parameters.fine_map_x_size, sim_parameters.fine_map_y_size,
 										sim_parameters.m_prob, sim_parameters.cutoff, sim_parameters.sigma,
 										sim_parameters.tau, sim_parameters.restrict_self);
+	dispersal_coordinator.verifyDispersalMap();
 }
 
 void SpatialTree::setup()
@@ -427,8 +428,8 @@ void SpatialTree::setup()
 		setParameters();
 		setInitialValues();
 		importMaps();
-		setupDispersalCoordinator();
 		landscape.setLandscape(sim_parameters.landscape_type);
+		setupDispersalCoordinator();
 #ifdef DEBUG
 		landscape.validateMaps();
 #endif
@@ -457,11 +458,10 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 
 				x = i;
 				y = j;
-
 				x_wrap = 0;
 				y_wrap = 0;
 				samplegrid.recalculate_coordinates(x, y, x_wrap, y_wrap);
-				if(x_wrap == 0 && y_wrap == 0)
+				if(grid[y][x].getListSize() == 0)
 				{
 					unsigned long stored_next = grid[y][x].getNext();
 					unsigned long stored_nwrap = grid[y][x].getNwrap();
@@ -469,12 +469,15 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 					grid[y][x].fillList();
 					grid[y][x].setNwrap(stored_nwrap);
 					grid[y][x].setNext(stored_next);
+				}
+				if(x_wrap == 0 && y_wrap == 0)
+				{
 					unsigned long sample_amount = getIndividualsSampled(x, y, 0, 0, 0.0);
 					if(sample_amount >= 1)
 					{
 						for(unsigned long k = 0; k < sample_amount; k++)
 						{
-							if(k >= grid[y][x].getMaxsize())
+							if(k >= grid[y][x].getMaxSize())
 							{
 								break;
 							}
@@ -537,6 +540,7 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 						}
 					}
 				}
+
 			}
 		}
 		if(sim_parameters.uses_spatial_sampling)
@@ -772,7 +776,7 @@ void SpatialTree::calcNewPos(bool& coal,
 		// then the procedure is relatively simple.
 		// check for coalescence
 		// check if the grid needs to be updated.
-		if(grid[oldy][oldx].getMaxsize() != landscape.getVal(oldx, oldy, oldxwrap, oldywrap, generation))
+		if(grid[oldy][oldx].getMaxSize() != landscape.getVal(oldx, oldy, oldxwrap, oldywrap, generation))
 		{
 			grid[oldy][oldx].setMaxsize(landscape.getVal(oldx, oldy, 0, 0, generation));
 		}
@@ -1503,6 +1507,11 @@ void SpatialTree::verifyReproductionMap()
 			{
 				if(rep_map[i][j] == 0.0 && landscape.getValFine(j, i, 0.0) != 0)
 				{
+					stringstream ss;
+					ss << "Location: " << j << ", " << i << endl;
+					ss << "Reproduction value: " << rep_map[i][j] << endl;
+					ss << "Density: " << landscape.getValFine(j, i, 0.0) << endl;
+					writeInfo(ss.str());
 					throw FatalException("Reproduction map is zero where density is non-zero. "
 												 "This will cause an infinite loop.");
 				}
@@ -1512,6 +1521,9 @@ void SpatialTree::verifyReproductionMap()
 				}
 			}
 		}
+#ifdef DEBUG
+		writeLog(10, "\nReproduction map validation complete.");
+#endif // DEBUG
 	}
 }
 
@@ -1555,11 +1567,11 @@ unsigned long SpatialTree::countCellExpansion(const long &x, const long &y, cons
 	if(xwrap == 0 && ywrap == 0)
 	{
 		unsigned long ref = 0;
-		if(map_cover >= grid[y][x].getMaxsize())
+		if(map_cover >= grid[y][x].getMaxSize())
 		{
 			grid[y][x].changePercentCover(map_cover);
 		}
-		while(ref < grid[y][x].getMaxsize() && num_to_add > 0)
+		while(ref < grid[y][x].getMaxSize() && num_to_add > 0)
 		{
 			unsigned long tmp_active = grid[y][x].getSpecies(ref);
 			if(tmp_active != 0)

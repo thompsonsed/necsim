@@ -479,13 +479,13 @@ public:
 	bool checkFine(const double &x, const double &y, const long &xwrap, const long &ywrap);
 
 	/**
-	 * @brief Converts the coordinates to within the original grid, altering the xwrap and ywrap consequently.
+	 * @brief Fixes the coordinates to be correctly within the original grid, altering the xwrap and ywrap consequently.
 	 * @param x the x position.
 	 * @param y the y position.
 	 * @param xwrap the number of wraps in the x dimension.
 	 * @param ywrap the number of wraps in the y dimension.
 	 */
-	void convertCoordinates(double &x, double &y, long &xwrap, long &ywrap);
+	void fixGridCoordinates(double &x, double &y, long &xwrap, long &ywrap);
 
 	/**
 	 * @brief The function that actually performs the dispersal. 

@@ -61,36 +61,39 @@ public:
 	/**
 	 * @brief Sets the parameters for the datamask, including the dimensions of the map, the offsets from the grid and
 	 * the dimensions of the grid itself for recalculating coordinates.
-	 * @param sample_mask_file the file to import the samplemask from (or "null")
-	 * @param x_in x dimension of the grid
-	 * @param y_in y dimension of the grid
-	 * @param mask_x_in x dimension of the sample mask
-	 * @param mask_y_in y dimension of the sample mask
-	 * @param x_offset_in x offset of the sample mask from the grid
-	 * @param y_offset_in y offset of the sample mask from the grid
-	 * @return true if using a "null" samplemask
+	 * @param sim_parameters Simulation parameter to set the data mask from
 	 */
-	bool setup(const string &sample_mask_file, const unsigned long &x_in, const unsigned long &y_in,
-			   const unsigned long &mask_x_in, const unsigned long &mask_y_in,
-			   const unsigned long &x_offset_in, const unsigned long &y_offset_in);
+	void setup(const SimParameters &sim_parameters);
 
+	bool checkCanUseDefault(const SimParameters &sim_parameters);
 	/**
 	 * @brief Imports the sample mask as a boolean mask and sets the relevant sample mask dimensions.
+	 * Should only be called if the import is actually required (i.e. the map is not null or none).
 	 * @param xdim the x dimension of the grid area
 	 * @param ydim the y dimension of the grid area
 	 * @param mask_xdim the x dimension of the sample map file
 	 * @param mask_ydim the y dimension of the sample map file
 	 * @param xoffset the x offset of the grid area from the sample map file
 	 * @param yoffset the y offset of the grid area from the sample map file
-	 * @param inputfile the path to the sample map file
+	 * @param inputfile_in the path to the sample map file
 	 */
 	void importBooleanMask(unsigned long xdim, unsigned long ydim, unsigned long mask_xdim, unsigned long mask_ydim,
-						   unsigned long xoffset, unsigned long yoffset, string inputfile);
+						   unsigned long xoffset, unsigned long yoffset, string inputfile_in);
 
 	/**
 	 * @brief Imports the boolean map object.
 	 */
 	void doImport();
+
+	/**
+	 * @brief Sets the map dimensions and the getVal function pointer.
+	 */
+	void completeBoolImport();
+
+	/**
+	 * @brief Sets up the null sampling map.
+	 */
+	void setupNull(SimParameters &mapvarin);
 
 	/**
 	 * @brief Imports the specified file for the sampling percentage within each cell.

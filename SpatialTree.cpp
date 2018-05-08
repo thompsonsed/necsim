@@ -572,7 +572,7 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 	{
 		if(initial_count > 1.1 * number_start)
 		{
-			writeWarning("Data usage higher than neccessary - check allocation of individuals to the grid.");
+			writeCritical("Data usage higher than neccessary - check allocation of individuals to the grid.");
 			stringstream ss;
 			ss << "Initial count: " << initial_count << "  Number counted: " << number_start << endl;
 			writeWarning(ss.str());
@@ -1501,6 +1501,7 @@ void SpatialTree::verifyReproductionMap()
 {
 	if(!(sim_parameters.reproduction_file == "none" || sim_parameters.reproduction_file == "null"))
 	{
+		bool has_printed = false;
 		for(unsigned long i = 0; i < sim_parameters.fine_map_y_size; i++)
 		{
 			for(unsigned long j = 0; j < sim_parameters.fine_map_x_size; j ++)
@@ -1515,10 +1516,26 @@ void SpatialTree::verifyReproductionMap()
 					throw FatalException("Reproduction map is zero where density is non-zero. "
 												 "This will cause an infinite loop.");
 				}
+#ifdef DEBUG
 				if(landscape.getValFine(j, i, 0.0) == 0 && rep_map[i][j] != 0.0)
 				{
-					writeCritical("Density is zero where reproduction map is non-zero. This is likely incorrect.");
+					stringstream ss;
+					ss << "Density is zero where reproduction map is non-zero for " << j << ", " << i << endl;
+					ss << "Density: " << landscape.getValFine(j, i, 0.0) << endl;
+					ss << "Reproduction map: " << rep_map[i][j] << endl;
+					ss << "This is likely incorrect." << endl;
+					writeCritical(ss.str());
 				}
+#else // NDEBUG
+				if(!has_printed)
+				{
+					if(landscape.getValFine(j, i, 0.0) == 0 && rep_map[i][j] != 0.0)
+					{
+						has_printed = true;
+						writeCritical("Density is zero where reproduction map is non-zero. This is likely incorrect.");
+					}
+				}
+#endif // DEBUG
 			}
 		}
 #ifdef DEBUG

@@ -160,9 +160,9 @@ void DispersalCoordinator::verifyDispersalMap()
 		{
 			throw FatalException("Dispersal probability map dimensions do not match.");
 		}
+		bool has_printed = false;
 		for(unsigned long y = 0; y < dispersal_prob_map.getRows(); y++)
 		{
-			bool has_printed = false;
 			Step origin_step;
 			calculateCellCoordinates(origin_step, y);
 #ifdef DEBUG

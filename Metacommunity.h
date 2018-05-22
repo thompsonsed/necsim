@@ -58,7 +58,8 @@ public:
 	 * @param speciation_rate_in the speciation rate to use for metacommunity creation
 	 * @param database_name_in the path to the database to store the metacommunity in
 	 */
-	void setCommunityParameters(unsigned long community_size_in, long double speciation_rate_in, string database_name_in);
+	void setCommunityParameters(unsigned long community_size_in, long double speciation_rate_in,
+								string database_name_in);
 
 	/**
 	 * @brief Gets the seed and the task from the SIMULATION_PARAMETERS database and stores them in the relevant

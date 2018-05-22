@@ -27,14 +27,6 @@
 #include "NRrand.h"
 #include "Cell.h"
 
-/**
- * @brief Calculates the distance between two cells
- *
- * @param c1 Cell containing one point
- * @param c2 Cell containing second point
- * @return the distance between the two points
- */
-double distanceBetweenCells(Cell &c1, Cell &c2);
 
 /**
  * @class SimulateDispersal

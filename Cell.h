@@ -26,6 +26,26 @@ struct Cell
 	 */
 	Cell &operator=(Cell const& c)
 	= default;
+
+	bool operator==(Cell const&c)
+	{
+		return x == c.x && y == c.y;
+	}
+
+	bool operator!=(Cell const&c)
+	{
+		return !(this->operator==(c));
+	}
 };
+
+
+/**
+ * @brief Calculates the distance between two cells
+ *
+ * @param c1 Cell containing one point
+ * @param c2 Cell containing second point
+ * @return the distance between the two points
+ */
+double distanceBetweenCells(Cell &c1, Cell &c2);
 
 #endif // CELL_H

@@ -14,6 +14,7 @@
 #include <set>
 #include <unordered_map>
 #include "Community.h"
+#include "DoubleComparison.h"
 #include "Filesystem.h"
 
 bool checkSpeciation(const long double &random_number, const long double &speciation_rate,
@@ -28,42 +29,30 @@ bool checkSpeciation(const long double &random_number, const long double &specia
 	return (false);
 
 }
-bool doubleCompare(double d1, double d2, double epsilon)
+
+CommunityParameters::CommunityParameters(unsigned long reference_in, long double speciation_rate_in, long double time_in,
+										 bool fragment_in, unsigned long metacommunity_reference_in,
+										 const ProtractedSpeciationParameters &protracted_params)
 {
-	return (abs(float(d1 - d2)) < epsilon);
+	setup(reference_in, speciation_rate_in, time_in, fragment_in, metacommunity_reference_in, protracted_params);
 }
 
-bool doubleCompare(long double d1, long double d2, long double epsilon)
-{
-	return abs((d1 - d2)) < epsilon;
-}
-
-bool doubleCompare(long double d1, long double d2, double epsilon)
-{
-	return abs((d1 - d2)) < epsilon;
-}
-
-
-CommunityParameters::CommunityParameters(unsigned long reference_in, long double speciation_rate_in,
-										 long double time_in, bool fragment_in,
-										 unsigned long metacommunity_reference_in)
-{
-	setup(reference_in, speciation_rate_in, time_in, fragment_in, metacommunity_reference_in);
-}
-
-void CommunityParameters::setup(unsigned long reference_in, long double speciation_rate_in, long double time_in,
-								bool fragment_in, unsigned long metacommunity_reference_in)
+void CommunityParameters::setup(unsigned long reference_in, long double speciation_rate_in, long double time_in, bool fragment_in,
+								unsigned long metacommunity_reference_in, const ProtractedSpeciationParameters &protracted_params)
 {
 	time = time_in;
 	speciation_rate = speciation_rate_in;
 	fragment = fragment_in;
 	reference = reference_in;
 	metacommunity_reference = metacommunity_reference_in;
+	protracted_parameters = protracted_params;
 	updated = false;
+
 }
 
 bool CommunityParameters::compare(long double speciation_rate_in, long double time_in, bool fragment_in,
-								  unsigned long metacommunity_reference_in)
+								  unsigned long metacommunity_reference_in,
+								  const ProtractedSpeciationParameters &protracted_params)
 {
 	if(doubleCompare(double(time_in), double(0.0), 0.00001))
 	{
@@ -73,18 +62,22 @@ bool CommunityParameters::compare(long double speciation_rate_in, long double ti
 		writeLog(10, os);
 #endif // DEBUG
 		return doubleCompare(speciation_rate, speciation_rate_in, speciation_rate * 0.000001) &&
-				fragment == fragment_in && metacommunity_reference == metacommunity_reference_in;
+			   fragment == fragment_in && metacommunity_reference == metacommunity_reference_in &&
+			   protracted_params == protracted_parameters;
 	}
 	return doubleCompare(speciation_rate, speciation_rate_in, speciation_rate * 0.000001) &&
 		   doubleCompare(time, time_in, time * 0.0001) && fragment == fragment_in &&
-		   metacommunity_reference == metacommunity_reference_in;
+		   metacommunity_reference == metacommunity_reference_in &&
+			protracted_params == protracted_parameters;
 }
 
 bool CommunityParameters::compare(long double speciation_rate_in, long double time_in,
-								  unsigned long metacommunity_reference_in)
+								  unsigned long metacommunity_reference_in,
+								  const ProtractedSpeciationParameters &protracted_params)
 {
 	return doubleCompare(speciation_rate, speciation_rate_in, speciation_rate * 0.000001) &&
-		   doubleCompare(time, time_in, 0.0001) && metacommunity_reference == metacommunity_reference_in;
+		   doubleCompare(time, time_in, 0.0001) && metacommunity_reference == metacommunity_reference_in &&
+			protracted_params == protracted_parameters;
 }
 
 bool CommunityParameters::compare(unsigned long reference_in)
@@ -93,9 +86,10 @@ bool CommunityParameters::compare(unsigned long reference_in)
 }
 
 void CommunitiesArray::pushBack(unsigned long reference, long double speciation_rate, long double time, bool fragment,
-								unsigned long metacommunity_reference)
+								unsigned long metacommunity_reference,
+								const ProtractedSpeciationParameters &protracted_params)
 {
-	CommunityParameters tmp_param(reference, speciation_rate, time, fragment, metacommunity_reference);
+	CommunityParameters tmp_param(reference, speciation_rate, time, fragment, metacommunity_reference, protracted_params);
 	calc_array.push_back(tmp_param);
 }
 
@@ -105,17 +99,18 @@ void CommunitiesArray::pushBack(CommunityParameters tmp_param)
 }
 
 CommunityParameters &CommunitiesArray::addNew(long double speciation_rate, long double time, bool fragment,
-											  unsigned long metacommunity_reference)
+											  unsigned long metacommunity_reference,
+											  const ProtractedSpeciationParameters &protracted_params)
 {
 	unsigned long max_reference = 1;
 	for(auto &i : calc_array)
 	{
-		if(i.compare(speciation_rate, time, metacommunity_reference))
+		if(i.compare(speciation_rate, time, metacommunity_reference, protracted_params))
 		{
 			if(i.fragment == fragment || !fragment)
 			{
 				throw FatalException("Tried to get reference for non-unique parameter set in communities. "
-											 "Please report this bug.");
+									 "Please report this bug.");
 			}
 			else
 			{
@@ -132,17 +127,19 @@ CommunityParameters &CommunitiesArray::addNew(long double speciation_rate, long 
 			}
 		}
 	}
-	CommunityParameters tmp_param(max_reference, speciation_rate, time, fragment, metacommunity_reference);
+	CommunityParameters tmp_param(max_reference, speciation_rate, time, fragment, metacommunity_reference,
+								  protracted_params);
 	calc_array.push_back(tmp_param);
 	return calc_array.back();
 }
 
 bool CommunitiesArray::hasPair(long double speciation_rate, double time, bool fragment,
-							   unsigned long metacommunity_reference)
+							   unsigned long metacommunity_reference,
+							   const ProtractedSpeciationParameters &protracted_params)
 {
 	for(auto &i : calc_array)
 	{
-		if(i.compare(speciation_rate, time, fragment, metacommunity_reference))
+		if(i.compare(speciation_rate, time, fragment, metacommunity_reference, protracted_params))
 		{
 			return true;
 		}
@@ -169,8 +166,8 @@ bool MetacommunityParameters::compare(unsigned long reference_in)
 	return reference == reference_in;
 }
 
-void
-MetacommunitiesArray::pushBack(unsigned long reference, long double speciation_rate, unsigned long metacommunity_size)
+void MetacommunitiesArray::pushBack(unsigned long reference, long double speciation_rate,
+									unsigned long metacommunity_size)
 {
 	MetacommunityParameters tmp_param(reference, speciation_rate, metacommunity_size);
 	calc_array.push_back(tmp_param);
@@ -190,7 +187,7 @@ unsigned long MetacommunitiesArray::addNew(long double speciation_rate, unsigned
 		{
 
 			throw FatalException("Tried to get reference for non-unique parameter set in metacommunities. "
-										 "Please report this bug.");
+								 "Please report this bug.");
 		}
 		else
 		{
@@ -404,14 +401,14 @@ unsigned long Community::calcSpecies()
 		if(protracted)
 		{
 			long double lineage_age = this_node->getGeneration() + this_node->getGenRate();
-			if(lineage_age >= applied_min_speciation_gen)
+			if(lineage_age >= applied_protracted_parameters.min_speciation_gen)
 			{
 				if(checkSpeciation(this_node->getSpecRate(), current_community_parameters->speciation_rate,
 								   this_node->getGenRate()))
 				{
 					this_node->speciate();
 				}
-				if(lineage_age >= applied_max_speciation_gen)
+				if(lineage_age >= applied_protracted_parameters.max_speciation_gen)
 				{
 					this_node->speciate();
 				}
@@ -471,7 +468,7 @@ unsigned long Community::calcSpecies()
 		unsigned long tmp_species_count = 0;
 		unordered_map<unsigned long, unsigned long> ids_map;
 		ids_map.reserve(iSpecCount);
-		for(unsigned long i = 1; i < nodes->size(); i ++)
+		for(unsigned long i = 1; i < nodes->size(); i++)
 		{
 			TreeNode *this_node = &(*nodes)[i];
 			if(this_node->hasSpeciated() && this_node->getExistence())
@@ -479,7 +476,7 @@ unsigned long Community::calcSpecies()
 				auto map_id = ids_map.find(this_node->getSpeciesID());
 				if(map_id == ids_map.end())
 				{
-					tmp_species_count ++;
+					tmp_species_count++;
 					this_node->resetSpecies();
 					this_node->burnSpecies(tmp_species_count);
 					ids_map.emplace(this_node->getSpeciesID(), tmp_species_count);
@@ -647,7 +644,7 @@ void Community::detectDimensions(string db)
 	int rc = sqlite3_open_v2(db.c_str(), &tmpdb, SQLITE_OPEN_READWRITE, "unix-dotfile");
 	string to_exec = "SELECT MAX(xval),MAX(yval) FROM SPECIES_LIST;";
 	sqlite3_stmt *stmt;
-	rc = sqlite3_prepare_v2(tmpdb, to_exec.c_str(), strlen(to_exec.c_str()), &stmt, NULL);
+	rc = sqlite3_prepare_v2(tmpdb, to_exec.c_str(), static_cast<int>(strlen(to_exec.c_str())), &stmt, nullptr);
 	unsigned long xvalmax, yvalmax;
 	rc = sqlite3_step(stmt);
 	xvalmax = static_cast<unsigned long>(sqlite3_column_int(stmt, 0) + 1);
@@ -856,10 +853,10 @@ void Community::getMaxSpeciesAbundancesID()
 	}
 }
 
-Row<unsigned long> * Community::getCumulativeAbundances()
+Row<unsigned long> *Community::getCumulativeAbundances()
 {
 	unsigned long total = 0;
-	for(unsigned long i = 0; i < row_out.size(); i ++)
+	for(unsigned long i = 0; i < row_out.size(); i++)
 	{
 		total += row_out[i];
 		row_out[i] = total;
@@ -876,6 +873,7 @@ unsigned long Community::getSpeciesNumber()
 {
 	return iSpecies;
 }
+
 void Community::getMaxSpeciesLocationsID()
 {
 	if(!bSqlConnection)
@@ -924,8 +922,8 @@ void Community::createDatabase()
 	   << "..." << flush;
 	writeInfo(os.str());
 	string table_command = "CREATE TABLE IF NOT EXISTS SPECIES_ABUNDANCES (ID int PRIMARY KEY NOT NULL, "
-			"species_id INT NOT NULL, no_individuals INT NOT "
-			"NULL, community_reference INT NOT NULL);";
+						   "species_id INT NOT NULL, no_individuals INT NOT "
+						   "NULL, community_reference INT NOT NULL);";
 	int rc = sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
 	if(rc != SQLITE_OK)
 	{
@@ -979,7 +977,7 @@ void Community::outputSpeciesAbundances()
 //#endif // DEBUG
 		sqlite3_stmt *stmt;
 		string table_command = "INSERT INTO SPECIES_ABUNDANCES (ID, species_id, "
-				"no_individuals, community_reference) VALUES (?,?,?,?);";
+							   "no_individuals, community_reference) VALUES (?,?,?,?);";
 		sqlite3_prepare_v2(database, table_command.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
 						   nullptr);
 
@@ -994,7 +992,7 @@ void Community::outputSpeciesAbundances()
 			// fixed precision problem - lexical cast allows for printing of very small doubles.
 			sqlite3_bind_int(stmt, 1, static_cast<int>(max_species_id++));
 			sqlite3_bind_int(stmt, 2, static_cast<int>(i));
-			sqlite3_bind_int(stmt, 3, row_out[i]);
+			sqlite3_bind_int(stmt, 3, static_cast<int>(row_out[i]));
 			sqlite3_bind_int(stmt, 4, static_cast<int>(current_community_parameters->reference));
 			int step = sqlite3_step(stmt);
 			// makes sure the while loop doesn't go forever.
@@ -1011,7 +1009,7 @@ void Community::outputSpeciesAbundances()
 				stringstream os;
 				os << "SQLITE error code: " << step << endl;
 				os << "ERROR_SQL_004d: Could not insert into database. Check destination file has not "
-						"been moved or deleted and that an entry doesn't already exist with the same ID."
+					  "been moved or deleted and that an entry doesn't already exist with the same ID."
 				   << endl;
 				os << sqlite3_errmsg(database) << endl;
 				sqlite3_clear_bindings(stmt);
@@ -1029,8 +1027,8 @@ void Community::outputSpeciesAbundances()
 		if(rc1 != SQLITE_OK || rc2 != SQLITE_OK)
 		{
 			writeError("ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and "
-					"SQL commands. Ensure SQL statements are properly cleared and that you are not attempting "
-					"to insert repeat IDs into the database.");
+					   "SQL commands. Ensure SQL statements are properly cleared and that you are not attempting "
+					   "to insert repeat IDs into the database.");
 		}
 		else
 		{
@@ -1049,15 +1047,15 @@ void Community::outputSpeciesAbundances()
 }
 
 bool Community::checkCalculationsPerformed(long double speciation_rate, double time, bool fragments,
-										  unsigned long metacommunity_size, long double metacommunity_speciation_rate)
+										   unsigned long metacommunity_size, long double metacommunity_speciation_rate,
+										   ProtractedSpeciationParameters proc_parameters)
 {
 	auto metacommunity_reference = past_metacommunities.getReference(metacommunity_speciation_rate, metacommunity_size);
-	if(metacommunity_reference == 0 &&  metacommunity_size != 0)
+	if(metacommunity_reference == 0 && metacommunity_size != 0)
 	{
 		return false;
 	}
-	bool has_pair = past_communities.hasPair(speciation_rate, time, fragments,
-											 metacommunity_reference);
+	bool has_pair = past_communities.hasPair(speciation_rate, time, fragments, metacommunity_reference, proc_parameters);
 #ifdef DEBUG
 	stringstream os;
 	os << "Checking for calculations with sr=" << speciation_rate << ", t=" << time;
@@ -1065,12 +1063,12 @@ bool Community::checkCalculationsPerformed(long double speciation_rate, double t
 															metacommunity_size) << ": " << has_pair << endl;
 	writeLog(10, os);
 #endif // DEBUG
-	if(fragments && past_communities.hasPair(speciation_rate, time, false, metacommunity_reference))
+	if(fragments && past_communities.hasPair(speciation_rate, time, false, metacommunity_reference, proc_parameters))
 	{
 		return false;
 
 	}
-	if(!fragments && past_communities.hasPair(speciation_rate, time, true, metacommunity_reference))
+	if(!fragments && past_communities.hasPair(speciation_rate, time, true, metacommunity_reference, proc_parameters))
 	{
 		return true;
 	}
@@ -1086,13 +1084,13 @@ void Community::createFragmentDatabase(const Fragment &f)
 {
 	//		os << "Generating new SQL table for speciation rate " << s << "..." << flush;
 	string table_command = "CREATE TABLE IF NOT EXISTS FRAGMENT_ABUNDANCES (ID int PRIMARY KEY NOT NULL, fragment "
-			"TEXT NOT NULL, area DOUBLE NOT NULL, size INT NOT NULL,  species_id INT NOT NULL, "
-			"no_individuals INT NOT NULL, community_reference int NOT NULL);";
+						   "TEXT NOT NULL, area DOUBLE NOT NULL, size INT NOT NULL,  species_id INT NOT NULL, "
+						   "no_individuals INT NOT NULL, community_reference int NOT NULL);";
 	sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
 	getMaxFragmentAbundancesID();
 	sqlite3_stmt *stmt;
 	table_command = "INSERT INTO FRAGMENT_ABUNDANCES (ID, fragment, area, size, species_id, "
-			"no_individuals, community_reference) VALUES (?,?,?,?,?,?,?);";
+					"no_individuals, community_reference) VALUES (?,?,?,?,?,?,?);";
 	sqlite3_prepare_v2(database, table_command.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
 					   nullptr);
 
@@ -1108,7 +1106,7 @@ void Community::createFragmentDatabase(const Fragment &f)
 			sqlite3_bind_double(stmt, 3, f.area);
 			sqlite3_bind_int(stmt, 4, static_cast<int>(f.num));
 			sqlite3_bind_int(stmt, 5, static_cast<int>(i));
-			sqlite3_bind_int(stmt, 6, row_out[i]);
+			sqlite3_bind_int(stmt, 6, static_cast<int>(row_out[i]));
 			sqlite3_bind_int(stmt, 7, static_cast<int>(current_community_parameters->reference));
 			int step = sqlite3_step(stmt);
 			// makes sure the while loop doesn't go forever.
@@ -1124,8 +1122,8 @@ void Community::createFragmentDatabase(const Fragment &f)
 			{
 				stringstream ss;
 				ss << "ERROR_SQL_004e: Could not insert into database. Check destination file has not "
-						"been moved or deleted and that an entry doesn't already exist with the same ID."
-					 << endl;
+					  "been moved or deleted and that an entry doesn't already exist with the same ID."
+				   << endl;
 				ss << "SQLITE error code: " << step << endl;
 				ss << sqlite3_errmsg(database) << endl;
 				writeWarning(ss.str());
@@ -1144,8 +1142,8 @@ void Community::createFragmentDatabase(const Fragment &f)
 	if(rc1 != SQLITE_OK || rc2 != SQLITE_OK)
 	{
 		writeError("ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and SQL "
-				"commands. Ensure SQL statements are properly cleared and that you are not attempting to insert "
-				"repeat IDs into the database.");
+				   "commands. Ensure SQL statements are properly cleared and that you are not attempting to insert "
+				   "repeat IDs into the database.");
 	}
 }
 
@@ -1159,7 +1157,8 @@ void Community::exportDatabase()
 		// Now write the database to the file object.
 		sqlite3 *outdatabase2;
 		writeInfo(os.str());
-		int rc = sqlite3_open_v2(spec_sim_parameters->filename.c_str(), &outdatabase2, SQLITE_OPEN_READWRITE, "unix-dotfile");
+		int rc = sqlite3_open_v2(spec_sim_parameters->filename.c_str(), &outdatabase2, SQLITE_OPEN_READWRITE,
+								 "unix-dotfile");
 		// check that the connection to file has opened correctly
 		if(rc != SQLITE_OK && rc != SQLITE_DONE)
 		{
@@ -1169,8 +1168,8 @@ void Community::exportDatabase()
 			if(rc != SQLITE_OK && rc != SQLITE_DONE)
 			{
 				ss << "ERROR_SQL_016: Connection to output database cannot be opened. Check write access "
-						"on output folder. Error code: "
-					 << rc << "." << endl;
+					  "on output folder. Error code: "
+				   << rc << "." << endl;
 				throw FatalException(ss.str());
 			}
 		}
@@ -1182,8 +1181,8 @@ void Community::exportDatabase()
 		if(!backupdb)
 		{
 			ss << "ERROR_SQL_003: Could not backup to SQL database. Check destination file has not been "
-					"moved or deleted."
-				 << endl;
+				  "moved or deleted."
+			   << endl;
 			throw FatalException(ss.str());
 		}
 		// Perform the backup
@@ -1191,16 +1190,16 @@ void Community::exportDatabase()
 		if(rc != SQLITE_OK && rc != SQLITE_DONE)
 		{
 			ss << "ERROR_SQL_016: Connection to output database cannot be opened. Check write access on "
-					"output folder. Error code: "
-				 << rc << "." << endl;
+				  "output folder. Error code: "
+			   << rc << "." << endl;
 			throw FatalException(ss.str());
 		}
 		rc = sqlite3_backup_finish(backupdb);
 		if(rc != SQLITE_OK && rc != SQLITE_DONE)
 		{
 			ss << "ERROR_SQL_016: Connection to output database cannot be opened. Check write access on "
-					"output folder. Error code: "
-				 << rc << "." << endl;
+				  "output folder. Error code: "
+			   << rc << "." << endl;
 			throw FatalException(ss.str());
 		}
 		sqlite3_close(outdatabase2);
@@ -1257,7 +1256,7 @@ void Community::recordSpatial()
 {
 //	os << "Recording spatial data for speciation rate " << current_community_parameters->speciation_rate << "..." << flush;
 	string table_command = "CREATE TABLE IF NOT EXISTS SPECIES_LOCATIONS (ID int PRIMARY KEY NOT NULL, species_id INT "
-			"NOT NULL, x INT NOT NULL, y INT NOT NULL, community_reference INT NOT NULL);";
+						   "NOT NULL, x INT NOT NULL, y INT NOT NULL, community_reference INT NOT NULL);";
 	sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
 	getMaxSpeciesLocationsID();
 	sqlite3_stmt *stmt;
@@ -1315,7 +1314,7 @@ void Community::recordSpatial()
 					stringstream ss;
 					ss << "SQLITE error code: " << step << endl;
 					ss << "ERROR_SQL_004f: Could not insert into database. Check destination file has not "
-							"been moved or deleted and that an entry doesn't already exist with the same ID."
+						  "been moved or deleted and that an entry doesn't already exist with the same ID."
 					   << endl;
 					ss << sqlite3_errmsg(database) << endl;
 					writeWarning(ss.str());
@@ -1333,8 +1332,8 @@ void Community::recordSpatial()
 	if(rc1 != SQLITE_OK || rc2 != SQLITE_OK)
 	{
 		writeError("ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and SQL "
-				"commands. Ensure SQL statements are properly cleared and that you are not attempting to insert "
-				"repeat IDs into the database.");
+				   "commands. Ensure SQL statements are properly cleared and that you are not attempting to insert "
+				   "repeat IDs into the database.");
 	}
 }
 
@@ -1550,9 +1549,9 @@ void Community::calcFragments(string fragment_file)
 			tmp_raw_read.push_back(getCsvLineAndSplitIntoTokens(fragment_configs));
 		}
 		fragments.resize(tmp_raw_read.size());
-		for(unsigned long i = 0; i < tmp_raw_read.size(); i ++)
+		for(unsigned long i = 0; i < tmp_raw_read.size(); i++)
 		{
-			vector<string> * this_fragment = &tmp_raw_read[i];
+			vector<string> *this_fragment = &tmp_raw_read[i];
 			if(this_fragment->size() != 6)
 			{
 				// Only throw an error if the size is not 1 (which usually means that there is an extra line
@@ -1690,7 +1689,7 @@ void Community::importSimParameters(string file)
 #endif
 		sqlite3_stmt *stmt2;
 		string sql_parameters = "SELECT speciation_rate, grid_x, grid_y, protracted, min_speciation_gen, max_speciation_gen, "
-				"sample_x_offset, sample_y_offset, sample_x, sample_y  FROM SIMULATION_PARAMETERS;";
+								"sample_x_offset, sample_y_offset, sample_x, sample_y  FROM SIMULATION_PARAMETERS;";
 		int rc = sqlite3_prepare_v2(database, sql_parameters.c_str(), static_cast<int>(strlen(sql_parameters.c_str())),
 									&stmt2, nullptr);
 		if(rc != SQLITE_DONE && rc != SQLITE_OK)
@@ -1743,51 +1742,41 @@ bool Community::isSetDatabase()
 	return database_set;
 }
 
-void Community::setProtractedParameters(double max_speciation_gen_in)
+void Community::setProtractedParameters(const ProtractedSpeciationParameters &protracted_params)
 {
-	if(max_speciation_gen_in > max_speciation_gen)
-	{
-		throw SpeciesException(
-				"Maximum protracted speciation generation is higher than original value for simulation.");
-	}
-	else
-	{
-		applied_max_speciation_gen = max_speciation_gen_in;
-		protracted = true;
-	}
-}
-
-void Community::setProtractedParameters(const double &min_speciation_gen_in, const double &max_speciation_gen_in)
-{
-	applied_max_speciation_gen = max_speciation_gen_in;
-	applied_min_speciation_gen = min_speciation_gen_in;
+	applied_protracted_parameters = protracted_params;
 	if(min_speciation_gen > 0 && max_speciation_gen > 0 &&
-			(applied_min_speciation_gen > min_speciation_gen || applied_max_speciation_gen > max_speciation_gen))
+	   (applied_protracted_parameters.min_speciation_gen > min_speciation_gen ||
+		applied_protracted_parameters.max_speciation_gen > max_speciation_gen))
 	{
 #ifdef DEBUG
-		writeLog(50, "Applied speciation parameters: " + to_string(applied_min_speciation_gen) + ", " +
-				to_string(applied_max_speciation_gen));
-		writeLog(50, "Simulated speciation parameters: " + to_string(min_speciation_gen_in) + ", " +
-					 to_string(max_speciation_gen_in));
+		writeLog(50, "Applied speciation parameters: " + to_string(applied_protracted_parameters.min_speciation_gen) + ", " +
+				to_string(applied_protracted_parameters.max_speciation_gen));
+		writeLog(50, "Simulated speciation parameters: " + to_string(min_speciation_gen) + ", " +
+					 to_string(max_speciation_gen));
 #endif // DEBUG
+		stringstream ss;
+		ss << "Applied protracted speciation parameters: " << applied_protracted_parameters.min_speciation_gen << ", ";
+		ss << applied_protracted_parameters.max_speciation_gen << endl;
+		ss << "Original protracted speciation parameters: " << min_speciation_gen << ", " << max_speciation_gen << endl;
+		writeCritical(ss.str());
 		throw SpeciesException("Cannot use protracted parameters with minimum > simulated minimum or "
-									   "maximum > simulated maximums.");
+							   "maximum > simulated maximums.");
 	}
 }
 
-void Community::overrideProtractedParameters(const double &min_speciation_gen_in, const double &max_speciation_gen_in)
+void Community::overrideProtractedParameters(const ProtractedSpeciationParameters protracted_params)
 {
-	min_speciation_gen = min_speciation_gen_in;
-	max_speciation_gen = max_speciation_gen_in;
-	applied_max_speciation_gen = max_speciation_gen_in;
-	applied_min_speciation_gen = min_speciation_gen_in;;
+	min_speciation_gen = protracted_params.min_speciation_gen;
+	max_speciation_gen = protracted_params.max_speciation_gen;
+	applied_protracted_parameters = protracted_params;
+
 }
 
 void Community::setProtracted(bool protracted_in)
 {
 	protracted = protracted_in;
 }
-
 
 void Community::getPreviousCalcs()
 {
@@ -1811,8 +1800,12 @@ void Community::getPreviousCalcs()
 	if(has_community_parameters)
 	{
 		sqlite3_stmt *stmt2;
-		string call2 = "SELECT reference, speciation_rate, time, fragments, metacommunity_reference FROM ";
-		call2 += "COMMUNITY_PARAMETERS";
+		string call2 = "SELECT reference, speciation_rate, time, fragments, metacommunity_reference ";
+		if(protracted)
+		{
+			call2 += ", min_speciation_gen, max_speciation_gen ";
+		}
+		call2 += " FROM COMMUNITY_PARAMETERS";
 		rc = sqlite3_prepare_v2(database, call2.c_str(), static_cast<int>(strlen(call2.c_str())), &stmt2,
 								nullptr);
 		if(rc != SQLITE_DONE && rc != SQLITE_OK)
@@ -1832,11 +1825,15 @@ void Community::getPreviousCalcs()
 			}
 			else
 			{
-				past_communities.pushBack(static_cast<unsigned long>(row_val),
-										  sqlite3_column_double(stmt2, 1),
-										  sqlite3_column_double(stmt2, 2),
-										  bool(sqlite3_column_int(stmt2, 3)),
-										  static_cast<unsigned long>(sqlite3_column_int(stmt2, 4)));
+				ProtractedSpeciationParameters tmp{};
+				if(protracted)
+				{
+					tmp.min_speciation_gen = sqlite3_column_double(stmt2, 5);
+					tmp.max_speciation_gen= sqlite3_column_double(stmt2, 6);
+				}
+				past_communities.pushBack(static_cast<unsigned long>(row_val), sqlite3_column_double(stmt2, 1),
+										  sqlite3_column_double(stmt2, 2), bool(sqlite3_column_int(stmt2, 3)),
+										  static_cast<unsigned long>(sqlite3_column_int(stmt2, 4)), tmp);
 			}
 			rc = sqlite3_step(stmt2);
 		}
@@ -1908,7 +1905,8 @@ void Community::getPreviousCalcs()
 }
 
 void Community::addCalculationPerformed(long double speciation_rate, double time, bool fragments,
-									   unsigned long metacommunity_size, long double metacommunity_speciation_rate)
+										unsigned long metacommunity_size, long double metacommunity_speciation_rate,
+										const ProtractedSpeciationParameters &protracted_params)
 {
 	auto meta_reference = past_metacommunities.getReference(metacommunity_speciation_rate,
 															metacommunity_size);
@@ -1920,13 +1918,15 @@ void Community::addCalculationPerformed(long double speciation_rate, double time
 	{
 		meta_reference = 0;
 	}
-	current_community_parameters = &past_communities.addNew(speciation_rate, time, fragments, meta_reference);
+	current_community_parameters = &past_communities.addNew(speciation_rate, time, fragments, meta_reference,
+															protracted_params);
 #ifdef DEBUG
 	for(auto &i : past_communities.calc_array)
 	{
 		if(doubleCompare(i.time, current_community_parameters->time, 0.00001) &&
 			doubleCompare(i.speciation_rate, current_community_parameters->speciation_rate,
 						  i.speciation_rate*0.00001) &&
+				i.protracted_parameters == current_community_parameters->protracted_parameters &&
 				i.metacommunity_reference == current_community_parameters->metacommunity_reference &&
 				i.reference != current_community_parameters->reference)
 		{
@@ -2053,13 +2053,24 @@ void Community::writeNewCommunityParameters()
 	{
 		// Create the table if it doesn't exist
 		string table_command = "CREATE TABLE IF NOT EXISTS COMMUNITY_PARAMETERS (reference INT PRIMARY KEY NOT NULL,"
-				" speciation_rate DOUBLE NOT NULL, time DOUBLE NOT NULL, fragments INT NOT NULL, "
-				"metacommunity_reference INT);";
+							   " speciation_rate DOUBLE NOT NULL, time DOUBLE NOT NULL, fragments INT NOT NULL, "
+							   "metacommunity_reference INT";
+		string table_command2 = "INSERT INTO COMMUNITY_PARAMETERS (reference, speciation_rate, time, fragments,"
+								" metacommunity_reference";
+		string table_command3 = "VALUES (?,?,?,?,?";
+		if(protracted)
+		{
+			table_command += ", min_speciation_gen DOUBLE NOT NULL, max_speciation_gen DOUBLE NOT NULL";
+			table_command2 += ", min_speciation_gen, max_speciation_gen";
+			table_command3 += ", ?, ?";
+		}
+		table_command += ");";
+		table_command2 += ") " + table_command3 + ");";
+
 		sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
 		sqlite3_stmt *stmt;
-		table_command = "INSERT INTO COMMUNITY_PARAMETERS (reference, speciation_rate, time, fragments,"
-				" metacommunity_reference) VALUES (?,?,?,?,?);";
-		sqlite3_prepare_v2(database, table_command.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
+
+		sqlite3_prepare_v2(database, table_command2.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
 						   nullptr);
 		// Then add the required elements
 		sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
@@ -2074,6 +2085,11 @@ void Community::writeNewCommunityParameters()
 			sqlite3_bind_double(stmt, 3, static_cast<double>(item.time));
 			sqlite3_bind_int(stmt, 4, static_cast<int>(item.fragment));
 			sqlite3_bind_int(stmt, 5, static_cast<int>(item.metacommunity_reference));
+			if(protracted)
+			{
+				sqlite3_bind_int(stmt, 6, static_cast<int>(item.protracted_parameters.min_speciation_gen));
+				sqlite3_bind_int(stmt, 7, static_cast<int>(item.protracted_parameters.max_speciation_gen));
+			}
 			time_t start_check, end_check;
 			time(&start_check);
 			time(&end_check);
@@ -2089,7 +2105,7 @@ void Community::writeNewCommunityParameters()
 				ss << "SQLITE error code: " << step << endl;
 				ss << sqlite3_errmsg(database) << endl;
 				ss << "ERROR_SQL_004a: Could not insert into database. Check destination file has not "
-						"been moved or deleted and that an entry doesn't already exist with the same ID."
+					  "been moved or deleted and that an entry doesn't already exist with the same ID."
 				   << endl;
 				sqlite3_clear_bindings(stmt);
 				sqlite3_reset(stmt);
@@ -2106,7 +2122,7 @@ void Community::writeNewCommunityParameters()
 		{
 			stringstream ss;
 			ss << "ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and SQL "
-					"commands. Please report this bug." << endl;
+				  "commands. Please report this bug." << endl;
 			writeWarning(ss.str());
 		}
 	}
@@ -2139,11 +2155,11 @@ void Community::writeNewMetacommuntyParameters()
 	{
 		// Create the table if it doesn't exist
 		string table_command = "CREATE TABLE IF NOT EXISTS METACOMMUNITY_PARAMETERS (reference INT PRIMARY KEY NOT NULL,"
-				" speciation_rate DOUBLE NOT NULL, metacommunity_size DOUBLE NOT NULL);";
+							   " speciation_rate DOUBLE NOT NULL, metacommunity_size DOUBLE NOT NULL);";
 		sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
 		sqlite3_stmt *stmt;
 		table_command = "INSERT INTO METACOMMUNITY_PARAMETERS (reference, speciation_rate, metacommunity_size"
-				") VALUES (?,?,?);";
+						") VALUES (?,?,?);";
 		sqlite3_prepare_v2(database, table_command.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
 						   nullptr);
 		// Then add the required elements
@@ -2177,8 +2193,8 @@ void Community::writeNewMetacommuntyParameters()
 				writeLog(10, ss);
 #endif // DEBUG
 				throw SpeciesException("ERROR_SQL_004b: Could not insert into database. Check destination file has not "
-											   "been moved or deleted and that an entry doesn't already exist with the"
-											   " same ID.");
+									   "been moved or deleted and that an entry doesn't already exist with the"
+									   " same ID.");
 			}
 			sqlite3_clear_bindings(stmt);
 			sqlite3_reset(stmt);
@@ -2190,7 +2206,7 @@ void Community::writeNewMetacommuntyParameters()
 		{
 			stringstream ss;
 			ss << "ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and SQL "
-					"commands. Please report this bug." << endl;
+				  "commands. Please report this bug." << endl;
 			ss << sqlite3_errmsg(database) << endl;
 			writeWarning(ss.str());
 		}
@@ -2225,7 +2241,6 @@ void Community::updateCommunityParameters()
 	}
 }
 
-
 void Community::writeSpeciationRates()
 {
 	stringstream os;
@@ -2254,44 +2269,60 @@ void Community::writeSpeciationRates()
 		}
 	}
 	writeInfo(os.str());
+	if(spec_sim_parameters->protracted_parameters.size() > 1)
+	{
+		os.str("");
+		os << "Protracted speciation parameters (min, max) are: " << endl;
+		for(const auto i : spec_sim_parameters->protracted_parameters)
+		{
+			os << i.min_speciation_gen << ", " << i.max_speciation_gen << endl;
+		}
+		writeInfo(os.str());
+	}
 }
 
 void Community::calculateTree()
 {
 	stringstream os;
-	for(auto sr : spec_sim_parameters->all_speciation_rates)
+	for(auto protracted_params : spec_sim_parameters->protracted_parameters)
 	{
-		os << "Calculating speciation rate " << sr << endl;
-		writeInfo(os.str());
-		os.str("");
-		for(auto time : spec_sim_parameters->all_times)
+		setProtractedParameters(protracted_params);
+		for(auto sr : spec_sim_parameters->all_speciation_rates)
 		{
-			os.str("");
-			os << "Calculating generation " << time << "\n";
+			os << "Calculating speciation rate " << sr << endl;
 			writeInfo(os.str());
-			resetTree();
-			if(!checkCalculationsPerformed(sr, time, spec_sim_parameters->use_fragments,
-										   spec_sim_parameters->metacommunity_size,
-										   spec_sim_parameters->metacommunity_speciation_rate))
-			{
-				addCalculationPerformed(sr, time, spec_sim_parameters->use_fragments,
-										spec_sim_parameters->metacommunity_size,
-										spec_sim_parameters->metacommunity_speciation_rate);
-				createDatabase();
-				if(spec_sim_parameters->use_spatial)
-				{
-					recordSpatial();
-				}
-				if(spec_sim_parameters->use_fragments)
-				{
-					applyFragments();
-				}
-			}
-			else
+			os.str("");
+			for(auto time : spec_sim_parameters->all_times)
 			{
 				os.str("");
-				os << "calculation already performed for " << sr << " at time " << time << endl;
+				os << "Calculating generation " << time << "\n";
 				writeInfo(os.str());
+				resetTree();
+				if(!checkCalculationsPerformed(sr, time, spec_sim_parameters->use_fragments,
+											   spec_sim_parameters->metacommunity_size,
+											   spec_sim_parameters->metacommunity_speciation_rate,
+											   applied_protracted_parameters))
+				{
+					addCalculationPerformed(sr, time, spec_sim_parameters->use_fragments,
+											spec_sim_parameters->metacommunity_size,
+											spec_sim_parameters->metacommunity_speciation_rate,
+											applied_protracted_parameters);
+					createDatabase();
+					if(spec_sim_parameters->use_spatial)
+					{
+						recordSpatial();
+					}
+					if(spec_sim_parameters->use_fragments)
+					{
+						applyFragments();
+					}
+				}
+				else
+				{
+					os.str("");
+					os << "calculation already performed for " << sr << " at time " << time << endl;
+					writeInfo(os.str());
+				}
 			}
 		}
 	}
@@ -2341,7 +2372,6 @@ void Community::doApplication(SpecSimParameters *sp, Row<TreeNode> *data)
 	// Set up the objects
 	setList(data);
 	importSimParameters(sp->filename);
-	setProtractedParameters(sp->min_speciation_gen, sp->max_speciation_gen);
 	importSamplemask(sp->samplemask);
 	importData(sp->filename);
 	getPreviousCalcs();

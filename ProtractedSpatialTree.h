@@ -18,7 +18,6 @@
 /**
  * @class ProtractedTree
  * @author Sam Thompson
- * @date 10/07/2017
  * @file ProtractedTree.h
  * @brief Contains the protracted tree class, for running simulations with procated speciation.
  */
@@ -26,7 +25,7 @@
 #define SPECIATIONCOUNTER_PROTRACTEDSPATIALTREE_H
 
 
-class ProtractedSpatialTree : public SpatialTree, public ProtractedTree
+class ProtractedSpatialTree : public virtual SpatialTree, public virtual ProtractedTree
 {
 
 };

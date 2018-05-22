@@ -44,38 +44,6 @@ bool checkSpeciation(const long double &random_number, const long double &specia
 					 const unsigned long &no_generations);
 
 /**
- * @brief Compares two doubles and returns a boolean of whether they are equal, within the epsilon deviation.
- * This is useful for floating point errors in saving and reading doubles from file.
- * @param d1 the first double.
- * @param d2 the second double.
- * @param epsilon the deviation within which the values are assumed to be equal.
- * @return true if the doubles are within epsilon of each other
- */
-bool doubleCompare(double d1, double d2, double epsilon);
-
-/**
- * @brief Compares two doubles and returns a boolean of whether they are equal, within the epsilon deviation.
- * This is useful for floating point errors in saving and reading doubles from file.
- * Overloaded version for long doubles.
- * @param d1 the first double.
- * @param d2 the second double.
- * @param epsilon the deviation within which the values are assumed to be equal.
- * @return true if the doubles are within epsilon of each other
- */
-bool doubleCompare(long double d1, long double d2, long double epsilon);
-
-/**
- * @brief Compares two doubles and returns a boolean of whether they are equal, within the epsilon deviation.
- * This is useful for floating point errors in saving and reading doubles from file.
- * Overloaded version for long doubles and double epsilon.
- * @param d1 the first double.
- * @param d2 the second double.
- * @param epsilon the deviation within which the values are assumed to be equal.
- * @return true if the doubles are within epsilon of each other
- */
-bool doubleCompare(long double d1, long double d2, double epsilon);
-
-/**
  * @struct CommunityParameters
  * @brief A struct for containing pairs of previous calculations to make sure that aren't repeated.
  */
@@ -86,17 +54,12 @@ struct CommunityParameters
 	long double time;
 	bool fragment;
 	unsigned long metacommunity_reference; // will be 0 if no metacommunity used.
+	// protracted speciation parameters
+	ProtractedSpeciationParameters protracted_parameters;
 	bool updated; // set to true if the fragment reference needs updating in the database
 
-	CommunityParameters()
-	{
-		reference = 0;
-		speciation_rate = 0.0;
-		time = 0.0;
-		fragment = false;
-		metacommunity_reference = 0;
-		updated = false;
-	}
+	CommunityParameters() : reference(0), speciation_rate(0.0), time(0), fragment(false), metacommunity_reference(0),
+							protracted_parameters(), updated(false){}
 
 	/**
 	 * @brief Constructor for CommunityParameters, for storing a pairs of previous calculations, requiring a speciation rate
@@ -107,9 +70,12 @@ struct CommunityParameters
 	 * @param time_in the time of the previous calculation
 	 * @param fragment_in bool of whether fragments  were used in the previous calculation
 	 * @param metacommunity_reference_in the metacommunity reference, or 0 for no metacommunity
+	 * @param min_speciation_gen_in the minimum number of generations required for existance before speciation
+	 * @param max_speciation_gen_in the maximum number of generations allowed for existance before speciation
 	 */
 	CommunityParameters(unsigned long reference_in, long double speciation_rate_in, long double time_in,
-						bool fragment_in, unsigned long metacommunity_reference_in);
+						bool fragment_in, unsigned long metacommunity_reference_in,
+						const ProtractedSpeciationParameters &protracted_params);
 
 	/**
 	 * @brief Sets up the CommunityParameters object
@@ -118,9 +84,11 @@ struct CommunityParameters
 	 * @param time_in the time of the previous calculation
 	 * @param fragment_in bool of whether fragments  were used in the previous calculation
 	 * @param metacommunity_reference_in the metacommunity reference, or 0 for no metacommunity
+	 * @param min_speciation_gen_in the minimum number of generations required for existance before speciation
+	 * @param max_speciation_gen_in the maximum number of generations allowed for existance before speciation
 	 */
-	void setup(unsigned long reference_in, long double speciation_rate_in, long double time_in,
-			   bool fragment_in, unsigned long metacommunity_reference_in);
+	void setup(unsigned long reference_in, long double speciation_rate_in, long double time_in, bool fragment_in,
+			   unsigned long metacommunity_reference_in, const ProtractedSpeciationParameters &protracted_params);
 
 	/**
 	 * @brief Compare these set of parameters with the input set. If they match, return true, otherwise return false
@@ -128,10 +96,13 @@ struct CommunityParameters
 	 * @param time_in time to compare with stored community parameter
 	 * @param fragment_in if fragments are being used on this database
 	 * @param metacommunity_reference_in metacommunity reference to compare with stored community parameter
+	 * @param protracted_params the minimum number of generations required for existance before speciation
+	 * @param max_speciation_gen_in the maximum number of generations allowed for existance before speciation
 	 * @return
 	 */
 	bool compare(long double speciation_rate_in, long double time_in, bool fragment_in,
-				 unsigned long metacommunity_reference_in);
+				 unsigned long metacommunity_reference_in,
+				 const ProtractedSpeciationParameters &protracted_params);
 
 	/**
 	 * @brief Compare these set of parameters with the input set. If they match, return true, otherwise return false
@@ -139,9 +110,13 @@ struct CommunityParameters
 	 * @param speciation_rate_in speciation rate to compare with stored community parameter
 	 * @param time_in time to compare with stored community parameter
 	 * @param metacommunity_reference_in metacommunity reference to compare with stored community parameter
+	 * @param min_speciation_gen_in the minimum number of generations required for existance before speciation
+	 * @param max_speciation_gen_in the maximum number of generations allowed for existance before speciation
 	 * @return
 	 */
-	bool compare(long double speciation_rate_in, long double time_in, unsigned long metacommunity_reference_in);
+	bool compare(long double speciation_rate_in, long double time_in,
+				 unsigned long metacommunity_reference_in,
+				 const ProtractedSpeciationParameters &protracted_params);
 
 	/**
 	 * @brief Checks if the supplied reference is the same in the community parameter
@@ -167,9 +142,12 @@ struct CommunitiesArray
 	 * @param time the time of the past calculation
 	 * @param fragment bool of whether fragments were used in the past calculation
 	 * @param metacommunity_reference reference for the metacommunity parameters, or 0 if no metacommunity
+	 * @param min_speciation_gen_in the minimum number of generations required for existance before speciation
+	 * @param max_speciation_gen_in the maximum number of generations allowed for existance before speciation
 	 */
 	void pushBack(unsigned long reference, long double speciation_rate, long double time, bool fragment,
-				  unsigned long metacommunity_reference);
+				  unsigned long metacommunity_reference,
+				  const ProtractedSpeciationParameters &protracted_params);
 
 	/**
 	 * @brief Adds the provided CommunityParameters object to the calc_array vector
@@ -182,10 +160,12 @@ struct CommunitiesArray
 	 * @param speciation_rate the speciation rate of the new calculation
 	 * @param time the time used in the new calculation
 	 * @param fragment true if fragments were used in the new calculation
+	 *
 	 * @return reference to the new CommunityParameters object added
 	 */
 	CommunityParameters &addNew(long double speciation_rate, long double time, bool fragment,
-								unsigned long metacommunity_reference);
+								unsigned long metacommunity_reference,
+								const ProtractedSpeciationParameters &protracted_params);
 
 	/**
 	 * @brief Checks whether the calculation with the supplied variables has already been performed.
@@ -196,7 +176,9 @@ struct CommunitiesArray
 	 * @param fragment bool for checking if fragments were used
 	 * @return true if the reference exists in past community parameters
 	 */
-	bool hasPair(long double speciation_rate, double time, bool fragment, unsigned long metacommunity_reference);
+	bool hasPair(long double speciation_rate, double time, bool fragment,
+				 unsigned long metacommunity_reference,
+				 const ProtractedSpeciationParameters &protracted_params);
 
 };
 
@@ -293,7 +275,6 @@ struct MetacommunitiesArray
 	unsigned long getReference(long double speciation_rate, unsigned long metacommunity_size);
 };
 
-
 /**
  * @struct Fragment
  * @brief Contains the information needed for defining a fragment.
@@ -310,7 +291,6 @@ struct Fragment
 	unsigned long num;
 	double area;
 };
-
 
 /**
  * @class Samplematrix
@@ -397,7 +377,8 @@ protected:
 	MetacommunitiesArray past_metacommunities;
 	// Protracted speciation parameters
 	bool protracted;
-	double min_speciation_gen, max_speciation_gen, applied_min_speciation_gen, applied_max_speciation_gen;
+	double min_speciation_gen, max_speciation_gen;
+	ProtractedSpeciationParameters applied_protracted_parameters;
 	unsigned long max_species_id, max_fragment_id, max_locations_id;
 	// Does not need to be stored during simulation pause
 	SpecSimParameters *spec_sim_parameters;
@@ -407,7 +388,7 @@ public:
 	 * @brief Contructor for the community linking to Treenode list.
 	 * @param r Row of TreeNode objects to link to.
 	 */
-	Community(Row<TreeNode> *r) : nodes(r)
+	Community(Row<TreeNode> *r) : nodes(r), applied_protracted_parameters()
 	{
 		in_mem = false;
 		iSpecies = 0;
@@ -417,7 +398,6 @@ public:
 		has_imported_data = false;
 		min_speciation_gen = 0.0;
 		max_speciation_gen = 0.0;
-		applied_max_speciation_gen = 0.0;
 		protracted = false;
 		current_community_parameters = nullptr;
 		max_species_id = 0;
@@ -428,7 +408,7 @@ public:
 	/**
 	 * @brief Default constructor
 	 */
-	Community()
+	Community() : applied_protracted_parameters()
 	{
 		in_mem = false;
 		iSpecies = 0;
@@ -438,7 +418,6 @@ public:
 		has_imported_data = false;
 		min_speciation_gen = 0.0;
 		max_speciation_gen = 0.0;
-		applied_max_speciation_gen = 0.0;
 		protracted = false;
 		current_community_parameters = nullptr;
 		max_species_id = 0;
@@ -542,6 +521,7 @@ public:
 	 * @param inputfile the sql database output from a NECSim simulation.
 	 */
 	void openSqlConnection(string inputfile);
+
 	/**
 	 * @brief Opens a connection to an in-memory database. This will eventually be written to the output file.
 	 */
@@ -566,7 +546,7 @@ public:
 	 * @brief Sets the simulation parameters from a SimParameters object.
 	 * @param sim_parameters pointer to the SimParameters object to set from
 	 */
-	void setSimParameters(const SimParameters * sim_parameters);
+	void setSimParameters(const SimParameters *sim_parameters);
 
 	/**
 	 * @brief Imports the simulation parameters by reading the SIMULATION_PARAMETERS table in the provided file.
@@ -600,7 +580,7 @@ public:
 	 * value = rOut[i] - rOut[i-1]
 	 * @return pointer to sorted Row of species abundances
 	 */
-	Row<unsigned long> * getCumulativeAbundances();
+	Row<unsigned long> *getCumulativeAbundances();
 
 	/**
 	 * @brief Returns the row_out object, which should contain species abundances or cumulative abundances
@@ -632,12 +612,6 @@ public:
 
 	/**
 	 * @brief Sets the protracted parameters for application of protracted speciation
-	 * @param max_speciation_gen the maximum number of generations a lineage can exist for before speciating
-	 */
-	void setProtractedParameters(double max_speciation_gen_in);
-
-	/**
-	 * @brief Sets the protracted parameters for application of protracted speciation
 	 * 
 	 * This overloaded version is for setting protracted parameters before a full simulation has been outputted (i.e. 
 	 * immediately after completion of the simulation).
@@ -645,9 +619,9 @@ public:
 	 * @param max_speciation_gen_in the maximum number of generations a lineage can exist for before speciating
  	 * @param min_speciation_gen_in the minimum number of generations a lineage must exist before speciating.
 	 */
-	void setProtractedParameters(const double &max_speciation_gen_in, const double &mix_speciation_gen_in);
+	void setProtractedParameters(const ProtractedSpeciationParameters &protracted_params);
 
-	void overrideProtractedParameters(const double &min_speciation_gen_in, const double &max_speciation_gen_in);
+	void overrideProtractedParameters(const ProtractedSpeciationParameters protracted_params);
 
 	/**
 	 * @brief Sets the protracted boolean to the input.
@@ -687,7 +661,8 @@ public:
 	 * @return
 	 */
 	bool checkCalculationsPerformed(long double speciation_rate, double time, bool fragments,
-									unsigned long metacommunity_size, long double metacommunity_speciation_rate);
+									unsigned long metacommunity_size, long double metacommunity_speciation_rate,
+									ProtractedSpeciationParameters proc_parameters);
 
 	/**
 	 * @brief Adds a performed calculation to the lists of calculations. Also sets the current_community_parameters
@@ -700,7 +675,8 @@ public:
 	 * @param metacommunity_speciation_rate the metacommunity speciation rate of the performed calculation
 	 */
 	void addCalculationPerformed(long double speciation_rate, double time, bool fragments,
-								 unsigned long metacommunity_size, long double metacommunity_speciation_rate);
+								 unsigned long metacommunity_size, long double metacommunity_speciation_rate,
+								 const ProtractedSpeciationParameters &protracted_params);
 
 	/**
 	 * @brief Creates a new table in the database file and outputs the database object to the same file as the input file.
@@ -776,7 +752,6 @@ public:
 	 * @brief Write all performed calculations to the output database
 	 */
 	void writeNewMetacommuntyParameters();
-
 
 	/**
 	 * @brief Updates the fragments tag on those simulations which now have had fragments added.

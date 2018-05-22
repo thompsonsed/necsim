@@ -750,9 +750,12 @@ void Tree::setupTreeGeneration(long double sr, double t)
 	}
 	community.resetTree();
 	community.internalOption();
-	community.overrideProtractedParameters(getProtractedGenerationMin(), getProtractedGenerationMax());
+	ProtractedSpeciationParameters tmp;
+	tmp.min_speciation_gen = getProtractedGenerationMin();
+	tmp.max_speciation_gen = getProtractedGenerationMax();
+	community.overrideProtractedParameters(tmp);
 	community.setProtracted(getProtracted());
-	community.addCalculationPerformed(sr, t, false, 0, 0.0);
+	community.addCalculationPerformed(sr, t, false, 0, 0.0, tmp);
 }
 
 void Tree::applySpecRate(long double sr)
@@ -763,17 +766,17 @@ void Tree::applySpecRate(long double sr)
 void Tree::applyMultipleRates()
 {
 	stringstream os;
-	if(speciation_rates.size() == 0)
+	if(speciation_rates.empty())
 	{
 		os << "No additional speciation rates to apply." << endl;
 	}
 	speciation_rates.push_back(spec);
 	// Get only unique speciation rates
 	vector<long double> unique_speciation_rates;
-	for(const double &s : speciation_rates)
+	for(const long double & s : speciation_rates)
 	{
 		bool add = true;
-		for(const double & u : unique_speciation_rates)
+		for(const long double & u : unique_speciation_rates)
 		{
 			if(doubleCompare(u, s, s*0.00001))
 			{

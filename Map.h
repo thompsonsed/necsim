@@ -21,6 +21,7 @@
 #include "Matrix.h"
 #include "Logging.h"
 #include "CustomExceptions.h"
+#include "CPLCustomHandler.h"
 
 using namespace std;
 #ifdef DEBUG

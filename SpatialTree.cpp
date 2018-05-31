@@ -14,9 +14,8 @@
 #include <algorithm>
 #include "SpatialTree.h"
 
-void SpatialTree::importSimulationVariables(const string &configfile)
+void SpatialTree::runFileChecks()
 {
-	sim_parameters.importParameters(configfile);
 	// Now check that our folders exist
 	checkFolders();
 	// Now check for paused simulations

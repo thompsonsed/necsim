@@ -50,7 +50,7 @@ public:
 
 	Metacommunity();
 
-	~Metacommunity() = default;
+	~Metacommunity() override = default;
 
 	/**
 	 * @brief Sets the parameters for the metacommunity
@@ -95,10 +95,11 @@ public:
 
 	/**
 	 * @brief Applies the speciation parameters to the completed simulation, including running the spatially-implicit
-	 * for the metacommunity structure
-	 * @param sp the speciation parameters to apply
-	 */
-	void apply(SpecSimParameters *sp) override ;
+	 * for the metacommunity structure, but doesn't write the output
+ 	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure.
+ 	 */
+	void applyNoOutput(SpecSimParameters *sp) override ;
+
 
 };
 

@@ -424,10 +424,10 @@ public:
 		max_locations_id = 0;
 	}
 
-	/**
+	 /**
 	 * @brief Default destructor
 	 */
-	~Community()
+	 virtual ~Community()
 	{
 		nodes = nullptr;
 	}
@@ -786,7 +786,13 @@ public:
 	 * Overridden for metacommunity application.
 	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
 	 */
-	virtual void apply(SpecSimParameters *sp);
+	void apply(SpecSimParameters *sp);
+
+	/**
+	 * @brief Applies the given speciation parameters to the coalescence tree, but does not write the output.
+	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure.
+	 */
+	virtual void applyNoOutput(SpecSimParameters *sp);
 
 	/**
 	 * @brief Creates the coalescence tree for the given speciation parameters.

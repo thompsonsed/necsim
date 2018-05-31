@@ -88,23 +88,26 @@ struct SpecSimParameters
 	 * @param metacommunity_size_in
 	 * @param metacommunity_speciation_rate_in
 	 */
-	void setup(string file_in, bool use_spatial_in, string sample_file, vector<double> times, string use_fragments_in,
-			   vector<double> speciation_rates, vector<double> min_speciation_gen_in,
+	void setup(string file_in, bool use_spatial_in, string sample_file, const vector<double> &times,
+			   string use_fragments_in, vector<double> speciation_rates, vector<double> min_speciation_gen_in,
 			   vector<double> max_speciation_gen_in,
 			   unsigned long metacommunity_size_in, double metacommunity_speciation_rate_in)
 	{
 		filename = std::move(file_in);
 		use_spatial = use_spatial_in;
 		samplemask = std::move(sample_file);
-		if(times.empty())
+		if(times.empty() && all_times.empty())
 		{
-			times_file = "null";
-			all_times.push_back(0.0);
+				times_file = "null";
+				all_times.push_back(0.0);
 		}
 		else
 		{
 			times_file = "set";
-			all_times = times;
+			for(const auto item : times)
+			{
+				all_times.emplace_back(item);
+			}
 		}
 		if(min_speciation_gen_in.size() != max_speciation_gen_in.size())
 		{
@@ -167,6 +170,28 @@ struct SpecSimParameters
 		protracted_parameters.clear();
 		metacommunity_size = 0;
 		metacommunity_speciation_rate = 0.0;
+	}
+
+	/**
+	 * @brief Adds an additional time to the times vector.
+	 * @param time a time to calculate speciation rates at
+	 */
+	void addTime(double time)
+	{
+		all_times.emplace_back(time);
+	}
+
+	/**
+	 * @brief Adds a set of protracted speciation parameters to the protracted parameters vector
+	 * @param proc_spec_min the minimum protracted speciation generation
+	 * @param proc_spec_max the maximum protracted speciation generation
+	 */
+	void addProtractedParameters(double proc_spec_min, double proc_spec_max)
+	{
+		ProtractedSpeciationParameters tmp;
+		tmp.min_speciation_gen = proc_spec_min;
+		tmp.max_speciation_gen = proc_spec_max;
+		protracted_parameters.emplace_back(tmp);
 	}
 };
 

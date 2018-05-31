@@ -14,12 +14,12 @@
 #include <string>
 #include <cstring>
 #include <sstream>
-#include "Logging.h"
+#include "Logger.h"
 #include <gdal_priv.h>
 #include <cpl_conv.h> // for CPLMalloc()
 #include <sstream>
 #include "Matrix.h"
-#include "Logging.h"
+#include "Logger.h"
 #include "CustomExceptions.h"
 #include "CPLCustomHandler.h"
 
@@ -55,7 +55,7 @@ public:
 	using Matrix<T>::operator+=;
 	using Matrix<T>::operator[];
 
-	Map() : Matrix<T>()
+	Map() : Matrix<T>(0, 0)
 	{
 		GDALAllRegister();
 		poDataset = nullptr;

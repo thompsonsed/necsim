@@ -33,7 +33,7 @@ void openSQLiteDatabase(const string &database_name, sqlite3 *& database);
  * @brief Checks that parent folder to the supplied file exists, and if it doesn't creates it.
  * @param file the file path to check for
  */
-void createParent(const string &file);
+void createParent(string file);
 
 
 /**

@@ -12,7 +12,7 @@
  */
 #include "DispersalCoordinator.h"
 #include "CustomExceptions.h"
-#include "Logging.h"
+#include "Logger.h"
 
 DispersalCoordinator::DispersalCoordinator()
 {
@@ -20,14 +20,13 @@ DispersalCoordinator::DispersalCoordinator()
 
 DispersalCoordinator::~DispersalCoordinator()
 {
-	
+
 }
 
-void DispersalCoordinator::setRandomNumber(NRrand * NR_ptr)
+void DispersalCoordinator::setRandomNumber(NRrand *NR_ptr)
 {
 	NR = NR_ptr;
 }
-
 
 void DispersalCoordinator::setHabitatMap(Landscape *map_ptr)
 {
@@ -39,16 +38,15 @@ void DispersalCoordinator::setHabitatMap(Landscape *map_ptr)
 	xdim = landscape->getSimParameters()->fine_map_x_size;
 }
 
-void DispersalCoordinator::setGenerationPtr(double * generation_ptr)
+void DispersalCoordinator::setGenerationPtr(double *generation_ptr)
 {
 	generation = generation_ptr;
 }
 
-
 void DispersalCoordinator::setDispersal(const string &dispersal_method, const string &dispersal_file,
-							  const unsigned long dispersal_x, const unsigned long dispersal_y,
-							  const double &m_probin, const double &cutoffin,
-							  const double &sigmain, const double &tauin, const bool &restrict_self)
+										const unsigned long dispersal_x, const unsigned long dispersal_y,
+										const double &m_probin, const double &cutoffin,
+										const double &sigmain, const double &tauin, const bool &restrict_self)
 {
 	// Open our file connection
 	if(dispersal_file == "none")
@@ -76,7 +74,8 @@ void DispersalCoordinator::setDispersal(const string &dispersal_method, const st
 		ifstream infile(dispersal_file);
 		if(!infile.good())
 		{
-			string msg = "Could not access dispersal map file " + dispersal_file + ". Check file exists and is readable.";
+			string msg =
+					"Could not access dispersal map file " + dispersal_file + ". Check file exists and is readable.";
 			throw FatalException(msg);
 		}
 		infile.close();
@@ -87,8 +86,7 @@ void DispersalCoordinator::setDispersal(const string &dispersal_method, const st
 	}
 }
 
-
-void DispersalCoordinator::setDispersal(SimParameters * simParameters)
+void DispersalCoordinator::setDispersal(SimParameters *simParameters)
 {
 	if(!simParameters)
 	{
@@ -101,7 +99,7 @@ void DispersalCoordinator::setDispersal(SimParameters * simParameters)
 
 void DispersalCoordinator::fixDispersal()
 {
-	for(unsigned long row = 0; row < dispersal_prob_map.getRows(); row ++)
+	for(unsigned long row = 0; row < dispersal_prob_map.getRows(); row++)
 	{
 		fixDispersalRow(row);
 	}
@@ -113,7 +111,7 @@ void DispersalCoordinator::fixDispersalRow(unsigned long row)
 	if(checkDispersalRow(row))
 	{
 		double total_value = 0.0;
-		for(unsigned long i = 0; i < dispersal_prob_map.getCols(); i ++)
+		for(unsigned long i = 0; i < dispersal_prob_map.getCols(); i++)
 		{
 			total_value += dispersal_prob_map[row][i];
 		}
@@ -121,10 +119,10 @@ void DispersalCoordinator::fixDispersalRow(unsigned long row)
 		{
 			return;
 		}
-		dispersal_prob_map[row][0] = dispersal_prob_map[row][0]/total_value;
-		for(unsigned long i = 1; i < dispersal_prob_map.getCols(); i ++)
+		dispersal_prob_map[row][0] = dispersal_prob_map[row][0] / total_value;
+		for(unsigned long i = 1; i < dispersal_prob_map.getCols(); i++)
 		{
-			dispersal_prob_map[row][i] = dispersal_prob_map[row][i-1] + (dispersal_prob_map[row][i]/total_value);
+			dispersal_prob_map[row][i] = dispersal_prob_map[row][i - 1] + (dispersal_prob_map[row][i] / total_value);
 		}
 #ifdef DEBUG
 		if(checkDispersalRow(row))
@@ -141,9 +139,9 @@ bool DispersalCoordinator::checkDispersalRow(unsigned long row)
 	{
 		return true;
 	}
-	for(unsigned long i = 0; i < dispersal_prob_map.getCols() - 1; i ++)
+	for(unsigned long i = 0; i < dispersal_prob_map.getCols() - 1; i++)
 	{
-		if(dispersal_prob_map[row][i] > dispersal_prob_map[row][i+1])
+		if(dispersal_prob_map[row][i] > dispersal_prob_map[row][i + 1])
 		{
 			return true;
 		}
@@ -180,16 +178,16 @@ void DispersalCoordinator::verifyDispersalMap()
 														   destination_step.oldxwrap,
 														   destination_step.oldywrap, 0.0) > 0;
 				double dispersal_prob = 0.0;
-				if(x==0)
+				if(x == 0)
 				{
 					dispersal_prob = dispersal_prob_map[y][0];
 				}
 				else
 				{
-					dispersal_prob = dispersal_prob_map[y][x] - dispersal_prob_map[y][x-1];
+					dispersal_prob = dispersal_prob_map[y][x] - dispersal_prob_map[y][x - 1];
 				}
 				dispersal_total += dispersal_prob;
-				if(dispersal_prob > 0.0 )
+				if(dispersal_prob > 0.0)
 				{
 					if(!destination_value && origin_value)
 					{
@@ -251,8 +249,8 @@ void DispersalCoordinator::assertReferenceMatches(unsigned long expected)
 void DispersalCoordinator::disperseNullDispersalMap(Step &this_step)
 {
 	// Pick a random cell - that's all we need
-	this_step.oldx = floor(NR->d01()*(xdim-1));
-	this_step.oldy = floor(NR->d01()*(xdim - 1));
+	this_step.oldx = floor(NR->d01() * (xdim - 1));
+	this_step.oldy = floor(NR->d01() * (xdim - 1));
 }
 
 void DispersalCoordinator::disperseDispersalMap(Step &this_step)
@@ -290,15 +288,15 @@ void DispersalCoordinator::disperseDispersalMap(Step &this_step)
 #endif // DEBUG
 }
 
-void DispersalCoordinator::calculateCellCoordinates(Step & this_step, const unsigned long &col_ref)
+void DispersalCoordinator::calculateCellCoordinates(Step &this_step, const unsigned long &col_ref)
 {
 	this_step.oldx = long(floor(fmod(double(col_ref), xdim)));
-	this_step.oldy = long(floor(double(col_ref)/xdim));
+	this_step.oldy = long(floor(double(col_ref) / xdim));
 	this_step.oldxwrap = 0;
 	this_step.oldywrap = 0;
 	// Convert back to sample map
 	landscape->convertFineToSample(this_step.oldx, this_step.oldxwrap, this_step.oldy, this_step.oldywrap);
-	
+
 }
 
 unsigned long DispersalCoordinator::calculateCellReference(Step &this_step)
@@ -335,16 +333,17 @@ void DispersalCoordinator::disperseDensityMap(Step &this_step)
 		}
 		// Discard the dispersal event a percentage of the time, based on the maximum value of the habitat map.
 		// This is to correctly mimic less-dense cells having a lower likelihood of being the parent to the cell.
-		
+
 #ifdef DEBUG
-		if(landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap, *generation) == 0 &&
-			!fail)
+		if(landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap, *generation) ==
+		   0 &&
+		   !fail)
 		{
 			stringstream ss;
 			ss << "x,y: " << this_step.oldx << "," << this_step.oldy;
 			ss << " x,y wrap: " << this_step.oldxwrap << "," << this_step.oldywrap << "Habitat cover: ";
 			ss << landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap,
-									  this_step.oldywrap, *generation) << endl;
+									this_step.oldywrap, *generation) << endl;
 			writeLog(50, ss);
 			throw FatalException("ERROR_MOVE_007: Dispersal attempted to non-habitat. Check dispersal function.");
 		}
@@ -364,8 +363,7 @@ void DispersalCoordinator::setEndPointFptr(const bool &restrict_self)
 	}
 }
 
-
-bool DispersalCoordinator::checkEndPoint(const unsigned long & density, long &oldx, long &oldy,
+bool DispersalCoordinator::checkEndPoint(const unsigned long &density, long &oldx, long &oldy,
 										 long &oldxwrap, long &oldywrap, const long &startx, const long &starty,
 										 const long &startxwrap, const long &startywrap)
 {
@@ -388,8 +386,9 @@ bool DispersalCoordinator::checkEndPointDensity(const unsigned long &density, lo
 	return true;
 }
 
-bool DispersalCoordinator::checkEndPointRestricted(const unsigned long &density, long &oldx, long &oldy, long &oldxwrap, long &oldywrap, const long &startx, const long &starty,
-							  const long &startxwrap, const long &startywrap)
+bool DispersalCoordinator::checkEndPointRestricted(const unsigned long &density, long &oldx, long &oldy, long &oldxwrap,
+												   long &oldywrap, const long &startx, const long &starty,
+												   const long &startxwrap, const long &startywrap)
 {
 	if(startx == oldx && starty == oldy && startxwrap == oldxwrap && startywrap == oldywrap)
 	{

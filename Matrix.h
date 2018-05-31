@@ -17,6 +17,7 @@
 #ifndef MATRIX
 #define MATRIX
 #define null 0
+
 #include <cstdio>
 #include <iostream>
 #include <sstream>
@@ -83,7 +84,6 @@ public:
 		// Change to standard copy
 		copy(&r.row[0], &r.row[numCols], row);
 	}
-
 
 	/**
 	 * @brief Setter for the row size.
@@ -211,7 +211,6 @@ public:
 	}
 };
 
-
 /**
  * @brief A class containing the Matrix object, set up as an array of Row objects.
  * Includes basic operations, as well as the importCsv() function for more advanced reading from file.
@@ -226,7 +225,6 @@ protected:
 	unsigned long numCols{}, numRows{};
 	// a matrix is an array of rows
 	Row<T> *matrix;
-
 public:
 
 	/**
@@ -343,7 +341,6 @@ public:
 		return *this;
 	}
 
-
 	/**
 	 * @brief Overloading the + operator.
 	 * @param m the matrix to add to this matrix.
@@ -449,7 +446,6 @@ public:
 		return *this;
 	}
 
-
 	/**
 	 * @brief Overloading the -= operator so that the new object is written to the current object.
 	 * @param m the Matrix object to subtract from this matrix.
@@ -501,7 +497,6 @@ public:
 		return result;
 	}
 
-
 	/**
 	 * @brief Overloading the * operator for matrix multiplication.
 	 * Multiplies each value in the matrix with its corresponding value in the other matrix.
@@ -540,7 +535,7 @@ public:
 	 * @param m the object to write out
 	 * @return the output stream
 	 */
-	friend ostream& writeOut(ostream &os, const Matrix &m)
+	friend ostream &writeOut(ostream &os, const Matrix &m)
 	{
 		for(unsigned long r = 0; r < m.numRows; r++)
 		{
@@ -559,7 +554,7 @@ public:
 	 * @param m the object to read into
 	 * @return
 	 */
-	friend istream& readIn(istream & is, Matrix &m)
+	friend istream &readIn(istream &is, Matrix &m)
 	{
 		char delim;
 		for(unsigned long r = 0; r < m.numRows; r++)
@@ -700,6 +695,7 @@ public:
 	}
 #endif
 #ifndef use_csv
+
 	/**
 	 * @brief Imports the matrix from a csv file using the standard, slower method.
 	 * @deprecated this function should not be used any more as it is much slower.
@@ -752,6 +748,5 @@ public:
 
 #endif // use_csv
 };
-
 
 #endif // MATRIX

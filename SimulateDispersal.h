@@ -90,8 +90,9 @@ public:
 	/**
 	 * @brief Sets the pointer to the simulation parameters object
 	 * @param sim_parameters pointer to the simulation parameters to use
+	 * @param print if true, writes the parameters out using writeInfo()
 	 */
-	void setSimulationParameters(SimParameters * sim_parameters);
+	void setSimulationParameters(SimParameters * sim_parameters, bool print=true);
 
 	/**
 	 * @brief Import the maps from the prescribed files.
@@ -107,7 +108,12 @@ public:
 	 * @param coarse_map_y_offset coarse map y offset
 	 */
 	void importMaps();
-	
+
+	/**
+	 * @brief Sets the dispersal parameters in the DispersalCoordinator.
+	 */
+	void setDispersalParameters();
+
 	/**
 	 * @brief Sets the seed for the random number generator
 	 * @param s the seed 
@@ -115,6 +121,7 @@ public:
 	void setSeed(unsigned long s)
 	{
 		seed = s;
+		random.wipeSeed();
 		random.setSeed(s);
 	}
 

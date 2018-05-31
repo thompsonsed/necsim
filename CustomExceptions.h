@@ -18,7 +18,6 @@
 
 using namespace std;
 
-
 /*!
  * @struct FatalException
  * @brief  This is called any time a fatal exception is called and the program is unwound and ended.

@@ -38,7 +38,7 @@
 # include <iostream>
 # include <fstream>
 #include <climits>
-#include "Logging.h"
+#include "Logger.h"
 
 using namespace std;
 /**
@@ -131,6 +131,15 @@ public:
 		{
 			throw runtime_error("Trying to set the seed again: this can only be set once.");
 		}
+	}
+
+	/**
+	 * @brief Clears the seed, if it has already been set.
+	 * Keeps other simulation parameters, such as sigma and tau.
+	 */
+	void wipeSeed()
+	{
+		seeded = false;
 	}
 
 	/**

@@ -16,7 +16,7 @@
 #define SIMULATIONTEMPLATES_H
 #include <string>
 #include <sstream>
-#include "Logging.h"
+#include "Logger.h"
 #include "CustomExceptions.h"
 
 /**

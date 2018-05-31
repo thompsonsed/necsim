@@ -18,9 +18,9 @@
 #include <boost/filesystem.hpp>
 #include "Filesystem.h"
 #include "CustomExceptions.h"
-#include "Logging.h"
+#include "Logger.h"
 
-void openSQLiteDatabase(const string &database_name, sqlite3 * &database)
+void openSQLiteDatabase(const string &database_name, sqlite3 *&database)
 {
 	int rc;
 	if(database_name == ":memory:")
@@ -57,27 +57,39 @@ void openSQLiteDatabase(const string &database_name, sqlite3 * &database)
 		{
 			stringstream ss;
 			ss << "ERROR_SQL_010: SQLite database file could not be opened. Check the folder exists and you "
-					"have write permissions. (REF1) Error code: "
-				 << rc << endl;
+				  "have write permissions. (REF1) Error code: "
+			   << rc << endl;
 			ss << " Attempted call " << max(i, j) << " times" << endl;
 			throw FatalException(ss.str());
 		}
 	}
 }
 
-void createParent(const string &file)
+void createParent(string file)
 {
+	// Boost < 1.59 support
 	boost::filesystem::path file_path(file);
-	if(!boost::filesystem::exists(file_path.parent_path()))
+	auto parent = file_path.parent_path().string();
+	if (parent.length() > 0)
 	{
-		if(!boost::filesystem::create_directories(file_path.parent_path()))
+		std::string::iterator it = parent.end() - 1;
+		if (*it == '/')
 		{
-			throw FatalException("Cannot create parent folder for " + file);
+			parent.erase(it);
+		}
+	}
+	boost::filesystem::path parent_path(parent);
+	if(!boost::filesystem::exists(parent_path))
+	{
+		if(!parent_path.empty())
+		{
+			if(!boost::filesystem::create_directories(parent_path))
+			{
+				throw runtime_error("Cannot create parent folder for " + file);
+			}
 		}
 	}
 }
-
-
 
 bool doesExist(string testfile)
 {
@@ -101,24 +113,24 @@ bool doesExistNull(string testfile)
 
 unsigned long cantorPairing(unsigned long x1, unsigned long x2)
 {
-	return ((x1 + x2) * (x1 + x2 + 1)/2) + x2;
+	return ((x1 + x2) * (x1 + x2 + 1) / 2) + x2;
 }
 
 vector<string> getCsvLineAndSplitIntoTokens(istream &str)
 {
 	vector<string> result;
 	string line;
-	getline(str,line);
+	getline(str, line);
 
 	stringstream lineStream(line);
 	string cell;
 
-	while(getline(lineStream,cell, ','))
+	while(getline(lineStream, cell, ','))
 	{
 		result.push_back(cell);
 	}
 	// This checks for a trailing comma with no data after it.
-	if (!lineStream && cell.empty())
+	if(!lineStream && cell.empty())
 	{
 		// If there was a trailing comma then add an empty element.
 		result.emplace_back("");

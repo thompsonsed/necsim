@@ -22,12 +22,7 @@ bool checkSpeciation(const long double &random_number, const long double &specia
 {
 	// bool result1, result2, result3, result4;
 	long double res = 1.0 - pow(double(1.0 - speciation_rate), double(no_generations));
-	if(random_number <= res)
-	{
-		return (true);
-	}
-	return (false);
-
+	return random_number <= res;
 }
 
 CommunityParameters::CommunityParameters(unsigned long reference_in, long double speciation_rate_in, long double time_in,
@@ -2353,11 +2348,17 @@ void Community::apply(SpecSimParameters *sp)
 	time_t tEnd{};
 	// Start the clock
 	time(&tStart);
-	// First print the variables
-	doApplication(sp);
+	applyNoOutput(sp);
 	output();
 	printEndTimes(tStart, tEnd);
 }
+
+void Community::applyNoOutput(SpecSimParameters *sp)
+{
+	doApplication(sp);
+}
+
+
 
 void Community::doApplication(SpecSimParameters *sp)
 {

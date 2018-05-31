@@ -57,7 +57,7 @@ struct SectionOption
 	/**
 	 * @brief Default constructor for SectionOption
 	 */
-	SectionOption()
+	SectionOption() : val(), refs()
 	{
 		section = "nullSectionOption";
 	}
@@ -102,10 +102,10 @@ public:
 	/**
 	 * @brief default construtor for ConfigOption
 	 */
-	ConfigOption()
+	ConfigOption() : configs()
 	{
-		bConfig = false;
 		configfile = "none";
+		bConfig = false;
 		bMain = false;
 		bFullParse = false;
 	}
@@ -122,11 +122,19 @@ public:
 
 	/**
 	 * @brief Reads a config file of a specific configuration.
-	 * Each line must be a set of values related to the object determined by ref='object'.
-	 * Each key must have the form key=value, which will be read as a string into a KeyOption structure.
+	 * Each section begins with '[section_name]'.
+	 * Each variable is defined as 'key=value', and must be one per line
+	 * Each key's variable will be read as a string into a KeyOption structure.
 	 */
 	void parseConfig();
 
+	/**
+	 * @brief Reads a config stream of a specific configuration.
+	 * Each section begins with '[section_name]'.
+	 * Each variable is defined as 'key=value', and must be one per line
+	 * Each key's variable will be read as a string into a KeyOption structure.
+	 */
+	void parseConfig(istream &istream1);
 	/**
 	* @brief Returns the vector of key options imported from the file.
 	* @return vector of key options

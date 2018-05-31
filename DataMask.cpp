@@ -9,8 +9,7 @@
 
 #include "DataMask.h"
 #include "Landscape.h"
-#include "Logging.h"
-
+#include "Logger.h"
 
 DataMask::DataMask()
 {
@@ -33,7 +32,7 @@ void DataMask::setup(const SimParameters &sim_parameters)
 {
 #ifdef DEBUG
 	if((sim_parameters.grid_x_size > sim_parameters.sample_x_size ||
-			sim_parameters.grid_y_size > sim_parameters.sample_y_size) && !bDefault)
+		sim_parameters.grid_y_size > sim_parameters.sample_y_size) && !bDefault)
 	{
 		writeLog(50, "Grid size: " + to_string(sim_parameters.grid_x_size) + ", " +
 					 to_string(sim_parameters.grid_y_size));
@@ -46,7 +45,7 @@ void DataMask::setup(const SimParameters &sim_parameters)
 	x_dim = sim_parameters.grid_x_size;
 	y_dim = sim_parameters.grid_y_size;
 	mask_x_dim = sim_parameters.sample_x_size;
-	mask_y_dim  = sim_parameters.sample_y_size;
+	mask_y_dim = sim_parameters.sample_y_size;
 	x_offset = sim_parameters.sample_x_offset;
 	y_offset = sim_parameters.sample_y_offset;
 }
@@ -56,8 +55,8 @@ bool DataMask::checkCanUseDefault(const SimParameters &sim_parameters)
 	if(sim_parameters.sample_mask_file == "null")
 	{
 		if(sim_parameters.fine_map_x_size == sim_parameters.sample_x_size &&
-				sim_parameters.fine_map_y_size == sim_parameters.sample_y_size &&
-				sim_parameters.fine_map_x_offset == 0 && sim_parameters.fine_map_y_offset == 0)
+		   sim_parameters.fine_map_y_size == sim_parameters.sample_y_size &&
+		   sim_parameters.fine_map_x_offset == 0 && sim_parameters.fine_map_y_offset == 0)
 		{
 			bDefault = true;
 		}
@@ -92,6 +91,7 @@ void DataMask::importBooleanMask(unsigned long xdim, unsigned long ydim, unsigne
 		doImport();
 	}
 }
+
 void DataMask::doImport()
 {
 	sample_mask.setSize(mask_y_dim, mask_x_dim);
@@ -185,7 +185,6 @@ bool DataMask::getVal(const long &x, const long &y, const long &xwrap, const lon
 	return sample_mask[yval][xval];
 }
 
-
 double DataMask::getNullProportion(const long &x, const long &y, const long &xwrap, const long &ywrap)
 {
 	return 1.0;
@@ -210,7 +209,7 @@ double DataMask::getSampleProportion(const long &x, const long &y, const long &x
 	if(bDefault || sample_mask_exact.getCols() == 0)
 	{
 		throw out_of_range("Cannot get the exact value from a samplemask if we are using a null mask, or the "
-								   "exact samplemask has not been properly imported.");
+						   "exact samplemask has not been properly imported.");
 	}
 #endif // DEBUG
 	long xval = x + (xwrap * x_dim) + x_offset;
@@ -251,8 +250,8 @@ void DataMask::recalculate_coordinates(long &x, long &y, long &x_wrap, long &y_w
 {
 	if(!bDefault)
 	{
-		x_wrap = (long)((floor((x - (double) x_offset) / (double) x_dim)));
-		y_wrap = (long)((floor((y - (double) y_offset) / (double) y_dim)));
+		x_wrap = (long) ((floor((x - (double) x_offset) / (double) x_dim)));
+		y_wrap = (long) ((floor((y - (double) y_offset) / (double) y_dim)));
 		x += -x_offset - (x_wrap * x_dim);
 		y += -y_offset - (y_wrap * y_dim);
 	}

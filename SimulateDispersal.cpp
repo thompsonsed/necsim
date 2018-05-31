@@ -11,7 +11,7 @@
 
 
 #include "SimulateDispersal.h"
-#include "Logging.h"
+#include "Logger.h"
 #include "CustomExceptions.h"
 #include "Filesystem.h"
 #include "Community.h"
@@ -23,23 +23,28 @@ void SimulateDispersal::setSequential(bool bSequential)
 	is_sequential = bSequential;
 }
 
-void SimulateDispersal::setSimulationParameters(SimParameters * sim_parameters)
+void SimulateDispersal::setSimulationParameters(SimParameters * sim_parameters, bool print)
 {
-	writeInfo("Setting simulation parameters...\n");
+	if(print)
+	{
+		writeInfo("********************************\n");
+		writeInfo("Setting simulation parameters...\n");
+	}
 	simParameters = sim_parameters;
-	simParameters->printSpatialVars();
+	if(print)
+	{
+		simParameters->printSpatialVars();
+	}
 }
 
 void SimulateDispersal::importMaps()
 {
 	writeInfo("Starting map import...\n");
-	if(!simParameters)
+	if(simParameters == nullptr)
 	{
 		throw FatalException("Simulation parameters have not been set.");
 	}
-	dispersal_coordinator.setRandomNumber(&random);
-	dispersal_coordinator.setGenerationPtr(&generation);
-	dispersal_coordinator.setDispersal(simParameters);
+	setDispersalParameters();
 	density_landscape.setDims(simParameters);
 	dispersal_coordinator.setHabitatMap(&density_landscape);
 	density_landscape.calcFineMap();
@@ -49,37 +54,14 @@ void SimulateDispersal::importMaps()
 	density_landscape.calcHistoricalCoarseMap();
 	density_landscape.setLandscape(simParameters->landscape_type);
 	density_landscape.recalculateHabitatMax();
-//	if(fine_map_file != "null")
-//	{
-//		density_landscape.import(fine_map_file);
-//		// Now loop over the density map to find the maximum value
-//		for(unsigned long i = 0; i < density_landscape.getRows(); i ++)
-//		{
-//			for(unsigned long j = 0; j < density_landscape.getCols(); j ++)
-//			{
-//				if(density_landscape[i][j] > max_density)
-//				{
-//					max_density = density_landscape[i][j];
-//				}
-//			}
-//		}
-//		density_landscape.close();
-//		if(max_density < 1)
-//		{
-//			throw FatalException("Maximum density on density map is less than 1. Please check your maps.");
-//		}
-//	}
-//	else
-//	{
-//		for(unsigned long i = 0; i < density_landscape.getRows(); i ++)
-//		{
-//			for(unsigned long j = 0; j < density_landscape.getCols(); j ++)
-//			{
-//				density_landscape[i][j] = 1;
-//			}
-//		}
-//		max_density = 1;
-//		}
+}
+
+void SimulateDispersal::setDispersalParameters()
+{
+	dispersal_coordinator.setRandomNumber(&random);
+	dispersal_coordinator.setGenerationPtr(&generation);
+	dispersal_coordinator.setDispersal(simParameters);
+
 }
 
 void SimulateDispersal::setOutputDatabase(string out_database)

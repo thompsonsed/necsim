@@ -115,10 +115,6 @@ protected:
 	bool bIsProtracted;
 	// variable for storing the paused sim location if files have been moved during paused/resumed simulations!
 	string pause_sim_directory;
-#ifdef DEBUG
-	// For debugging purposes
-	unsigned long count_dispersal_fails, count_density_fails;
-#endif
 public:
 	Tree() : community(&data), this_step()
 	{
@@ -177,8 +173,28 @@ public:
 
 	 * @param comargs a vector of strings, containing the command-line arguments
 	 */
-	virtual void importSimulationVariables(const string &configfile);
+	void importSimulationVariables(const string &configfile);
 
+	/**
+	 * @brief Import the simulation variables from a ConfigOption.
+	 *
+	 * This function parses the simulation variables, imports them (from either the command line or a config file),
+	 * checks that the input files exist and checks for any paused simulations. The flags are then set correctly,
+	 * meaning that setup() and runSim() can be run immediately afterwards.
+
+	 * @param comargs a vector of strings, containing the command-line arguments
+	 */
+	void importSimulationVariables(ConfigOption config);
+	/**
+	 * @brief Runs the basic file existence checks.
+	 * Checks for paused simulations and file existence.
+	 */
+	virtual void runFileChecks();
+
+	/**
+	 * @brief Resets all the simulation variables.
+	 */
+	void wipeSimulationVariables();
 	/**
 	 * @brief Sets up the simulation parameters from the one provided.
 	 *
@@ -308,6 +324,10 @@ public:
 	 */
 	void determineSpeciationRates();
 
+	/**
+	 * @brief Adds the speciation rates to those to be applied.
+	 */
+	void addSpeciationRates(vector<long double> spec_rates_in);
 	/**
 	 * @brief Assigns the objects sizes in memory and fills with the starting lineages.
 	 */

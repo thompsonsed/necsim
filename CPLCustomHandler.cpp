@@ -6,10 +6,12 @@
  * @brief Contains a custom CPL error handler.
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
-#include "CPLCustomHandler.h"
 #include <sstream>
+#include "CPLCustomHandler.h"
 #include "Logging.h"
+
 #ifdef with_gdal
+
 void cplCustomErrorHandler(CPLErr eErrClass, int err_no, const char *msg)
 {
 	stringstream error_msg;
@@ -33,4 +35,5 @@ void cplCustomErrorHandler(CPLErr eErrClass, int err_no, const char *msg)
 	}
 #endif // DEBUG
 }
+
 #endif //with_gdal

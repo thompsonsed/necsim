@@ -75,7 +75,7 @@
 #include "Setup.h"
 #include "DispersalCoordinator.h"
 #include "ReproductionMap.h"
-#include "Logging.h"
+#include "Logger.h"
 
 using namespace std;
 
@@ -118,13 +118,12 @@ public:
 	}
 
 	~SpatialTree() override = default;
+
 	/**
-	 * @brief Imports the simulation variables from the config file.
-	 *
-	 * Also checks for paused simulations and file existence.
-	 * @param configfile a vector containing the configfile to import from
+	 * @brief Runs the basic file existence checks.
+	 * Checks for paused simulations and file existence.
 	 */
-	void importSimulationVariables(const string &configfile) override;
+	void runFileChecks() override;
 
 	/**
 	 * @brief Parses the command line arguments and saves the flags in Tree for fullmode,

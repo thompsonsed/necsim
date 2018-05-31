@@ -15,9 +15,12 @@
 #define DATAPOINT_H
 
 #include <iostream>
-#include "Logging.h"
+#include "Logger.h"
 
 using namespace std;
+
+
+
 /**
  * @brief A data object used in coalescence simulations for calculating the output.
  * Data from this object is outputted to an SQLite database after simulations are complete.
@@ -204,16 +207,7 @@ public:
 	friend istream& operator>>(istream& is, DataPoint& d);
 
 #ifdef DEBUG
-	void logActive(const int &level)
-	{
-		writeLog(50, "x, y, (x wrap, y wrap): " + to_string(xpos) + ", " + to_string(ypos) + ", (" +
-				to_string(xwrap) + ", " + to_string(ywrap) + ")");
-		writeLog(50, "Lineage next: " + to_string(next_lineage));
-		writeLog(50, "Reference: " + to_string(reference));
-		writeLog(50, "List position: " + to_string(list_position));
-		writeLog(50, "Number in wrapped lineages: " + to_string(nwrap));
-		writeLog(50, "Minimum maximum: " + to_string(min_max));
-	}
+	void logActive(const int &level);
 #endif // DEBUG
 };
 

@@ -12,9 +12,10 @@
 #ifndef SPECIATIONCOUNTER_SIMPARAMETERS_H
 #define SPECIATIONCOUNTER_SIMPARAMETERS_H
 #include <string>
+#include <utility>
 #include <vector>
 #include "ConfigFileParser.h"
-#include "Logging.h"
+#include "Logger.h"
 #include "CustomExceptions.h"
 
 using namespace std;
@@ -50,7 +51,7 @@ struct SimParameters
 	// the sample proportion,
 	double deme_sample{};
 	// the speciation rate.
-	long double  spec{};
+	long double  spec{0.0};
 	// the variance of the dispersal kernel.
 	double sigma{};
 	// max time to run for
@@ -123,11 +124,11 @@ struct SimParameters
 	/**
 	 * @brief Links to the provided ConfigOption.
 	 * Assumes that the parameters have already been parsed from the config file.
-	 * @param configOption the pointer to the parsed ConfigOption object
+	 * @param configOption the parsed ConfigOption object
 	 */
-	void importParameters(ConfigOption *configOption)
+	void importParameters(ConfigOption configOption)
 	{
-		configs = *configOption;
+		configs = std::move(configOption);
 		importParameters();
 	}
 
@@ -559,6 +560,8 @@ struct SimParameters
 		max_speciation_gen = 0.0;
 	}
 
+
+
 	/**
 	 * @brief Overloading the << operator for outputting to the output stream
 	 * @param os the output stream.
@@ -625,6 +628,8 @@ struct SimParameters
 		is >> m.configs;
 		return is;
 	}
+
+	SimParameters & operator=(const SimParameters &other) = default;
 };
 
 #endif //SPECIATIONCOUNTER_SIMPARAMETERS_H

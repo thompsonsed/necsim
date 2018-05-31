@@ -15,7 +15,7 @@
  */
 
 #include "Metacommunity.h"
-
+#include "LogFile.h"
 
 Metacommunity::Metacommunity()
 {
@@ -143,16 +143,12 @@ unsigned long Metacommunity::selectLineageFromMetacommunity()
 	return min_indices;
 }
 
-void Metacommunity::apply(SpecSimParameters *sp)
+void Metacommunity::applyNoOutput(SpecSimParameters *sp)
 {
 #ifdef DEBUG
 	writeLog(10, "********************");
 	writeLog(10, "Metacommunity application");
 #endif //DEBUG
-	time_t tStart{};
-	time_t tEnd{};
-	// Start the clock
-	time(&tStart);
 	setCommunityParameters(sp->metacommunity_size, sp->metacommunity_speciation_rate, sp->filename);
 	// Make sure that the connection is opened to file.
 	bSqlConnection = false;
@@ -161,10 +157,7 @@ void Metacommunity::apply(SpecSimParameters *sp)
 #ifdef DEBUG
 	writeLog(10, "Creating coalescence tree from metacommunity...");
 #endif //DEBUG
-	doApplication(sp);
-	output();
-	printEndTimes(tStart, tEnd);
-
+	Community::applyNoOutput(sp);
 }
 
 

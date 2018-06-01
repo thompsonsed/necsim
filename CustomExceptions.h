@@ -14,7 +14,8 @@
 #define CUSTOM_EXCEPTION_H
 
 #include <stdexcept>
-#include <utility> #include "Logging.h"
+#include <utility>
+#include "Logging.h"
 
 using namespace std;
 

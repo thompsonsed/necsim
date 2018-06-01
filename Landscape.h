@@ -252,7 +252,6 @@ public:
 
 	/**
 	 * @brief Updates the historical map configuration.
-	 * @param generation the current generation timer
 	 */
 	void doUpdate();
 	/**

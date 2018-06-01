@@ -167,11 +167,11 @@ public:
 	/**
 	 * @brief Import the simulation variables from the command line structure.
 	 *
-	 * This function parses the simulation variables, imports them (from either the command line or a config file),
+	 * This function parses the simulation variables, imports them from the config file,
 	 * checks that the input files exist and checks for any paused simulations. The flags are then set correctly,
-	 * meaning that setup() and runSim() can be run immediately afterwards.
+	 * meaning that setup() and runSimulation() can be run immediately afterwards.
 
-	 * @param comargs a vector of strings, containing the command-line arguments
+	 * @param configfile the path to the config file containing parameters to parse.
 	 */
 	void importSimulationVariables(const string &configfile);
 
@@ -182,7 +182,7 @@ public:
 	 * checks that the input files exist and checks for any paused simulations. The flags are then set correctly,
 	 * meaning that setup() and runSim() can be run immediately afterwards.
 
-	 * @param comargs a vector of strings, containing the command-line arguments
+	 * @param config the set of config parameters to import
 	 */
 	void importSimulationVariables(ConfigOption config);
 	/**

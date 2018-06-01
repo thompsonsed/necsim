@@ -85,12 +85,12 @@ void CommunitiesArray::pushBack(unsigned long reference, long double speciation_
 								const ProtractedSpeciationParameters &protracted_params)
 {
 	CommunityParameters tmp_param(reference, speciation_rate, time, fragment, metacommunity_reference, protracted_params);
-	calc_array.push_back(tmp_param);
+	communityParameters.push_back(tmp_param);
 }
 
 void CommunitiesArray::pushBack(CommunityParameters tmp_param)
 {
-	calc_array.push_back(tmp_param);
+	communityParameters.push_back(tmp_param);
 }
 
 CommunityParameters &CommunitiesArray::addNew(long double speciation_rate, long double time, bool fragment,
@@ -98,7 +98,7 @@ CommunityParameters &CommunitiesArray::addNew(long double speciation_rate, long 
 											  const ProtractedSpeciationParameters &protracted_params)
 {
 	unsigned long max_reference = 1;
-	for(auto &i : calc_array)
+	for(auto &i : communityParameters)
 	{
 		if(i.compare(speciation_rate, time, metacommunity_reference, protracted_params))
 		{
@@ -124,15 +124,15 @@ CommunityParameters &CommunitiesArray::addNew(long double speciation_rate, long 
 	}
 	CommunityParameters tmp_param(max_reference, speciation_rate, time, fragment, metacommunity_reference,
 								  protracted_params);
-	calc_array.push_back(tmp_param);
-	return calc_array.back();
+	communityParameters.push_back(tmp_param);
+	return communityParameters.back();
 }
 
 bool CommunitiesArray::hasPair(long double speciation_rate, double time, bool fragment,
 							   unsigned long metacommunity_reference,
 							   const ProtractedSpeciationParameters &protracted_params)
 {
-	for(auto &i : calc_array)
+	for(auto &i : communityParameters)
 	{
 		if(i.compare(speciation_rate, time, fragment, metacommunity_reference, protracted_params))
 		{
@@ -1760,7 +1760,7 @@ void Community::setProtractedParameters(const ProtractedSpeciationParameters &pr
 	}
 }
 
-void Community::overrideProtractedParameters(const ProtractedSpeciationParameters protracted_params)
+void Community::overrideProtractedParameters(const ProtractedSpeciationParameters &protracted_params)
 {
 	min_speciation_gen = protracted_params.min_speciation_gen;
 	max_speciation_gen = protracted_params.max_speciation_gen;
@@ -1916,7 +1916,7 @@ void Community::addCalculationPerformed(long double speciation_rate, double time
 	current_community_parameters = &past_communities.addNew(speciation_rate, time, fragments, meta_reference,
 															protracted_params);
 #ifdef DEBUG
-	for(auto &i : past_communities.calc_array)
+	for(auto &i : past_communities.communityParameters)
 	{
 		if(doubleCompare(i.time, current_community_parameters->time, 0.00001) &&
 			doubleCompare(i.speciation_rate, current_community_parameters->speciation_rate,
@@ -2035,7 +2035,7 @@ void Community::writeNewCommunityParameters()
 	// Find new community parameters to add
 	auto unique_community_refs = getUniqueCommunityRefs();
 	CommunitiesArray communities_to_write;
-	for(auto &community_param : past_communities.calc_array)
+	for(auto &community_param : past_communities.communityParameters)
 	{
 		if(find(unique_community_refs.begin(),
 				unique_community_refs.end(), community_param.reference) == unique_community_refs.end())
@@ -2044,7 +2044,7 @@ void Community::writeNewCommunityParameters()
 			unique_community_refs.push_back(community_param.reference);
 		}
 	}
-	if(!communities_to_write.calc_array.empty())
+	if(!communities_to_write.communityParameters.empty())
 	{
 		// Create the table if it doesn't exist
 		string table_command = "CREATE TABLE IF NOT EXISTS COMMUNITY_PARAMETERS (reference INT PRIMARY KEY NOT NULL,"
@@ -2069,7 +2069,7 @@ void Community::writeNewCommunityParameters()
 						   nullptr);
 		// Then add the required elements
 		sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
-		for(auto &item : communities_to_write.calc_array)
+		for(auto &item : communities_to_write.communityParameters)
 		{
 			if(item.reference == 0)
 			{
@@ -2210,7 +2210,7 @@ void Community::writeNewMetacommuntyParameters()
 
 void Community::updateCommunityParameters()
 {
-	for(auto parameter : past_communities.calc_array)
+	for(auto parameter : past_communities.communityParameters)
 	{
 		if(parameter.updated)
 		{

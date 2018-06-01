@@ -27,11 +27,21 @@ struct Cell
 	Cell &operator=(Cell const& c)
 	= default;
 
+	/**
+	 * @brief Equality operator for Cell
+	 * @param c the Cell object to compare against
+	 * @return true if the x and y locations are identical
+	 */
 	bool operator==(Cell const&c)
 	{
 		return x == c.x && y == c.y;
 	}
 
+	/**
+	 * @brief Inequality operator for Cell
+	 * @param c the Cell object to compare against
+	 * @return true if the x and y locations are not identical
+	 */
 	bool operator!=(Cell const&c)
 	{
 		return !(this->operator==(c));

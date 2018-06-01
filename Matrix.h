@@ -1,3 +1,6 @@
+//This file is part of NECSim project which is released under MIT license.
+//See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
+
 /**
  * @author Samuel Thompson
  * @file Matrix.h
@@ -43,6 +46,7 @@ const int gdal_data_sizes[] = {0, 8, 16, 16, 32, 32, 32, 64};
 /**
  * @brief Contains a template Row class and basic operations.
  * Uses an array to store the row.
+ * @tparam T the type of the values in the row
  */
 template<class T>
 class Row
@@ -214,6 +218,7 @@ public:
 /**
  * @brief A class containing the Matrix object, set up as an array of Row objects.
  * Includes basic operations, as well as the importCsv() function for more advanced reading from file.
+ * @tparam T the type of the values in the matrix
  */
 template<class T>
 class Matrix

@@ -55,6 +55,9 @@ struct CommunityParameters
 	bool fragment;
 	unsigned long metacommunity_reference; // will be 0 if no metacommunity used.
 	// protracted speciation parameters
+	/**
+	 * @brief The protracted speciation parameters for this object
+	 */
 	ProtractedSpeciationParameters protracted_parameters;
 	bool updated; // set to true if the fragment reference needs updating in the database
 
@@ -70,8 +73,7 @@ struct CommunityParameters
 	 * @param time_in the time of the previous calculation
 	 * @param fragment_in bool of whether fragments  were used in the previous calculation
 	 * @param metacommunity_reference_in the metacommunity reference, or 0 for no metacommunity
-	 * @param min_speciation_gen_in the minimum number of generations required for existance before speciation
-	 * @param max_speciation_gen_in the maximum number of generations allowed for existance before speciation
+	 * @param protracted_params protracted speciation parameters to add
 	 */
 	CommunityParameters(unsigned long reference_in, long double speciation_rate_in, long double time_in,
 						bool fragment_in, unsigned long metacommunity_reference_in,
@@ -84,8 +86,7 @@ struct CommunityParameters
 	 * @param time_in the time of the previous calculation
 	 * @param fragment_in bool of whether fragments  were used in the previous calculation
 	 * @param metacommunity_reference_in the metacommunity reference, or 0 for no metacommunity
-	 * @param min_speciation_gen_in the minimum number of generations required for existance before speciation
-	 * @param max_speciation_gen_in the maximum number of generations allowed for existance before speciation
+	 * @param protracted_params protracted speciation parameters to add
 	 */
 	void setup(unsigned long reference_in, long double speciation_rate_in, long double time_in, bool fragment_in,
 			   unsigned long metacommunity_reference_in, const ProtractedSpeciationParameters &protracted_params);
@@ -97,7 +98,7 @@ struct CommunityParameters
 	 * @param fragment_in if fragments are being used on this database
 	 * @param metacommunity_reference_in metacommunity reference to compare with stored community parameter
 	 * @param protracted_params the minimum number of generations required for existance before speciation
-	 * @param max_speciation_gen_in the maximum number of generations allowed for existance before speciation
+	 * @param protracted_params protracted speciation parameters to add
 	 * @return
 	 */
 	bool compare(long double speciation_rate_in, long double time_in, bool fragment_in,
@@ -110,8 +111,7 @@ struct CommunityParameters
 	 * @param speciation_rate_in speciation rate to compare with stored community parameter
 	 * @param time_in time to compare with stored community parameter
 	 * @param metacommunity_reference_in metacommunity reference to compare with stored community parameter
-	 * @param min_speciation_gen_in the minimum number of generations required for existance before speciation
-	 * @param max_speciation_gen_in the maximum number of generations allowed for existance before speciation
+	 * @param protracted_params protracted speciation parameters to add
 	 * @return
 	 */
 	bool compare(long double speciation_rate_in, long double time_in,
@@ -133,7 +133,10 @@ struct CommunityParameters
  */
 struct CommunitiesArray
 {
-	vector<CommunityParameters> calc_array;
+	/**
+	 * @brief The array of CommunityParameters which have been stored.
+	 */
+	vector<CommunityParameters> communityParameters;
 
 	/**
 	 * @brief Adds an extra CommunityParameters object to the calc_array vector with the supplied variables
@@ -142,8 +145,7 @@ struct CommunitiesArray
 	 * @param time the time of the past calculation
 	 * @param fragment bool of whether fragments were used in the past calculation
 	 * @param metacommunity_reference reference for the metacommunity parameters, or 0 if no metacommunity
-	 * @param min_speciation_gen_in the minimum number of generations required for existance before speciation
-	 * @param max_speciation_gen_in the maximum number of generations allowed for existance before speciation
+	 * @param protracted_params protracted speciation parameters to add
 	 */
 	void pushBack(unsigned long reference, long double speciation_rate, long double time, bool fragment,
 				  unsigned long metacommunity_reference,
@@ -160,7 +162,8 @@ struct CommunitiesArray
 	 * @param speciation_rate the speciation rate of the new calculation
 	 * @param time the time used in the new calculation
 	 * @param fragment true if fragments were used in the new calculation
-	 *
+	 * @param metacommunity_reference the reference to the set of metacommunity parameters (0 for none)
+	 * @param protracted_params protracted speciation parameters to add
 	 * @return reference to the new CommunityParameters object added
 	 */
 	CommunityParameters &addNew(long double speciation_rate, long double time, bool fragment,
@@ -174,6 +177,8 @@ struct CommunitiesArray
 	 * @param speciation_rate the speciation rate to check for
 	 * @param time the time to check for
 	 * @param fragment bool for checking if fragments were used
+	 * @param metacommunity_reference the reference to the set of metacommunity parameters (0 for none)
+	 * @param protracted_params protracted speciation parameters to add
 	 * @return true if the reference exists in past community parameters
 	 */
 	bool hasPair(long double speciation_rate, double time, bool fragment,
@@ -325,6 +330,8 @@ public:
 	 * Also checks whether or not the map is set to null, or whether the value comes from within a fragment.
 	 * @param x1 the x coordinate.
 	 * @param y1 the y coordinate
+	 * @param xwrap the x wrapping
+//	 * @param ywrap the y wrapping
 	 * @return the value at x,y.
 	 */
 	bool getMaskVal(unsigned long x1, unsigned long y1, long x_wrap, long y_wrap);
@@ -616,12 +623,15 @@ public:
 	 * This overloaded version is for setting protracted parameters before a full simulation has been outputted (i.e. 
 	 * immediately after completion of the simulation).
 	 *
-	 * @param max_speciation_gen_in the maximum number of generations a lineage can exist for before speciating
- 	 * @param min_speciation_gen_in the minimum number of generations a lineage must exist before speciating.
+	 * @param protracted_params protracted speciation parameters to add
 	 */
 	void setProtractedParameters(const ProtractedSpeciationParameters &protracted_params);
 
-	void overrideProtractedParameters(const ProtractedSpeciationParameters protracted_params);
+	/**
+	 * @brief Overrides the protracted parameters for the Community object
+	 * @param protracted_params the protracted parameters to override with
+	 */
+	void overrideProtractedParameters(const ProtractedSpeciationParameters &protracted_params);
 
 	/**
 	 * @brief Sets the protracted boolean to the input.
@@ -658,6 +668,7 @@ public:
 	 * @param fragments if true, checks fragments have been used
 	 * @param metacommunity_size the metacommunity size to check for
 	 * @param metacommunity_speciation_rate the metacommunity speciation rate to check for
+	 * @param proc_parameters protracted speciation parameters to add
 	 * @return
 	 */
 	bool checkCalculationsPerformed(long double speciation_rate, double time, bool fragments,
@@ -673,6 +684,7 @@ public:
 	 * @param fragments if true, fragments were used
 	 * @param metacommunity_size the metacommunity size of the performed calculation
 	 * @param metacommunity_speciation_rate the metacommunity speciation rate of the performed calculation
+	 * @param protracted_params protracted speciation parameters to add
 	 */
 	void addCalculationPerformed(long double speciation_rate, double time, bool fragments,
 								 unsigned long metacommunity_size, long double metacommunity_speciation_rate,
@@ -690,7 +702,6 @@ public:
 	 * @brief Output the database from memory to the database file.
 	 * Most of the time, it is desirable for the outputfile to be the same path
 	 * as the input file and will write to the same object.
-	 * @param outputfile the path to the output file.
 	 */
 	void exportDatabase();
 
@@ -770,7 +781,6 @@ public:
 
 	/**
 	 * @brief Outputs the data to the SQL database.
-	 * @param file_name the path to the sql database to output to
 	 */
 	void output();
 

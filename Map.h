@@ -7,6 +7,7 @@
  *
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
+
 #ifndef MAP_H
 #define MAP_H
 #ifdef with_gdal
@@ -28,7 +29,11 @@ using namespace std;
 #include "CustomExceptions.h"
 #endif // DEBUG
 
-template<typename T>
+/**
+ * @brief Read a a tif file to a matrix and obtain spatial metadata.
+ * @tparam T The type of the Matrix to create.
+ */
+template<class T>
 class Map : public virtual Matrix<T>
 {
 protected:

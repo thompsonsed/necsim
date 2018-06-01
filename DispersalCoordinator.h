@@ -93,6 +93,8 @@ public:
 	 * 
 	 * @param dispersal_method string containing the dispersal type. Can be one of [normal, fat-tail, norm-uniform]
 	 * @param dispersal_file string containing the dispersal file, or "none" if using dispersal kernel
+	 * @param dispersal_x the x dimensions of the dispersal file
+	 * @param dispersal_y the y dimensions of the dispersal file
 	 * @param m_probin the probability of drawing from the uniform distribution. Only relevant for uniform dispersals
 	 * @param cutoffin the maximum value to be drawn from the uniform dispersal. Only relevant for uniform dispersals
 	 * @param sigmain the fatness of the fat-tailed dispersal kernel
@@ -100,7 +102,7 @@ public:
 	 * @param restrict_self if true, denies possibility that dispersal comes from the same cell as the parent
 	 */
 	void setDispersal(const string &dispersal_method, const string &dispersal_file,
-					  const unsigned long dispersal_x, const unsigned long dispersal_y,
+					  const unsigned long &dispersal_x, const unsigned long &dispersal_y,
 					  const double &m_probin, const double &cutoffin,
 					  const double &sigmain, const double &tauin, const bool &restrict_self);
 

@@ -40,9 +40,10 @@ protected:
 	typedef double (DataMask::*fptr)(const long &x, const long &y, const long &xwrap, const long &ywrap);
 	fptr getProportionfptr;
 public:
-	Map<bool> sample_mask; /** A binary grid telling whether or not the cell should be sampled.*/
-	// Stores the exact values from the input tif file.
-	Map<double> sample_mask_exact; /** Exact grid for determining sampling proportion.*/
+	/** A binary grid telling whether or not the cell should be sampled.*/
+	Map<bool> sample_mask;
+	/** Exact grid for determining sampling proportion.*/
+	Map<double> sample_mask_exact;
 
 	/**
 	 * @brief The DataMask constructor.
@@ -112,8 +113,8 @@ public:
 	 *
 	 * @param x the x position on the grid
 	 * @param y the y position on the grid
-	 * @param xval the number of x wraps
-	 * @param yval the number of y wraps
+	 * @param xwrap the number of x wraps
+	 * @param ywrap the number of y wraps
 	 * @return the sample_mask value at x,y (or true if the file was "null")
 	 */
 	bool getVal(const long &x, const long &y, const long &xwrap, const long &ywrap);

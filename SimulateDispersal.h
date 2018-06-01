@@ -95,17 +95,7 @@ public:
 	void setSimulationParameters(SimParameters * sim_parameters, bool print=true);
 
 	/**
-	 * @brief Import the maps from the prescribed files.
-	 * @param fine_map_file path to the fine map file
-	 * @param fine_map_x fine map x dimension
-	 * @param fine_map_y fine map y dimension
-	 * @param fine_map_x_offset fine map x offset
-	 * @param fine_map_y_offset fine map y offset
-	 * @param coarse_map_file file path to the coarse map file
-	 * @param coarse_map_x coarse map x dimension
-	 * @param coarse_map_y coarse map y dimension
-	 * @param coarse_map_x_offset coarse map x offset
-	 * @param coarse_map_y_offset coarse map y offset
+	 * @brief Import the maps from the simulation parameters.
 	 */
 	void importMaps();
 

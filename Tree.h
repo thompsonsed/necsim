@@ -2,13 +2,12 @@
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
- * @author Samuel Thompson
- * @date 24/03/17
  * @file Tree.h
- * @brief  Contains the Tree class implementation as the main simulation object for spatially-implicit
- * coalescence simulations.
+ * @brief  Contains the main simulation object for spatially-implicit coalescence simulations.
+ *
  * Provides the basis for spatially-explicit versions in SpatialTree, and protracted speciation versions in
  * ProtractedTree and ProtractedSpatialTree.
+ *
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 #ifndef TREE_H
@@ -31,8 +30,6 @@
 
 
 /**
- * @class Tree
- * @file Tree.h
  * @brief Main simulation class for performing a non-spatial neutral simulation and generating the phylogenetic tree of
  * the individuals.
  */
@@ -104,7 +101,7 @@ protected:
 	Step this_step;
 	string sql_output_database;
 	// If true, means the command-line imports were under the (deprecated) fullmode.
-	bool bFullmode;
+	bool bFullMode;
 	// If true, the simulation is to be resumed.
 	bool bResume;
 	// If true, a config file contains the simulation variables.
@@ -116,43 +113,18 @@ protected:
 	// variable for storing the paused sim location if files have been moved during paused/resumed simulations!
 	string pause_sim_directory;
 public:
-	Tree() : community(&data), this_step()
+	Tree() : data(), enddata(0), sim_parameters(), NR(), speciation_rates(), seeded(false), the_seed(-1), the_task(-1),
+			 times_file("null"), reference_times(), uses_temporal_sampling(false), start(0), sim_start(0), sim_end(0),
+			 now(0), sim_finish(0), out_finish(0), time_taken(0), active(), endactive(0), startendactive(0),
+			 maxsimsize(0), community(&data), steps(0), maxtime(0), generation(0.0), deme(0), deme_sample(0.0),
+			 spec(0.0), out_directory(""), database(nullptr), sim_complete(false), has_imported_vars(false),
+#ifdef sql_ram
+			 outdatabase(nullptr),
+#endif //sql_ram
+			 this_step(), sql_output_database("null"), bFullMode(false), bResume(false), bConfig(true),
+			 has_paused(false), has_imported_pause(false), bIsProtracted(false), pause_sim_directory("null")
 	{
-		has_imported_vars = false;
-		enddata = 0;
-		seeded = false;
-		the_seed = -10;
-		// set this equal to true if you want to log every 5 seconds to a logfile.
-		the_task = -1;
-		sql_output_database = "null";
-		sim_complete = false;
-		time_taken = 0;  // the time taken starts at 0, unless imported from file.
-		maxtime = 0;
-		// Set the database to NULL pointers.
-		database = nullptr;
-		outdatabase = nullptr;
-		uses_temporal_sampling = false;
-		start = 0;
-		sim_start = 0;
-		sim_end = 0;
-		now = 0;
-		sim_finish = 0;
-		out_finish = 0;
-		endactive = 0;
-		startendactive = 0;
-		maxsimsize = 0;
-		steps = 0;
-		generation = 0.0;
-		spec = 0.0;
-		deme_sample = 0.0;
-		deme = 0;
-		bFullmode = false;
-		bResume = false;
-		bConfig = true;
-		has_paused = false;
-		has_imported_pause = false;
-		bIsProtracted = false;
-		pause_sim_directory = "null";
+
 	}
 
 	virtual ~Tree()

@@ -2,14 +2,11 @@
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
- * @author Samuel Thompson
- * @date 24/03/17
  * @file Tree.cpp
- *
- * @brief  Contains the Tree class implementation as the main simulation object for spatially-implicit
- * coalescence simulations.
+ * @brief Contains the main simulation object for spatially-implicit coalescence simulations.
  * Provides the basis for spatially-explicit versions in SpatialTree, and protracted speciation versions in
  * ProtractedTree and ProtractedSpatialTree.
+ *
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 
@@ -718,16 +715,17 @@ void Tree::addLineages(double generation_in)
 
 void Tree::checkSimSize(unsigned long req_data, unsigned long req_active)
 {
-	// need to be triple the size of the maximum number of individuals plus enddata
-	unsigned long min_data = (3 * req_data) + enddata + 2;
-	unsigned long min_active = endactive + req_active + 2;
-	if(data.size() <= min_data)
+	unsigned long min_active = endactive+req_active + 2;
+	unsigned long min_data = enddata + req_data + 2;
+	// Take into account future coalescence events
+	min_data += min_active * 2;
+	if(data.size() < min_data)
 	{
 		// change the size of data
 		data.resize(min_data);
 	}
 
-	if(active.size() <= min_active)
+	if(active.size() < min_active)
 	{
 		// change the size of active.
 		active.resize(min_active);
@@ -1069,7 +1067,7 @@ void Tree::writeTimes()
 
 void Tree::openSQLDatabase()
 {
-	if(!database)
+	if(database == nullptr)
 	{
 #ifdef sql_ram
 		sqlite3_open(":memory:", &database);
@@ -1093,7 +1091,10 @@ void Tree::sqlCreate()
 	string sqlfolder = out_directory;
 	try
 	{
-		createParent(sqlfolder);
+		if(!boost::filesystem::exists(boost::filesystem::path(sqlfolder)))
+		{
+			createParent(sqlfolder);
+		}
 		sql_output_database += string("/data_") + to_string(the_task) + "_" + to_string(the_seed) + ".db";
 	}
 	catch(FatalException &fe)
@@ -1106,8 +1107,8 @@ void Tree::sqlCreate()
 	os << "\r    Generating species list....              " << flush;
 	writeInfo(os.str());
 	// for outputting the full data from the simulation in to a SQL file.
-	sqlite3_stmt *stmt;
-	char *sErrMsg;
+	sqlite3_stmt *stmt = nullptr;
+	char *sErrMsg = nullptr;
 	int rc = 0;
 // Open a SQL database in memory. This will be written to disk later.
 // A check here can be done to write to disc directly instead to massively reduce RAM consumption
@@ -1464,6 +1465,12 @@ void Tree::loadMainSave()
 		file_to_open = pause_sim_directory + string("/Pause/Dump_main_") + to_string(the_task) + "_" +
 					   to_string(the_seed) + string(".csv");
 		in1.open(file_to_open);
+		if(!in1)
+		{
+			stringstream es;
+			es << "Cannot open file at " << file_to_open << endl;
+			throw FatalException(es.str());
+		}
 		// Reading the initial data
 		string string1;
 		// First read our boolean which just determines whether the simulation is a protracted simulation or not.

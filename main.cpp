@@ -38,6 +38,8 @@
 #endif
 #endif
 
+#include "Logging.h"
+#include "Logger.h"
 #include "SpatialTree.h"
 #include "SimulationTemplates.h"
 
@@ -63,9 +65,11 @@
  */
 int main(int argc, char *argv[])
 {
+	logger = new Logger();
 	vector<string> comargs;
 	importArgs(static_cast<const unsigned int &>(argc), argv, comargs);
 	const string &config_file = getConfigFileFromCmdArgs(comargs);
 	runMain<SpatialTree>(config_file);
+	delete logger;
 	return 0;
 }

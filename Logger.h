@@ -19,6 +19,9 @@
 
 using namespace std;
 
+/**
+ * @brief Controls writing to console and files for informing of statuses and debugging.
+ */
 class Logger
 {
 protected:

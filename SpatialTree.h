@@ -2,10 +2,8 @@
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 //
 /**
- * @author Sam Thompson
- * @date 31/08/2016
  * @file SpatialTree.h
- * @brief Contains the SpatialTree class for running simulations and outputting the phylogenetic tree.
+ * @brief Contains SpatialTree for running simulations and outputting the phylogenetic tree.
  *
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
@@ -80,7 +78,6 @@
 using namespace std;
 
 /**
-* @class SpatialTree
 * @brief Represents the output phylogenetic tree, when run on a spatially-explicit landscape.
 *
 * Contains all functions for running simulations, outputting data and calculating coalescence tree structure.
@@ -111,10 +108,11 @@ public:
 	 * Sets all uninitiated variables to false, except log_all.
 	 * log_all should be changed to false if minimal text output during simulations is desired.
 	 */
-	SpatialTree() : Tree()
+	SpatialTree() : Tree(), dispersal_coordinator(), rep_map(), fine_map_input("none"), coarse_map_input("none"),
+					historical_fine_map_input("none"), historical_coarse_map_input("none"), landscape(), grid(),
+					desired_specnum(1), samplegrid()
 	{
-		outdatabase = nullptr;
-		desired_specnum = 1;
+
 	}
 
 	~SpatialTree() override = default;
@@ -207,7 +205,8 @@ public:
 	 * @return the number of individuals to sample at this location.
 	 */
 	unsigned long getIndividualsSampled(const long &x, const long &y,
-								 const long &x_wrap, const long &y_wrap, const double &current_gen);
+										const long &x_wrap, const long &y_wrap, const double &current_gen);
+
 	/**
 	 * @brief Removes the old position within active by checking any wrapping and removing connections.
 	 *
@@ -287,12 +286,11 @@ public:
 	void historicalStepChecks();
 #endif
 
-
 	/**
 	 * @brief Increments the generation counter and step references, then updates the map for any changes to habitat
 	 * cover.
 	 */
-	void incrementGeneration() override ;
+	void incrementGeneration() override;
 
 	/**
 	 * @brief Updates the coalescence variables in the step object.
@@ -315,7 +313,6 @@ public:
 	 * @return string containing the SQL insertion statement
 	 */
 	string simulationParametersSqlInsertion() override;
-
 
 	/**
 	 * @brief Pause the simulation and dump data from memory.
@@ -391,10 +388,8 @@ public:
 	 */
 	void expandCell(long x, long y, long x_wrap, long y_wrap, double generation_in, unsigned long add);
 
-
-
-
 #ifdef DEBUG
+
 	/**
 	 * @brief Validates all lineages have been set up correctly. This may take considerable time for larger simulations.
 	 *
@@ -407,6 +402,7 @@ public:
 	 *
 	 */
 	void debugDispersal();
+
 	/**
 	 * @brief Checks that adding a lineage has resulting in the correct structures being created.
 	 *
@@ -424,6 +420,7 @@ public:
 	 * @param coalchosen the lineage which is coalescing with the chosen lineage which we are also required to check
 	 */
 	void runChecks(const unsigned long &chosen, const unsigned long &coalchosen) override;
+
 #endif
 };
 

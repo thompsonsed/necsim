@@ -73,9 +73,9 @@ struct SimParameters
 	// file containing the points to record data from
 	string times_file;
 	// vector of times
-	vector<double> times{};
+	vector<double> times;
 	// Stores the full list of configs imported from file
-	ConfigOption configs{};
+	ConfigOption configs;
 	// Set to true if the oldest historical state has been reached.
 	bool is_historical{};
 	// if the sample file is not null, this variable tells us whether different points in space require different
@@ -99,7 +99,7 @@ struct SimParameters
 	/**
 	 * @brief Default constructor
 	 */
-	SimParameters()
+	SimParameters() : times(), configs()
 	{
 		fine_map_file = "none";
 		coarse_map_file = "none";

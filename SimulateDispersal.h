@@ -22,11 +22,12 @@
 #include <cmath>
 #include <stdexcept>
 #include <sqlite3.h>
+#include <set>
 #include "Landscape.h"
 #include "DispersalCoordinator.h"
 #include "NRrand.h"
 #include "Cell.h"
-
+#include "DataMask.h"
 
 /**
  * @class SimulateDispersal
@@ -38,6 +39,8 @@ class SimulateDispersal
 protected:
 	// The density map object
 	Landscape density_landscape;
+	// The samplemask object
+	DataMask dataMask;
 	// Dispersal coordinator
 	DispersalCoordinator dispersal_coordinator{};
 	// Stores all key simulation parameters for the Landscape object
@@ -48,30 +51,31 @@ protected:
 	unsigned long seed;
 	// The sqlite3 database object for storing outputs
 	sqlite3 * database;
-	// Vector for storing successful dispersal distances
-	vector<double> distances;
+	// Vector for storing pairs of dispersal distances to parameter references
+	vector<pair<unsigned long, double>> distances;
+	// Maps distances to parameter references
+	map<unsigned long, unsigned long> parameter_references;
 	// Vector for storing the cells (for randomly choosing from)
 	vector<Cell> cells;
 	// The number of repeats to run the dispersal loop for
 	unsigned long num_repeats;
-	// The number of num_steps within each dispersal loop for the average distance travelled/
-	unsigned long num_steps;
+	// The number of num_steps within each dispersal loop for the average distance travelled, which should be
+	set<unsigned long> num_steps;
 	// generation counter
 	double generation;
 	// If true, sequentially selects dispersal probabilities, default is true
 	bool is_sequential;
 	// Reference number for this set of parameters in the database output
-	unsigned long parameter_reference;
+	unsigned long max_parameter_reference;
 public:
-	SimulateDispersal()
+	SimulateDispersal() : num_steps(), distances()
 	{
 		simParameters = nullptr;
 		num_repeats = 0;
-		num_steps = 0;
 		database = nullptr;
 		seed = 0;
 		is_sequential = false;
-		parameter_reference = 0;
+		max_parameter_reference = 0;
 		generation = 0.0;
 	}
 	
@@ -98,6 +102,11 @@ public:
 	 * @brief Import the maps from the simulation parameters.
 	 */
 	void importMaps();
+
+	/**
+	 * @brief Creates the map of steps to parameter references and initialises object sizes.
+	 */
+	void setSizes();
 
 	/**
 	 * @brief Sets the dispersal parameters in the DispersalCoordinator.
@@ -130,9 +139,16 @@ public:
 	/**
 	 * @brief Sets the number of steps to run each repeat of the dispersal kernel for when recording mean distance
 	 * travelled
-	 * @param s the number of steps
+	 * @param s a vector containing each step variable to record the distance at
 	 */
-	void setNumberSteps(unsigned long s);
+	void setNumberSteps(const vector<unsigned long> &s);
+
+	/**
+	 * @brief Gets the maximum number of steps that is to be applied.
+	 * @return
+	 */
+	unsigned long getMaxNumberSteps();
+
 	/**
 	 * @brief Calculates the list of cells to choose randomly from 
 	 */
@@ -162,7 +178,13 @@ public:
 	 * @brief Simulates the dispersal kernel for the set parameters, storing the mean distance travelled.
 	 */
 	void runMeanDistanceTravelled();
-	
+
+
+	/**
+	 * @brief Writes the information about this repeat to the logger.
+	 */
+	void writeRepeatInfo(unsigned long i);
+
 	/**
 	 * @brief Writes out the distances to the SQL database.
 	 * @param table_name the name of the table to output to, either 'DISPERSAL_DISTANCE' or 'DISTANCES_TRAVELLED'
@@ -175,6 +197,11 @@ public:
 	 */
 	void writeParameters(string table_name);
 
+	/**
+	 * @brief Clears the parameters from the internal objects so that another dispersal simulation can be run, if
+	 * necessary.
+	 */
+	void clearParameters();
 	/**
 	 * @brief Gets the maximum parameter reference from the output SQL database and saves val + 1 to parameter_reference
 	 * Assumes that the database exists.

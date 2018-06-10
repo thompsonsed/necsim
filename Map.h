@@ -3,7 +3,7 @@
 /**
  * @author Samuel Thompson
  * @file Map.h
- * @brief Contains the Map class for importing .tif files and obtaining a variety of information from them.
+ * @brief Contains Map for importing .tif files and obtaining a variety of information from them.
  *
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */

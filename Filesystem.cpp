@@ -77,15 +77,15 @@ void createParent(string file)
 		{
 			parent.erase(it);
 		}
-	}
-	boost::filesystem::path parent_path(parent);
-	if(!boost::filesystem::exists(parent_path))
-	{
-		if(!parent_path.empty())
+		boost::filesystem::path parent_path(parent);
+		if(!boost::filesystem::exists(parent_path))
 		{
-			if(!boost::filesystem::create_directories(parent_path))
+			if(!parent_path.empty())
 			{
-				throw runtime_error("Cannot create parent folder for " + file);
+				if(!boost::filesystem::create_directories(parent_path))
+				{
+					throw runtime_error("Cannot create parent folder for " + file);
+				}
 			}
 		}
 	}

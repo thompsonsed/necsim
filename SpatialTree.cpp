@@ -6,7 +6,7 @@
  * @date 24/03/17
  * @file SpatialTree.cpp
  *
- * @brief  Contains the SpatialTree class implementation as the main simulation object for spatially-explicit
+ * @brief  Contains SpatialTree implementation as the main simulation object for spatially-explicit
  * coalescence simulations.
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
@@ -173,15 +173,15 @@ void SpatialTree::parseArgs(vector<string> & comargs)
 		}
 		bConfig = true;
 	}
-	bFullmode = false;
+	bFullMode = false;
 	if(comargs[1] == "-f" || comargs[2] == "-f")
 	{
 		writeInfo("Full command-line mode enabled.\n");
-		bFullmode = true;
+		bFullMode = true;
 	}
 	removeComOption(argc, comargs);
 	removeComOption(argc, comargs);
-	if(argc > 12 && !bFullmode)
+	if(argc > 12 && !bFullMode)
 	{
 		return;
 	}
@@ -588,7 +588,7 @@ unsigned long SpatialTree::getIndividualsSampled(const long &x, const long &y, c
 {
 //	if(sim_parameters.uses_spatial_sampling)
 //	{
-		return static_cast<unsigned long>(max(floor(deme_sample * landscape.getVal(x, y, x_wrap, y_wrap, 0.0)
+		return static_cast<unsigned long>(max(floor(deme_sample * landscape.getVal(x, y, x_wrap, y_wrap, current_gen)
 						 * samplegrid.getExactValue(x, y, x_wrap, y_wrap)), 0.0));
 //	}
 //	else
@@ -1285,12 +1285,11 @@ void SpatialTree::addLineages(double generation_in)
 			if(samplegrid.getVal(x, y, xwrap, ywrap))
 			{
 				unsigned long num_to_add = countCellExpansion(x, y, xwrap, ywrap, generation_in, false);
-				added_data += getIndividualsSampled(x, y, xwrap, ywrap, generation_in) - num_to_add;
+				added_data += getIndividualsSampled(x, y, xwrap, ywrap, generation_in);
 				added_active += num_to_add;
 			}
 		}
 	}
-	added_data += added_active;
 	// now resize data and active if necessary
 	checkSimSize(added_data, added_active);
 	// Add the new lineages and modify the existing lineages within our sample area
@@ -1324,6 +1323,7 @@ void SpatialTree::addLineages(double generation_in)
 	{
 		startendactive = endactive;
 	}
+	// Rescale to make sure that the remaining space is enough to encompass a complete coalescence tree
 #ifdef DEBUG
 	validateLineages();
 #endif
@@ -1575,11 +1575,8 @@ void SpatialTree::addWrappedLineage(unsigned long numstart, long x, long y)
 unsigned long SpatialTree::countCellExpansion(const long &x, const long &y, const long &xwrap, const long &ywrap,
 									   const double &generation_in, const bool& make_tips)
 {
-	unsigned long map_cover = landscape.getVal(x, y, xwrap, ywrap, generation_in); // think I fixed a bug here...
-	unsigned long num_to_add = static_cast<unsigned long>(max(floor(map_cover * deme_sample *
-																			samplegrid.getExactValue(x, y,
-																									 xwrap, ywrap)),
-															  0.0));
+	unsigned long map_cover = landscape.getVal(x, y, xwrap, ywrap, generation_in);
+	unsigned long num_to_add = getIndividualsSampled(x, y, xwrap, ywrap, generation_in);
 	if(xwrap == 0 && ywrap == 0)
 	{
 		unsigned long ref = 0;
@@ -1666,20 +1663,30 @@ void SpatialTree::validateLineages()
 	bool fail = false;
 	writeInfo("\nStarting lineage validation...");
 	unsigned long printed = 0;
+	// Basic checks
+	if(endactive >= active.size() || enddata >= data.size())
+	{
+		stringstream ss;
+		ss << "Endactive (size):" << endactive << "(" << active.size() << ")" << endl;
+		ss << "Enddata (size):" << enddata << "(" << data.size() << ")" << endl;
+		writeCritical(ss.str());
+		throw FatalException("Endactive out of range of active or enddata out of range of data. "
+					   "Please report this bug.");
+	}
 	for(unsigned long i = 1; i < endactive; i++)
 	{
 		stringstream ss;
 		DataPoint tmp_datapoint = active[i];
 		// Validate the location exists
 		if(landscape.getVal(tmp_datapoint.getXpos(), tmp_datapoint.getYpos(),
-							tmp_datapoint.getXwrap(), tmp_datapoint.getYwrap(), 0.0) == 0)
+							tmp_datapoint.getXwrap(), tmp_datapoint.getYwrap(), generation) == 0)
 		{
 			if(printed < 100)
 			{
 				printed ++;
 				ss << "Map value: " << landscape.getVal(tmp_datapoint.getXpos(), tmp_datapoint.getYpos(),
 														   tmp_datapoint.getXwrap(), tmp_datapoint.getYwrap(),
-														   0.0) << endl;
+														   generation) << endl;
 			}
 			fail = true;
 		}
@@ -1731,10 +1738,15 @@ void SpatialTree::validateLineages()
 		if(fail)
 		{
 			stringstream ss;
-			ss << "active reference: " << i << endl;
+			ss << "Active reference: " << i << endl;
 			ss << "Grid wrapping: " << grid[tmp_datapoint.getYpos()][tmp_datapoint.getXpos()].getNwrap() << endl;
+			ss << "Endactive: " << endactive << endl;
+			ss << "Active size: " << active.size() << endl;
+			ss << "Enddata: " << enddata << endl;
+			ss << "Data size: " << data.size() << endl;
 			writeLog(50, ss);
 			tmp_datapoint.logActive(50);
+			data[tmp_datapoint.getReference()].logLineageInformation(50);
 			throw FatalException("Failure in lineage validation. Please report this bug.");
 		}
 	}

@@ -17,23 +17,16 @@
 #include "Metacommunity.h"
 #include "LogFile.h"
 
-Metacommunity::Metacommunity()
+Metacommunity::Metacommunity(): community_size(0), speciation_rate(0.0), seed(0), task(0), parameters_checked(false),
+								metacommunity_cumulative_abundances(nullptr), random(), metacommunity_tree()
 {
-	community_size = 0;
-	seed = 0;
-	speciation_rate = 0.0;
-	parameters_checked = false;
-	metacommunity_cumulative_abundances = nullptr;
+
 }
 
-void Metacommunity::setCommunityParameters(unsigned long community_size_in, long double speciation_rate_in,
-										   string database_name_in)
+void Metacommunity::setCommunityParameters(unsigned long community_size_in, long double speciation_rate_in)
 {
-	createParent(database_name_in);
 	community_size = community_size_in;
 	speciation_rate = speciation_rate_in;
-	// open the sqlite connection to the output database
-	openSqlConnection(database_name_in);
 }
 
 void Metacommunity::checkSimulationParameters()
@@ -45,7 +38,7 @@ void Metacommunity::checkSimulationParameters()
 			throw FatalException("Cannot read simulation parameters as database is null pointer.");
 		}
 		// Now do the same for times
-		sqlite3_stmt *stmt;
+		sqlite3_stmt *stmt = nullptr;
 		string sql_call = "SELECT seed, task from SIMULATION_PARAMETERS";
 		int rc = sqlite3_prepare_v2(database, sql_call.c_str(), static_cast<int>(strlen(sql_call.c_str())), &stmt,
 									nullptr);
@@ -149,10 +142,11 @@ void Metacommunity::applyNoOutput(SpecSimParameters *sp)
 	writeLog(10, "********************");
 	writeLog(10, "Metacommunity application");
 #endif //DEBUG
-	setCommunityParameters(sp->metacommunity_size, sp->metacommunity_speciation_rate, sp->filename);
+	setCommunityParameters(sp->metacommunity_size, sp->metacommunity_speciation_rate);
 	// Make sure that the connection is opened to file.
-	bSqlConnection = false;
+	openSqlConnection(sp->filename);
 	checkSimulationParameters();
+	closeSqlConnection();
 	createMetacommunityNSENeutralModel();
 #ifdef DEBUG
 	writeLog(10, "Creating coalescence tree from metacommunity...");

@@ -52,6 +52,14 @@ struct SpecSimParameters
 	unsigned long metacommunity_size;
 	double metacommunity_speciation_rate;
 
+	SpecSimParameters(): use_spatial(false), bMultiRun(false), use_fragments(false), filename("none"),
+						 all_speciation_rates(), samplemask("none"), times_file("null"), all_times(),
+						 fragment_config_file("none"), protracted_parameters(), metacommunity_size(0),
+						 metacommunity_speciation_rate(0.0)
+	{
+
+	}
+
 	/**
 	 * @brief Sets the application arguments for the inputs. Intended for use with the applyspecmodule for
 	 * integration with python.
@@ -111,7 +119,12 @@ struct SpecSimParameters
 		}
 		if(min_speciation_gen_in.size() != max_speciation_gen_in.size())
 		{
-			throw FatalException("Protracted parameter mismatch between minimum and maximum generations (must be equal length).");
+			throw FatalException("Protracted parameter mismatch between minimum and maximum generations "
+						"(must be equal length).");
+		}
+		if(!protracted_parameters.empty())
+		{
+			protracted_parameters.clear();
 		}
 		for(unsigned long i = 0; i < min_speciation_gen_in.size(); i++)
 		{

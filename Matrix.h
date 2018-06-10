@@ -227,7 +227,8 @@ class Matrix
 protected:
 
 	// number of rows and columns
-	unsigned long numCols{}, numRows{};
+	unsigned long numCols{};
+	unsigned long numRows{};
 	// a matrix is an array of rows
 	Row<T> *matrix;
 public:

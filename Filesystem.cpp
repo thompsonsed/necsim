@@ -14,7 +14,6 @@
  */
 #include <string>
 #include <sstream>
-#include <zconf.h>
 #include <boost/filesystem.hpp>
 #include "Filesystem.h"
 #include "CustomExceptions.h"

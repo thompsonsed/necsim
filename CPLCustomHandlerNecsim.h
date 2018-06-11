@@ -2,12 +2,12 @@
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 /**
  * @author Sam Thompson
- * @file CPLCustomHandler.h
+ * @file CPLCustomHandlerNecsim.h
  * @brief Contains a custom CPL error handler.
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
-#ifndef SPECIATIONCOUNTER_CPLCUSTOMHANDLER_H
-#define SPECIATIONCOUNTER_CPLCUSTOMHANDLER_H
+#ifndef SPECIATIONCOUNTER_cplCustomHandlerNecsim_H
+#define SPECIATIONCOUNTER_cplCustomHandlerNecsim_H
 #ifdef with_gdal
 #include <cpl_error.h>
 /**
@@ -16,9 +16,9 @@
  * @param err_no the error number to report
  * @param msg the message to report
  */
-void cplCustomErrorHandler(CPLErr eErrClass, int err_no, const char *msg);
+void cplNecsimCustomErrorHandler(CPLErr eErrClass, int err_no, const char *msg);
 
 #endif // with_gdal
 
 
-#endif //SPECIATIONCOUNTER_CPLCUSTOMHANDLER_H
+#endif //SPECIATIONCOUNTER_cplCustomHandlerNecsim_H

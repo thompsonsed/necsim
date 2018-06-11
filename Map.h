@@ -22,7 +22,7 @@
 #include "Matrix.h"
 #include "Logger.h"
 #include "CustomExceptions.h"
-#include "CPLCustomHandler.h"
+#include "CPLCustomHandlerNecsim.h"
 
 using namespace std;
 #ifdef DEBUG
@@ -69,7 +69,7 @@ public:
 		blockXSize = 0;
 		blockYSize = 0;
 		noDataValue = 0.0;
-		CPLSetErrorHandler(cplCustomErrorHandler);
+		CPLSetErrorHandler(cplNecsimCustomErrorHandler);
 	}
 
 	~Map()

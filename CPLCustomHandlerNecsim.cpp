@@ -2,17 +2,17 @@
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 /**
  * @author Sam Thompson
- * @file CPLCustomHandler.cpp
+ * @file CPLCustomHandlerNecsim.cpp
  * @brief Contains a custom CPL error handler.
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 #include <sstream>
-#include "CPLCustomHandler.h"
+#include "CPLCustomHandlerNecsim.h"
 #include "Logging.h"
 
 #ifdef with_gdal
 
-void cplCustomErrorHandler(CPLErr eErrClass, int err_no, const char *msg)
+void cplNecsimCustomErrorHandler(CPLErr eErrClass, int err_no, const char *msg)
 {
 	stringstream error_msg;
 	error_msg << "Gdal error: " << err_no << ". " << msg << endl;

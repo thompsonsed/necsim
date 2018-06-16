@@ -295,7 +295,7 @@ void SimulateDispersal::writeDatabase(string table_name)
 			sqlite3_bind_int(stmt, 1, static_cast<int>(max_id + i));
 			auto iter = parameter_references.find(distances[i].first);
 
-#ifdef DEBUG // TODO move to debug
+#ifdef DEBUG
 			if(iter == parameter_references.end())
 			{
 				throw FatalException("Cannot find parameter reference. Please report this bug.");

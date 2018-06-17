@@ -91,11 +91,12 @@ void SimulateDispersal::setOutputDatabase(string out_database)
 		throw FatalException("Output database is not a .db file, check file name.");
 	}
 	// Open our SQL connection to the database
-	int o2 = sqlite3_open_v2(out_database.c_str(), &database, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, "unix-dotfile");
-	if(o2 != SQLITE_OK && o2 != SQLITE_DONE)
-	{
-		throw FatalException("Database file cannot be opened or created.");
-	}
+	openSQLiteDatabase(out_database, database);
+//	int o2 = sqlite3_open_v2(out_database.c_str(), &database, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, "unix-dotfile");
+//	if(o2 != SQLITE_OK && o2 != SQLITE_DONE)
+//	{
+//		throw FatalException("Database file cannot be opened or created.");
+//	}
 	checkMaxParameterReference();
 }
 

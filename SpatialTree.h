@@ -24,7 +24,9 @@
 #include <ctime>
 #include <ctime>
 #include <sqlite3.h>
+#ifndef WIN_INSTALL
 #include <unistd.h>
+#endif
 #include <algorithm>
 #include <stdexcept>
 //#define with_gdal

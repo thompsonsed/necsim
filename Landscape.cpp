@@ -7,9 +7,11 @@
  * same coordinate system.
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
-
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include "Landscape.h"
 #include "Filesystem.h"
+
 
 
 uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned long map_x,

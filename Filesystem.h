@@ -12,6 +12,9 @@
  *
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
  */
+
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <sqlite3.h>
 #include <string>
 

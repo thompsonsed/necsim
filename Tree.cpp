@@ -11,9 +11,14 @@
  */
 
 #include <algorithm>
+#ifdef WIN_INSTALL
+#include <windows.h>
+#define sleep Sleep
+#endif
 #include "Tree.h"
 #include "Logger.h"
 #include "LogFile.h"
+
 
 void Tree::importSimulationVariables(const string &configfile)
 {

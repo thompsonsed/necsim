@@ -13,6 +13,11 @@
 
 #include <algorithm>
 #include "SpatialTree.h"
+#ifdef WIN_INSTALL
+#include <windows.h>
+#include <io.h>
+#define dup2 _dup2
+#endif
 
 void SpatialTree::runFileChecks()
 {
@@ -837,7 +842,7 @@ void SpatialTree::calcNewPos(bool& coal,
 			unsigned long matches = 0;
 			// Create an array containing the list of active references for those that match as
 			// this stops us having to loop twice over the same list.
-			unsigned long matchlist[nwrap];
+			vector<unsigned long> match_list(nwrap);
 			unsigned long next_active;
 			next_active = grid[oldy][oldx].getNext();
 			// Count if the first "next" matches
@@ -849,7 +854,7 @@ void SpatialTree::calcNewPos(bool& coal,
 					throw FatalException("ERROR_MOVE_022a: Nwrap not set correctly in move.");
 				}
 #endif
-				matchlist[matches] = next_active;  // add the match to the list of matches.
+				match_list[matches] = next_active;  // add the match to the list of matches.
 				matches++;
 			}
 			// Now loop over the remaining nexts counting matches
@@ -861,7 +866,7 @@ void SpatialTree::calcNewPos(bool& coal,
 				next_active = active[next_active].getNext();
 				if(active[next_active].getXwrap() == oldxwrap && active[next_active].getYwrap() == oldywrap)
 				{
-					matchlist[matches] = next_active;
+					match_list[matches] = next_active;
 					matches++;
 				}
 				// check
@@ -925,7 +930,7 @@ void SpatialTree::calcNewPos(bool& coal,
 				else  // coalescence has occured
 				{
 					coal = true;
-					coalchosen = matchlist[randwrap - 1];
+					coalchosen = match_list[randwrap - 1];
 					active[chosen].setEndpoint(oldx, oldy, oldxwrap, oldywrap);
 					if(coalchosen == 0)
 					{

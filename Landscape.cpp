@@ -8,11 +8,10 @@
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 #define _USE_MATH_DEFINES
+
 #include <cmath>
 #include "Landscape.h"
 #include "Filesystem.h"
-
-
 
 uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned long map_x,
 							 unsigned long map_y,
@@ -22,7 +21,7 @@ uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned lo
 	if(map_x > 1000000 || map_y > 1000000)
 	{
 		throw runtime_error("Extremely large map sizes set for " + map_file + ": " + to_string(map_x) + ", " +
-									to_string(map_y) + "\n");
+							to_string(map_y) + "\n");
 	}
 #endif
 	Map<float> temp_matrix;
@@ -59,7 +58,7 @@ uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned lo
 	{
 		for(unsigned long j = 0; j < temp_matrix.getCols(); j++)
 		{
-			map_in[i][j] = (uint32_t)(max(round(temp_matrix[i][j] * (double)scalar), 0.0));
+			map_in[i][j] = (uint32_t) (max(round(temp_matrix[i][j] * (double) scalar), 0.0));
 			if(map_in[i][j] > max_value)
 			{
 				max_value = map_in[i][j];
@@ -70,6 +69,17 @@ uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned lo
 	return max_value;
 }
 
+unsigned long archimedesSpiralX(const double &centre_x, const double &centre_y, const double &radius,
+								const double &theta)
+{
+	return static_cast<unsigned long>(floor(radius * cos(theta) + centre_x));
+}
+
+unsigned long archimedesSpiralY(const double &centre_x, const double &centre_y, const double &radius,
+								const double &theta)
+{
+	return static_cast<unsigned long>(floor(radius * sin(theta) + centre_y));
+}
 
 void Landscape::setDims(SimParameters *mapvarsin)
 {
@@ -180,7 +190,8 @@ void Landscape::calcHistoricalCoarseMap()
 		has_historical = file_input != "none";
 		if(has_historical)
 		{
-			historical_coarse_max = importToMapAndRound(file_input, historical_coarse_map, map_x_size, map_y_size, deme);
+			historical_coarse_max = importToMapAndRound(file_input, historical_coarse_map, map_x_size, map_y_size,
+														deme);
 		}
 	}
 }
@@ -225,26 +236,28 @@ void Landscape::calcOffset()
 	os << "coarsex: " << coarse_x_min << "," << coarse_x_max << endl;
 	os << "coarsey: " << coarse_y_min << "," << coarse_y_max << endl;
 	os << "offsets: "
-		 << "(" << fine_x_offset << "," << fine_y_offset << ")(" << coarse_x_offset << "," << coarse_y_offset << ")" << endl;
+	   << "(" << fine_x_offset << "," << fine_y_offset << ")(" << coarse_x_offset << "," << coarse_y_offset << ")"
+	   << endl;
 	os << "historical fine file: " << historical_fine_map << endl;
 	os << "historical coarse file: " << historical_coarse_map << endl;
 	writeInfo(os.str());
 #endif
 	//		os << "fine variables: " << finexmin << "," << fine_x_max << endl;
 	//		os << "coarse variabes: " << coarse_x_min << "," << coarse_x_max << endl;
-	if(fine_x_min < coarse_x_min || fine_x_max > coarse_x_max || (fine_x_max - fine_x_min) < x_dim || (fine_y_max - fine_y_min) < y_dim)
+	if(fine_x_min < coarse_x_min || fine_x_max > coarse_x_max || (fine_x_max - fine_x_min) < x_dim ||
+	   (fine_y_max - fine_y_min) < y_dim)
 	{
 		throw FatalException(
-			"ERROR_MAP_006: FATAL - fine map extremes outside coarse map or sample grid larger than fine map");
+				"ERROR_MAP_006: FATAL - fine map extremes outside coarse map or sample grid larger than fine map");
 	}
 }
 
 bool Landscape::checkAllDimensionsZero()
 {
 	return mapvars->fine_map_x_offset == 0 && mapvars->fine_map_y_offset == 0 && mapvars->coarse_map_x_offset == 0 &&
-			mapvars->coarse_map_y_offset == 0 && mapvars->sample_x_offset == 0 && mapvars->sample_y_offset == 0 &&
-			mapvars->fine_map_x_size == 0 && mapvars->fine_map_y_size == 0 && mapvars->coarse_map_x_size == 0 &&
-			mapvars->coarse_map_y_size == 0;
+		   mapvars->coarse_map_y_offset == 0 && mapvars->sample_x_offset == 0 && mapvars->sample_y_offset == 0 &&
+		   mapvars->fine_map_x_size == 0 && mapvars->fine_map_y_size == 0 && mapvars->coarse_map_x_size == 0 &&
+		   mapvars->coarse_map_y_size == 0;
 }
 
 void Landscape::calculateOffsetsFromMaps()
@@ -294,8 +307,8 @@ void Landscape::calculateOffsetsFromMaps()
 	y_dim = mapvars->grid_y_size;
 	fine_map.calculateOffset(coarse_map, x_offset, y_offset);
 	mapvars->coarse_map_x_offset = static_cast<unsigned long>(x_offset);
-	mapvars->coarse_map_y_offset= static_cast<unsigned long>(y_offset);
-	mapvars->coarse_map_scale= fine_map.roundedScale(coarse_map);
+	mapvars->coarse_map_y_offset = static_cast<unsigned long>(y_offset);
+	mapvars->coarse_map_scale = fine_map.roundedScale(coarse_map);
 	scale = mapvars->coarse_map_scale;
 	if(x_offset < 0 || y_offset < 0)
 	{
@@ -314,7 +327,7 @@ void Landscape::calculateOffsetsFromMaps()
 	ss << "Dimensions detected as: " << endl;
 	ss << "Fine map" << endl;
 	ss << "-dimensions: " << fine_map.getCols() << ", " << fine_map.getRows() << endl;
-	ss << "-offsets: " << mapvars->fine_map_x_offset << ", " << mapvars->fine_map_y_offset  << endl;
+	ss << "-offsets: " << mapvars->fine_map_x_offset << ", " << mapvars->fine_map_y_offset << endl;
 	ss << "Coarse map" << endl;
 	ss << "-dimensions: " << coarse_map.getCols() << ", " << coarse_map.getRows() << endl;
 	ss << "-offsets: " << mapvars->coarse_map_x_offset << ", " << mapvars->coarse_map_y_offset << endl;
@@ -353,19 +366,19 @@ void Landscape::calculateOffsetsFromParameters()
 	}
 }
 
-
-
 void Landscape::validateMaps()
 {
 	stringstream os;
 	os << "\rValidating maps..." << flush;
+#ifdef historical_mode
 	double dTotal = fine_map.getCols() + coarse_map.getCols();
 	unsigned long iCounter = 0;
+#endif // historical_mode
 	if(has_historical)
 	{
 		if(fine_map.getCols() == historical_fine_map.getCols() && fine_map.getRows() == historical_fine_map.getRows() &&
-				coarse_map.getCols() == historical_coarse_map.getCols() && coarse_map.getRows() ==
-																			historical_coarse_map.getRows())
+		   coarse_map.getCols() == historical_coarse_map.getCols() && coarse_map.getRows() ==
+																	  historical_coarse_map.getRows())
 		{
 			os << "\rValidating maps...map sizes okay" << flush;
 			writeInfo(os.str());
@@ -400,9 +413,11 @@ void Landscape::validateMaps()
 				writeInfo(os.str());
 			}
 		}
-#endif
+#endif // historical mode
 	}
+#ifdef historical_mode
 	iCounter = fine_map.getCols();
+	stringstream ss;
 	if(has_historical)
 	{
 		for(unsigned long i = 0; i < coarse_map.getCols(); i++)
@@ -411,19 +426,16 @@ void Landscape::validateMaps()
 			{
 				if(coarse_map[j][i] > historical_coarse_map[j][i])
 				{
-#ifdef DEBUG
-					stringstream ss;
 					ss << "coarse map: " << coarse_map[j][i] << " historical map: " << historical_coarse_map[j][i];
 					ss << " coarse map x+1: " << coarse_map[j][i + 1]
-						 << " historical map: " << historical_coarse_map[j][i + 1];
+					   << " historical map: " << historical_coarse_map[j][i + 1];
 					ss << " x,y: " << i << "," << j;
 					writeLog(50, ss);
-#endif // DEBUG
 					throw FatalException("ERROR_MAP_008: Landscape validation failed - coarse map value larger "
-											  "than historical coarse map value.");
+										 "than historical coarse map value.");
 				}
 			}
-			double dPercentComplete = 100 * ((double)(i + iCounter) / dTotal);
+			double dPercentComplete = 100 * ((double) (i + iCounter) / dTotal);
 			if(i % 1000 == 0)
 			{
 				os.str("");
@@ -431,8 +443,9 @@ void Landscape::validateMaps()
 				writeInfo(os.str());
 			}
 		}
-		
+
 	}
+#endif // historical_mode
 	os.str("");
 	os << "\rValidating maps complete                                       " << endl;
 	writeInfo(os.str());
@@ -490,6 +503,7 @@ void Landscape::resetHistorical()
 
 void Landscape::setLandscape(string landscape_type)
 {
+	infinite_boundaries = true;
 	if(landscape_type == "infinite")
 	{
 		writeInfo("Setting infinite landscape.\n");
@@ -507,6 +521,7 @@ void Landscape::setLandscape(string landscape_type)
 	}
 	else if(landscape_type == "closed")
 	{
+		infinite_boundaries = false;
 		getValFunc = &Landscape::getValFinite;
 	}
 	else
@@ -515,14 +530,14 @@ void Landscape::setLandscape(string landscape_type)
 	}
 }
 
-unsigned long Landscape::getVal(const double& x, const double& y,
-						  const long& xwrap, const long& ywrap, const double& current_generation)
+unsigned long Landscape::getVal(const double &x, const double &y,
+								const long &xwrap, const long &ywrap, const double &current_generation)
 {
 	return (this->*getValFunc)(x, y, xwrap, ywrap, current_generation);
 }
 
 unsigned long Landscape::getValInfinite(
-	const double& x, const double& y, const long& xwrap, const long& ywrap, const double& current_generation)
+		const double &x, const double &y, const long &xwrap, const long &ywrap, const double &current_generation)
 {
 	double xval, yval;
 	xval = x + (x_dim * xwrap);  //
@@ -536,7 +551,7 @@ unsigned long Landscape::getValInfinite(
 }
 
 unsigned long Landscape::getValCoarseTiled(
-	const double& x, const double& y, const long& xwrap, const long& ywrap, const double& current_generation)
+		const double &x, const double &y, const long &xwrap, const long &ywrap, const double &current_generation)
 {
 	double newx = fmod(x + (xwrap * x_dim) + fine_x_offset + coarse_x_offset, coarse_map.getCols());
 	double newy = fmod(y + (ywrap * y_dim) + fine_x_offset + coarse_x_offset, coarse_map.getRows());
@@ -552,7 +567,7 @@ unsigned long Landscape::getValCoarseTiled(
 }
 
 unsigned long Landscape::getValFineTiled(
-	const double& x, const double& y, const long& xwrap, const long& ywrap, const double& current_generation)
+		const double &x, const double &y, const long &xwrap, const long &ywrap, const double &current_generation)
 {
 
 	double newx = fmod(x + (xwrap * x_dim) + fine_x_offset, fine_map.getCols());
@@ -591,10 +606,10 @@ unsigned long Landscape::getValCoarse(const double &xval, const double &yval, co
 		else
 		{
 			double currentTime = current_generation - current_map_time;
-			retval = (unsigned long)floor(coarse_map[yval][xval] +
+			retval = (unsigned long) floor(coarse_map[yval][xval] +
 										   (habitat_change_rate *
 											((historical_coarse_map[yval][xval] - coarse_map[yval][xval]) /
-													(gen_since_historical-current_map_time)) * currentTime));
+											 (gen_since_historical - current_map_time)) * currentTime));
 		}
 	}
 	else
@@ -617,7 +632,7 @@ unsigned long Landscape::getValCoarse(const double &xval, const double &yval, co
 	return retval;
 }
 
-unsigned long Landscape::getValFine(const double&xval, const double &yval, const double& current_generation)
+unsigned long Landscape::getValFine(const double &xval, const double &yval, const double &current_generation)
 {
 	unsigned long retval = 0;
 	if(has_historical)
@@ -634,10 +649,11 @@ unsigned long Landscape::getValFine(const double&xval, const double &yval, const
 										   (habitat_change_rate * ((historical_fine_map[yval][xval] - fine_map[yval][xval]) /
 												   (gen_since_historical-current_map_time)) * currentTime));
 #else
-			retval = (unsigned long)floor(fine_map[yval][xval] +
-										  (habitat_change_rate * ((static_cast<double>(historical_fine_map[yval][xval])-
-																   static_cast<double>(fine_map[yval][xval]))/
-																  (gen_since_historical-current_map_time)) * currentTime));
+			retval = (unsigned long) floor(fine_map[yval][xval] +
+										   (habitat_change_rate *
+											((static_cast<double>(historical_fine_map[yval][xval]) -
+											  static_cast<double>(fine_map[yval][xval])) /
+											 (gen_since_historical - current_map_time)) * currentTime));
 #endif
 		}
 	}
@@ -661,7 +677,7 @@ unsigned long Landscape::getValFine(const double&xval, const double &yval, const
 }
 
 unsigned long Landscape::getValFinite(
-	const double& x, const double& y, const long& xwrap, const long& ywrap, const double& current_generation)
+		const double &x, const double &y, const long &xwrap, const long &ywrap, const double &current_generation)
 {
 
 	double xval, yval;
@@ -673,7 +689,7 @@ unsigned long Landscape::getValFinite(
 		return 0;
 	}
 	if((xval < fine_x_min || xval >= fine_x_max || yval < fine_y_min ||
-	   yval >= fine_y_max) && has_coarse)  // check if the coordinate comes from the coarse resolution map.
+		yval >= fine_y_max) && has_coarse)  // check if the coordinate comes from the coarse resolution map.
 	{
 		// take in to account the fine map offsetting
 		xval += fine_x_offset;
@@ -701,7 +717,7 @@ unsigned long Landscape::convertSampleYToFineY(const unsigned long &y, const lon
 	return y + fine_y_offset + (ywrap * y_dim);
 }
 
-void Landscape::convertFineToSample(long & x, long & xwrap, long &y, long &ywrap)
+void Landscape::convertFineToSample(long &x, long &xwrap, long &y, long &ywrap)
 {
 	auto tmpx = double(x - fine_x_offset);
 	auto tmpy = double(y - fine_y_offset);
@@ -710,8 +726,7 @@ void Landscape::convertFineToSample(long & x, long & xwrap, long &y, long &ywrap
 	y = static_cast<long>(floor(tmpy));
 }
 
-
-unsigned long Landscape::getInitialCount(double dSample, DataMask& samplemask)
+unsigned long Landscape::getInitialCount(double dSample, DataMask &samplemask)
 {
 	unsigned long toret;
 	toret = 0;
@@ -744,7 +759,7 @@ unsigned long Landscape::getInitialCount(double dSample, DataMask& samplemask)
 	return toret;
 }
 
-SimParameters * Landscape::getSimParameters()
+SimParameters *Landscape::getSimParameters()
 {
 	if(!mapvars)
 	{
@@ -753,17 +768,39 @@ SimParameters * Landscape::getSimParameters()
 	return mapvars;
 }
 
-bool Landscape::checkMap(const double& x, const double& y, const long& xwrap, const long& ywrap, const double generation)
+bool
+Landscape::checkMap(const double &x, const double &y, const long &xwrap, const long &ywrap, const double generation)
 {
 	return getVal(x, y, xwrap, ywrap, generation) != 0;
 }
 
-bool Landscape::checkFine(const double& x, const double& y, const long& xwrap, const long& ywrap)
+bool Landscape::isOnFine(const double &x, const double &y, const long &xwrap, const long &ywrap)
 {
 	double tmpx, tmpy;
 	tmpx = x + xwrap * x_dim;
 	tmpy = y + ywrap * y_dim;
 	return !(tmpx < fine_x_min || tmpx >= fine_x_max || tmpy < fine_y_min || tmpy >= fine_y_max);
+}
+
+bool Landscape::isOnCoarse(const double &x, const double &y, const long &xwrap, const long &ywrap)
+{
+	double xval, yval;
+	xval = x + xwrap * x_dim;
+	yval = y + ywrap * y_dim;
+	return xval < coarse_x_min || xval >= coarse_x_max || yval < coarse_y_min || yval >= coarse_y_max;
+}
+
+bool Landscape::isOnMap(const double &x, const double &y, const long &xwrap, const long &ywrap)
+{
+	if(infinite_boundaries)
+	{
+		return true;
+	}
+	if(has_coarse && isOnCoarse(x, y, xwrap, ywrap))
+	{
+		return true;
+	}
+	return isOnFine(x, y, xwrap, ywrap);
 }
 
 void Landscape::fixGridCoordinates(double &x, double &y, long &xwrap, long &ywrap)
@@ -774,14 +811,14 @@ void Landscape::fixGridCoordinates(double &x, double &y, long &xwrap, long &ywra
 	y = y - ywrap * y_dim;
 }
 
-unsigned long Landscape::runDispersal(const double& dist,
-					   const double& angle,
-					   long& startx,
-					   long& starty,
-					   long& startxwrap,
-					   long& startywrap,
-					   bool& disp_comp,
-					   const double& generation)
+unsigned long Landscape::runDispersal(const double &dist,
+									  const double &angle,
+									  long &startx,
+									  long &starty,
+									  long &startxwrap,
+									  long &startywrap,
+									  bool &disp_comp,
+									  const double &generation)
 {
 // Checks that the start point is not out of matrix - this might have to be disabled to ensure that when updating the
 // map, it doesn't cause problems.
@@ -797,7 +834,7 @@ unsigned long Landscape::runDispersal(const double& dist,
 	double newx, newy;
 	newx = startx + (x_dim * startxwrap) + 0.5;
 	newy = starty + (y_dim * startywrap) + 0.5;
-	if(dispersal_relative_cost ==1)
+	if(dispersal_relative_cost == 1)
 	{
 		// then nothing complicated is required and we can jump straight to the final point.
 		newx += dist * cos(angle);
@@ -817,7 +854,7 @@ unsigned long Landscape::runDispersal(const double& dist,
 			while(cur_dist < dist)
 			{
 				// Check if the starting position of the loop is in the fine map or not.
-				if(checkFine(newx, newy, 0, 0))
+				if(isOnFine(newx, newy, 0, 0))
 				{
 					// Keep the standard movement rate
 					boost = 1;
@@ -853,7 +890,7 @@ unsigned long Landscape::runDispersal(const double& dist,
 		{
 			while(cur_dist < dist)
 			{
-				if(checkFine(newx, newy, 0, 0))
+				if(isOnFine(newx, newy, 0, 0))
 				{
 					boost = 1;
 				}
@@ -880,7 +917,7 @@ unsigned long Landscape::runDispersal(const double& dist,
 		{
 			while(cur_dist < dist)
 			{
-				if(checkFine(newx, newy, 0, 0))
+				if(isOnFine(newx, newy, 0, 0))
 				{
 					boost = 1;
 				}
@@ -908,7 +945,7 @@ unsigned long Landscape::runDispersal(const double& dist,
 			//				os << "...ang4..." <<  flush;
 			while(cur_dist < dist)
 			{
-				if(checkFine(newx, newy, 0, 0))
+				if(isOnFine(newx, newy, 0, 0))
 				{
 					boost = 1;
 				}
@@ -943,7 +980,7 @@ unsigned long Landscape::runDispersal(const double& dist,
 		newy = starty + 0.5 + tot_dist * sin(angle);
 	}
 	unsigned long ret = getVal(newx, newy, 0, 0, generation);
-	if(ret >0)
+	if(ret > 0)
 	{
 		long newxwrap, newywrap;
 		newxwrap = 0;
@@ -953,8 +990,8 @@ unsigned long Landscape::runDispersal(const double& dist,
 		if(!checkMap(newx, newy, newxwrap, newywrap, generation))
 		{
 			throw FatalException(string(
-				"ERROR_MOVE_007: Dispersal attempted to non-forest. Check dispersal function. Forest cover: " +
-				to_string((long long)getVal(newx, newy, newxwrap, newywrap, generation))));
+					"ERROR_MOVE_007: Dispersal attempted to non-forest. Check dispersal function. Forest cover: " +
+					to_string((long long) getVal(newx, newy, newxwrap, newywrap, generation))));
 		}
 #endif
 		startx = newx;
@@ -965,6 +1002,31 @@ unsigned long Landscape::runDispersal(const double& dist,
 	}
 	return ret;
 };
+
+double Landscape::distanceToNearestHabitat(const long & start_x, const long & start_y, const long & start_x_wrap,
+										   const long & start_y_wrap, const double & generation)
+{
+	long end_x = start_x;
+	long end_y = start_y;
+	double theta = 0;
+	double radius = 1.0;
+	while(!getVal(end_x, end_y, start_x_wrap, start_y_wrap, generation))
+	{
+		theta += 0.1 * M_PI / (2.0 * max(radius, 1.0));
+		radius = theta / (2 * M_PI);
+		end_x = archimedesSpiralX(start_x, start_y, radius, theta);
+		end_y = archimedesSpiralY(start_x, start_y, radius, theta);
+
+		// Double check that the distance is not greater than the map size
+		// This acts as a fail-safe in case someone presents a historical map with no habitat cells on
+		if(!isOnMap(end_x, end_y, start_x_wrap, start_y_wrap))
+		{
+			throw FatalException("Could not find a habitat cell for parent. Check that your map files always have a "
+						"place for lineages to disperse from.");
+		}
+	}
+	return pow(pow((start_x - end_x), 2) + pow((start_y - end_y), 2), 0.5);
+}
 
 void Landscape::clearMap()
 {

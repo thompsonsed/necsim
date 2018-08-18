@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include "SpatialTree.h"
+
 #ifdef WIN_INSTALL
 #include <windows.h>
 #include <io.h>
@@ -27,30 +28,30 @@ void SpatialTree::runFileChecks()
 	checkSims();
 }
 
-void SpatialTree::parseArgs(vector<string> & comargs)
+void SpatialTree::parseArgs(vector<string> &comargs)
 {
 	// First parse the command line arguments
-	bool bCheckUser=false;
+	bool bCheckUser = false;
 	unsigned long argc = comargs.size();
-	if(argc==1)
+	if(argc == 1)
 	{
 		comargs.emplace_back("-e");
-		if(comargs.size()!=2)
+		if(comargs.size() != 2)
 		{
 			stringstream ss;
 			ss << "ERROR_MAIN_010: Incorrect command line parsing." << endl;
 			throw FatalException(ss.str());
 		}
 	}
-	if(comargs[1]=="-h"||comargs[1]=="-H"||argc==1||comargs[1]=="-help" || comargs[1] == "-e")
+	if(comargs[1] == "-h" || comargs[1] == "-H" || argc == 1 || comargs[1] == "-help" || comargs[1] == "-e")
 	{
 		stringstream os;
 		// Sort out piping to terminal if verbose has not been defined.
-		#ifndef verbose
+#ifndef verbose
 		dup2(saved_stdout, fileno(stdout));
 		//close(saved_stdout);
-		#endif
-		if(argc==1)
+#endif
+		if(argc == 1)
 		{
 			os << "No arguments supplied: expected 30. These are: " << endl;
 		}
@@ -69,10 +70,14 @@ void SpatialTree::parseArgs(vector<string> & comargs)
 		os << "9: the deme sample size." << endl;
 		os << "10: the maximum simulation time (in seconds)." << endl;
 		os << "11: the dispersal_relative_cost value for moving through non-habitat." << endl;
-		os << "12: the temporal sampling file containing tab-separated generation values for sampling points in time (null for only sampling the present)." << endl;
+		os
+				<< "12: the temporal sampling file containing tab-separated generation values for sampling points in time (null for only sampling the present)."
+				<< endl;
 		os << "13: the minimum number of species known to exist. (Currently has no effect)." << endl;
 		os << "14 onwards: speciation rates to apply after simulation." << endl;
-		os << "There is also a full-command line mode, (flag -f), which allows for more options to be specified via the command line." << endl;
+		os
+				<< "There is also a full-command line mode, (flag -f), which allows for more options to be specified via the command line."
+				<< endl;
 		os << "Would you like to see these options? Y/N: " << flush;
 		writeWarning(os.str());
 		os.str("");
@@ -93,7 +98,9 @@ void SpatialTree::parseArgs(vector<string> & comargs)
 			os << "11: the coarse map y dimension." << endl;
 			os << "12: the coarse map x offset." << endl;
 			os << "13: the coarse map y offset." << endl;
-			os << "14: the scale of the coarse map compared to the fine (10 means resolution of coarse map = 10 x resolution of fine map)." << endl;
+			os
+					<< "14: the scale of the coarse map compared to the fine (10 means resolution of coarse map = 10 x resolution of fine map)."
+					<< endl;
 			os << "15: the output directory." << endl;
 			os << "16: the speciation rate." << endl;
 			os << "17: the dispersal distance (tau)." << endl;
@@ -108,8 +115,12 @@ void SpatialTree::parseArgs(vector<string> & comargs)
 			os << "26: the rate of forest change from historical." << endl;
 			os << "27: the time (in generations) since the historical forest was seen." << endl;
 			os << "28: the dispersal sigma value." << endl;
-			os << "29: the sample mask, with binary 1:0 values for areas that we want to sample from. If this is not provided then this will default to mapping the entire grid." << endl;
-			os << "30: a file containing a tab-separated list of sample points in time (in generations). If this is null then only the present day will be sampled." << endl;
+			os
+					<< "29: the sample mask, with binary 1:0 values for areas that we want to sample from. If this is not provided then this will default to mapping the entire grid."
+					<< endl;
+			os
+					<< "30: a file containing a tab-separated list of sample points in time (in generations). If this is null then only the present day will be sampled."
+					<< endl;
 			os << "31-onwards: speciation rates to be applied at the end of the simulation" << endl;
 			os << "Note that using the -f flag prohibits more than one two historic maps being used." << endl;
 		}
@@ -118,7 +129,7 @@ void SpatialTree::parseArgs(vector<string> & comargs)
 		os.str("");
 		string cDef;
 		cin >> cDef;
-		if(cDef == "Y"||cDef=="y")
+		if(cDef == "Y" || cDef == "y")
 		{
 			bCheckUser = true;
 		}
@@ -131,10 +142,11 @@ void SpatialTree::parseArgs(vector<string> & comargs)
 			os << "-dl/-DL: Run with default large parameters." << endl;
 			os << "-dx/-DX: Run with the default very large parameters." << endl;
 			os << "-c/-config: Run with the supplied config file." << endl;
-			throw FatalException(os.str()); // exit the program right away as there is no need to continue if there is no simulation to run!
+			throw FatalException(
+					os.str()); // exit the program right away as there is no need to continue if there is no simulation to run!
 		}
 	}
-	
+
 	if(comargs[1] == "-r" || comargs[1] == "-R" || comargs[1] == "-resume")
 	{
 		comargs[1] = "resuming";
@@ -153,28 +165,28 @@ void SpatialTree::parseArgs(vector<string> & comargs)
 		has_paused = true;
 	}
 	// Import the default parameters if required.
-	if(comargs[1]=="-d"||comargs[1]=="-D"||bCheckUser)
+	if(comargs[1] == "-d" || comargs[1] == "-D" || bCheckUser)
 	{
 		runAsDefault(comargs);
-		bCheckUser=true;
+		bCheckUser = true;
 	}
-	if(comargs[1]=="-dl"||comargs[1]=="-DL"||comargs[1]=="-dL"||comargs[1]=="-Dl")
+	if(comargs[1] == "-dl" || comargs[1] == "-DL" || comargs[1] == "-dL" || comargs[1] == "-Dl")
 	{
 		runLarge(comargs);
 		bCheckUser = true;
 	}
-	if(comargs[1]=="-dx"||comargs[1]=="-dX"||comargs[1]=="-DX"||comargs[1]=="-Dx")
+	if(comargs[1] == "-dx" || comargs[1] == "-dX" || comargs[1] == "-DX" || comargs[1] == "-Dx")
 	{
 		runXL(comargs);
 		bCheckUser = true;
 	}
-	if(comargs[1]=="-c"||comargs[1]=="-C"||comargs[1]=="-config"|| comargs[1]=="-Config")
+	if(comargs[1] == "-c" || comargs[1] == "-C" || comargs[1] == "-config" || comargs[1] == "-Config")
 	{
 		// Check that the config file is supplied.
-		if(argc!=3 && argc)
+		if(argc != 3 && argc)
 		{
 			throw FatalException("ERROR_MAIN_011: FATAL. -c or -config used to attempt import from "
-										 "config file, but no config file provided.");
+								 "config file, but no config file provided.");
 		}
 		bConfig = true;
 	}
@@ -190,19 +202,19 @@ void SpatialTree::parseArgs(vector<string> & comargs)
 	{
 		return;
 	}
-	if(argc<31&&!bCheckUser &&!bConfig)
+	if(argc < 31 && !bCheckUser && !bConfig)
 	{
-		string err = "ERROR_MAIN_000: FATAL.  Incorrect arguments supplied (" + to_string((long long)argc-1) + " supplied; expected 30).";
+		string err = "ERROR_MAIN_000: FATAL.  Incorrect arguments supplied (" + to_string((long long) argc - 1) +
+					 " supplied; expected 30).";
 		throw FatalException(err);
 		// note argc-1 which takes in to account the automatic generation of one command line argument which is the number of arguments.
 	}
 	argc = comargs.size();
 }
 
-
 void SpatialTree::checkFolders()
 {
-	
+
 	stringstream os;
 	os << "Checking folder existance..." << flush;
 	bool bFineMap, bCoarseMap, bFineMapHistorical, bCoarseMapHistorical, bSampleMask, bOutputFolder;
@@ -210,7 +222,7 @@ void SpatialTree::checkFolders()
 	{
 		bFineMap = doesExistNull(sim_parameters.fine_map_file);
 	}
-	catch(FatalException& fe)
+	catch(FatalException &fe)
 	{
 		writeError(fe.what());
 		bFineMap = false;
@@ -219,7 +231,7 @@ void SpatialTree::checkFolders()
 	{
 		bCoarseMap = doesExistNull(sim_parameters.coarse_map_file);
 	}
-	catch(FatalException& fe)
+	catch(FatalException &fe)
 	{
 		writeError(fe.what());
 		bCoarseMap = false;
@@ -228,7 +240,7 @@ void SpatialTree::checkFolders()
 	{
 		bFineMapHistorical = doesExistNull(sim_parameters.historical_fine_map_file);
 	}
-	catch(FatalException& fe)
+	catch(FatalException &fe)
 	{
 		writeError(fe.what());
 		bFineMapHistorical = false;
@@ -237,7 +249,7 @@ void SpatialTree::checkFolders()
 	{
 		bCoarseMapHistorical = doesExistNull(sim_parameters.historical_coarse_map_file);
 	}
-	catch(FatalException& fe)
+	catch(FatalException &fe)
 	{
 		writeError(fe.what());
 		bCoarseMapHistorical = false;
@@ -247,14 +259,15 @@ void SpatialTree::checkFolders()
 	{
 		bSampleMask = doesExistNull(sim_parameters.sample_mask_file);
 	}
-	catch(FatalException& fe)
+	catch(FatalException &fe)
 	{
 		writeError(fe.what());
 		bSampleMask = false;
 	}
 	if(bFineMap && bCoarseMap && bFineMapHistorical && bCoarseMapHistorical && bOutputFolder && bSampleMask)
 	{
-		os << "\rChecking folder existance...done!                                                                " << endl;
+		os << "\rChecking folder existance...done!                                                                "
+		   << endl;
 		writeInfo(os.str());
 		return;
 	}
@@ -263,7 +276,6 @@ void SpatialTree::checkFolders()
 		throw FatalException("Required files do not all exist. Check program inputs.");
 	}
 }
-
 
 void SpatialTree::setParameters()
 {
@@ -292,8 +304,6 @@ void SpatialTree::setParameters()
 	}
 }
 
-
-
 void SpatialTree::importMaps()
 {
 	if(has_imported_vars)
@@ -319,10 +329,10 @@ void SpatialTree::importMaps()
 			importReproductionMap();
 			samplegrid.importSampleMask(sim_parameters);
 		}
-		catch(FatalException& fe)
+		catch(FatalException &fe)
 		{
 			stringstream ss;
-			ss <<"Problem setting up map files: " << fe.what() << endl;
+			ss << "Problem setting up map files: " << fe.what() << endl;
 			throw FatalException(ss.str());
 		}
 	}
@@ -341,7 +351,6 @@ void SpatialTree::importReproductionMap()
 	// Now verify that the reproduction map is always non-zero when the density is non-zero.
 	verifyReproductionMap();
 }
-
 
 unsigned long SpatialTree::getInitialCount()
 {
@@ -382,7 +391,7 @@ unsigned long SpatialTree::getInitialCount()
 			}
 		}
 	}
-	catch(exception& e)
+	catch(exception &e)
 	{
 		throw FatalException(e.what());
 	}
@@ -402,16 +411,15 @@ unsigned long SpatialTree::getInitialCount()
 	return initcount;
 }
 
-
 void SpatialTree::setupDispersalCoordinator()
 {
 	dispersal_coordinator.setHabitatMap(&landscape);
 	dispersal_coordinator.setRandomNumber(&NR);
 	dispersal_coordinator.setGenerationPtr(&generation);
 	dispersal_coordinator.setDispersal(sim_parameters.dispersal_method, sim_parameters.dispersal_file,
-										sim_parameters.fine_map_x_size, sim_parameters.fine_map_y_size,
-										sim_parameters.m_prob, sim_parameters.cutoff, sim_parameters.sigma,
-										sim_parameters.tau, sim_parameters.restrict_self);
+									   sim_parameters.fine_map_x_size, sim_parameters.fine_map_y_size,
+									   sim_parameters.m_prob, sim_parameters.cutoff, sim_parameters.sigma,
+									   sim_parameters.tau, sim_parameters.restrict_self);
 	dispersal_coordinator.verifyDispersalMap();
 }
 
@@ -589,12 +597,12 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 }
 
 unsigned long SpatialTree::getIndividualsSampled(const long &x, const long &y, const long &x_wrap,
-										  const long &y_wrap, const double &current_gen)
+												 const long &y_wrap, const double &current_gen)
 {
 //	if(sim_parameters.uses_spatial_sampling)
 //	{
-		return static_cast<unsigned long>(max(floor(deme_sample * landscape.getVal(x, y, x_wrap, y_wrap, current_gen)
-						 * samplegrid.getExactValue(x, y, x_wrap, y_wrap)), 0.0));
+	return static_cast<unsigned long>(max(floor(deme_sample * landscape.getVal(x, y, x_wrap, y_wrap, current_gen)
+												* samplegrid.getExactValue(x, y, x_wrap, y_wrap)), 0.0));
 //	}
 //	else
 //	{
@@ -673,7 +681,7 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
 					writeLog(50, "Logging chosen position: ");
 					active[chosen].logActive(50);
 					throw FatalException("ERROR_MOVE_022: nwrap setting of either chosen or the "
-										  "lineage wrapped before chosen. Check move function.");
+										 "lineage wrapped before chosen. Check move function.");
 				}
 #endif // DEBUG
 				lastpos = active[lastpos].getNext();
@@ -690,7 +698,7 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
 				active[chosen].logActive(50);
 #endif // DEBUG
 				throw FatalException(
-					"ERROR_MOVE_024: Last position before chosen is 0 - this is impossible.");
+						"ERROR_MOVE_024: Last position before chosen is 0 - this is impossible.");
 			}
 			grid[oldy][oldx].decreaseNwrap();
 			active[chosen].setNwrap(0);
@@ -735,8 +743,7 @@ void SpatialTree::calcMove()
 	dispersal_coordinator.disperse(this_step);
 }
 
-
-long double SpatialTree::calcMinMax(const unsigned long& current)
+long double SpatialTree::calcMinMax(const unsigned long &current)
 {
 	// this formula calculates the speciation rate required for speciation to have occured on this branch.
 	// need to allow for the case that the number of gens was 0
@@ -757,15 +764,13 @@ long double SpatialTree::calcMinMax(const unsigned long& current)
 	return toret;
 }
 
-
-
-void SpatialTree::calcNewPos(bool& coal,
-					  const unsigned long& chosen,
-					  unsigned long& coalchosen,
-					  const long& oldx,
-					  const long& oldy,
-					  const long& oldxwrap,
-					  const long& oldywrap)
+void SpatialTree::calcNewPos(bool &coal,
+							 const unsigned long &chosen,
+							 unsigned long &coalchosen,
+							 const long &oldx,
+							 const long &oldy,
+							 const long &oldxwrap,
+							 const long &oldywrap)
 {
 	// Calculate the new position of the move, whilst also calculating the probability of coalescence.
 	unsigned long nwrap = active[chosen].getNwrap();
@@ -775,12 +780,12 @@ void SpatialTree::calcNewPos(bool& coal,
 		if(nwrap != 0)
 		{
 			throw FatalException(
-				"ERROR_MOVE_006: NON FATAL. Nwrap not set correctly. Check move programming function.");
+					"ERROR_MOVE_006: NON FATAL. Nwrap not set correctly. Check move programming function.");
 		}
 		// then the procedure is relatively simple.
 		// check for coalescence
 		// check if the grid needs to be updated.
-		if(grid[oldy][oldx].getMaxSize() != landscape.getVal(oldx, oldy, oldxwrap, oldywrap, generation))
+		if(grid[oldy][oldx].getMaxSize() != landscape.getVal(oldx, oldy, 0, 0, generation))
 		{
 			grid[oldy][oldx].setMaxsize(landscape.getVal(oldx, oldy, 0, 0, generation));
 		}
@@ -788,8 +793,8 @@ void SpatialTree::calcNewPos(bool& coal,
 #ifdef DEBUG
 		if(coalchosen != 0)
 		{
-			if(active[coalchosen].getXpos() != (unsigned long)oldx ||
-			   active[coalchosen].getYpos() != (unsigned long)oldy ||
+			if(active[coalchosen].getXpos() != (unsigned long) oldx ||
+			   active[coalchosen].getYpos() != (unsigned long) oldy ||
 			   active[coalchosen].getXwrap() != oldxwrap || active[coalchosen].getYwrap() != oldywrap)
 			{
 				writeLog(50, "Logging chosen:");
@@ -807,7 +812,7 @@ void SpatialTree::calcNewPos(bool& coal,
 			if(grid[oldy][oldx].getSpecies(tmplistindex) != chosen)
 			{
 				throw FatalException("ERROR_MOVE_005: Grid index not set correctly for species. Check "
-									  "move programming function.");
+									 "move programming function.");
 			}
 #ifdef historical_mode
 			if(grid[oldy][oldx].getListsize() > grid[oldy][oldx].getMaxsize())
@@ -836,7 +841,7 @@ void SpatialTree::calcNewPos(bool& coal,
 		}
 		nwrap = grid[oldy][oldx].getNwrap();
 		if(nwrap != 0)  // then coalescence is possible and we need to loop over the nexts to check those that are
-		// in the same position
+			// in the same position
 		{
 			// Count the possible matches of the position.
 			unsigned long matches = 0;
@@ -897,10 +902,10 @@ void SpatialTree::calcNewPos(bool& coal,
 			else  // if there were matches, generate a random number to see if coalescence occured or not
 			{
 				unsigned long randwrap =
-					floor(NR.d01() * (landscape.getVal(oldx, oldy, oldxwrap, oldywrap, generation)) + 1);
-// Get the random reference from the match list.
-// If the movement is to an empty space, then we can update the chain to include the new
-// lineage.
+						floor(NR.d01() * (landscape.getVal(oldx, oldy, oldxwrap, oldywrap, generation)) + 1);
+				// Get the random reference from the match list.
+				// If the movement is to an empty space, then we can update the chain to include the new
+				// lineage.
 #ifdef historical_mode
 				if(randwrap > landscape.getVal(oldx, oldy, oldxwrap, oldywrap, generation))
 				{
@@ -935,7 +940,7 @@ void SpatialTree::calcNewPos(bool& coal,
 					if(coalchosen == 0)
 					{
 						throw FatalException(
-							"ERROR_MOVE_025: Coalescence attempted with lineage of 0.");
+								"ERROR_MOVE_025: Coalescence attempted with lineage of 0.");
 					}
 				}
 			}
@@ -959,7 +964,6 @@ void SpatialTree::calcNewPos(bool& coal,
 			active[chosen].setNwrap(1);
 			active[chosen].setNext(0);
 			grid[oldy][oldx].increaseNwrap();
-// check
 #ifdef DEBUG
 			if(grid[oldy][oldx].getNwrap() != 1)
 			{
@@ -969,8 +973,8 @@ void SpatialTree::calcNewPos(bool& coal,
 		}
 		if(coalchosen != 0)
 		{
-			if(active[coalchosen].getXpos() != (unsigned long)oldx ||
-			   active[coalchosen].getYpos() != (unsigned long)oldy ||
+			if(active[coalchosen].getXpos() != (unsigned long) oldx ||
+			   active[coalchosen].getYpos() != (unsigned long) oldy ||
 			   active[coalchosen].getXwrap() != oldxwrap || active[coalchosen].getYwrap() != oldywrap)
 			{
 #ifdef DEBUG
@@ -980,10 +984,9 @@ void SpatialTree::calcNewPos(bool& coal,
 				active[coalchosen].logActive(50);
 #endif // DEBUG
 				throw FatalException("ERROR_MOVE_006b: NON FATAL. Nwrap not set correctly. Check move "
-									  "programming function.");
+									 "programming function.");
 			}
 		}
-		//#endif
 	}
 }
 
@@ -1012,12 +1015,12 @@ void SpatialTree::switchPositions(const unsigned long &chosen)
 			if(active[endactive].getNwrap() != 0)
 			{
 				stringstream ss;
-				ss <<"Nwrap is not set correctly for endactive (nwrap should be 0, but is ";
+				ss << "Nwrap is not set correctly for endactive (nwrap should be 0, but is ";
 				ss << active[endactive].getNwrap() << " ). Identified during switch of positions." << endl;
 				writeError(ss.str());
 			}
 			grid[active[endactive].getYpos()][active[endactive].getXpos()].setSpecies(
-				active[endactive].getListpos(), chosen);
+					active[endactive].getListpos(), chosen);
 			active[chosen].setup(active[endactive]);
 			active[endactive].setup(tmpdatactive);
 			active[endactive].setNwrap(0);
@@ -1028,7 +1031,7 @@ void SpatialTree::switchPositions(const unsigned long &chosen)
 			if(active[endactive].getNwrap() == 0)
 			{
 				stringstream ss;
-				ss <<"Nwrap is not set correctly for endactive (nwrap incorrectly 0).";
+				ss << "Nwrap is not set correctly for endactive (nwrap incorrectly 0).";
 				ss << "Identified during switch of positions." << endl;
 				writeError(ss.str());
 			}
@@ -1043,12 +1046,12 @@ void SpatialTree::switchPositions(const unsigned long &chosen)
 				if(grid[active[endactive].getYpos()][active[endactive].getXpos()].getNext() != endactive)
 				{
 					throw FatalException(string(
-						"ERROR_MOVE_019: FATAL. Nwrap for endactive not set correctly. Nwrap is 1, but "
-						"lineage at 1st position is " +
-						to_string(
-							(long long)grid[active[endactive].getYpos()][active[endactive].getXpos()]
-								.getNext()) +
-						". Identified during the move."));
+							"ERROR_MOVE_019: FATAL. Nwrap for endactive not set correctly. Nwrap is 1, but "
+							"lineage at 1st position is " +
+							to_string(
+									(long long) grid[active[endactive].getYpos()][active[endactive].getXpos()]
+											.getNext()) +
+							". Identified during the move."));
 				}
 				grid[active[endactive].getYpos()][active[endactive].getXpos()].setNext(chosen);
 			}
@@ -1064,19 +1067,19 @@ void SpatialTree::switchPositions(const unsigned long &chosen)
 					if(tmpcount > tmpnwrap)
 					{
 						writeLog(30, "ERROR_MOVE_013: NON FATAL. Looping has not encountered a match, "
-								"despite going further than required. Check nwrap counting.");
+									 "despite going further than required. Check nwrap counting.");
 						if(tmpactive == 0)
 						{
 							stringstream ss;
 							ss << "gridnext: "
-								 << grid[active[endactive].getYpos()][active[endactive]
-																		  .getXpos()]
-										.getNext()
-								 << endl;
+							   << grid[active[endactive].getYpos()][active[endactive]
+									   .getXpos()]
+									   .getNext()
+							   << endl;
 							ss << "endactive: " << endactive << endl;
 							ss << "tmpactive: " << tmpactive << endl;
 							ss << "tmpnwrap: " << tmpnwrap << " tmpcount: " << tmpcount
-								 << endl;
+							   << endl;
 							writeLog(50, ss);
 							writeLog(50, "Logging chosen:");
 							active[chosen].logActive(50);
@@ -1101,7 +1104,7 @@ void SpatialTree::switchPositions(const unsigned long &chosen)
 			if(testnext != chosen)
 			{
 				throw FatalException("ERROR_MOVE_009: Nwrap position not set correctly after coalescence. "
-									  "Check move process.");
+									 "Check move process.");
 			}
 		}
 	}
@@ -1157,7 +1160,7 @@ unsigned long SpatialTree::estSpecnum()
 	{
 		long double tmpminmax = calcMinMax(i);
 		active[i].setMinmax(tmpminmax);
-		dMinmax = (long double)max(dMinmax, tmpminmax);
+		dMinmax = (long double) max(dMinmax, tmpminmax);
 	}
 	for(unsigned long i = 0; i <= enddata; i++)
 	{
@@ -1223,7 +1226,6 @@ void SpatialTree::historicalStepChecks()
 }
 #endif
 
-
 void SpatialTree::incrementGeneration()
 {
 	Tree::incrementGeneration();
@@ -1233,16 +1235,18 @@ void SpatialTree::incrementGeneration()
 	landscape.checkHistorical(generation);
 
 }
+
 #ifdef DEBUG
+
 void SpatialTree::debugDispersal()
 {
 	if(landscape.getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap, generation) == 0)
 	{
 		throw FatalException(
-			string("ERROR_MOVE_007: Dispersal attempted to non-forest. "
-				   "Check dispersal function. Forest cover: " +
-				   to_string((long long)landscape.getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap,
-														 this_step.oldywrap, generation))));
+				string("ERROR_MOVE_007: Dispersal attempted to non-forest. "
+					   "Check dispersal function. Forest cover: " +
+					   to_string((long long) landscape.getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap,
+															  this_step.oldywrap, generation))));
 	}
 }
 
@@ -1268,9 +1272,10 @@ void SpatialTree::updateStepCoalescenceVariables()
 
 void SpatialTree::addLineages(double generation_in)
 {
-	// First loop over the grid to check for the number that needs to be added to active
-	unsigned long added_active = 0;
-	unsigned long added_data = 0;
+	// Store all tree nodes to add in a vector
+	vector<TreeNode> data_added{};
+	// Store all added active lineages in a vector
+	vector<DataPoint> active_added{};
 	// Update the sample grid boolean mask, if required.
 	if(sim_parameters.uses_spatial_sampling)
 	{
@@ -1289,46 +1294,38 @@ void SpatialTree::addLineages(double generation_in)
 			samplegrid.recalculate_coordinates(x, y, xwrap, ywrap);
 			if(samplegrid.getVal(x, y, xwrap, ywrap))
 			{
-				unsigned long num_to_add = countCellExpansion(x, y, xwrap, ywrap, generation_in, false);
-				added_data += getIndividualsSampled(x, y, xwrap, ywrap, generation_in);
-				added_active += num_to_add;
+				unsigned long num_to_add = countCellExpansion(x, y, xwrap, ywrap, generation_in, data_added);
+				expandCell(x, y, xwrap, ywrap, generation_in, num_to_add, data_added, active_added);
 			}
 		}
 	}
 	// now resize data and active if necessary
-	checkSimSize(added_data, added_active);
-	// Add the new lineages and modify the existing lineages within our sample area
-	for(unsigned long i = 0; i < sim_parameters.sample_x_size; i++)
+	checkSimSize(data_added.size(), active_added.size());
+	// Add all the data_added and active_added lineages
+	for(auto & item : data_added)
 	{
-		for(unsigned long j = 0; j < sim_parameters.sample_y_size; j++)
+		enddata ++;
+		data[enddata] = item;
+	}
+	for(auto & item : active_added)
+	{
+		endactive ++;
+		active[endactive] = item;
+		if(item.getXwrap() != 0 || item.getYwrap() != 0)
 		{
-			long x, y;
-			x = i;
-			y = j;
-			long xwrap, ywrap;
-			xwrap = 0;
-			ywrap = 0;
-			samplegrid.recalculate_coordinates(x, y, xwrap, ywrap);
-			if(samplegrid.getVal(x, y, xwrap, ywrap))
-			{
-				// Count the number of new cells that we need to add (after making those that already exist into tips)
-				// Note that this function won't make more tips than the proportion we are sampling
-				unsigned long num_to_add = countCellExpansion(x, y, xwrap, ywrap, generation_in, true);
-				expandCell(x, y, xwrap, ywrap, generation_in, num_to_add);
-			}
+			addWrappedLineage(endactive, item.getXpos(), item.getYpos());
 		}
 	}
 	// double check sizes
 	if(enddata >= data.size() || endactive >= active.size())
 	{
 		throw FatalException("ERROR_MAIN_012: FATAL. Enddata or endactive is greater than the size of the "
-							  "relevant object. Programming error likely.");
+							 "relevant object. Programming error likely.");
 	}
 	if(endactive > startendactive)
 	{
 		startendactive = endactive;
 	}
-	// Rescale to make sure that the remaining space is enough to encompass a complete coalescence tree
 #ifdef DEBUG
 	validateLineages();
 #endif
@@ -1337,29 +1334,36 @@ void SpatialTree::addLineages(double generation_in)
 string SpatialTree::simulationParametersSqlInsertion()
 {
 	string to_execute;
-	to_execute = "INSERT INTO SIMULATION_PARAMETERS VALUES(" + to_string((long long)the_seed) + "," +
-				 to_string((long long)the_task);
-	to_execute += ",'" + out_directory + "'," + boost::lexical_cast<std::string>((long double)spec) + "," +
-				  to_string((long double)sim_parameters.sigma) + ",";
-	to_execute += to_string((long double)sim_parameters.tau) + "," + to_string((long long)sim_parameters.deme) + ",";
-	to_execute += to_string((long double)sim_parameters.deme_sample) + "," + to_string((long long)maxtime) + ",";
-	to_execute += to_string((long double)sim_parameters.dispersal_relative_cost) + "," + to_string((long long)desired_specnum) + ",";
-	to_execute += to_string((long double)sim_parameters.habitat_change_rate) + ",";
-	to_execute += to_string((long double)sim_parameters.gen_since_historical) + ",'" + sim_parameters.times_file + "','";
-	to_execute += coarse_map_input + "'," + to_string((long long)sim_parameters.coarse_map_x_size) + ",";
-	to_execute += to_string((long long)sim_parameters.coarse_map_y_size) + "," + to_string((long long)sim_parameters.coarse_map_x_offset) + ",";
-	to_execute += to_string((long long)sim_parameters.coarse_map_y_offset) + "," + to_string((long long)sim_parameters.coarse_map_scale) + ",'";
-	to_execute += fine_map_input + "'," + to_string((long long)sim_parameters.fine_map_x_size) + "," + to_string((long long)sim_parameters.fine_map_y_size);
-	to_execute += "," + to_string((long long)sim_parameters.fine_map_x_offset) + "," + to_string((long long)sim_parameters.fine_map_y_offset) + ",'";
-	to_execute += sim_parameters.sample_mask_file + "'," + to_string((long long)sim_parameters.grid_x_size) + "," +
-				  to_string((long long) sim_parameters.grid_y_size) + "," + to_string((long long) sim_parameters.sample_x_size) + ", ";
+	to_execute = "INSERT INTO SIMULATION_PARAMETERS VALUES(" + to_string((long long) the_seed) + "," +
+				 to_string((long long) the_task);
+	to_execute += ",'" + out_directory + "'," + boost::lexical_cast<std::string>((long double) spec) + "," +
+				  to_string((long double) sim_parameters.sigma) + ",";
+	to_execute += to_string((long double) sim_parameters.tau) + "," + to_string((long long) sim_parameters.deme) + ",";
+	to_execute += to_string((long double) sim_parameters.deme_sample) + "," + to_string((long long) maxtime) + ",";
+	to_execute += to_string((long double) sim_parameters.dispersal_relative_cost) + "," +
+				  to_string((long long) desired_specnum) + ",";
+	to_execute += to_string((long double) sim_parameters.habitat_change_rate) + ",";
+	to_execute +=
+			to_string((long double) sim_parameters.gen_since_historical) + ",'" + sim_parameters.times_file + "','";
+	to_execute += coarse_map_input + "'," + to_string((long long) sim_parameters.coarse_map_x_size) + ",";
+	to_execute += to_string((long long) sim_parameters.coarse_map_y_size) + "," +
+				  to_string((long long) sim_parameters.coarse_map_x_offset) + ",";
+	to_execute += to_string((long long) sim_parameters.coarse_map_y_offset) + "," +
+				  to_string((long long) sim_parameters.coarse_map_scale) + ",'";
+	to_execute += fine_map_input + "'," + to_string((long long) sim_parameters.fine_map_x_size) + "," +
+				  to_string((long long) sim_parameters.fine_map_y_size);
+	to_execute += "," + to_string((long long) sim_parameters.fine_map_x_offset) + "," +
+				  to_string((long long) sim_parameters.fine_map_y_offset) + ",'";
+	to_execute += sim_parameters.sample_mask_file + "'," + to_string((long long) sim_parameters.grid_x_size) + "," +
+				  to_string((long long) sim_parameters.grid_y_size) + "," +
+				  to_string((long long) sim_parameters.sample_x_size) + ", ";
 	to_execute += to_string((long long) sim_parameters.sample_y_size) + ", ";
 	to_execute += to_string((long long) sim_parameters.sample_x_offset) + ", ";
 	to_execute += to_string((long long) sim_parameters.sample_y_offset) + ", '";
 	to_execute += historical_coarse_map_input + "','" + historical_fine_map_input + "'," + to_string(sim_complete);
 	to_execute += ", '" + sim_parameters.dispersal_method + "', ";
 	to_execute += boost::lexical_cast<std::string>(sim_parameters.m_prob) + ", ";
-	to_execute += to_string((long double)sim_parameters.cutoff) + ", ";
+	to_execute += to_string((long double) sim_parameters.cutoff) + ", ";
 	to_execute += to_string(sim_parameters.restrict_self) + ", '";
 	to_execute += sim_parameters.landscape_type + "', ";
 	// Now save the protracted speciation variables (not relevant in this simulation scenario)
@@ -1399,7 +1403,7 @@ void SpatialTree::dumpMap(string pause_folder)
 		out4 << landscape;
 		out4.close();
 	}
-	catch(exception& e)
+	catch(exception &e)
 	{
 		stringstream ss;
 		ss << e.what() << endl;
@@ -1422,8 +1426,6 @@ void SpatialTree::simResume()
 	writeInfo("\rLoading data from temp file...done!\n");
 	sim_parameters.printVars();
 }
-
-
 
 void SpatialTree::loadGridSave()
 {
@@ -1467,7 +1469,7 @@ void SpatialTree::loadGridSave()
 			}
 		}
 	}
-	catch(exception& e)
+	catch(exception &e)
 	{
 		string msg;
 		msg = string(e.what()) + "Failure to import grid from " + file_to_open;
@@ -1493,7 +1495,7 @@ void SpatialTree::loadMapSave()
 		in5.close();
 		importReproductionMap();
 	}
-	catch(exception& e)
+	catch(exception &e)
 	{
 		string msg;
 		msg = string(e.what()) + "Failure to import map from " + file_to_open;
@@ -1508,7 +1510,7 @@ void SpatialTree::verifyReproductionMap()
 		bool has_printed = false;
 		for(unsigned long i = 0; i < sim_parameters.fine_map_y_size; i++)
 		{
-			for(unsigned long j = 0; j < sim_parameters.fine_map_x_size; j ++)
+			for(unsigned long j = 0; j < sim_parameters.fine_map_x_size; j++)
 			{
 				if(rep_map[i][j] == 0.0 && landscape.getValFine(j, i, 0.0) != 0)
 				{
@@ -1518,7 +1520,7 @@ void SpatialTree::verifyReproductionMap()
 					ss << "Density: " << landscape.getValFine(j, i, 0.0) << endl;
 					writeInfo(ss.str());
 					throw FatalException("Reproduction map is zero where density is non-zero. "
-												 "This will cause an infinite loop.");
+										 "This will cause an infinite loop.");
 				}
 #ifdef DEBUG
 				if(landscape.getValFine(j, i, 0.0) == 0 && rep_map[i][j] != 0.0)
@@ -1563,7 +1565,7 @@ void SpatialTree::addWrappedLineage(unsigned long numstart, long x, long y)
 		unsigned long tmp_nwrap = 0;
 		while(tmp_next != 0)
 		{
-			tmp_nwrap ++;
+			tmp_nwrap++;
 			tmp_last = tmp_next;
 			tmp_next = active[tmp_next].getNext();
 		}
@@ -1576,31 +1578,44 @@ void SpatialTree::addWrappedLineage(unsigned long numstart, long x, long y)
 #endif
 }
 
-
 unsigned long SpatialTree::countCellExpansion(const long &x, const long &y, const long &xwrap, const long &ywrap,
-									   const double &generation_in, const bool& make_tips)
+											  const double &generation_in, vector<TreeNode> &data_added)
 {
 	unsigned long map_cover = landscape.getVal(x, y, xwrap, ywrap, generation_in);
 	unsigned long num_to_add = getIndividualsSampled(x, y, xwrap, ywrap, generation_in);
+	double proportion_added = double(num_to_add)/double(map_cover);
 	if(xwrap == 0 && ywrap == 0)
 	{
+		// Check that the species list sizings make sense
 		unsigned long ref = 0;
-		if(map_cover >= grid[y][x].getMaxSize())
+		if(map_cover != grid[y][x].getMaxSize())
+		{
+			if(map_cover > grid[y][x].getMaxSize())
+			{
+				grid[y][x].changePercentCover(map_cover);
+			}
+			else
+			{
+				grid[y][x].setMaxsize(map_cover);
+			}
+		}
+		if(map_cover > grid[y][x].getListLength())
 		{
 			grid[y][x].changePercentCover(map_cover);
 		}
-		while(ref < grid[y][x].getMaxSize() && num_to_add > 0)
+		// Add the lineages
+		while(ref < grid[y][x].getListLength() && num_to_add > 0)
 		{
 			unsigned long tmp_active = grid[y][x].getSpecies(ref);
 			if(tmp_active != 0)
 			{
-				if(make_tips)
+				if(checkProportionAdded(proportion_added))
 				{
-					makeTip(tmp_active, generation_in);
+					makeTip(tmp_active, generation_in, data_added);
+					num_to_add--;
 				}
-				num_to_add --;
 			}
-			ref ++;
+			ref++;
 		}
 	}
 	else
@@ -1610,10 +1625,10 @@ unsigned long SpatialTree::countCellExpansion(const long &x, const long &y, cons
 		{
 			if(active[next].getXwrap() == xwrap && active[next].getYwrap() == ywrap)
 			{
-				num_to_add--;
-				if(make_tips)
+				if(checkProportionAdded(proportion_added))
 				{
-					makeTip(next, generation_in);
+					num_to_add--;
+					makeTip(next, generation_in, data_added);
 				}
 			}
 			next = active[next].getNext();
@@ -1622,47 +1637,46 @@ unsigned long SpatialTree::countCellExpansion(const long &x, const long &y, cons
 	return num_to_add;
 }
 
-void SpatialTree::expandCell(long x, long y, long x_wrap, long y_wrap, double generation_in, unsigned long num_to_add)
+void SpatialTree::expandCell(long x, long y, long x_wrap, long y_wrap, double generation_in, unsigned long num_to_add,
+							 vector<TreeNode> &data_added, vector<DataPoint> &active_added)
 {
 	if(num_to_add > 0)
 	{
-		for(unsigned long k = 0; k < num_to_add; k ++)
+		for(unsigned long k = 0; k < num_to_add; k++)
 		{
-			endactive ++;
-			enddata ++;
+			TreeNode tmp_tree_node{};
+			DataPoint tmp_data_point{};
 			unsigned long listpos = 0;
 			// Add the species to active
 			if(x_wrap == 0 && y_wrap == 0)
 			{
-				listpos = grid[y][x].addSpecies(endactive);
-				active[endactive].setup(x, y, x_wrap, y_wrap, enddata, listpos, 1);
+				listpos = grid[y][x].addSpecies(endactive + active_added.size() + 1);
 			}
-			else
-			{
-				active[endactive].setup(x, y, x_wrap, y_wrap, enddata, listpos, 1);
-				addWrappedLineage(endactive, x, y);
-			}
+			tmp_data_point.setup(x, y, x_wrap, y_wrap, enddata + data_added.size() + 1, listpos, 1);
 			if(enddata >= data.size())
 			{
 				throw FatalException("Cannot add lineage - no space in data. "
-											  "Check size calculations.");
+									 "Check size calculations.");
 			}
 			if(endactive >= active.size())
 			{
 				throw FatalException("Cannot add lineage - no space in active. "
-											  "Check size calculations.");
+									 "Check size calculations.");
 			}
 
-			// Add a tip in the TreeNode for calculation of the coalescence tree at the
-			// end of the simulation.
+			// Add a tip in the TreeNode for calculation of the coalescence tree at the end of the simulation.
 			// This also contains the start x and y position of the species.
-			data[enddata].setup(true, x, y, x_wrap, y_wrap, generation_in);
-			data[enddata].setSpec(NR.d01());
+			tmp_tree_node.setup(true, x, y, x_wrap, y_wrap, generation_in);
+			tmp_tree_node.setSpec(NR.d01());
+			active_added.emplace_back(tmp_data_point);
+			data_added.emplace_back(tmp_tree_node);
+
 		}
 	}
 }
 
 #ifdef DEBUG
+
 void SpatialTree::validateLineages()
 {
 	bool fail = false;
@@ -1676,25 +1690,27 @@ void SpatialTree::validateLineages()
 		ss << "Enddata (size):" << enddata << "(" << data.size() << ")" << endl;
 		writeCritical(ss.str());
 		throw FatalException("Endactive out of range of active or enddata out of range of data. "
-					   "Please report this bug.");
+							 "Please report this bug.");
 	}
 	for(unsigned long i = 1; i < endactive; i++)
 	{
 		stringstream ss;
 		DataPoint tmp_datapoint = active[i];
 		// Validate the location exists
+#ifdef historical_mode
 		if(landscape.getVal(tmp_datapoint.getXpos(), tmp_datapoint.getYpos(),
 							tmp_datapoint.getXwrap(), tmp_datapoint.getYwrap(), generation) == 0)
 		{
 			if(printed < 100)
 			{
-				printed ++;
+				printed++;
 				ss << "Map value: " << landscape.getVal(tmp_datapoint.getXpos(), tmp_datapoint.getYpos(),
-														   tmp_datapoint.getXwrap(), tmp_datapoint.getYwrap(),
-														   generation) << endl;
+														tmp_datapoint.getXwrap(), tmp_datapoint.getYwrap(),
+														generation) << endl;
 			}
 			fail = true;
 		}
+#endif // historical mode
 		if(tmp_datapoint.getXwrap() == 0 && tmp_datapoint.getYwrap() == 0)
 		{
 			if(tmp_datapoint.getNwrap() != 0)
@@ -1764,7 +1780,7 @@ void SpatialTree::debugAddingLineage(unsigned long numstart, long x, long y)
 	unsigned long tmp_nwrap = 0;
 	while(tmp_next != 0)
 	{
-		tmp_nwrap ++;
+		tmp_nwrap++;
 		if(active[tmp_next].getNwrap() != tmp_nwrap)
 		{
 			stringstream ss;
@@ -1787,7 +1803,7 @@ void SpatialTree::debugAddingLineage(unsigned long numstart, long x, long y)
 		tmp_nwrap = 0;
 		while(tmp_next != 0 && tmp_nwrap < grid[y][x].getNwrap())
 		{
-			tmp_nwrap ++;
+			tmp_nwrap++;
 			ss << "tmp_next: " << tmp_next << endl;
 			ss << "tmp_nwrap: " << tmp_nwrap << endl;
 			tmp_next = active[tmp_next].getNext();
@@ -1797,7 +1813,7 @@ void SpatialTree::debugAddingLineage(unsigned long numstart, long x, long y)
 	}
 }
 
-void SpatialTree::runChecks(const unsigned long& chosen, const unsigned long& coalchosen)
+void SpatialTree::runChecks(const unsigned long &chosen, const unsigned long &coalchosen)
 {
 // final checks
 #ifdef historical_mode
@@ -1852,7 +1868,7 @@ void SpatialTree::runChecks(const unsigned long& chosen, const unsigned long& co
 				ss << "chosen: " << chosen << endl;
 				writeLog(10, ss);
 				throw FatalException("ERROR_MOVE_016: Nwrap for endactive not set correctly. Nwrap is 1, "
-											  "but the lineage at 1st position is not endactive.");
+									 "but the lineage at 1st position is not endactive.");
 			}
 		}
 		else
@@ -1867,7 +1883,7 @@ void SpatialTree::runChecks(const unsigned long& chosen, const unsigned long& co
 				{
 					stringstream ss;
 					ss << "ERROR_MOVE_017: NON FATAL. Nrap for endactive not set correctly; looped "
-							"beyond nwrap and not yet found enactive."
+						  "beyond nwrap and not yet found enactive."
 					   << endl;
 					ss << "endactive: " << endactive << endl
 					   << "nwrap: " << nwrap << endl

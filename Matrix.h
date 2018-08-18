@@ -571,6 +571,7 @@ public:
 				is >> delim;
 			}
 		}
+		return is;
 	}
 
 	/**

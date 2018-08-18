@@ -42,6 +42,26 @@ uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned lo
 							 unsigned long map_y, unsigned long scalar);
 
 /**
+ * @brief Gets the x coordinate of the archimedes spiral
+ * @param centre_x the x coordinate of the spiral centre
+ * @param centre_y the y coordinate of the spiral centre
+ * @param radius the radius of the spiral
+ * @param theta the theta of rotation of the spiral
+ */
+unsigned long archimedesSpiralX(const double &centre_x, const double &centre_y, const double &radius,
+								const double &theta);
+
+/**
+ * @brief Gets the y coordinate of the archimedes spiral
+ * @param centre_x the x coordinate of the spiral centre
+ * @param centre_y the y coordinate of the spiral centre
+ * @param radius the radius of the spiral
+ * @param theta the theta of rotation of the spiral
+ */
+unsigned long archimedesSpiralY(const double &centre_x, const double &centre_y, const double &radius,
+								const double &theta);
+
+/**
  * @class Landscape
  * @brief Contains all maps and provides the functions for accessing a grid cell in the correct temporal and spacial
  * location.
@@ -71,7 +91,7 @@ protected:
 	// the historical coarser map.
 	Map<uint32_t> historical_coarse_map;
 	// for importing and storing the simulation set-up options.
-	SimParameters * mapvars;
+	SimParameters *mapvars;
 	// the minimum values for each dimension for offsetting.
 	long fine_x_min{}, fine_y_min{}, coarse_x_min{}, coarse_y_min{};
 	// the maximum values for each dimension for offsetting.
@@ -112,8 +132,10 @@ protected:
 	unsigned long historical_fine_max;
 	// the maximum value on the historical coarse map file
 	unsigned long historical_coarse_max;
-	// if true, dispersal is possible from anywhere, only the fine map spatial structure is preserved
+	// the landscape structure type
 	string landscape_type;
+	// true if the landscapes boundaries are infinite
+	bool infinite_boundaries;
 	string NextMap;
 	// If this is false, there is no coarse map defined, so ignore the boundaries.
 	bool has_coarse;
@@ -144,6 +166,7 @@ public:
 		coarse_max = 0;
 		historical_fine_max = 0;
 		historical_coarse_max = 0;
+		infinite_boundaries = false;
 	}
 
 	/**
@@ -157,14 +180,14 @@ public:
 	 * @return true if using historical maps
 	 */
 	bool hasHistorical();
+
 	/**
 	 * @brief Sets the dimensions of the grid, the area where the species are initially sampled from.
 	 * This function must be run before any of the calc map functions to allow for the correct deme allocation.
 	 * 
 	 * @param mapvarsin the SimParameters object containing the map variables to import
 	 */
-	void setDims(SimParameters * mapvarsin);
-
+	void setDims(SimParameters *mapvarsin);
 
 	/**
 	 * @brief Checks that the map files exist (or are none/null).
@@ -244,16 +267,17 @@ public:
 	 */
 	void validateMaps();
 
-	 /**
-	  * @brief Checks if an update needs to be performed to the map configuration, and if it does, performs the update.
-	  * @param generation the current generation timer
-	  */
+	/**
+	 * @brief Checks if an update needs to be performed to the map configuration, and if it does, performs the update.
+	 * @param generation the current generation timer
+	 */
 	void updateMap(double generation);
 
 	/**
 	 * @brief Updates the historical map configuration.
 	 */
 	void doUpdate();
+
 	/**
 	 * @brief Resets the historical variables to recalculate historical maps.
 	 *
@@ -454,7 +478,7 @@ public:
 	 * @brief Gets the mapvars object pointer for referencing simulation parameters.
 	 * @return 
 	 */
-	SimParameters * getSimParameters();
+	SimParameters *getSimParameters();
 
 	/**
 	 * @brief Checks whether the point is habitat or non-habitat.
@@ -469,13 +493,35 @@ public:
 
 	/**
 	 * @brief  Checks whether the point comes from the fine grid.
-	 * @param x the x position.
-	 * @param y the y position.
-	 * @param xwrap the number of wraps in the x dimension.
-	 * @param ywrap the number of wraps in the y dimension.
-	 * @return a boolean of whether the location is on the fine map.
+	 * @param x the x position
+	 * @param y the y position
+	 * @param xwrap the number of wraps in the x dimension
+	 * @param ywrap the number of wraps in the y dimension
+	 * @return a boolean of whether the location is on the fine map
 	 */
-	bool checkFine(const double &x, const double &y, const long &xwrap, const long &ywrap);
+	bool isOnFine(const double &x, const double &y, const long &xwrap, const long &ywrap);
+
+	/**
+	 * @brief  Checks whether the point comes from the coarse grid.
+	 * @param x the x position
+	 * @param y the y position
+	 * @param xwrap the number of wraps in the x dimension
+	 * @param ywrap the number of wraps in the y dimension
+	 * @return a boolean of whether the location is on the fine map
+	 */
+	bool isOnCoarse(const double &x, const double &y, const long &xwrap, const long &ywrap);
+
+	/**
+	 * @brief Checks that the point supplied is within map limits.
+	 * If the map is inifite, returns true.
+	 * @param x the x position
+	 * @param y the y position
+	 * @param xwrap the number of wraps in the x dimension
+	 * @param ywrap the number of wraps in the y dimension
+	 * @return a boolean of whether the location is on the fine map
+	 * @return true if the point is within the map limits
+	 */
+	bool isOnMap(const double &x, const double &y, const long &xwrap, const long &ywrap);
 
 	/**
 	 * @brief Fixes the coordinates to be correctly within the original grid, altering the xwrap and ywrap consequently.
@@ -503,6 +549,18 @@ public:
 	 */
 	unsigned long runDispersal(const double &dist, const double &angle, long &startx, long &starty, long &startxwrap,
 							   long &startywrap, bool &disp_comp, const double &generation);
+
+	/**
+	 * @brief Calculates the distance from the start position to the nearest habitat cell.
+	 * @param start_x the start x coordinate
+	 * @param start_y the start y coordinate
+	 * @param start_x_wrap the starting x wrapping
+	 * @param start_y_wrap the starting y wrapping
+	 * @param generation the generation timer
+	 * @return the distance from the start position to the nearest habitat cell
+	 */
+	double distanceToNearestHabitat(const long &start_x, const long &start_y, const long &start_x_wrap,
+									const long &start_y_wrap, const double &generation);
 
 	/**
 	 * @brief Operator for outputting the Map object variables to an output stream.

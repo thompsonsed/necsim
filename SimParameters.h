@@ -426,9 +426,9 @@ struct SimParameters
 			if(configs[i].section.find("historical_fine") == 0)
 			{
 				// Then loop over each element to find the number, and check if it is equal to our input number.
-				is_historical = false;
 				if(stol(configs[i].getOption("number")) == n)
 				{
+					is_historical = false;
 					string tmpmapfile;
 					tmpmapfile = configs[i].getOption("path");
 					if(historical_fine_map_file != tmpmapfile)

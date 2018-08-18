@@ -68,7 +68,7 @@ protected:
 	// Reference number for this set of parameters in the database output
 	unsigned long max_parameter_reference;
 public:
-	SimulateDispersal() : num_steps(), distances()
+	SimulateDispersal() : distances(), num_steps()
 	{
 		simParameters = nullptr;
 		num_repeats = 0;

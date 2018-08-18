@@ -73,7 +73,11 @@ unsigned long SpeciesList::addSpecies(unsigned long new_spec)
 #ifdef DEBUG
 	if(list_size + 1 > maxsize)
 	{
-		throw out_of_range("Could not add species - no empty space");
+		stringstream ss;
+		ss << "list size: " << list_size << endl;
+		ss << "max size: " << maxsize << endl;
+		writeLog(10, ss.str());
+		throw out_of_range("Could not add species - list size greater than max size.");
 	}
 #endif
 	// First loop from the list size value
@@ -151,7 +155,7 @@ void SpeciesList::changePercentCover(unsigned long newmaxsize)
 	Row<unsigned long> templist(list);
 	maxsize = newmaxsize;
 	list.setSize(newmaxsize);
-	for(unsigned int i=0;i<newmaxsize;i++)
+	for(unsigned int i=0;i<max(newmaxsize, templist.size());i++)
 	{
 		if(i<templist.size())
 		{
@@ -240,6 +244,11 @@ unsigned long SpeciesList::getListSize()
 unsigned long SpeciesList::getMaxSize()
 {
 	return maxsize;
+}
+
+unsigned long SpeciesList::getListLength()
+{
+	return list.size();
 }
 
 void SpeciesList::wipeList()

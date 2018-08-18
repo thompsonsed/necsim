@@ -12,9 +12,9 @@
  */
 #ifndef TREE_H
 #define TREE_H
-#ifndef sql_ram
-#define sql_ram
-#endif
+//#ifndef sql_ram
+//#define sql_ram
+//#endif
 
 #include <sqlite3.h>
 #include <string>
@@ -409,6 +409,13 @@ public:
 	virtual void addLineages(double generation_in);
 
 	/**
+	 * @brief Randomly checks if a lineage should be added, based on the proportion added.
+	 * @param proportion_added the proportion of lineages that should be added
+	 * @return true if the lineage should be added, false otherwise
+	 */
+	bool checkProportionAdded(const double & proportion_added);
+
+	/**
 	 * @brief Checks the size of the main active and data objects is large enough
 	 * @param req_data the required data object size
 	 * @param req_active the required active object size
@@ -421,15 +428,17 @@ public:
 	 * generation time.
 	 * @param tmp_active the reference in active
 	 * @param generation_in the generation to set for the new lineage
+	 * @param data_added vector of lineages to add to data
 	 */
-	void makeTip(const unsigned long &tmp_active, const double &generation_in);
+	void makeTip(const unsigned long &tmp_active, const double &generation_in, vector<TreeNode> &data_added);
 
 	/**
 	 * @brief Creates a new reference in data containing the tip with a new generation counter.
 	 * @param i the reference in active of the lineage to make a tip
 	 * @param generationin the generation to make the lineage a tip at
+	 * @param data_added vector of lineages to add to the data object
 	 */
-	void convertTip(unsigned long i, double generationin);
+	void convertTip(unsigned long i, double generationin, vector<TreeNode> &data_added);
 
 	/**
 	 * @brief Finalises the simulation, and performs the correct tasks depending if the sim has been paused or finished.

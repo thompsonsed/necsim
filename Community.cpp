@@ -59,7 +59,7 @@ bool CommunityParameters::compare(long double speciation_rate_in, long double ti
 			   protracted_params == protracted_parameters;
 	}
 	return doubleCompare(speciation_rate, speciation_rate_in, speciation_rate * 0.000001) &&
-		   doubleCompare(time, time_in, time * 0.0001) && fragment == fragment_in &&
+		   doubleCompare(time, time_in, time * 0.0000000001) && fragment == fragment_in &&
 		   metacommunity_reference == metacommunity_reference_in &&
 			protracted_params == protracted_parameters;
 }
@@ -69,7 +69,7 @@ bool CommunityParameters::compare(long double speciation_rate_in, long double ti
 								  const ProtractedSpeciationParameters &protracted_params)
 {
 	return doubleCompare(speciation_rate, speciation_rate_in, speciation_rate * 0.000001) &&
-		   doubleCompare(time, time_in, 0.0001) && metacommunity_reference == metacommunity_reference_in &&
+		   doubleCompare(time, time_in, 0.0000000001) && metacommunity_reference == metacommunity_reference_in &&
 			protracted_params == protracted_parameters;
 }
 
@@ -1574,6 +1574,7 @@ void Community::calcFragments(string fragment_file)
 					ss << ", requires 6 (name, x_west, y_north, x_east, y_south, area)." << endl;
 					throw FatalException(ss.str());
 				}
+				fragments.resize(tmp_raw_read.size() - 1);
 				break;
 			}
 			// Fragment name and dimensions
@@ -2393,6 +2394,9 @@ void Community::doApplication(SpecSimParameters *sp, Row<TreeNode> *data)
 	if(sp->use_fragments)
 	{
 		calcFragments(sp->fragment_config_file);
+		stringstream os;
+		os << "Total fragments: " << fragments.size() << endl;
+		writeInfo(os.str());
 	}
 	calculateTree();
 }

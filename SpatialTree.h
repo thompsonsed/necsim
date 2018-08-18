@@ -58,9 +58,9 @@
 * For HPC systems, it is recommended to use this option as write speeds are generally fast and large simulations don't
 * have a linear increase in the SQL database size (at least in RAM).
 */
-#ifndef sql_ram
-#define sql_ram
-#endif
+//#ifndef sql_ram
+//#define sql_ram
+//#endif
 
 // other includes for required files
 #include "Tree.h"
@@ -363,18 +363,18 @@ public:
 
 	/**
 	 * @brief Counts the number of lineages at a particular location that need to be added, after making the correct
-	 * number of those that already exist into tips.
+	 * proportion of those that already exist into tips.
 	 *
 	 * @param x the x coordinate of the location of interest
 	 * @param y the y coordinate of the location of interest
 	 * @param xwrap the x wrapping of the location
 	 * @param ywrap the y wrapping of the location
 	 * @param generationin the generation to assign to new tips
-	 * @param make_tips if true, stores the tips as well as counting them
-	 * @return the number of new lineages that need to be added.
+	 * @param data_added vector containing TreeNode objects to add to data
+	 * @return the number of lineages still to add
 	 */
 	unsigned long countCellExpansion(const long &x, const long &y, const long &xwrap, const long &ywrap,
-									 const double &generationin, const bool &make_tips);
+									 const double &generationin, vector<TreeNode> &data_added);
 
 	/**
 	 * @brief Expands the cell at the desired location by adding the supplied number of lineages
@@ -388,7 +388,8 @@ public:
 	 * @param generation_in the generation to set the new lineages to
 	 * @param add the total number of lineages to add at this location
 	 */
-	void expandCell(long x, long y, long x_wrap, long y_wrap, double generation_in, unsigned long add);
+	void expandCell(long x, long y, long x_wrap, long y_wrap, double generation_in, unsigned long add,
+					vector<TreeNode> &data_added, vector<DataPoint> &active_added);
 
 #ifdef DEBUG
 

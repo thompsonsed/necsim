@@ -180,7 +180,14 @@ public:
 	 * @return the maximum number of lineages that can exist currently.
 	 */
 	unsigned long getMaxSize();
-	
+
+
+	/**
+	 * @brief Gets the length of the list object
+	 * @return the length of the list object
+	 */
+	unsigned long getListLength();
+
 	/**
 	 * @brief Empties the list of any data and fills the list with zeros.
 	 */

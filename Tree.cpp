@@ -11,14 +11,15 @@
  */
 
 #include <algorithm>
+
 #ifdef WIN_INSTALL
 #include <windows.h>
 #define sleep Sleep
 #endif
+
 #include "Tree.h"
 #include "Logger.h"
 #include "LogFile.h"
-
 
 void Tree::importSimulationVariables(const string &configfile)
 {
@@ -696,15 +697,26 @@ void Tree::checkTimeUpdate()
 
 void Tree::addLineages(double generation_in)
 {
-	auto added_data = static_cast<unsigned long>(floor(deme_sample * deme));
-	unsigned long added_active = added_data - endactive;
-	checkSimSize(added_data, added_active);
+	auto number_added = static_cast<unsigned long>(floor(deme_sample * deme));
+	// Store all the data lineages to add in a vector
+	vector<TreeNode> data_to_add{};
 	// change those that already exist to tips
 	for(unsigned long i = 0; i < endactive; i++)
 	{
-		makeTip(endactive, generation_in);
+		// With probability deme_sample, just change the active lineage to a tip.
+		if(checkProportionAdded(deme_sample) && number_added > 0)
+		{
+			number_added --;
+			makeTip(endactive, generation_in, data_to_add);
+		}
 	}
-	for(unsigned long i = 0; i < added_active; i++)
+	checkSimSize(data_to_add.size() + number_added, number_added);
+	for(auto & item : data_to_add)
+	{
+		enddata ++;
+		data[enddata] = item;
+	}
+	for(unsigned long i = 0; i < number_added; i++)
 	{
 		enddata++;
 		endactive++;
@@ -712,15 +724,16 @@ void Tree::addLineages(double generation_in)
 		data[enddata].setup(true, 0, 0, 0, 0, generation_in);
 		data[enddata].setSpec(NR.d01());
 	}
-	if(endactive != added_data)
-	{
-		throw FatalException("Error whilst adding lineages. Please report this bug.");
-	}
+}
+
+bool Tree::checkProportionAdded(const double &proportion_added)
+{
+	return NR.d01() < proportion_added;
 }
 
 void Tree::checkSimSize(unsigned long req_data, unsigned long req_active)
 {
-	unsigned long min_active = endactive+req_active + 2;
+	unsigned long min_active = endactive + req_active + 2;
 	unsigned long min_data = enddata + req_data + 2;
 	// Take into account future coalescence events
 	min_data += min_active * 2;
@@ -737,12 +750,12 @@ void Tree::checkSimSize(unsigned long req_data, unsigned long req_active)
 	}
 }
 
-void Tree::makeTip(const unsigned long &tmp_active, const double &generationin)
+void Tree::makeTip(const unsigned long &tmp_active, const double &generationin, vector<TreeNode> &data_added)
 {
 	unsigned long reference = active[tmp_active].getReference();
 	if(data[reference].isTip())
 	{
-		convertTip(tmp_active, generationin);
+		convertTip(tmp_active, generationin, data_added);
 	}
 	else
 	{
@@ -751,21 +764,19 @@ void Tree::makeTip(const unsigned long &tmp_active, const double &generationin)
 	}
 }
 
-void Tree::convertTip(unsigned long i, double generationin)
+void Tree::convertTip(unsigned long i, double generationin, vector<TreeNode> &data_added)
 {
-	enddata++;
-	if(enddata >= data.size())
-	{
-		throw FatalException("Cannot add tip - no space in data. Check size calculations.");
-	}
-	data[enddata].setup(true, active[i].getXpos(), active[i].getYpos(),
+	TreeNode tmp_tree_node;
+	tmp_tree_node.setup(true, active[i].getXpos(), active[i].getYpos(),
 						active[i].getXwrap(),
 						active[i].getYwrap(), generationin);
 	// Now link the old tip to the new tip
-	data[active[i].getReference()].setParent(enddata);
-	data[enddata].setGenerationRate(0);
-	data[enddata].setSpec(NR.d01());
-	active[i].setReference(enddata);
+	auto data_pos = enddata + data_added.size() + 1;
+	data[active[i].getReference()].setParent(data_pos);
+	tmp_tree_node.setGenerationRate(0);
+	tmp_tree_node.setSpec(NR.d01());
+	active[i].setReference(data_pos);
+	data_added.emplace_back(tmp_tree_node);
 }
 
 void Tree::applySpecRate(long double sr, double t)

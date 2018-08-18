@@ -320,35 +320,64 @@ void DispersalCoordinator::disperseDensityMap(Step &this_step)
 	// Store the density in the end location.
 	unsigned long density;
 	double dist, angle;
-	while(fail)
+	// First check to see if the source cell is non-habitat.
+	// If this is the case, then find the nearest neighbouring habitat pixel and only pick dispersal distances
+	// greater than or equal to that distance.
+	if(!landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap, *generation))
 	{
-		angle = NR->direction();
-		dist = NR->dispersal();
-		density = landscape->runDispersal(dist, angle, this_step.oldx,
-										  this_step.oldy, this_step.oldxwrap, this_step.oldywrap, fail, *generation);
-		if(!fail)
+		// TODO add proper unittests for this scenario
+		auto min_distance = landscape->distanceToNearestHabitat(this_step.oldx, this_step.oldy, this_step.oldxwrap,
+																this_step.oldywrap, *generation);
+		while(fail)
 		{
-			fail = !checkEndPoint(density, this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap,
-								  startx, starty, startxwrap, startywrap);
+			dist = NR->dispersalMinDistance(min_distance);
+			// TODO move to debug
+			if(dist < min_distance)
+			{
+				throw FatalException("Distance is less than minimum distance: please report this bug.");
+			}
+			angle = NR->direction();
+			density = landscape->runDispersal(dist, angle, this_step.oldx,
+											  this_step.oldy, this_step.oldxwrap, this_step.oldywrap, fail, *generation);
+			if(!fail)
+			{
+				fail = !checkEndPoint(density, this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap,
+									  startx, starty, startxwrap, startywrap);
+			}
 		}
-		// Discard the dispersal event a percentage of the time, based on the maximum value of the habitat map.
-		// This is to correctly mimic less-dense cells having a lower likelihood of being the parent to the cell.
-
-#ifdef DEBUG
-		if(landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap, *generation) ==
-		   0 &&
-		   !fail)
-		{
-			stringstream ss;
-			ss << "x,y: " << this_step.oldx << "," << this_step.oldy;
-			ss << " x,y wrap: " << this_step.oldxwrap << "," << this_step.oldywrap << "Habitat cover: ";
-			ss << landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap,
-									this_step.oldywrap, *generation) << endl;
-			writeLog(50, ss);
-			throw FatalException("ERROR_MOVE_007: Dispersal attempted to non-habitat. Check dispersal function.");
-		}
-#endif
 	}
+	else
+	{
+		while(fail)
+		{
+			angle = NR->direction();
+			dist = NR->dispersal();
+			density = landscape->runDispersal(dist, angle, this_step.oldx,
+											  this_step.oldy, this_step.oldxwrap, this_step.oldywrap, fail,
+											  *generation);
+			// Discard the dispersal event a percentage of the time, based on the maximum value of the habitat map.
+			// This is to correctly mimic less-dense cells having a lower likelihood of being the parent to the cell.
+			if(!fail)
+			{
+				fail = !checkEndPoint(density, this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap,
+									  startx, starty, startxwrap, startywrap);
+			}
+		}
+
+	}
+#ifdef DEBUG
+	if(landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap, *generation) ==
+	   0 && !fail)
+	{
+		stringstream ss;
+		ss << "x,y: " << this_step.oldx << "," << this_step.oldy;
+		ss << " x,y wrap: " << this_step.oldxwrap << "," << this_step.oldywrap << "Habitat cover: ";
+		ss << landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap,
+								this_step.oldywrap, *generation) << endl;
+		writeLog(50, ss);
+		throw FatalException("ERROR_MOVE_007: Dispersal attempted to non-habitat. Check dispersal function.");
+	}
+#endif
 }
 
 void DispersalCoordinator::setEndPointFptr(const bool &restrict_self)

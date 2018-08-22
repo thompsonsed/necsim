@@ -119,7 +119,7 @@ void SpatialTree::parseArgs(vector<string> &comargs)
 					<< "29: the sample mask, with binary 1:0 values for areas that we want to sample from. If this is not provided then this will default to mapping the entire grid."
 					<< endl;
 			os
-					<< "30: a file containing a tab-separated list of sample points in time (in generations). If this is null then only the present day will be sampled."
+					<< "30: a file containing a tab-separated species_id_list of sample points in time (in generations). If this is null then only the present day will be sampled."
 					<< endl;
 			os << "31-onwards: speciation rates to be applied at the end of the simulation" << endl;
 			os << "Note that using the -f flag prohibits more than one two historic maps being used." << endl;
@@ -359,7 +359,7 @@ unsigned long SpatialTree::getInitialCount()
 	try
 	{
 		long max_x, max_y;
-		if(samplegrid.getDefault())
+		if(samplegrid.isNull())
 		{
 			max_x = sim_parameters.fine_map_x_size;
 			max_y = sim_parameters.fine_map_y_size;
@@ -386,7 +386,7 @@ unsigned long SpatialTree::getInitialCount()
 				y = i;
 				xwrap = 0;
 				ywrap = 0;
-				samplegrid.recalculate_coordinates(x, y, xwrap, ywrap);
+				samplegrid.recalculateCoordinates(x, y, xwrap, ywrap);
 				initcount += getIndividualsSampled(x, y, xwrap, ywrap, 0.0);
 			}
 		}
@@ -472,13 +472,12 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 				y = j;
 				x_wrap = 0;
 				y_wrap = 0;
-				samplegrid.recalculate_coordinates(x, y, x_wrap, y_wrap);
+				samplegrid.recalculateCoordinates(x, y, x_wrap, y_wrap);
 				if(grid[y][x].getListSize() == 0)
 				{
 					unsigned long stored_next = grid[y][x].getNext();
 					unsigned long stored_nwrap = grid[y][x].getNwrap();
 					grid[y][x].initialise(landscape.getVal(x, y, 0, 0, 0));
-					grid[y][x].fillList();
 					grid[y][x].setNwrap(stored_nwrap);
 					grid[y][x].setNext(stored_next);
 				}
@@ -625,7 +624,7 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
 			throw FatalException("ERROR_MOVE_015: Nwrap not set correctly. Nwrap 0, but x and y wrap not 0. ");
 		}
 #endif // DEBUG
-// Then the lineage exists in the main list;
+// Then the lineage exists in the main species_id_list;
 // debug (can be removed later)
 #ifdef historical_mode
 		if(grid[oldy][oldx].getMaxsize() < active[chosen].getListpos())
@@ -636,7 +635,7 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
 			throw FatalException("ERROR_MOVE_001: Listpos outside maxsize. Check move programming function.");
 		}
 #endif
-		// delete the species from the list
+		// delete the species from the species_id_list
 		grid[oldy][oldx].deleteSpecies(active[chosen].getListpos());
 		// clear out the variables.
 		active[chosen].setNext(0);
@@ -650,7 +649,7 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
 			grid[oldy][oldx].setNext(active[chosen].getNext());
 			// Now reduce the nwrap of the lineages that have been effected.
 			long nextpos = active[chosen].getNext();
-			// loop over the rest of the list, reducing the nwrap
+			// loop over the rest of the species_id_list, reducing the nwrap
 			while(nextpos != 0)
 			{
 				active[nextpos].decreaseNwrap();
@@ -845,8 +844,8 @@ void SpatialTree::calcNewPos(bool &coal,
 		{
 			// Count the possible matches of the position.
 			unsigned long matches = 0;
-			// Create an array containing the list of active references for those that match as
-			// this stops us having to loop twice over the same list.
+			// Create an array containing the species_id_list of active references for those that match as
+			// this stops us having to loop twice over the same species_id_list.
 			vector<unsigned long> match_list(nwrap);
 			unsigned long next_active;
 			next_active = grid[oldy][oldx].getNext();
@@ -859,7 +858,7 @@ void SpatialTree::calcNewPos(bool &coal,
 					throw FatalException("ERROR_MOVE_022a: Nwrap not set correctly in move.");
 				}
 #endif
-				match_list[matches] = next_active;  // add the match to the list of matches.
+				match_list[matches] = next_active;  // add the match to the species_id_list of matches.
 				matches++;
 			}
 			// Now loop over the remaining nexts counting matches
@@ -903,7 +902,7 @@ void SpatialTree::calcNewPos(bool &coal,
 			{
 				unsigned long randwrap =
 						floor(NR.d01() * (landscape.getVal(oldx, oldy, oldxwrap, oldywrap, generation)) + 1);
-				// Get the random reference from the match list.
+				// Get the random reference from the match species_id_list.
 				// If the movement is to an empty space, then we can update the chain to include the new
 				// lineage.
 #ifdef historical_mode
@@ -1291,7 +1290,7 @@ void SpatialTree::addLineages(double generation_in)
 			long xwrap, ywrap;
 			xwrap = 0;
 			ywrap = 0;
-			samplegrid.recalculate_coordinates(x, y, xwrap, ywrap);
+			samplegrid.recalculateCoordinates(x, y, xwrap, ywrap);
 			if(samplegrid.getVal(x, y, xwrap, ywrap))
 			{
 				unsigned long num_to_add = countCellExpansion(x, y, xwrap, ywrap, generation_in, data_added);
@@ -1375,39 +1374,42 @@ string SpatialTree::simulationParametersSqlInsertion()
 
 void SpatialTree::simPause()
 {
-	// Completely changed how this sections works - it won't currently allow restarting of the simulations, but will
-	// dump the data file to memory. - simply calls sqlCreate and sqlOutput.
-	// sqlCreate();
-	// sqlOutput();
-
-	// This function saves the data to 4 files. One contains the main simulation parameters, the other 3 contain the
-	// simulation results thus far
-	// including the grid object, data object and active object.
-	string pause_folder = initiatePause();
-	dumpMain(pause_folder);
-	dumpActive(pause_folder);
-	dumpData(pause_folder);
-	dumpMap(pause_folder);
-	completePause();
+	// This function dumps all simulation data to a file.
+	auto out1 = initiatePause();
+	dumpMain(out1);
+	dumpMap(out1);
+	dumpActive(out1);
+	dumpGrid(out1);
+	dumpData(out1);
+	completePause(out1);
 }
 
-void SpatialTree::dumpMap(string pause_folder)
+void SpatialTree::dumpMap(ofstream &out)
 {
 	try
 	{
 		// Output the data object
-		ofstream out4;
-		string file_to_open = pause_folder + "Dump_map_" + to_string(the_task) + "_" + to_string(the_seed) + ".csv";
-		out4 << setprecision(64);
-		out4.open(file_to_open.c_str());
-		out4 << landscape;
-		out4.close();
+		out << landscape;
 	}
 	catch(exception &e)
 	{
 		stringstream ss;
-		ss << e.what() << endl;
-		ss << "Failed to perform map dump to " << pause_folder << endl;
+		ss << "Failed to perform dump of map: " << e.what() << endl;
+		writeCritical(ss.str());
+	}
+}
+
+void SpatialTree::dumpGrid(ofstream &out)
+{
+	try
+	{
+		// Output the data object
+		out << grid;
+	}
+	catch(exception &e)
+	{
+		stringstream ss;
+		ss << "Failed to perform dump of grid: " << e.what() << endl;
 		writeCritical(ss.str());
 	}
 }
@@ -1415,22 +1417,23 @@ void SpatialTree::dumpMap(string pause_folder)
 void SpatialTree::simResume()
 {
 	initiateResume();
+	auto is = openSaveFile();
 	// now load the objects
-	loadMainSave();
-	loadMapSave();
+	loadMainSave(is);
+	loadMapSave(is);
 	setObjectSizes();
-	loadActiveSave();
-	loadDataSave();
-	loadGridSave();
+	loadActiveSave(is);
+	loadGridSave(is);
+	loadDataSave(is);
 	time(&sim_start);
 	writeInfo("\rLoading data from temp file...done!\n");
 	sim_parameters.printVars();
 }
 
-void SpatialTree::loadGridSave()
+void SpatialTree::loadGridSave(ifstream &in1)
 {
 	grid.setSize(sim_parameters.grid_y_size, sim_parameters.grid_x_size);
-	string file_to_open;
+	in1 >> grid;
 	try
 	{
 		stringstream os;
@@ -1443,7 +1446,6 @@ void SpatialTree::loadGridSave()
 			for(unsigned long j = 0; j < sim_parameters.grid_x_size; j++)
 			{
 				grid[i][j].initialise(landscape.getVal(j, i, 0, 0, generation));
-				grid[i][j].fillList();
 			}
 		}
 		// Now fill the grid object with lineages from active. Only need to loop once.
@@ -1452,7 +1454,6 @@ void SpatialTree::loadGridSave()
 			if(active[i].getXwrap() == 0 && active[i].getYwrap() == 0)
 			{
 				grid[active[i].getYpos()][active[i].getXpos()].setSpeciesEmpty(active[i].getListpos(), i);
-				grid[active[i].getYpos()][active[i].getXpos()].increaseListSize();
 			}
 			else
 			{
@@ -1472,33 +1473,28 @@ void SpatialTree::loadGridSave()
 	catch(exception &e)
 	{
 		string msg;
-		msg = string(e.what()) + "Failure to import grid from " + file_to_open;
+		msg = "Failure to import grid from temp grid: " + string(e.what());
 		throw FatalException(msg);
 	}
 }
 
-void SpatialTree::loadMapSave()
+void SpatialTree::loadMapSave(ifstream &in1)
 {
-	string file_to_open;
 	// Input the map object
 	try
 	{
 		stringstream os;
 		os << "\rLoading data from temp file...map..." << flush;
 		writeInfo(os.str());
-		ifstream in5;
-		file_to_open = pause_sim_directory + string("/Pause/Dump_map_") + to_string(the_task) + "_" +
-					   to_string(the_seed) + string(".csv");
-		in5.open(file_to_open);
 		landscape.setDims(&sim_parameters);
-		in5 >> landscape;
-		in5.close();
+		in1 >> landscape;
+		samplegrid.importSampleMask(sim_parameters);
 		importReproductionMap();
 	}
 	catch(exception &e)
 	{
 		string msg;
-		msg = string(e.what()) + "Failure to import map from " + file_to_open;
+		msg = "Failure to import data from temp map: " + string(e.what());
 		throw FatalException(msg);
 	}
 }
@@ -1586,7 +1582,7 @@ unsigned long SpatialTree::countCellExpansion(const long &x, const long &y, cons
 	double proportion_added = double(num_to_add)/double(map_cover);
 	if(xwrap == 0 && ywrap == 0)
 	{
-		// Check that the species list sizings make sense
+		// Check that the species species_id_list sizings make sense
 		unsigned long ref = 0;
 		if(map_cover != grid[y][x].getMaxSize())
 		{

@@ -11,20 +11,9 @@
 #include "SpeciesList.h"
 
 
-SpeciesList::SpeciesList() : list_size(0), maxsize(0), next_active(0), nwrap(0)
+SpeciesList::SpeciesList() : list_size(0), maxsize(0), next_active(0), species_id_list(), nwrap(0)
 {
-	list.setSize(0);
-}
 
-void SpeciesList::fillList()
-{
-	if(maxsize!=0)
-	{
-		for(unsigned int i = 0; i < maxsize; i++)
-		{
-			list[i] = 0;
-		}
-	}
 }
 
 void SpeciesList::initialise(unsigned long maxsizein)
@@ -32,7 +21,6 @@ void SpeciesList::initialise(unsigned long maxsizein)
 	maxsize = maxsizein;
 	nwrap = 0;
 	list_size = 0;
-	list.setSize(maxsize);
 }
 
 void SpeciesList::setMaxsize(unsigned long maxsizein)
@@ -42,20 +30,32 @@ void SpeciesList::setMaxsize(unsigned long maxsizein)
 
 void SpeciesList::setSpecies(unsigned long index, unsigned long new_val)
 {
-	if(list[index] == 0)
+#ifdef DEBUG
+	if(index >= species_id_list.size())
 	{
-		throw runtime_error("ERROR_MOVE_027: List position to be replaced is zero. Check list assignment.");
+		throw out_of_range("List index to change value is out of range of vector size. Please report this bug.");
 	}
-	list[index] = new_val;
+#endif //DEBUG
+	if(species_id_list[index] == 0)
+	{
+		throw runtime_error("List position to be replaced is zero. Check species_id_list assignment.");
+	}
+	species_id_list[index] = new_val;
 }
 
 void SpeciesList::setSpeciesEmpty(unsigned long index, unsigned long new_val)
 {
-	if(list[index] != 0)
+	if(index >= species_id_list.size())
 	{
-		throw runtime_error("ERROR_MOVE_027b: List position to be replaced is not zero. Check list assignment.");
+		species_id_list.resize(index + 1, 0);
+		species_id_list[index] = 0;
 	}
-	list[index] = new_val;
+	if(species_id_list[index] != 0)
+	{
+		throw runtime_error("List position to be replaced is not zero. Check species_id_list assignment.");
+	}
+	species_id_list[index] = new_val;
+	list_size ++;
 }
 
 void SpeciesList::setNext(unsigned long n)
@@ -68,59 +68,56 @@ void SpeciesList::setNwrap(unsigned long nr)
 	nwrap = nr;
 }
 
-unsigned long SpeciesList::addSpecies(unsigned long new_spec)
+unsigned long SpeciesList::addSpecies(const unsigned long &new_spec)
 {
 #ifdef DEBUG
 	if(list_size + 1 > maxsize)
 	{
 		stringstream ss;
-		ss << "list size: " << list_size << endl;
+		ss << "species_id_list size: " << list_size << endl;
 		ss << "max size: " << maxsize << endl;
 		writeLog(10, ss.str());
-		throw out_of_range("Could not add species - list size greater than max size.");
+		throw out_of_range("Could not add species - species_id_list size greater than max size.");
 	}
 #endif
-	// First loop from the list size value
-	for(unsigned long i = list_size; i<list.size(); i++)
+	// Check if there are empty spaces
+	if(species_id_list.size() > list_size)
 	{
-		if(list[i] == 0)
+		// First loop from the species_id_list size value
+		for(unsigned long i = list_size; i<species_id_list.size(); i++)
 		{
-			list_size++;
-			list[i] = new_spec;
-			return i;
+			if(species_id_list[i] == 0)
+			{
+				list_size++;
+				species_id_list[i] = new_spec;
+				return i;
+			}
+		}
+		// Now loop over the rest of the lineages
+		for(unsigned long i = 0; i < list_size; i ++)
+		{
+			if(species_id_list[i] == 0)
+			{
+				list_size++;
+				species_id_list[i] = new_spec;
+				return i;
+			}
 		}
 	}
-	// Now loop over the rest of the lineages
-	for(unsigned long i = 0; i < list_size; i ++)
+	else
 	{
-		if(list[i] == 0)
-		{
-			list_size++;
-			list[i] = new_spec;
-			return i;
-		}
+		// Just need to append to the vector
+		species_id_list.push_back(new_spec);
+		list_size ++;
+		return species_id_list.size() - 1;
 	}
-	throw out_of_range("Could not add species - no empty space");
-}
 
-void SpeciesList::addSpeciesSilent(unsigned long new_spec)
-{
-	for(unsigned long i =0;i<maxsize;i++)
-	{
-		if(list[i] == 0)
-		{
-			list_size++;
-			list[i] = new_spec;
-			return;
-		}
-
-	}
 	throw out_of_range("Could not add species - no empty space");
 }
 
 void SpeciesList::deleteSpecies(unsigned long index)
 {
-	list[index] = 0;
+	species_id_list[index] = 0;
 	list_size --;
 }
 
@@ -152,26 +149,7 @@ void SpeciesList::increaseNwrap()
 
 void SpeciesList::changePercentCover(unsigned long newmaxsize)
 {
-	Row<unsigned long> templist(list);
 	maxsize = newmaxsize;
-	list.setSize(newmaxsize);
-	for(unsigned int i=0;i<max(newmaxsize, templist.size());i++)
-	{
-		if(i<templist.size())
-		{
-			list[i] = templist[i];
-		}
-		else
-		{
-			list[i] = 0;
-		}
-	}
-#ifdef DEBUG
-	if(list.size() > maxsize)
-		{
-			throw out_of_range("List size not equal to maxsize");
-		}
-#endif
 }
 
 unsigned long SpeciesList::getRandLineage(NRrand &rand_no)
@@ -179,21 +157,21 @@ unsigned long SpeciesList::getRandLineage(NRrand &rand_no)
 	double rand_index;
 	if(maxsize <= list_size)
 	{
-		// Then the list size is larger than the actual size. This means we must return a lineage.
+		// Then the species_id_list size is larger than the actual size. This means we must return a lineage.
 		try
 		{
 			do
 			{
 				rand_index = rand_no.d01();
-				rand_index *= list.size();
-				//os << "ref: " << rand_index << ", " << list[round(rand_index)] << endl;
-			} while(list[floor(rand_index)] == 0);
+				rand_index *= species_id_list.size();
+				//os << "ref: " << rand_index << ", " << species_id_list[round(rand_index)] << endl;
+			} while(species_id_list[floor(rand_index)] == 0);
 			//os << "RETURNING!" << endl;
-			return(list[floor(rand_index)]);
+			return(species_id_list[floor(rand_index)]);
 		}
 		catch(out_of_range &oor)
 		{
-			throw runtime_error("ERROR_MOVE_001b: Listpos outside maxsize.");
+			throw runtime_error("Listpos outside maxsize.");
 		}
 	}
 	else
@@ -201,13 +179,12 @@ unsigned long SpeciesList::getRandLineage(NRrand &rand_no)
 		rand_index =  rand_no.d01();
 //		os << "rand_index: " << rand_index << endl;
 		rand_index  *= maxsize;
-		// Dynamically resize the list if required. Otherwise, to save memory, the list will not be resized;
-		if(rand_index>=list.size())
+		if(rand_index >= species_id_list.size())
 		{
-			changePercentCover(maxsize);
+			return 0;
 		}
 
-		unsigned long i = static_cast<unsigned long>(floor(rand_index));
+		auto i = static_cast<unsigned long>(floor(rand_index));
 
 #ifdef DEBUG
 		if(rand_index>maxsize)
@@ -217,13 +194,13 @@ unsigned long SpeciesList::getRandLineage(NRrand &rand_no)
 				throw runtime_error(ss.str());
 			}
 #endif // DEBUG
-		return list[i];
+		return species_id_list[i];
 	}
 }
 
 unsigned long SpeciesList::getSpecies(unsigned long index)
 {
-	return list[index];
+	return species_id_list[index];
 }
 
 unsigned long SpeciesList::getNext()
@@ -248,12 +225,11 @@ unsigned long SpeciesList::getMaxSize()
 
 unsigned long SpeciesList::getListLength()
 {
-	return list.size();
+	return species_id_list.size();
 }
 
 void SpeciesList::wipeList()
 {
-	fillList();
 	next_active=0;
 	nwrap =0;
 	list_size=0;
@@ -261,29 +237,14 @@ void SpeciesList::wipeList()
 
 ostream &operator<<(ostream &os, const SpeciesList &r)
 {
-	//os << m.numRows<<" , "<<m.numCols<<" , "<<endl;
-	os << r.list << ",";
-	os << r.list_size << ",";
-	os << r.maxsize << ",";
-	os << r.next_active << ",";
-	os << r.nwrap << ",";
+	os << r.species_id_list.size();
 	return os;
 }
 
 istream &operator>>(istream &is, SpeciesList &r)
 {
-	char delim;
-	//double temp1,temp2;
-	//is << m.numRows<<" , "<<m.numCols<<" , "<<endl;
-	is >> r.list;
-	is >> delim;
-	is >> r.list_size;
-	is >> delim;
-	is >> r.maxsize;
-	is >> delim;
-	is >> r.next_active;
-	is >> delim;
-	is >> r.nwrap;
-	is >> delim;
+	unsigned int size;
+	is >> size;
+	r.species_id_list.resize(size, 0);
 	return is;
 }

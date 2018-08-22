@@ -26,7 +26,7 @@ You are free to modify and distribute the code as per the license specified in *
 
 ## INSTRUCTIONS ##
 ###Compiling the program###
-See the Requirements section for a full list of the necessary prerequisites. Once these are installed, compiling the program should be relatively easy. NECSim requires a linker to the boost libraries, as well as the sqlite3 library. It is recommended to run with the maximum optimisation possible. 
+See the Requirements section for a full species_id_list of the necessary prerequisites. Once these are installed, compiling the program should be relatively easy. NECSim requires a linker to the boost libraries, as well as the sqlite3 library. It is recommended to run with the maximum optimisation possible.
 
 
 Additionally, if support is required for tif files (an alternative to importing csv files), the [gdal library](http://www.gdal.org/) is required. See the online documentation for help compiling gdal for your operating system. When compiling using gdal, use the ```-D with_gdal``` compilation flag.
@@ -38,7 +38,7 @@ for the application of different speciation rates.
 The routine relies on supplying command line arguments (see below) for all the major simulation variables. Alternatively, supplying a config .txt file and using the command line arguments `./necsim -c /path/to/config.txt` can be used for parsing command line arguments from the text file. 
 
 ####Command Line Arguments ####
-The following command line arguments are required. This list can be accessed by running `“./necsim -h”` or `./necsim -help`
+The following command line arguments are required. This species_id_list can be accessed by running `“./necsim -h”` or `./necsim -help`
 
 The command line options to be specified are:
 
@@ -94,7 +94,7 @@ Alternatively, by specifying the -f flag, (full mode) as the first argument, the
 27. the time (in generations) since the historical forest was seen.
 28. the dispersal tau value (the width of the kernel.
 29. the sample mask, with binary 1:0 values for areas that we want to sample from. If this is not provided then this will default to mapping the whole area.
-30.  the link to the file containing every generation that the list should be expanded. This should be in the format of a list.
+30.  the link to the file containing every generation that the species_id_list should be expanded. This should be in the format of a species_id_list.
 31. (and onwards) - speciation rates to apply after the simulation is complete.
 
 ####Config Files ####
@@ -179,7 +179,7 @@ A brief description of the important classes is given below. Some classes also c
 	- Based on code written by James Rosindell (j.rosindell@imperial.ac.uk).
 	- Handles indexing of the 2D object plus importing values from a csv file.
 * The `SpeciesList` class
-	- Contains the list of individuals, for application in a matrix, to essentially create a 3D array. 
+	- Contains the species_id_list of individuals, for application in a matrix, to essentially create a 3D array.
 	- Handles the positioning of individuals in space within a grid cell.
 * The `ConfigOption` class
 	- Contains basic functions for importing command line arguments from a config file, providing an alternative way of setting up simulations.

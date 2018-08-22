@@ -593,31 +593,33 @@ public:
 
 	/**
 	 * @brief Checks the output folder exists and initiates the pause.
+	 * @return the output file stream to save objects to
 	 */
-	string initiatePause();
+	ofstream initiatePause();
 
 	/**
 	 * @brief Saves the main simulation variables to file.
-	 * @param pause_folder the folder to save files into
+	 * @param out the output file stream to save the object to
 	 */
-	void dumpMain(string pause_folder);
+	void dumpMain(ofstream &out);
 
 	/**
 	 * @brief Saves the active object to file.
-	 * @param pause_folder the folder to save files into
+	 * @param out the output file stream to save the object to
 	 */
-	void dumpActive(string pause_folder);
+	void dumpActive(ofstream &out);
 
 	/**
 	 * @brief Saves the data object to file.
-	 * @param pause_folder the folder to save files into
+	 * @param out the output file stream to save the object to
 	 */
-	void dumpData(string pause_folder);
+	void dumpData(ofstream &out);
 
 	/**
 	 * @brief Completes the pause routine and outputs the sql dump.
+	 * @param out the output stream to close up
 	 */
-	void completePause();
+	void completePause(ofstream &out);
 
 	/**
 	 * @brief Sets the resume variables so that the simulation can be resumed.
@@ -638,20 +640,22 @@ public:
 	 */
 	void setResumeParameters();
 
+	ifstream openSaveFile();
+
 	/**
 	 * @brief Loads the main simulation parameters from the save file into memory.
 	 */
-	virtual void loadMainSave();
+	virtual void loadMainSave(ifstream &in1);
 
 	/**
 	 * @brief Loads the data object from the save file into memory.
 	 */
-	void loadDataSave();
+	void loadDataSave(ifstream &in1);
 
 	/**
 	 * @brief Loads the active object from the save file into memory.
 	 */
-	void loadActiveSave();
+	void loadActiveSave(ifstream &in1);
 
 	/**
 	 * @brief Checks for resuming and prints to the terminal

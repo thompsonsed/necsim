@@ -352,7 +352,7 @@ protected:
 	bool database_set; // boolean for whether the database has been set already.
 	sqlite3 *database; // stores the in-memory database connection.
 	bool bSqlConnection; // true if the data connection has been established.
-	Row<TreeNode> *nodes; // in older versions this was called list. Changed to avoid confusion with the built-in class.
+	Row<TreeNode> *nodes; // in older versions this was called species_id_list. Changed to avoid confusion with the built-in class.
 	Row<unsigned long> row_out;
 	unsigned long iSpecies;
 	bool has_imported_samplemask; // checks whether the samplemask has already been imported.

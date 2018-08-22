@@ -91,7 +91,7 @@ protected:
 	DispersalCoordinator dispersal_coordinator;
 	// The reproduction map object
 	ReproductionMap rep_map;
-	// A list of new variables which will contain the relevant information for maps and grids.
+	// A species_id_list of new variables which will contain the relevant information for maps and grids.
 	//  strings containing the file names to be imported.
 	string fine_map_input, coarse_map_input;
 	string historical_fine_map_input, historical_coarse_map_input;
@@ -323,10 +323,15 @@ public:
 
 	/**
 	 * @brief Saves the map object to file.
-	 * @param pause_folder the folder to save files into
+	 * @param out the output file stream to save the object to
 	 */
-	void dumpMap(string pause_folder);
+	void dumpMap(ofstream &out);
 
+	/**
+	 * @brief Saves the grid object to file
+	 * @param out the output file stream to save the object to
+	 */
+	void dumpGrid(ofstream &out);
 	/**
 	 * @brief Resumes the simulation from a previous state.
 	 *
@@ -339,14 +344,14 @@ public:
 	 *
 	 * @note Requires that both the simulation parameters and the maps have already been loaded.
 	 */
-	void loadGridSave();
+	void loadGridSave(ifstream &in1);
 
 	/**
 	 * @brief Loads the map from the save file into memory.
 	 *
 	 * @note Requires that the simulation parameters have already been loaded.
 	 */
-	void loadMapSave();
+	void loadMapSave(ifstream &in1);
 
 	/**
 	 * @brief Checks that the reproduction map makes sense with the fine density map.

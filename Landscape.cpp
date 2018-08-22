@@ -733,7 +733,7 @@ unsigned long Landscape::getInitialCount(double dSample, DataMask &samplemask)
 	long x, y;
 	long xwrap, ywrap;
 	unsigned long max_x, max_y;
-	if(samplemask.getDefault())
+	if(samplemask.isNull())
 	{
 		max_x = fine_map.getCols();
 		max_y = fine_map.getRows();
@@ -751,7 +751,7 @@ unsigned long Landscape::getInitialCount(double dSample, DataMask &samplemask)
 			y = j;
 			xwrap = 0;
 			ywrap = 0;
-			samplemask.recalculate_coordinates(x, y, xwrap, ywrap);
+			samplemask.recalculateCoordinates(x, y, xwrap, ywrap);
 			toret += (unsigned long) (max(floor(dSample * (getVal(x, y, xwrap, ywrap, 0)) *
 												samplemask.getExactValue(x, y, xwrap, ywrap)), 0.0));
 		}

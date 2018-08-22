@@ -761,7 +761,7 @@ void Community::importData(string inputfile)
 	// The sql statement to store the sql statement message object
 	sqlite3_stmt *stmt = nullptr;
 
-	// Now find out the max size of the list, so we have a count to work from
+	// Now find out the max size of the species_id_list, so we have a count to work from
 	string count_command = "SELECT COUNT(*) FROM SPECIES_LIST;";
 	sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
 					   nullptr);
@@ -810,7 +810,7 @@ void Community::importData(string inputfile)
 //		}
 //		else
 //		{
-		// the -1 is to ensure that the list includes all lineages, but fills the output from the beginning
+		// the -1 is to ensure that the species_id_list includes all lineages, but fills the output from the beginning
 		unsigned long index = i - 1 - ignored_lineages;
 		(*nodes)[index].setup(tip, xval, yval, xwrap, ywrap, generationin);
 		(*nodes)[index].burnSpecies(species_id);
@@ -857,7 +857,7 @@ void Community::getMaxSpeciesAbundancesID()
 	if(max_species_id == 0)
 	{
 		sqlite3_stmt *stmt = nullptr;
-		// Now find out the max size of the list, so we have a count to work from
+		// Now find out the max size of the species_id_list, so we have a count to work from
 		string count_command = "SELECT MAX(ID) FROM SPECIES_ABUNDANCES;";
 		sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
 						   nullptr);
@@ -898,7 +898,7 @@ void Community::getMaxSpeciesLocationsID()
 	if(max_locations_id == 0)
 	{
 		sqlite3_stmt *stmt = nullptr;
-		// Now find out the max size of the list, so we have a count to work from
+		// Now find out the max size of the species_id_list, so we have a count to work from
 		string count_command = "SELECT MAX(ID) FROM SPECIES_LOCATIONS;";
 		sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
 						   nullptr);
@@ -918,7 +918,7 @@ void Community::getMaxFragmentAbundancesID()
 	if(max_fragment_id == 0)
 	{
 		sqlite3_stmt *stmt = nullptr;
-		// Now find out the max size of the list, so we have a count to work from
+		// Now find out the max size of the species_id_list, so we have a count to work from
 		string count_command = "SELECT MAX(ID) FROM FRAGMENT_ABUNDANCES;";
 		sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
 						   nullptr);
@@ -1231,7 +1231,7 @@ bool Community::checkSpeciesLocationsReference()
 	}
 
 	sqlite3_stmt *stmt = nullptr;
-	// Now find out the max size of the list, so we have a count to work from
+	// Now find out the max size of the species_id_list, so we have a count to work from
 	string count_command = "SELECT COUNT(*) FROM SPECIES_LOCATIONS WHERE community_reference == ";
 	count_command += to_string(current_community_parameters->reference) + ";";
 	sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
@@ -1251,7 +1251,7 @@ bool Community::checkSpeciesAbundancesReference()
 	}
 
 	sqlite3_stmt *stmt = nullptr;
-	// Now find out the max size of the list, so we have a count to work from
+	// Now find out the max size of the species_id_list, so we have a count to work from
 	string count_command = "SELECT COUNT(*) FROM SPECIES_ABUNDANCES WHERE community_reference = ";
 	count_command += to_string(current_community_parameters->reference) + ";";
 	sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
@@ -2228,7 +2228,7 @@ void Community::updateCommunityParameters()
 				throw FatalException("Attempted to update sql database without opening database connection.");
 			}
 
-			// Now find out the max size of the list, so we have a count to work from
+			// Now find out the max size of the species_id_list, so we have a count to work from
 			string count_command = "UPDATE COMMUNITY_PARAMETERS SET fragments = 1 WHERE reference = ";
 			count_command += to_string(parameter.reference) + ";";
 			int rc = sqlite3_exec(database, count_command.c_str(), nullptr, nullptr, nullptr);

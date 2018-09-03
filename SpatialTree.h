@@ -2,10 +2,8 @@
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 //
 /**
- * @author Sam Thompson
- * @date 31/08/2016
  * @file SpatialTree.h
- * @brief Contains the SpatialTree class for running simulations and outputting the phylogenetic tree.
+ * @brief Contains SpatialTree for running simulations and outputting the phylogenetic tree.
  *
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
@@ -26,9 +24,16 @@
 #include <ctime>
 #include <ctime>
 #include <sqlite3.h>
+
+#ifndef WIN_INSTALL
+
 #include <unistd.h>
+
+#endif
+
 #include <algorithm>
 #include <stdexcept>
+#include <memory>
 //#define with_gdal
 // extra boost include - this requires the installation of boost on the system
 // note that this requires compilation with the -lboost_filesystem and -lboost_system linkers.
@@ -36,9 +41,7 @@
 
 // include fast-csv-parser by Ben Strasser (available from https://github.com/ben-strasser/fast-cpp-csv-parser)
 // for fast file reading
-#ifdef use_csv
-#include "fast-cpp-csv-parser/csv.h"
-#endif
+
 /**
 * @defgroup DEFINES Preprocessor Definitions
 */
@@ -49,6 +52,9 @@
 *https://github.com/ben-strasser/fast-cpp-csv-parser).
 * This enables much faster csv reading, but can cause problems on systems where this module is not fully tested.
 */
+#ifdef use_csv
+#include "fast-cpp-csv-parser/csv.h"
+#endif
 
 /**
 *@ingroup DEFINES
@@ -58,9 +64,9 @@
 * For HPC systems, it is recommended to use this option as write speeds are generally fast and large simulations don't
 * have a linear increase in the SQL database size (at least in RAM).
 */
-#ifndef sql_ram
-#define sql_ram
-#endif
+//#ifndef sql_ram
+//#define sql_ram
+//#endif
 
 // other includes for required files
 #include "Tree.h"
@@ -74,13 +80,12 @@
 #include "Community.h"
 #include "Setup.h"
 #include "DispersalCoordinator.h"
-#include "ReproductionMap.h"
+#include "ActivityMap.h"
 #include "Logger.h"
 
 using namespace std;
 
 /**
-* @class SpatialTree
 * @brief Represents the output phylogenetic tree, when run on a spatially-explicit landscape.
 *
 * Contains all functions for running simulations, outputting data and calculating coalescence tree structure.
@@ -90,15 +95,17 @@ class SpatialTree : public virtual Tree
 protected:
 	// Our dispersal coordinator for getting dispersal distances and managing calls from the landscape
 	DispersalCoordinator dispersal_coordinator;
-	// The reproduction map object
-	ReproductionMap rep_map;
-	// A list of new variables which will contain the relevant information for maps and grids.
+	// Death probability values across the landscape
+	shared_ptr<ActivityMap> death_map;
+	// Reproduction probability values across the landscape
+	shared_ptr<ActivityMap> reproduction_map;
+	// A species_id_list of new variables which will contain the relevant information for maps and grids.
 	//  strings containing the file names to be imported.
 	string fine_map_input, coarse_map_input;
 	string historical_fine_map_input, historical_coarse_map_input;
 	// Landscape object containing both the coarse and fine maps for checking whether or not there is habitat at a
 	// particular location.
-	Landscape landscape;
+	shared_ptr<Landscape> landscape;
 	// An indexing spatial positioning of the lineages
 	Matrix<SpeciesList> grid;
 	unsigned long desired_specnum;
@@ -106,15 +113,15 @@ protected:
 	DataMask samplegrid;
 public:
 	/**
-	 * @brief The constructor for the tree object.
-	 *
-	 * Sets all uninitiated variables to false, except log_all.
-	 * log_all should be changed to false if minimal text output during simulations is desired.
+	 * @brief The constructor for SpatialTree.
 	 */
-	SpatialTree() : Tree()
+	SpatialTree() : Tree(), dispersal_coordinator(), death_map(make_shared<ActivityMap>()),
+					reproduction_map(make_shared<ActivityMap>()),
+					fine_map_input("none"), coarse_map_input("none"), historical_fine_map_input("none"),
+					historical_coarse_map_input("none"), landscape(make_shared<Landscape>()),
+					grid(), desired_specnum(1), samplegrid()
 	{
-		outdatabase = nullptr;
-		desired_specnum = 1;
+
 	}
 
 	~SpatialTree() override = default;
@@ -160,9 +167,9 @@ public:
 	void importMaps();
 
 	/**
-	 * @brief Imports the reproduction map from file.
+	 * @brief Imports the activity maps from the relevant files.
 	 */
-	void importReproductionMap();
+	void importActivityMaps();
 
 	/**
 	 * @brief Counts the number of individuals that exist on the spatial grid.
@@ -207,7 +214,8 @@ public:
 	 * @return the number of individuals to sample at this location.
 	 */
 	unsigned long getIndividualsSampled(const long &x, const long &y,
-								 const long &x_wrap, const long &y_wrap, const double &current_gen);
+										const long &x_wrap, const long &y_wrap, const double &current_gen);
+
 	/**
 	 * @brief Removes the old position within active by checking any wrapping and removing connections.
 	 *
@@ -287,12 +295,11 @@ public:
 	void historicalStepChecks();
 #endif
 
-
 	/**
 	 * @brief Increments the generation counter and step references, then updates the map for any changes to habitat
 	 * cover.
 	 */
-	void incrementGeneration() override ;
+	void incrementGeneration() override;
 
 	/**
 	 * @brief Updates the coalescence variables in the step object.
@@ -316,7 +323,6 @@ public:
 	 */
 	string simulationParametersSqlInsertion() override;
 
-
 	/**
 	 * @brief Pause the simulation and dump data from memory.
 	 */
@@ -324,9 +330,15 @@ public:
 
 	/**
 	 * @brief Saves the map object to file.
-	 * @param pause_folder the folder to save files into
+	 * @param out the output file stream to save the object to
 	 */
-	void dumpMap(string pause_folder);
+	void dumpMap(ofstream &out);
+
+	/**
+	 * @brief Saves the grid object to file
+	 * @param out the output file stream to save the object to
+	 */
+	void dumpGrid(ofstream &out);
 
 	/**
 	 * @brief Resumes the simulation from a previous state.
@@ -340,19 +352,19 @@ public:
 	 *
 	 * @note Requires that both the simulation parameters and the maps have already been loaded.
 	 */
-	void loadGridSave();
+	void loadGridSave(ifstream &in1);
 
 	/**
 	 * @brief Loads the map from the save file into memory.
 	 *
 	 * @note Requires that the simulation parameters have already been loaded.
 	 */
-	void loadMapSave();
+	void loadMapSave(ifstream &in1);
 
 	/**
 	 * @brief Checks that the reproduction map makes sense with the fine density map.
 	 */
-	void verifyReproductionMap();
+	void verifyActivityMaps();
 
 	/**
 	 * @brief Adds the lineage to the correct point in the linked list of active lineages
@@ -364,18 +376,18 @@ public:
 
 	/**
 	 * @brief Counts the number of lineages at a particular location that need to be added, after making the correct
-	 * number of those that already exist into tips.
+	 * proportion of those that already exist into tips.
 	 *
 	 * @param x the x coordinate of the location of interest
 	 * @param y the y coordinate of the location of interest
 	 * @param xwrap the x wrapping of the location
 	 * @param ywrap the y wrapping of the location
 	 * @param generationin the generation to assign to new tips
-	 * @param make_tips if true, stores the tips as well as counting them
-	 * @return the number of new lineages that need to be added.
+	 * @param data_added vector containing TreeNode objects to add to data
+	 * @return the number of lineages still to add
 	 */
 	unsigned long countCellExpansion(const long &x, const long &y, const long &xwrap, const long &ywrap,
-									 const double &generationin, const bool &make_tips);
+									 const double &generationin, vector<TreeNode> &data_added);
 
 	/**
 	 * @brief Expands the cell at the desired location by adding the supplied number of lineages
@@ -389,12 +401,11 @@ public:
 	 * @param generation_in the generation to set the new lineages to
 	 * @param add the total number of lineages to add at this location
 	 */
-	void expandCell(long x, long y, long x_wrap, long y_wrap, double generation_in, unsigned long add);
-
-
-
+	void expandCell(long x, long y, long x_wrap, long y_wrap, double generation_in, unsigned long add,
+					vector<TreeNode> &data_added, vector<DataPoint> &active_added);
 
 #ifdef DEBUG
+
 	/**
 	 * @brief Validates all lineages have been set up correctly. This may take considerable time for larger simulations.
 	 *
@@ -407,6 +418,7 @@ public:
 	 *
 	 */
 	void debugDispersal();
+
 	/**
 	 * @brief Checks that adding a lineage has resulting in the correct structures being created.
 	 *
@@ -424,6 +436,7 @@ public:
 	 * @param coalchosen the lineage which is coalescing with the chosen lineage which we are also required to check
 	 */
 	void runChecks(const unsigned long &chosen, const unsigned long &coalchosen) override;
+
 #endif
 };
 

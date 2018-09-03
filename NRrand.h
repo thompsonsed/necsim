@@ -14,29 +14,17 @@
 #ifndef FATTAIL_H
 #define FATTAIL_H
 
-//
-//#define IM1 2147483563
-//#define IM2 2147483399
-//#define AM (1.0/IM1)
-//#define IMM1 (IM1-1)
-//#define IA1 40014
-//#define IA2 40692
-//#define IQ1 53668
-//#define IQ2 5277
-//#define IR1 12211
-//#define IR2 3791
-//#define NTAB 32
-//#define NDIV (1+IMM1/NTAB)
-//#define EPS 1.2e-8
-//#define RNMX (1.0-EPS)
+#include <cstdio>
+#include <string>
+#include <iomanip>
 
-# include <cstdio>
-# include <string>
-# include <iomanip>
-# include <cmath>
-# include <vector>
-# include <iostream>
-# include <fstream>
+#define _USE_MATH_DEFINES
+
+#include <cmath>
+#include <algorithm>
+#include <vector>
+#include <iostream>
+#include <fstream>
 #include <climits>
 #include "Logger.h"
 
@@ -46,7 +34,7 @@ using namespace std;
  */
 const long IM1 = 2147483563;
 const long IM2 = 2147483399;
-const double AM = (1.0/IM1);
+const double AM = (1.0 / IM1);
 const long IMM1 = (IM1 - 1);
 const long IA1 = 40014;
 const long IA2 = 40692;
@@ -55,9 +43,10 @@ const long IQ2 = 5277;
 const long IR1 = 12211;
 const long IR2 = 3791;
 const long NTAB = 32;
-const double NDIV = (1+IMM1/NTAB);
+const double NDIV = (1 + IMM1 / NTAB);
 const double EPS = 1.2e-8;
-const double RNMX (1.0-EPS);
+const double RNMX(1.0 - EPS);
+
 /**
  * @brief Contains the functions for random number generation.
  */
@@ -83,6 +72,9 @@ private:
 
 	typedef double (NRrand::*fptr)(); // once setup will contain the dispersal function to use for this simulation.
 	fptr dispersalFunction;
+	// once setup will contain the dispersal function for the minimum dispersal distance.
+	typedef double (NRrand::*fptr2)(const double &min_distance);
+	fptr2 dispersalFunctionMinDistance;
 	// the probability that dispersal comes from the uniform distribution. This is only relevant for uniform dispersals.
 	double m_prob{};
 	// the cutoff for the uniform dispersal function i.e. the maximum value to be drawn from the uniform distribution.
@@ -97,6 +89,7 @@ public:
 		seeded = false;
 		normflag = true;
 		dispersalFunction = nullptr;
+		dispersalFunctionMinDistance = nullptr;
 		sigma = 0;
 		tau = 0;
 	}
@@ -166,7 +159,6 @@ public:
 		if(iy < 1) iy += IMM1;
 		if((temp = AM * iy) > RNMX)
 		{
-			//os << "random call = " << "RNMAX" << "\n";
 			return RNMX; //Because users don't expect endpoint values.
 		}
 		return temp;
@@ -180,7 +172,7 @@ public:
 	 */
 	unsigned long i0(unsigned long max)
 	{
-		return (unsigned long)(d01() * (max + 1));
+		return (unsigned long) (d01() * (max + 1));
 	}
 
 	/**
@@ -215,17 +207,43 @@ public:
 	}
 
 	/**
-	 * @brief Returns a 2 dimensional call from a normal distribution, giving a distance in cartesian space
-	 * This way is slightly inefficient for normal distributions, but it's kept this way to make the 
-	 * Map::runDispersal() function applicable with any dispersal type.
-	 * @return dispersal distance of a normal distribution
+	 * @brief Returns a random distance from a 2 dimensional normal distribution, also called the rayleigh distribution.
+	 * @return dispersal distance of a rayleigh distribution
 	 */
-	double norm2D()
+	double rayleigh()
 	{
-		double distx, disty;
-		distx = norm();
-		disty = norm();
-		return pow(pow(distx, 2) + pow(disty, 2), 0.5);
+		return sigma * pow(-2 * log(d01()), 0.5);
+	}
+
+	/**
+	 * @brief Generates a random distance from a rayleigh distribution, given that the distance is more than some
+	 * minimum.
+	 * @param dist the minimum distance to generate
+	 * @return a random distance greater than the minimum provided
+	 */
+	double rayleighMinDist(const double &dist)
+	{
+		double min_prob = rayleighCDF(dist);
+		double rand_prob = min_prob + (1-min_prob) * d01();
+		double out = sigma * pow(-2 * log(rand_prob), 0.5);
+		if(out < dist)
+		{
+			// This probably means that the rayleigh distribution has a less-than-machine-precision probability of
+			// producing this distance.
+			// Therefore, we just return the distance
+			return dist;
+		}
+		return out;
+	}
+
+	/**
+	 * @brief Gets the cumulative probability of a distance from the rayleigh distribution
+	 * @param dist the distance to obtain the probability of
+	 * @return the probability of producing the given distance
+	 */
+	double rayleighCDF(const double &dist)
+	{
+		return 1 - exp(-pow(dist, 2.0) / (2.0 * pow(sigma, 2.0)));
 	}
 
 	/**
@@ -240,7 +258,6 @@ public:
 		tau = tauin; // used to invert the sign here, doesn't any more.
 	}
 
-
 	/**
 	 * @brief Call from the fat-tailed dispersal kernel with the provided sigma.
 	 * @deprecated This is the original version used in J Rosindell's codebase, and has been altered for
@@ -253,6 +270,28 @@ public:
 		double result;
 		result = pow((pow(d01(), (1.0 / (1.0 - z))) - 1.0), 0.5);
 		return result;
+	}
+
+	/**
+	 * @brief Gets the cumulative probability density of travelling the distance
+	 * @param distance the distance to obtain the cumulative probability for
+	 * @return the probability of dispersing less than or equal to distance
+	 */
+	double fattailCDF(const double & distance)
+	{
+		return (1.0/(2.0*M_PI*sigma*sigma)) * pow(1 + (distance*distance/(tau*sigma*sigma)), -(tau + 2.0)/2.0);
+	}
+
+	/**
+	 * @brief Gets a fat-tailed random distance greater than some minimum
+	 * @param min_distance the minimum distance to return
+	 * @return a fat-tailed distance greater than the minimum
+	 */
+	double fattailMinDistance(const double & min_distance)
+	{
+		double prob = fattailCDF(min_distance);
+		double random_number = prob + d01() * (1-prob);
+		return (sigma * pow((tau * (pow(random_number, -2.0 / tau)) - 1.0), 0.5));
 	}
 
 	// this new version corrects the 1.0 to 2.0 and doesn't require the values to be passed every time.
@@ -289,7 +328,7 @@ public:
 	 */
 	double direction()
 	{
-		return(d01() * 2 * M_PI);
+		return (d01() * 2 * M_PI);
 	}
 
 	/**
@@ -313,7 +352,6 @@ public:
 		}
 		return (d01() <= event_probability);
 
-
 	}
 
 	/**
@@ -328,11 +366,54 @@ public:
 		if(d01() < m_prob)
 		{
 			// Then it does come from the uniform distribution
-			return (d01() * cutoff);
+			return uniform();
 		}
-		return norm2D();
+		return rayleigh();
 	}
 
+	/**
+	 * @brief Generates a random distance from a norm-uniform distribution, given that the distance is more than some
+	 * minimum.
+	 * @param dist the minimum distance to generate
+	 * @return a random distance greater than the minimum provided
+	 */
+	double normUniformMinDistance(const double & min_distance)
+	{
+		if(d01() < m_prob)
+		{
+			// Then it does come from the uniform distribution
+			return uniformMinDistance(min_distance);
+		}
+		return rayleighMinDist(min_distance);
+	}
+
+	/**
+	 * @brief Draws a random number from a uniform distribution between 0 and cutoff
+	 * @return a random number in (0, cutoff)
+	 */
+	double uniform()
+	{
+		return d01() * cutoff;
+	}
+
+	/**
+	 * @brief Generates a random distance from a uniform distribution, given that the distance is more than some
+	 * minimum.
+	 * @param dist the minimum distance to generate
+	 * @return a random distance greater than the minimum provided
+	 */
+	double uniformMinDistance(const double & min_distance)
+	{
+		if(min_distance > cutoff)
+		{
+			// Note this may introduce problems for studies of extremely isolated islands
+			// I've left this in to make it much easier to deal with scenarios where the
+			// disappearing habitat pixel is further from the nearest habitat pixel than
+			// the maximum dispersal distance
+			return min_distance;
+		}
+		return min_distance + d01() * (cutoff - min_distance);
+	}
 
 	/**
 	 * @brief Two uniform distributions, the first between 0 and 0.1*cutoff, and the second between 0.9*cutoff and
@@ -345,10 +426,30 @@ public:
 		if(d01() < 0.5)
 		{
 			// Then value comes from the first uniform distribution
-			return (d01() * cutoff * 0.1);
+			return (uniform() * 0.1);
 		}
 		// Then the value comes from the second uniform distribution
-		return 0.9 * cutoff + (d01() * cutoff * 0.1);
+		return 0.9 * cutoff + (uniform() * 0.1);
+	}
+
+	/**
+	 * @brief Generates a random distance from a uniform-uniform distribution, given that the distance is more than some
+	 * minimum.
+	 * @param dist the minimum distance to generate
+	 * @return a random distance greater than the minimum provided
+	 */
+	double uniformUniformMinDistance(const double & min_distance)
+	{
+		if(d01() < 0.5)
+		{
+			// Then value comes from the first uniform distribution
+			if(min_distance > cutoff * 0.1)
+			{
+				return uniformMinDistance(min_distance * 10) * 0.1;
+			}
+		}
+		// Then the value comes from the second uniform distribution
+		return uniformMinDistance(max(min_distance, 0.9 * cutoff));
 	}
 
 	/**
@@ -362,7 +463,8 @@ public:
 	{
 		if(dispersal_method == "normal")
 		{
-			dispersalFunction = &NRrand::norm2D;
+			dispersalFunction = &NRrand::rayleigh;
+			dispersalFunctionMinDistance = &NRrand::rayleighMinDist;
 			if(sigma < 0)
 			{
 				throw invalid_argument("Cannot have negative sigma with normal dispersal");
@@ -371,6 +473,7 @@ public:
 		else if(dispersal_method == "fat-tail" || dispersal_method == "fat-tailed")
 		{
 			dispersalFunction = &NRrand::fattail;
+			dispersalFunctionMinDistance = &NRrand::fattailMinDistance;
 			if(tau < 0 || sigma < 0)
 			{
 				throw invalid_argument("Cannot have negative sigma or tau with fat-tailed dispersal");
@@ -379,6 +482,7 @@ public:
 		else if(dispersal_method == "norm-uniform")
 		{
 			dispersalFunction = &NRrand::normUniform;
+			dispersalFunctionMinDistance = &NRrand::normUniformMinDistance;
 			if(sigma < 0)
 			{
 				throw invalid_argument("Cannot have negative sigma with normal dispersal");
@@ -388,11 +492,14 @@ public:
 		{
 			// This is just here for testing purposes
 			dispersalFunction = &NRrand::uniformUniform;
+			dispersalFunctionMinDistance = &NRrand::uniformUniformMinDistance;
 		}
 			// Also provided the old version of the fat-tailed dispersal kernel
 		else if(dispersal_method == "fat-tail-old")
 		{
 			dispersalFunction = &NRrand::fattail_old;
+			dispersalFunctionMinDistance = &NRrand::fattailMinDistance;
+
 			if(tau > -2 || sigma < 0)
 			{
 				throw invalid_argument(
@@ -407,7 +514,6 @@ public:
 		cutoff = cutoffin;
 	}
 
-
 	/**
 	 * @brief Runs the dispersal with the allocated dispersal function.
 	 *
@@ -420,6 +526,16 @@ public:
 	double dispersal()
 	{
 		return min(double(LONG_MAX), (this->*dispersalFunction)());
+	}
+
+	/**
+	 * @brief Get a dispersal distance with some minimum
+	 * @param min_distance the minimum distance to disperse
+	 * @return the random dispersal distance greater than or equal to the minimum
+	 */
+	double dispersalMinDistance(const double &min_distance)
+	{
+		return min(double(LONG_MAX), (this->*dispersalFunctionMinDistance)(min_distance));
 	}
 
 	// to reconstruct distribution, use x = fattail/squrt(1+direction) , y = fattail/squrt(1+(direction^-1))

@@ -16,6 +16,7 @@
 class Landscape;
 
 #include <string>
+#include <memory>
 
 #include "SimParameters.h"
 #include "Map.h"
@@ -30,9 +31,12 @@ class DataMask
 protected:
 	// the file to read in from
 	string inputfile;
-	bool bDefault;
+	// True if the sample mask is true everywhere
+	bool isNullSample;
+	// True if the grid is smaller than the sample mask
+	bool isGridOffset;
 	unsigned long x_offset, y_offset;
-	// Stores the size of the grid which is stored as a full species list
+	// Stores the size of the grid which is stored as a full species species_id_list
 	unsigned long x_dim, y_dim;
 	// Stores the size of the samplemask from which spatially sampling is read
 	unsigned long mask_x_dim, mask_y_dim;
@@ -57,7 +61,7 @@ public:
 	 * sample grid in memory.
 	 * @return true if using a null samplemask
 	 */
-	bool getDefault();
+	bool isNull();
 
 	/**
 	 * @brief Sets the parameters for the datamask, including the dimensions of the map, the offsets from the grid and
@@ -172,7 +176,7 @@ public:
 	 * @param deme_sampling the proportion of individuals to sample
 	 * @param generation the generation individuals are added at
 	 */
-	void convertBoolean(Landscape &map1, const double &deme_sampling, const double &generation);
+	void convertBoolean(shared_ptr<Landscape> map1, const double &deme_sampling, const double &generation);
 
 	/**
 	 * @brief Removes the spatial mask from memory. This should be performed if no more map expansions are required.
@@ -188,7 +192,7 @@ public:
 	 * @param x_wrap the xwrap variable to place the value into
 	 * @param y_wrap the ywrap variable to place the value into
 	 */
-	void recalculate_coordinates(long &x, long &y, long &x_wrap, long &y_wrap);
+	void recalculateCoordinates(long &x, long &y, long &x_wrap, long &y_wrap);
 };
 
 

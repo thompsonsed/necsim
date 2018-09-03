@@ -73,9 +73,9 @@ struct SimParameters
 	// file containing the points to record data from
 	string times_file;
 	// vector of times
-	vector<double> times{};
+	vector<double> times;
 	// Stores the full list of configs imported from file
-	ConfigOption configs{};
+	ConfigOption configs;
 	// Set to true if the oldest historical state has been reached.
 	bool is_historical{};
 	// if the sample file is not null, this variable tells us whether different points in space require different
@@ -93,13 +93,15 @@ struct SimParameters
 	// to any other.
 	string dispersal_file;
 
+	// a map of relative death probabilities.
+	string death_file;
+
 	// a map of relative reproduction probabilities.
 	string reproduction_file;
-
 	/**
 	 * @brief Default constructor
 	 */
-	SimParameters()
+	SimParameters() : times(), configs()
 	{
 		fine_map_file = "none";
 		coarse_map_file = "none";
@@ -110,6 +112,7 @@ struct SimParameters
 		times_file = "null";
 		dispersal_method = "none";
 		landscape_type = "none";
+		death_file = "none";
 		reproduction_file = "none";
 		dispersal_file = "none";
 		min_speciation_gen = 0.0;
@@ -186,6 +189,7 @@ struct SimParameters
 		restrict_self = static_cast<bool>(stoi(configs.getSectionOptions("dispersal", "restrict_self", "0")));
 		landscape_type = configs.getSectionOptions("dispersal", "landscape_type", "none");
 		dispersal_file = configs.getSectionOptions("dispersal", "dispersal_file", "none");
+		death_file = configs.getSectionOptions("death", "map", "none");
 		reproduction_file = configs.getSectionOptions("reproduction", "map", "none");
 		output_directory = configs.getSectionOptions("main", "output_directory", "Default");
 		the_seed = stol(configs.getSectionOptions("main", "seed", "0"));
@@ -286,7 +290,7 @@ struct SimParameters
 		restrict_self = restrict_self_in;
 		landscape_type = landscape_type_in;
 		dispersal_file = dispersal_file_in;
-		reproduction_file = reproduction_file_in;
+		death_file = reproduction_file_in;
 	}
 
 	/**
@@ -326,12 +330,18 @@ struct SimParameters
 		if(time_fine.size() != rate_fine.size() || rate_fine.size() != number_fine.size() ||
 		   number_fine.size() != time_fine.size())
 		{
-			throw FatalException("Lengths of fine map lists must be the same.");
+			stringstream ss;
+			ss << "Lengths of historical fine map variables lists must be the same: " <<  time_fine.size() << "!=";
+			ss << rate_fine.size() << "!=" << number_fine.size() << "!=" << time_fine.size() << endl;
+			throw FatalException(ss.str());
 		}
 		if(time_coarse.size() != rate_coarse.size() || rate_coarse.size() != number_coarse.size() ||
 		   number_coarse.size() != time_coarse.size())
 		{
-			throw FatalException("Lengths of coarse map lists must be the same.");
+			stringstream ss;
+			ss << "Lengths of historical coarse map variables lists must be the same: " <<  time_coarse.size() << "!=";
+			ss << rate_coarse.size() << "!=" << number_coarse.size() << "!=" << time_coarse.size() << endl;
+			throw FatalException(ss.str());
 		}
 		for(unsigned long i = 0; i < time_fine.size(); i ++)
 		{
@@ -426,9 +436,9 @@ struct SimParameters
 			if(configs[i].section.find("historical_fine") == 0)
 			{
 				// Then loop over each element to find the number, and check if it is equal to our input number.
-				is_historical = false;
 				if(stol(configs[i].getOption("number")) == n)
 				{
+					is_historical = false;
 					string tmpmapfile;
 					tmpmapfile = configs[i].getOption("path");
 					if(historical_fine_map_file != tmpmapfile)

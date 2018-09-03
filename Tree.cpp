@@ -2,18 +2,21 @@
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
- * @author Samuel Thompson
- * @date 24/03/17
  * @file Tree.cpp
- *
- * @brief  Contains the Tree class implementation as the main simulation object for spatially-implicit
- * coalescence simulations.
+ * @brief Contains the main simulation object for spatially-implicit coalescence simulations.
  * Provides the basis for spatially-explicit versions in SpatialTree, and protracted speciation versions in
  * ProtractedTree and ProtractedSpatialTree.
+ *
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 
 #include <algorithm>
+
+#ifdef WIN_INSTALL
+#include <windows.h>
+#define sleep Sleep
+#endif
+
 #include "Tree.h"
 #include "Logger.h"
 #include "LogFile.h"
@@ -92,7 +95,7 @@ void Tree::checkSims(string output_dir, long seed_in, long task_in)
 	string file_to_open;
 //	char file_to_open[100];
 //	sprintf (file_to_open, "%s/Pause/Data_%i.csv",outdirect,int(the_task));
-	file_to_open = output_dir + string("/Pause/Dump_active_") + to_string((unsigned long long) task_in) + "_" +
+	file_to_open = output_dir + string("/Pause/Dump_main_") + to_string((unsigned long long) task_in) + "_" +
 				   to_string((unsigned long long) seed_in) + string(".csv");
 	out.open(file_to_open);
 	if(out.good())
@@ -102,8 +105,8 @@ void Tree::checkSims(string output_dir, long seed_in, long task_in)
 		if(!has_imported_pause)
 		{
 			setResumeParameters(sim_parameters.output_directory, sim_parameters.output_directory,
-								sim_parameters.the_seed,
-								sim_parameters.the_task, sim_parameters.max_time);
+								static_cast<unsigned long>(sim_parameters.the_seed),
+								static_cast<unsigned long>(sim_parameters.the_task), sim_parameters.max_time);
 		}
 		has_paused = true;
 	}
@@ -170,7 +173,7 @@ void Tree::setSeed(long long seed_in)
 {
 	if(!seeded)
 	{
-		NR.setSeed(seed_in);
+		NR->setSeed(seed_in);
 		the_seed = seed_in;
 		seeded = true;
 	}
@@ -367,7 +370,7 @@ unsigned long Tree::fillObjects(const unsigned long &initial_count)
 		// end of the simulation.
 		// This also contains the start x and y position of the species.
 		data[number_start].setup(true);
-		data[number_start].setSpec(NR.d01());
+		data[number_start].setSpec(NR->d01());
 		endactive++;
 		enddata++;
 	}
@@ -421,7 +424,7 @@ bool Tree::runSimulation()
 			}
 			else
 			{
-				// remove the species data from the species list to be placed somewhere new.
+				// remove the species data from the species species_id_list to be placed somewhere new.
 				removeOldPosition(this_step.chosen);
 				calcNextStep();
 #ifdef DEBUG
@@ -558,7 +561,7 @@ void Tree::chooseRandomLineage()
 {
 	incrementGeneration();
 	// choose a random lineage to die and be reborn out of those currently active
-	this_step.chosen = NR.i0(endactive - 1) + 1;  // cannot be 0
+	this_step.chosen = NR->i0(endactive - 1) + 1;  // cannot be 0
 	// Rejection sample based on reproductive potential
 	updateStepCoalescenceVariables();
 }
@@ -633,7 +636,7 @@ void Tree::switchPositions(const unsigned long &chosen)
 
 void Tree::calcNextStep()
 {
-	unsigned long random_lineage = NR.i0(static_cast<unsigned long>(deme)) + 1;
+	unsigned long random_lineage = NR->i0(static_cast<unsigned long>(deme)) + 1;
 	if(random_lineage != this_step.chosen && random_lineage <= endactive)
 	{
 		// then we have a coalescence event
@@ -665,7 +668,7 @@ void Tree::coalescenceEvent(const unsigned long &chosen, unsigned long &coalchos
 				active[chosen].getMinmax()));  // set the new minmax to the maximum of the two minimums.
 	active[chosen].setMinmax(active[coalchosen].getMinmax());
 	data[enddata].setGenerationRate(0);
-	data[enddata].setSpec(NR.d01());
+	data[enddata].setSpec(NR->d01());
 	active[chosen].setReference(enddata);
 	active[coalchosen].setReference(enddata);
 	//		removeOldPosition(chosen);
@@ -694,52 +697,65 @@ void Tree::checkTimeUpdate()
 
 void Tree::addLineages(double generation_in)
 {
-	auto added_data = static_cast<unsigned long>(floor(deme_sample * deme));
-	unsigned long added_active = added_data - endactive;
-	checkSimSize(added_data, added_active);
+	auto number_added = static_cast<unsigned long>(floor(deme_sample * deme));
+	// Store all the data lineages to add in a vector
+	vector<TreeNode> data_to_add{};
 	// change those that already exist to tips
 	for(unsigned long i = 0; i < endactive; i++)
 	{
-		makeTip(endactive, generation_in);
+		// With probability deme_sample, just change the active lineage to a tip.
+		if(checkProportionAdded(deme_sample) && number_added > 0)
+		{
+			number_added --;
+			makeTip(endactive, generation_in, data_to_add);
+		}
 	}
-	for(unsigned long i = 0; i < added_active; i++)
+	checkSimSize(data_to_add.size() + number_added, number_added);
+	for(auto & item : data_to_add)
+	{
+		enddata ++;
+		data[enddata] = item;
+	}
+	for(unsigned long i = 0; i < number_added; i++)
 	{
 		enddata++;
 		endactive++;
 		active[endactive].setup(enddata, endactive, 1.0);
 		data[enddata].setup(true, 0, 0, 0, 0, generation_in);
-		data[enddata].setSpec(NR.d01());
+		data[enddata].setSpec(NR->d01());
 	}
-	if(endactive != added_data)
-	{
-		throw FatalException("Error whilst adding lineages. Please report this bug.");
-	}
+}
+
+bool Tree::checkProportionAdded(const double &proportion_added)
+{
+	return NR->d01() < proportion_added;
 }
 
 void Tree::checkSimSize(unsigned long req_data, unsigned long req_active)
 {
-	// need to be triple the size of the maximum number of individuals plus enddata
-	unsigned long min_data = (3 * req_data) + enddata + 2;
 	unsigned long min_active = endactive + req_active + 2;
-	if(data.size() <= min_data)
+	unsigned long min_data = enddata + req_data + 2;
+	// Take into account future coalescence events
+	min_data += min_active * 2;
+	if(data.size() < min_data)
 	{
 		// change the size of data
 		data.resize(min_data);
 	}
 
-	if(active.size() <= min_active)
+	if(active.size() < min_active)
 	{
 		// change the size of active.
 		active.resize(min_active);
 	}
 }
 
-void Tree::makeTip(const unsigned long &tmp_active, const double &generationin)
+void Tree::makeTip(const unsigned long &tmp_active, const double &generationin, vector<TreeNode> &data_added)
 {
 	unsigned long reference = active[tmp_active].getReference();
 	if(data[reference].isTip())
 	{
-		convertTip(tmp_active, generationin);
+		convertTip(tmp_active, generationin, data_added);
 	}
 	else
 	{
@@ -748,21 +764,19 @@ void Tree::makeTip(const unsigned long &tmp_active, const double &generationin)
 	}
 }
 
-void Tree::convertTip(unsigned long i, double generationin)
+void Tree::convertTip(unsigned long i, double generationin, vector<TreeNode> &data_added)
 {
-	enddata++;
-	if(enddata >= data.size())
-	{
-		throw FatalException("Cannot add tip - no space in data. Check size calculations.");
-	}
-	data[enddata].setup(true, active[i].getXpos(), active[i].getYpos(),
+	TreeNode tmp_tree_node;
+	tmp_tree_node.setup(true, active[i].getXpos(), active[i].getYpos(),
 						active[i].getXwrap(),
 						active[i].getYwrap(), generationin);
 	// Now link the old tip to the new tip
-	data[active[i].getReference()].setParent(enddata);
-	data[enddata].setGenerationRate(0);
-	data[enddata].setSpec(NR.d01());
-	active[i].setReference(enddata);
+	auto data_pos = enddata + data_added.size() + 1;
+	data[active[i].getReference()].setParent(data_pos);
+	tmp_tree_node.setGenerationRate(0);
+	tmp_tree_node.setSpec(NR->d01());
+	active[i].setReference(data_pos);
+	data_added.emplace_back(tmp_tree_node);
 }
 
 void Tree::applySpecRate(long double sr, double t)
@@ -976,7 +990,7 @@ void Tree::outputData(unsigned long species_richness)
 
 unsigned long Tree::sortData()
 {
-	// Sort and process the species list so that the useful information can be extracted from it.
+	// Sort and process the species species_id_list so that the useful information can be extracted from it.
 	stringstream os;
 	os << "Finalising data..." << flush;
 	writeInfo(os.str());
@@ -1060,8 +1074,8 @@ void Tree::writeTimes()
 	   << (out_finish - sim_finish) % 60 << " seconds" << endl;
 	os << "SQL output time was " << floor((sim_end - out_finish) / 60) << " minutes " << (sim_end - out_finish) % 60
 	   << " seconds" << endl;
-	time_taken += (sim_end - out_finish);
-	os << "Total time taken was " << floor((time_taken) / 3600) << " hours " << flush;
+	time_taken += (sim_end - sim_finish);
+	os << "Total simulation and output time was " << floor((time_taken) / 3600) << " hours " << flush;
 	os << (floor((time_taken) / 60) - 60 * floor((time_taken) / 3600)) << flush;
 	os << " minutes " << (time_taken) % 60 << " seconds" << endl;
 	writeInfo(os.str());
@@ -1069,7 +1083,7 @@ void Tree::writeTimes()
 
 void Tree::openSQLDatabase()
 {
-	if(!database)
+	if(database == nullptr)
 	{
 #ifdef sql_ram
 		sqlite3_open(":memory:", &database);
@@ -1093,7 +1107,10 @@ void Tree::sqlCreate()
 	string sqlfolder = out_directory;
 	try
 	{
-		createParent(sqlfolder);
+		if(!boost::filesystem::exists(boost::filesystem::path(sqlfolder)))
+		{
+			createParent(sqlfolder);
+		}
 		sql_output_database += string("/data_") + to_string(the_task) + "_" + to_string(the_seed) + ".db";
 	}
 	catch(FatalException &fe)
@@ -1106,8 +1123,8 @@ void Tree::sqlCreate()
 	os << "\r    Generating species list....              " << flush;
 	writeInfo(os.str());
 	// for outputting the full data from the simulation in to a SQL file.
-	sqlite3_stmt *stmt;
-	char *sErrMsg;
+	sqlite3_stmt *stmt = nullptr;
+	char *sErrMsg = nullptr;
 	int rc = 0;
 // Open a SQL database in memory. This will be written to disk later.
 // A check here can be done to write to disc directly instead to massively reduce RAM consumption
@@ -1298,22 +1315,19 @@ void Tree::simPause()
 	// This function saves the data to 4 files. One contains the main simulation parameters, the other 3 contain the
 	// simulation results thus far
 	// including the grid object, data object and active object.
-	string pause_folder = initiatePause();
-	dumpMain(pause_folder);
-	dumpActive(pause_folder);
-	dumpData(pause_folder);
-	completePause();
+	auto out1 = initiatePause();
+	dumpMain(out1);
+	dumpActive(out1);
+	dumpData(out1);
+	completePause(out1);
 }
 
-string Tree::initiatePause()
+ofstream Tree::initiatePause()
 {
 	stringstream os;
 	os << "Pausing simulation..." << endl << "Saving data to temp file in " << out_directory << "/Pause/ ..." << flush;
 	writeInfo(os.str());
 	os.str("");
-	ofstream out;
-	out.precision(64);
-	string file_to_open;
 	// Create the pause directory
 	string pause_folder = out_directory + "/Pause/";
 	boost::filesystem::path pause_dir(pause_folder);
@@ -1334,11 +1348,16 @@ string Tree::initiatePause()
 			pause_folder = out_directory;
 		}
 	}
-	return pause_folder;
+	string file_to_open = pause_folder + "Dump_main_" + to_string(the_task) + "_" + to_string(the_seed) + ".csv";
+	ofstream out;
+	out.open(file_to_open.c_str());
+	out << setprecision(64);
+	return out;
 }
 
-void Tree::completePause()
+void Tree::completePause(ofstream &out)
 {
+	out.close();
 	stringstream os;
 	os << "done!" << endl;
 	os << "SQL dump started" << endl;
@@ -1353,14 +1372,10 @@ void Tree::completePause()
 	writeTimes();
 }
 
-void Tree::dumpMain(string pause_folder)
+void Tree::dumpMain(ofstream &out)
 {
 	try
 	{
-		string file_to_open = pause_folder + "Dump_main_" + to_string(the_task) + "_" + to_string(the_seed) + ".csv";
-		ofstream out;
-		out.open(file_to_open.c_str());
-		out << setprecision(64);
 		// Save that this simulation was not a protracted speciation sim
 		out << bIsProtracted << "\n";
 		// Saving the initial data to one file.
@@ -1372,58 +1387,44 @@ void Tree::dumpMain(string pause_folder)
 		out << endactive << "\n" << startendactive << "\n" << maxsimsize << "\n" << steps << "\n";
 		out << generation << "\n" << "\n" << maxtime << "\n";
 		out << deme_sample << "\n" << spec << "\n" << deme << "\n";
-		out << sql_output_database << "\n" << NR << "\n" << sim_parameters << "\n";
+		out << sql_output_database << "\n" << *NR << "\n" << sim_parameters << "\n";
 		// now output the protracted speciation variables (there should be two of these).
 		out << getProtractedVariables();
-		out.close();
 	}
 	catch(exception &e)
 	{
 		stringstream ss;
-		ss << e.what() << endl;
-		ss << "Failed to perform main dump to " << pause_folder << endl;
+		ss << "Failed to perform dump of main: " << e.what() << endl;
 		writeError(ss.str());
 	}
 }
 
-void Tree::dumpActive(string pause_folder)
+void Tree::dumpActive(ofstream &out)
 {
 	try
 	{
 		// Output the active object
-		ofstream out3;
-		string file_to_open = pause_folder + "Dump_active_" + to_string(the_task) + "_" + to_string(the_seed) + ".csv";
-		out3 << setprecision(64);
-		out3.open(file_to_open.c_str());
-		out3 << active;
-		out3.close();
+		out << active;
 	}
 	catch(exception &e)
 	{
 		stringstream ss;
-		ss << e.what() << endl;
-		ss << "Failed to perform active dump to " << pause_folder << endl;
+		ss << "Failed to perform dump of active: " << e.what() << endl;
 		writeError(ss.str());
 	}
 }
 
-void Tree::dumpData(string pause_folder)
+void Tree::dumpData(ofstream &out)
 {
 	try
 	{
 		// Output the data object
-		ofstream out4;
-		string file_to_open = pause_folder + "Dump_data_" + to_string(the_task) + "_" + to_string(the_seed) + ".csv";
-		out4 << setprecision(64);
-		out4.open(file_to_open.c_str());
-		out4 << data;
-		out4.close();
+		out << data;
 	}
 	catch(exception &e)
 	{
 		stringstream ss;
-		ss << e.what() << endl;
-		ss << "Failed to perform data dump to " << pause_folder << endl;
+		ss << "Failed to perform dump of data: " << e.what() << endl;
 		writeError(ss.str());
 	}
 }
@@ -1435,6 +1436,21 @@ void Tree::setResumeParameters()
 		pause_sim_directory = out_directory;
 		has_imported_pause = true;
 	}
+}
+
+ifstream Tree::openSaveFile()
+{
+	ifstream in1;
+	string file_to_open = pause_sim_directory + string("/Pause/Dump_main_") + to_string(the_task) + "_" +
+						  to_string(the_seed) + string(".csv");
+	in1.open(file_to_open);
+	if(!in1)
+	{
+		stringstream es;
+		es << "Cannot open file at " << file_to_open << endl;
+		throw FatalException(es.str());
+	}
+	return in1;
 }
 
 void Tree::setResumeParameters(
@@ -1451,19 +1467,14 @@ void Tree::setResumeParameters(
 	}
 }
 
-void Tree::loadMainSave()
+void Tree::loadMainSave(ifstream &in1)
 {
-	string file_to_open;
 	try
 	{
 		stringstream os;
 		os << "\rLoading data from temp file...main..." << flush;
 		writeInfo(os.str());
 		os.str("");
-		ifstream in1;
-		file_to_open = pause_sim_directory + string("/Pause/Dump_main_") + to_string(the_task) + "_" +
-					   to_string(the_seed) + string(".csv");
-		in1.open(file_to_open);
 		// Reading the initial data
 		string string1;
 		// First read our boolean which just determines whether the simulation is a protracted simulation or not.
@@ -1499,7 +1510,7 @@ void Tree::loadMainSave()
 		in1 >> deme_sample >> spec >> deme;
 		in1.ignore();
 		getline(in1, sql_output_database);
-		in1 >> NR;
+		in1 >> *NR;
 		in1.ignore();
 		in1 >> sim_parameters;
 		if(maxtime == 0)
@@ -1512,7 +1523,7 @@ void Tree::loadMainSave()
 			throw FatalException("Time set to 0 on resume!");
 		}
 #endif
-		NR.setDispersalMethod(sim_parameters.dispersal_method, sim_parameters.m_prob, sim_parameters.cutoff);
+		NR->setDispersalMethod(sim_parameters.dispersal_method, sim_parameters.m_prob, sim_parameters.cutoff);
 		if(has_imported_pause)
 		{
 			sim_parameters.output_directory = out_directory;
@@ -1521,7 +1532,6 @@ void Tree::loadMainSave()
 		double tmp1, tmp2;
 		in1 >> tmp1 >> tmp2;
 		setProtractedVariables(tmp1, tmp2);
-		in1.close();
 		if(times_file == "null")
 		{
 			if(uses_temporal_sampling)
@@ -1549,35 +1559,29 @@ void Tree::loadMainSave()
 	catch(exception &e)
 	{
 		string msg;
-		msg = string(e.what()) + "Failure to import parameters from " + file_to_open;
+		msg = "Failure to import parameters from temp main: " + string(e.what());
 		throw FatalException(msg);
 	}
 }
 
-void Tree::loadDataSave()
+void Tree::loadDataSave(ifstream &in1)
 {
-	string file_to_open;
 	try
 	{
 		stringstream os;
 		os << "\rLoading data from temp file...data..." << flush;
 		writeInfo(os.str());
-		ifstream in4;
-		file_to_open = pause_sim_directory + string("/Pause/Dump_data_") + to_string(the_task) + "_" +
-					   to_string(the_seed) + string(".csv");
-		in4.open(file_to_open);
-		in4 >> data;
-		in4.close();
+		in1 >> data;
 	}
 	catch(exception &e)
 	{
 		string msg;
-		msg = string(e.what()) + "Failure to import data from " + file_to_open;
+		msg = "Failure to import data from temp data: " + string(e.what());
 		throw FatalException(msg);
 	}
 }
 
-void Tree::loadActiveSave()
+void Tree::loadActiveSave(ifstream &in1)
 {
 	string file_to_open;
 	try
@@ -1586,17 +1590,12 @@ void Tree::loadActiveSave()
 		os << "\rLoading data from temp file...active..." << flush;
 		writeInfo(os.str());
 		// Input the active object
-		ifstream in3;
-		file_to_open = pause_sim_directory + string("/Pause/Dump_active_") + to_string(the_task) + "_" +
-					   to_string(the_seed) + string(".csv");
-		in3.open(file_to_open);
-		in3 >> active;
-		in3.close();
+		in1 >> active;
 	}
 	catch(exception &e)
 	{
 		string msg;
-		msg = string(e.what()) + "Failure to import active from " + file_to_open;
+		msg = "Failure to import data from temp active: " + string(e.what());
 		throw FatalException(msg);
 	}
 }
@@ -1628,14 +1627,18 @@ void Tree::initiateResume()
 void Tree::simResume()
 {
 	initiateResume();
+	// open the save file
+	auto is = openSaveFile();
 	// now load the objects
-	loadMainSave();
+	loadMainSave(is);
 	setObjectSizes();
-	loadActiveSave();
-	loadDataSave();
+	loadActiveSave(is);
+	loadDataSave(is);
 	time(&sim_start);
 	writeInfo("\rLoading data from temp file...done!\n");
 }
+
+
 
 #ifdef DEBUG
 

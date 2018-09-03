@@ -15,10 +15,13 @@
 #include <stdexcept>
 #include <sstream>
 #include "LogFile.h"
-#include "CPLCustomHandler.h"
+#include "CPLCustomHandlerNecsim.h"
 
 using namespace std;
 
+/**
+ * @brief Controls writing to console and files for informing of statuses and debugging.
+ */
 class Logger
 {
 protected:

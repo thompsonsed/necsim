@@ -2,7 +2,6 @@
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 //
 /**
- * @author Sam Thompson
  * @file ProtractedTree.h
  * @brief Contains the ProtractedTree class for running simulations and outputting the phylogenetic trees using
  * protracted speciation.
@@ -20,10 +19,6 @@
 #define PROTRACTED_SPATIAL_TREE_H
 
 /**
- * @class ProtractedTree
- * @author Sam Thompson
- * @date 10/07/2017
- * @file ProtractedTree.h
  * @brief Contains the protracted tree class, for running simulations with procated speciation.
  */
 class ProtractedTree : public virtual Tree
@@ -40,11 +35,9 @@ private:
 	double speciation_generation_max;
 public:
 	
-	ProtractedTree() : Tree()
+	ProtractedTree() : Tree(), speciation_generation_min(0.0), speciation_generation_max(0.0)
 	{
 		bIsProtracted = true;
-		speciation_generation_min = 0.0;
-		speciation_generation_max = 0.0;
 	}
 
 	/**

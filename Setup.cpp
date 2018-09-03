@@ -158,7 +158,7 @@ void runXL(vector<string> &comargs)
 
 void removeComOption(unsigned long &argc, vector<string> &comargs)
 {
-	// stupidly long list of possible arguments, but can't think of a better way to check this.
+	// stupidly long species_id_list of possible arguments, but can't think of a better way to check this.
 	if(comargs[1] == "-d" || comargs[1] == "-D" ||  comargs[1] == "-dl" ||  comargs[1] == "-dL" ||  comargs[1] == " -Dl" ||  comargs[1] == "-DL" ||
 		comargs[1] == "-dx" || comargs[1] == "-dX" ||  comargs[1] == "-DX" ||  comargs[1] == " -Dx" ||  comargs[1] == "-c" ||  comargs[1] == "-C" ||
 		comargs[1] == "-config" ||  comargs[1] == "-Config" || comargs[1] == "-f" || comargs[1] == "-h" || comargs[1] == "-H" || comargs[1] == "-F)")

@@ -2,10 +2,8 @@
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
- * @author Samuel Thompson
  * @file Community.cpp
- * @brief Contains the Community class implementation, which is used for reconstructing the coalescence tree after
- * simulations are complete.
+ * @brief Contains various objects used for reconstructing the coalescence tree after simulations are complete.
  *
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
@@ -61,7 +59,7 @@ bool CommunityParameters::compare(long double speciation_rate_in, long double ti
 			   protracted_params == protracted_parameters;
 	}
 	return doubleCompare(speciation_rate, speciation_rate_in, speciation_rate * 0.000001) &&
-		   doubleCompare(time, time_in, time * 0.0001) && fragment == fragment_in &&
+		   doubleCompare(time, time_in, time * 0.0000000001) && fragment == fragment_in &&
 		   metacommunity_reference == metacommunity_reference_in &&
 			protracted_params == protracted_parameters;
 }
@@ -71,7 +69,7 @@ bool CommunityParameters::compare(long double speciation_rate_in, long double ti
 								  const ProtractedSpeciationParameters &protracted_params)
 {
 	return doubleCompare(speciation_rate, speciation_rate_in, speciation_rate * 0.000001) &&
-		   doubleCompare(time, time_in, 0.0001) && metacommunity_reference == metacommunity_reference_in &&
+		   doubleCompare(time, time_in, 0.0000000001) && metacommunity_reference == metacommunity_reference_in &&
 			protracted_params == protracted_parameters;
 }
 
@@ -104,6 +102,15 @@ CommunityParameters &CommunitiesArray::addNew(long double speciation_rate, long 
 		{
 			if(i.fragment == fragment || !fragment)
 			{
+				stringstream ss;
+				ss << "Non-unique parameter set: " << endl;
+				ss << "-speciation rate: " << speciation_rate << endl;
+				ss << "-time: " << time << endl;
+				ss << "-fragment: " << fragment << endl;
+				ss << "-metacommunity reference: " << metacommunity_reference << endl;
+				ss << "-protracted speciation min: " << protracted_params.min_speciation_gen << endl;
+				ss << "-protracted speciation max: " << protracted_params.max_speciation_gen<< endl;
+				writeCritical(ss.str());
 				throw FatalException("Tried to get reference for non-unique parameter set in communities. "
 									 "Please report this bug.");
 			}
@@ -638,7 +645,7 @@ void Community::detectDimensions(string db)
 	sqlite3 *tmpdb;
 	int rc = sqlite3_open_v2(db.c_str(), &tmpdb, SQLITE_OPEN_READWRITE, "unix-dotfile");
 	string to_exec = "SELECT MAX(xval),MAX(yval) FROM SPECIES_LIST;";
-	sqlite3_stmt *stmt;
+	sqlite3_stmt *stmt = nullptr;
 	rc = sqlite3_prepare_v2(tmpdb, to_exec.c_str(), static_cast<int>(strlen(to_exec.c_str())), &stmt, nullptr);
 	unsigned long xvalmax, yvalmax;
 	rc = sqlite3_step(stmt);
@@ -658,8 +665,15 @@ void Community::detectDimensions(string db)
 void Community::openSqlConnection(string inputfile)
 {
 	// open the database objects
-	sqlite3_backup *backupdb;
+	sqlite3_backup *backupdb = nullptr;
+	sqlite3 *outdatabase = nullptr;
 	// open one db in memory and one from the file.
+	if(!boost::filesystem::exists(inputfile))
+	{
+		stringstream ss;
+		ss << "Output database does not exist at " << inputfile << ": cannot open sql connection." << endl;
+		throw FatalException(ss.str());
+	}
 	try
 	{
 		openSQLiteDatabase(":memory:", database);
@@ -704,6 +718,12 @@ void Community::openSqlConnection(string inputfile)
 	bSqlConnection = true;
 }
 
+void Community::closeSqlConnection()
+{
+	sqlite3_close(database);
+	bSqlConnection = false;
+}
+
 void Community::setInternalDatabase()
 {
 	{
@@ -739,9 +759,9 @@ void Community::importData(string inputfile)
 	}
 	writeInfo("Beginning data import...");
 	// The sql statement to store the sql statement message object
-	sqlite3_stmt *stmt;
+	sqlite3_stmt *stmt = nullptr;
 
-	// Now find out the max size of the list, so we have a count to work from
+	// Now find out the max size of the species_id_list, so we have a count to work from
 	string count_command = "SELECT COUNT(*) FROM SPECIES_LIST;";
 	sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
 					   nullptr);
@@ -790,7 +810,7 @@ void Community::importData(string inputfile)
 //		}
 //		else
 //		{
-		// the -1 is to ensure that the list includes all lineages, but fills the output from the beginning
+		// the -1 is to ensure that the species_id_list includes all lineages, but fills the output from the beginning
 		unsigned long index = i - 1 - ignored_lineages;
 		(*nodes)[index].setup(tip, xval, yval, xwrap, ywrap, generationin);
 		(*nodes)[index].burnSpecies(species_id);
@@ -836,8 +856,8 @@ void Community::getMaxSpeciesAbundancesID()
 	}
 	if(max_species_id == 0)
 	{
-		sqlite3_stmt *stmt;
-		// Now find out the max size of the list, so we have a count to work from
+		sqlite3_stmt *stmt = nullptr;
+		// Now find out the max size of the species_id_list, so we have a count to work from
 		string count_command = "SELECT MAX(ID) FROM SPECIES_ABUNDANCES;";
 		sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
 						   nullptr);
@@ -877,8 +897,8 @@ void Community::getMaxSpeciesLocationsID()
 	}
 	if(max_locations_id == 0)
 	{
-		sqlite3_stmt *stmt;
-		// Now find out the max size of the list, so we have a count to work from
+		sqlite3_stmt *stmt = nullptr;
+		// Now find out the max size of the species_id_list, so we have a count to work from
 		string count_command = "SELECT MAX(ID) FROM SPECIES_LOCATIONS;";
 		sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
 						   nullptr);
@@ -897,8 +917,8 @@ void Community::getMaxFragmentAbundancesID()
 	}
 	if(max_fragment_id == 0)
 	{
-		sqlite3_stmt *stmt;
-		// Now find out the max size of the list, so we have a count to work from
+		sqlite3_stmt *stmt = nullptr;
+		// Now find out the max size of the species_id_list, so we have a count to work from
 		string count_command = "SELECT MAX(ID) FROM FRAGMENT_ABUNDANCES;";
 		sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
 						   nullptr);
@@ -970,7 +990,7 @@ void Community::outputSpeciesAbundances()
 			return;
 		}
 //#endif // DEBUG
-		sqlite3_stmt *stmt;
+		sqlite3_stmt *stmt = nullptr;
 		string table_command = "INSERT INTO SPECIES_ABUNDANCES (ID, species_id, "
 							   "no_individuals, community_reference) VALUES (?,?,?,?);";
 		sqlite3_prepare_v2(database, table_command.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
@@ -1083,7 +1103,7 @@ void Community::createFragmentDatabase(const Fragment &f)
 						   "no_individuals INT NOT NULL, community_reference int NOT NULL);";
 	sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
 	getMaxFragmentAbundancesID();
-	sqlite3_stmt *stmt;
+	sqlite3_stmt *stmt = nullptr;
 	table_command = "INSERT INTO FRAGMENT_ABUNDANCES (ID, fragment, area, size, species_id, "
 					"no_individuals, community_reference) VALUES (?,?,?,?,?,?,?);";
 	sqlite3_prepare_v2(database, table_command.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
@@ -1198,13 +1218,9 @@ void Community::exportDatabase()
 			throw FatalException(ss.str());
 		}
 		sqlite3_close(outdatabase2);
-		sqlite3_close(database);
 		writeInfo("done!\n");
 	}
-	else
-	{
-		sqlite3_close(database);
-	}
+	closeSqlConnection();
 }
 
 bool Community::checkSpeciesLocationsReference()
@@ -1214,8 +1230,8 @@ bool Community::checkSpeciesLocationsReference()
 		throw FatalException("Attempted to get from sql database without opening database connection.");
 	}
 
-	sqlite3_stmt *stmt;
-	// Now find out the max size of the list, so we have a count to work from
+	sqlite3_stmt *stmt = nullptr;
+	// Now find out the max size of the species_id_list, so we have a count to work from
 	string count_command = "SELECT COUNT(*) FROM SPECIES_LOCATIONS WHERE community_reference == ";
 	count_command += to_string(current_community_parameters->reference) + ";";
 	sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
@@ -1234,8 +1250,8 @@ bool Community::checkSpeciesAbundancesReference()
 		throw FatalException("Attempted to get from sql database without opening database connection.");
 	}
 
-	sqlite3_stmt *stmt;
-	// Now find out the max size of the list, so we have a count to work from
+	sqlite3_stmt *stmt = nullptr;
+	// Now find out the max size of the species_id_list, so we have a count to work from
 	string count_command = "SELECT COUNT(*) FROM SPECIES_ABUNDANCES WHERE community_reference = ";
 	count_command += to_string(current_community_parameters->reference) + ";";
 	sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
@@ -1254,7 +1270,7 @@ void Community::recordSpatial()
 						   "NOT NULL, x INT NOT NULL, y INT NOT NULL, community_reference INT NOT NULL);";
 	sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
 	getMaxSpeciesLocationsID();
-	sqlite3_stmt *stmt;
+	sqlite3_stmt *stmt = nullptr;
 	// Checks that the SPECIES_LOCATIONS table doesn't already have a reference in matching the current reference
 	if(current_community_parameters->updated)
 	{
@@ -1558,6 +1574,7 @@ void Community::calcFragments(string fragment_file)
 					ss << ", requires 6 (name, x_west, y_north, x_east, y_south, area)." << endl;
 					throw FatalException(ss.str());
 				}
+				fragments.resize(tmp_raw_read.size() - 1);
 				break;
 			}
 			// Fragment name and dimensions
@@ -1692,7 +1709,6 @@ void Community::importSimParameters(string file)
 			stringstream ss;
 			ss << "ERROR_SQL_020: FATAL. Could not open simulation parameters in " << file << ". Error code: ";
 			ss << sqlite3_errmsg(database);
-			sqlite3_close(outdatabase);
 			sqlite3_close(database);
 			throw SpeciesException(ss.str());
 		}
@@ -1781,7 +1797,6 @@ void Community::getPreviousCalcs()
 	int rc = sqlite3_prepare_v2(database, call1.c_str(), static_cast<int>(strlen(call1.c_str())), &stmt1, nullptr);
 	if(rc != SQLITE_DONE && rc != SQLITE_OK)
 	{
-		sqlite3_close(outdatabase);
 		sqlite3_close(database);
 		throw SpeciesException("ERROR_SQL_020: FATAL. Could not check for COMMUNITY_PARAMETERS table. Error code: " +
 							   to_string(rc));
@@ -1805,7 +1820,6 @@ void Community::getPreviousCalcs()
 								nullptr);
 		if(rc != SQLITE_DONE && rc != SQLITE_OK)
 		{
-			sqlite3_close(outdatabase);
 			sqlite3_close(database);
 			throw SpeciesException("ERROR_SQL_020: FATAL. Could not detect COMMUNITY_PARAMETERS table. Error code: " +
 								   to_string(rc));
@@ -1850,7 +1864,6 @@ void Community::getPreviousCalcs()
 	rc = sqlite3_prepare_v2(database, call3.c_str(), static_cast<int>(strlen(call3.c_str())), &stmt3, nullptr);
 	if(rc != SQLITE_DONE && rc != SQLITE_OK)
 	{
-		sqlite3_close(outdatabase);
 		sqlite3_close(database);
 		throw SpeciesException(
 				"ERROR_SQL_020: FATAL. Could not check for METACOMMUNITY_PARAMETERS table. Error code: " +
@@ -1870,7 +1883,6 @@ void Community::getPreviousCalcs()
 								nullptr);
 		if(rc != SQLITE_DONE && rc != SQLITE_OK)
 		{
-			sqlite3_close(outdatabase);
 			sqlite3_close(database);
 			throw SpeciesException(
 					"ERROR_SQL_020: FATAL. Could not detect METACOMMUNITY_PARAMETERS table. Error code: " +
@@ -1907,11 +1919,12 @@ void Community::addCalculationPerformed(long double speciation_rate, double time
 															metacommunity_size);
 	if(meta_reference == 0 && metacommunity_size != 0)
 	{
+#ifdef DEBUG
+		stringstream ss;
+		ss << "Adding metacommunity (" << metacommunity_size << ", " << metacommunity_speciation_rate << ")" << endl;
+		writeInfo(ss.str());
+#endif
 		meta_reference = past_metacommunities.addNew(metacommunity_speciation_rate, metacommunity_size);
-	}
-	else
-	{
-		meta_reference = 0;
 	}
 	current_community_parameters = &past_communities.addNew(speciation_rate, time, fragments, meta_reference,
 															protracted_params);
@@ -1940,7 +1953,6 @@ vector<unsigned long> Community::getUniqueCommunityRefs()
 	int rc = sqlite3_prepare_v2(database, call1.c_str(), static_cast<int>(strlen(call1.c_str())), &stmt1, nullptr);
 	if(rc != SQLITE_DONE && rc != SQLITE_OK)
 	{
-		sqlite3_close(outdatabase);
 		sqlite3_close(database);
 		throw SpeciesException("ERROR_SQL_020: FATAL. Could not check for COMMUNITY_PARAMETERS table. Error code: " +
 							   to_string(rc));
@@ -1959,7 +1971,6 @@ vector<unsigned long> Community::getUniqueCommunityRefs()
 								nullptr);
 		if(rc != SQLITE_DONE && rc != SQLITE_OK)
 		{
-			sqlite3_close(outdatabase);
 			sqlite3_close(database);
 			throw SpeciesException("ERROR_SQL_020: FATAL. Could not detect COMMUNITY_PARAMETERS table. Error code: " +
 								   to_string(rc));
@@ -1989,7 +2000,6 @@ vector<unsigned long> Community::getUniqueMetacommunityRefs()
 	int rc = sqlite3_prepare_v2(database, call1.c_str(), static_cast<int>(strlen(call1.c_str())), &stmt1, nullptr);
 	if(rc != SQLITE_DONE && rc != SQLITE_OK)
 	{
-		sqlite3_close(outdatabase);
 		sqlite3_close(database);
 		throw SpeciesException(
 				"ERROR_SQL_020: FATAL. Could not check for METACOMMUNITY_PARAMETERS table. Error code: " +
@@ -2008,7 +2018,6 @@ vector<unsigned long> Community::getUniqueMetacommunityRefs()
 								nullptr);
 		if(rc != SQLITE_DONE && rc != SQLITE_OK)
 		{
-			sqlite3_close(outdatabase);
 			sqlite3_close(database);
 			throw SpeciesException(
 					"ERROR_SQL_020: FATAL. Could not detect METACOMMUNITY_PARAMETERS table. Error code: " +
@@ -2063,7 +2072,7 @@ void Community::writeNewCommunityParameters()
 		table_command2 += ") " + table_command3 + ");";
 
 		sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
-		sqlite3_stmt *stmt;
+		sqlite3_stmt *stmt = nullptr;
 
 		sqlite3_prepare_v2(database, table_command2.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
 						   nullptr);
@@ -2152,7 +2161,7 @@ void Community::writeNewMetacommuntyParameters()
 		string table_command = "CREATE TABLE IF NOT EXISTS METACOMMUNITY_PARAMETERS (reference INT PRIMARY KEY NOT NULL,"
 							   " speciation_rate DOUBLE NOT NULL, metacommunity_size DOUBLE NOT NULL);";
 		sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
-		sqlite3_stmt *stmt;
+		sqlite3_stmt *stmt = nullptr;
 		table_command = "INSERT INTO METACOMMUNITY_PARAMETERS (reference, speciation_rate, metacommunity_size"
 						") VALUES (?,?,?);";
 		sqlite3_prepare_v2(database, table_command.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
@@ -2219,7 +2228,7 @@ void Community::updateCommunityParameters()
 				throw FatalException("Attempted to update sql database without opening database connection.");
 			}
 
-			// Now find out the max size of the list, so we have a count to work from
+			// Now find out the max size of the species_id_list, so we have a count to work from
 			string count_command = "UPDATE COMMUNITY_PARAMETERS SET fragments = 1 WHERE reference = ";
 			count_command += to_string(parameter.reference) + ";";
 			int rc = sqlite3_exec(database, count_command.c_str(), nullptr, nullptr, nullptr);
@@ -2264,7 +2273,7 @@ void Community::writeSpeciationRates()
 		}
 	}
 	writeInfo(os.str());
-	if(spec_sim_parameters->protracted_parameters.size() > 1)
+	if(!spec_sim_parameters->protracted_parameters.empty())
 	{
 		os.str("");
 		os << "Protracted speciation parameters (min, max) are: " << endl;
@@ -2273,6 +2282,12 @@ void Community::writeSpeciationRates()
 			os << i.min_speciation_gen << ", " << i.max_speciation_gen << endl;
 		}
 		writeInfo(os.str());
+	}
+	if(spec_sim_parameters->metacommunity_size > 0)
+	{
+		os.str("");
+		os << "Metacommunity size: " << spec_sim_parameters->metacommunity_size << endl;
+		os << "Metacommunity speciation rate: " << spec_sim_parameters->metacommunity_speciation_rate << endl;
 	}
 }
 
@@ -2379,6 +2394,9 @@ void Community::doApplication(SpecSimParameters *sp, Row<TreeNode> *data)
 	if(sp->use_fragments)
 	{
 		calcFragments(sp->fragment_config_file);
+		stringstream os;
+		os << "Total fragments: " << fragments.size() << endl;
+		writeInfo(os.str());
 	}
 	calculateTree();
 }

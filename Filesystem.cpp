@@ -12,13 +12,18 @@
  *
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
  */
+
 #include <string>
 #include <sstream>
-#include <zconf.h>
 #include <boost/filesystem.hpp>
+#ifdef WIN_INSTALL
+#include <windows.h>
+#define sleep Sleep
+#endif
 #include "Filesystem.h"
 #include "CustomExceptions.h"
 #include "Logger.h"
+
 
 void openSQLiteDatabase(const string &database_name, sqlite3 *&database)
 {
@@ -34,7 +39,11 @@ void openSQLiteDatabase(const string &database_name, sqlite3 *&database)
 			throw FatalException(ss.str());
 		}
 	}
+#ifdef WIN_INSTALL
+	rc = sqlite3_open_v2(database_name.c_str(), &database, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, "win32");
+#else
 	rc = sqlite3_open_v2(database_name.c_str(), &database, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, "unix-dotfile");
+#endif
 	if(rc != SQLITE_OK && rc != SQLITE_DONE)
 	{
 		int i = 0;
@@ -77,15 +86,15 @@ void createParent(string file)
 		{
 			parent.erase(it);
 		}
-	}
-	boost::filesystem::path parent_path(parent);
-	if(!boost::filesystem::exists(parent_path))
-	{
-		if(!parent_path.empty())
+		boost::filesystem::path parent_path(parent);
+		if(!boost::filesystem::exists(parent_path))
 		{
-			if(!boost::filesystem::create_directories(parent_path))
+			if(!parent_path.empty())
 			{
-				throw runtime_error("Cannot create parent folder for " + file);
+				if(!boost::filesystem::create_directories(parent_path))
+				{
+					throw runtime_error("Cannot create parent folder for " + file);
+				}
 			}
 		}
 	}

@@ -2,7 +2,6 @@
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 //
 /**
- * @author Sam Thompson
  * @file ProtractedSpatialTree.h
  * @brief Contains the ProtractedSpatialTree class for running simulations and outputting the phylogenetic trees using
  * protracted speciation.
@@ -17,8 +16,6 @@
 
 /**
  * @class ProtractedTree
- * @author Sam Thompson
- * @file ProtractedTree.h
  * @brief Contains the protracted tree class, for running simulations with procated speciation.
  */
 #ifndef SPECIATIONCOUNTER_PROTRACTEDSPATIALTREE_H

@@ -1,12 +1,9 @@
 //This file is part of NECSim project which is released under MIT license.
 //See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 /**
- * @author Samuel Thompson
- * @date 31/08/16
  * @file Community.h
  *
- * @brief Contains the Community object, which is used for reconstructing the coalescence tree after simulations are
- * complete.
+ * @brief Contains various objects used for reconstructing the coalescence tree after simulations are complete.
  *
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
@@ -127,8 +124,7 @@ struct CommunityParameters
 };
 
 /**
- * @class CommunitiesArray
- * @brief A structure for containing an array of previous calculation information, including which fragments have been 
+ * @brief A structure for containing an array of previous calculation information, including which fragments have been
  * already calculated for.
  */
 struct CommunitiesArray
@@ -188,10 +184,8 @@ struct CommunitiesArray
 };
 
 /**
- * @struct MetacommunityParameters
  * @brief Contains a set of metacommunity parameters that have been applied, or are to be applied, to the coalescence
  * tree.
- *
  */
 struct MetacommunityParameters
 {
@@ -225,7 +219,6 @@ struct MetacommunityParameters
 };
 
 /**
- * @struct MetacommunitiesArray
  * @brief Contains an array of MetacommunityParameters that have been applied to the coalescence tree.
  */
 struct MetacommunitiesArray
@@ -281,10 +274,7 @@ struct MetacommunitiesArray
 };
 
 /**
- * @struct Fragment
  * @brief Contains the information needed for defining a fragment.
- * Fragments can be detected from the Samplematrix object (which only detects rectangular fragments), or (preferably) is read from an input file.
- * Currently all fragments must be rectangular, although they can be larger than the intended shape if necesssary.
  */
 struct Fragment
 {
@@ -298,7 +288,6 @@ struct Fragment
 };
 
 /**
- * @class Samplematrix
  * @brief A child of the Matrix class as booleans.
  * Used for determining where to sample species from.
  */
@@ -350,7 +339,6 @@ public:
 };
 
 /**
- * @class Community
  * @brief A class to contain the tree object lineages and reconstructing the coalescence tree.
  * Contains functions for calculating the number of species for a given speciation rate,
  * outputting spatial data and generating species abundance distributions.
@@ -363,9 +351,8 @@ protected:
 	bool in_mem; // boolean for whether the database is in memory or not.
 	bool database_set; // boolean for whether the database has been set already.
 	sqlite3 *database; // stores the in-memory database connection.
-	sqlite3 *outdatabase; // stores the file database connection
 	bool bSqlConnection; // true if the data connection has been established.
-	Row<TreeNode> *nodes; // in older versions this was called list. Changed to avoid confusion with the built-in class.
+	Row<TreeNode> *nodes; // in older versions this was called species_id_list. Changed to avoid confusion with the built-in class.
 	Row<unsigned long> row_out;
 	unsigned long iSpecies;
 	bool has_imported_samplemask; // checks whether the samplemask has already been imported.
@@ -395,40 +382,24 @@ public:
 	 * @brief Contructor for the community linking to Treenode list.
 	 * @param r Row of TreeNode objects to link to.
 	 */
-	Community(Row<TreeNode> *r) : nodes(r), applied_protracted_parameters()
+	Community(Row<TreeNode> *r) : in_mem(false), database_set(false), database(nullptr),
+								  bSqlConnection(false), nodes(r), row_out(), iSpecies(0),
+								  has_imported_samplemask(false), has_imported_data(false), samplemask(),
+								  fragments(), current_community_parameters(nullptr), min_spec_rate(0.0),
+								  grid_x_size(0), grid_y_size(0), samplemask_x_size(0), samplemask_y_size(0),
+								  samplemask_x_offset(0), samplemask_y_offset(0), past_communities(),
+								  past_metacommunities(), protracted(false), min_speciation_gen(0.0),
+								  max_speciation_gen(0.0), applied_protracted_parameters(), max_species_id(0),
+								  max_fragment_id(0), max_locations_id(0), spec_sim_parameters(nullptr)
 	{
-		in_mem = false;
-		iSpecies = 0;
-		has_imported_samplemask = false;
-		bSqlConnection = false;
-		database_set = false;
-		has_imported_data = false;
-		min_speciation_gen = 0.0;
-		max_speciation_gen = 0.0;
-		protracted = false;
-		current_community_parameters = nullptr;
-		max_species_id = 0;
-		max_locations_id = 0;
 
 	}
 
 	/**
 	 * @brief Default constructor
 	 */
-	Community() : applied_protracted_parameters()
+	Community() : Community(nullptr)
 	{
-		in_mem = false;
-		iSpecies = 0;
-		has_imported_samplemask = false;
-		bSqlConnection = false;
-		database_set = false;
-		has_imported_data = false;
-		min_speciation_gen = 0.0;
-		max_speciation_gen = 0.0;
-		protracted = false;
-		current_community_parameters = nullptr;
-		max_species_id = 0;
-		max_locations_id = 0;
 	}
 
 	 /**
@@ -437,6 +408,7 @@ public:
 	 virtual ~Community()
 	{
 		nodes = nullptr;
+		sqlite3_close(database);
 	}
 
 	/**
@@ -529,6 +501,10 @@ public:
 	 */
 	void openSqlConnection(string inputfile);
 
+	/**
+	 * @brief Safely destroys the SQL connection.
+	 */
+	void closeSqlConnection();
 	/**
 	 * @brief Opens a connection to an in-memory database. This will eventually be written to the output file.
 	 */

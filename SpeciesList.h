@@ -20,15 +20,16 @@
  * Note that the maximum size of the list is constrained by the maximum size of unsigned long. Any simulation requiring
  * more individuals per cell than this will unlikely finish in any reasonable time anyway.
  */
+#include <memory>
 #include "Matrix.h"
 #include "NRrand.h"
 using namespace std;
 class SpeciesList
 {
 private:
-	unsigned long list_size,maxsize; // List size and maximum size of the cell (based on percentage cover).
+	unsigned long list_size, maxsize; // List size and maximum size of the cell (based on percentage cover).
 	unsigned long next_active; // For calculating the wrapping, using the next and last system.
-	Row<unsigned long> list; // list of the active reference number, with zeros for empty cells.
+	vector<unsigned long> species_id_list; // list of the active reference number, with zeros for empty cells.
 	unsigned long nwrap; // The number of wrapping (next and last possibilities) that there are.
 public:
 	/**
@@ -40,23 +41,14 @@ public:
 	 * @brief Default destructor
 	 */
 	~SpeciesList() = default;
-	// Sets the list size to the required length.
-	// Note this will delete any species currently stored in the list
 
-	// Fill the list with empty 0s.
-	/**
-	 * @brief Fills the list with 0, up to the specified maximum size.
-	 */
-	void fillList();
-	
-	// Standard setters
 	/**
 	 * @brief Initialises the list to the specified size.
 	 * @param maxsizein the maximum list size.
 	 */
 	void initialise(unsigned long maxsizein);
 	
-	// special case if just the maxsize wants to be change, but want to maintain the list variables.
+	// special case if just the maxsize wants to be change, but want to maintain the species_id_list variables.
 	/**
 	 * @brief Sets the maxsize without altering the actual size of list.
 	 * @param maxsizein The new maximum size to set.
@@ -99,15 +91,8 @@ public:
 	 * @param new_spec the new species reference to place in the first empty space.
 	 * @return the location the species has been added to.
 	 */
-	unsigned long addSpecies(unsigned long new_spec);
-	
-	/**
-	 * @brief Add a new species to the first empty place.
-	 * Essentially a version of addSpecies() without returning the species location. 
-	 * @param new_spec the new species reference to place in the first empty space.
-	 */
-	void addSpeciesSilent(unsigned long new_spec);
-	
+	unsigned long addSpecies(const unsigned long &new_spec);
+
 	/**
 	 * @brief Removes the species at the specified index.
 	 * The species number will be replaced with 0, indicating no species present.
@@ -137,7 +122,7 @@ public:
 	
 	/**
 	 * @brief Changes the maximum size of the SpeciesList.
-	 * Creates a new list object with all the species in the correct place from the old list object and zeros everywhere else.
+	 * Currently identical to setMaxsize.
 	 * @param newmaxsize the new maximum size to be applied.
 	 */
 	void changePercentCover(unsigned long newmaxsize);
@@ -148,7 +133,7 @@ public:
 	 * @param rand_no the random number object to pass (for maintaining the same seed throughout simulations).
 	 * @return the reference of the random lineage. 0 indicates an empty space.
 	 */
-	unsigned long getRandLineage(NRrand &rand_no);
+	unsigned long getRandLineage(shared_ptr<NRrand> rand_no);
 	
 	/**
 	 * @brief Get the species reference number from a particular entry.
@@ -180,7 +165,14 @@ public:
 	 * @return the maximum number of lineages that can exist currently.
 	 */
 	unsigned long getMaxSize();
-	
+
+
+	/**
+	 * @brief Gets the length of the list object
+	 * @return the length of the list object
+	 */
+	unsigned long getListLength();
+
 	/**
 	 * @brief Empties the list of any data and fills the list with zeros.
 	 */

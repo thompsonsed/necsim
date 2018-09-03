@@ -14,7 +14,9 @@
 #define SETUP
 #include <string>
 #include <vector>
+#ifndef WIN_INSTALL
 #include <unistd.h>
+#endif
 #include <sstream>
 #include <ctime>
 #include <boost/filesystem.hpp>

@@ -2,20 +2,19 @@
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
- * @author Samuel Thompson
- * @date 24/03/17
  * @file Tree.h
- * @brief  Contains the Tree class implementation as the main simulation object for spatially-implicit
- * coalescence simulations.
+ * @brief  Contains the main simulation object for spatially-implicit coalescence simulations.
+ *
  * Provides the basis for spatially-explicit versions in SpatialTree, and protracted speciation versions in
  * ProtractedTree and ProtractedSpatialTree.
+ *
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 #ifndef TREE_H
 #define TREE_H
-#ifndef sql_ram
-#define sql_ram
-#endif
+//#ifndef sql_ram
+//#define sql_ram
+//#endif
 
 #include <sqlite3.h>
 #include <string>
@@ -31,8 +30,6 @@
 
 
 /**
- * @class Tree
- * @file Tree.h
  * @brief Main simulation class for performing a non-spatial neutral simulation and generating the phylogenetic tree of
  * the individuals.
  */
@@ -46,7 +43,7 @@ protected:
 	// Stores the command line parameters and parses the required information.
 	SimParameters sim_parameters;
 	// random number generator
-	NRrand NR;
+	shared_ptr<NRrand> NR;
 	// Storing the speciation rates for later reference.
 	vector<long double> speciation_rates;
 	// flag for having set the simulation seed.
@@ -104,7 +101,7 @@ protected:
 	Step this_step;
 	string sql_output_database;
 	// If true, means the command-line imports were under the (deprecated) fullmode.
-	bool bFullmode;
+	bool bFullMode;
 	// If true, the simulation is to be resumed.
 	bool bResume;
 	// If true, a config file contains the simulation variables.
@@ -116,43 +113,19 @@ protected:
 	// variable for storing the paused sim location if files have been moved during paused/resumed simulations!
 	string pause_sim_directory;
 public:
-	Tree() : community(&data), this_step()
+	Tree() : data(), enddata(0), sim_parameters(), NR(make_shared<NRrand>()), speciation_rates(), seeded(false),
+			 the_seed(-1), the_task(-1), times_file("null"), reference_times(), uses_temporal_sampling(false),
+			 start(0), sim_start(0), sim_end(0), now(0), sim_finish(0), out_finish(0), time_taken(0), active(),
+			 endactive(0), startendactive(0), maxsimsize(0), community(&data), steps(0), maxtime(0), generation(0.0),
+			 deme(0), deme_sample(0.0), spec(0.0), out_directory(""), database(nullptr), sim_complete(false),
+			 has_imported_vars(false),
+#ifdef sql_ram
+			 outdatabase(nullptr),
+#endif //sql_ram
+			 this_step(), sql_output_database("null"), bFullMode(false), bResume(false), bConfig(true),
+			 has_paused(false), has_imported_pause(false), bIsProtracted(false), pause_sim_directory("null")
 	{
-		has_imported_vars = false;
-		enddata = 0;
-		seeded = false;
-		the_seed = -10;
-		// set this equal to true if you want to log every 5 seconds to a logfile.
-		the_task = -1;
-		sql_output_database = "null";
-		sim_complete = false;
-		time_taken = 0;  // the time taken starts at 0, unless imported from file.
-		maxtime = 0;
-		// Set the database to NULL pointers.
-		database = nullptr;
-		outdatabase = nullptr;
-		uses_temporal_sampling = false;
-		start = 0;
-		sim_start = 0;
-		sim_end = 0;
-		now = 0;
-		sim_finish = 0;
-		out_finish = 0;
-		endactive = 0;
-		startendactive = 0;
-		maxsimsize = 0;
-		steps = 0;
-		generation = 0.0;
-		spec = 0.0;
-		deme_sample = 0.0;
-		deme = 0;
-		bFullmode = false;
-		bResume = false;
-		bConfig = true;
-		has_paused = false;
-		has_imported_pause = false;
-		bIsProtracted = false;
-		pause_sim_directory = "null";
+
 	}
 
 	virtual ~Tree()
@@ -437,6 +410,13 @@ public:
 	virtual void addLineages(double generation_in);
 
 	/**
+	 * @brief Randomly checks if a lineage should be added, based on the proportion added.
+	 * @param proportion_added the proportion of lineages that should be added
+	 * @return true if the lineage should be added, false otherwise
+	 */
+	bool checkProportionAdded(const double & proportion_added);
+
+	/**
 	 * @brief Checks the size of the main active and data objects is large enough
 	 * @param req_data the required data object size
 	 * @param req_active the required active object size
@@ -449,15 +429,17 @@ public:
 	 * generation time.
 	 * @param tmp_active the reference in active
 	 * @param generation_in the generation to set for the new lineage
+	 * @param data_added vector of lineages to add to data
 	 */
-	void makeTip(const unsigned long &tmp_active, const double &generation_in);
+	void makeTip(const unsigned long &tmp_active, const double &generation_in, vector<TreeNode> &data_added);
 
 	/**
 	 * @brief Creates a new reference in data containing the tip with a new generation counter.
 	 * @param i the reference in active of the lineage to make a tip
 	 * @param generationin the generation to make the lineage a tip at
+	 * @param data_added vector of lineages to add to the data object
 	 */
-	void convertTip(unsigned long i, double generationin);
+	void convertTip(unsigned long i, double generationin, vector<TreeNode> &data_added);
 
 	/**
 	 * @brief Finalises the simulation, and performs the correct tasks depending if the sim has been paused or finished.
@@ -612,31 +594,33 @@ public:
 
 	/**
 	 * @brief Checks the output folder exists and initiates the pause.
+	 * @return the output file stream to save objects to
 	 */
-	string initiatePause();
+	ofstream initiatePause();
 
 	/**
 	 * @brief Saves the main simulation variables to file.
-	 * @param pause_folder the folder to save files into
+	 * @param out the output file stream to save the object to
 	 */
-	void dumpMain(string pause_folder);
+	void dumpMain(ofstream &out);
 
 	/**
 	 * @brief Saves the active object to file.
-	 * @param pause_folder the folder to save files into
+	 * @param out the output file stream to save the object to
 	 */
-	void dumpActive(string pause_folder);
+	void dumpActive(ofstream &out);
 
 	/**
 	 * @brief Saves the data object to file.
-	 * @param pause_folder the folder to save files into
+	 * @param out the output file stream to save the object to
 	 */
-	void dumpData(string pause_folder);
+	void dumpData(ofstream &out);
 
 	/**
 	 * @brief Completes the pause routine and outputs the sql dump.
+	 * @param out the output stream to close up
 	 */
-	void completePause();
+	void completePause(ofstream &out);
 
 	/**
 	 * @brief Sets the resume variables so that the simulation can be resumed.
@@ -657,20 +641,22 @@ public:
 	 */
 	void setResumeParameters();
 
+	ifstream openSaveFile();
+
 	/**
 	 * @brief Loads the main simulation parameters from the save file into memory.
 	 */
-	virtual void loadMainSave();
+	virtual void loadMainSave(ifstream &in1);
 
 	/**
 	 * @brief Loads the data object from the save file into memory.
 	 */
-	void loadDataSave();
+	void loadDataSave(ifstream &in1);
 
 	/**
 	 * @brief Loads the active object from the save file into memory.
 	 */
-	void loadActiveSave();
+	void loadActiveSave(ifstream &in1);
 
 	/**
 	 * @brief Checks for resuming and prints to the terminal

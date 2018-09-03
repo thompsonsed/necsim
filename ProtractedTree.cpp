@@ -2,8 +2,6 @@
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 //
 /**
- * @author Sam Thompson
- * @date 12/07/2017
  * @file ProtractedTree.cpp
  * @brief Contains the ProtractedTree class for running simulations and outputting the phylogenetic trees using protracted
  * speciation.

@@ -44,16 +44,16 @@ void SimulateDispersal::importMaps()
 	{
 		throw FatalException("Simulation parameters have not been set.");
 	}
+	density_landscape->setDims(simParameters);
+	dispersal_coordinator.setMaps(density_landscape);
 	setDispersalParameters();
-	density_landscape.setDims(simParameters);
-	dispersal_coordinator.setHabitatMap(&density_landscape);
-	density_landscape.calcFineMap();
-	density_landscape.calcCoarseMap();
-	density_landscape.calcOffset();
-	density_landscape.calcHistoricalFineMap();
-	density_landscape.calcHistoricalCoarseMap();
-	density_landscape.setLandscape(simParameters->landscape_type);
-	density_landscape.recalculateHabitatMax();
+	density_landscape->calcFineMap();
+	density_landscape->calcCoarseMap();
+	density_landscape->calcOffset();
+	density_landscape->calcHistoricalFineMap();
+	density_landscape->calcHistoricalCoarseMap();
+	density_landscape->setLandscape(simParameters->landscape_type);
+	density_landscape->recalculateHabitatMax();
 	dataMask.importSampleMask(*simParameters);
 }
 
@@ -77,7 +77,7 @@ void SimulateDispersal::setSizes()
 
 void SimulateDispersal::setDispersalParameters()
 {
-	dispersal_coordinator.setRandomNumber(&random);
+	dispersal_coordinator.setRandomNumber(random);
 	dispersal_coordinator.setGenerationPtr(&generation);
 	dispersal_coordinator.setDispersal(simParameters);
 
@@ -139,7 +139,7 @@ void SimulateDispersal::storeCellList()
 			if(dataMask.getVal(j, i, 0, 0))
 			{
 				cell_total++;
-				total += density_landscape.getVal(j, i, 0, 0, 0.0);
+				total += density_landscape->getVal(j, i, 0, 0, 0.0);
 			}
 		}
 	}
@@ -150,7 +150,7 @@ void SimulateDispersal::storeCellList()
 	{
 		for(unsigned long j = 0; j < simParameters->sample_x_size; j++)
 		{
-			for(unsigned long k = 0; k < density_landscape.getVal(j, i, 0, 0, 0.0); k++)
+			for(unsigned long k = 0; k < density_landscape->getVal(j, i, 0, 0, 0.0); k++)
 			{
 				cells[ref].x = j;
 				cells[ref].y = i;
@@ -162,7 +162,7 @@ void SimulateDispersal::storeCellList()
 
 const Cell& SimulateDispersal::getRandomCell()
 {
-	auto index = static_cast<unsigned long>(floor(random.d01() * cells.size()));
+	auto index = static_cast<unsigned long>(floor(random->d01() * cells.size()));
 	return cells[index];
 }
 

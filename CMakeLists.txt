@@ -16,7 +16,7 @@ set(SOURCE_FILES
         ${SOURCE_DIR_NECSIM}/ProtractedTree.cpp
         ${SOURCE_DIR_NECSIM}/Setup.cpp
         ${SOURCE_DIR_NECSIM}/Community.cpp
-        ${SOURCE_DIR_NECSIM}/ReproductionMap.cpp
+        ${SOURCE_DIR_NECSIM}/ActivityMap.cpp
         ${SOURCE_DIR_NECSIM}/Metacommunity.cpp
         ${SOURCE_DIR_NECSIM}/Filesystem.cpp
         ${SOURCE_DIR_NECSIM}/DataMask.cpp
@@ -29,7 +29,9 @@ set(SOURCE_FILES
         ${SOURCE_DIR_NECSIM}/DoubleComparison.cpp
         ${SOURCE_DIR_NECSIM}/NRrand.h
         ${SOURCE_DIR_NECSIM}/Matrix.h
-        ${SOURCE_DIR_NECSIM}/SimulationTemplates.h)
+        ${SOURCE_DIR_NECSIM}/Map.h
+        ${SOURCE_DIR_NECSIM}/SimulationTemplates.h
+        ${SOURCE_DIR_NECSIM}/SimParameters.h)
 
 find_package(Boost 1.5.7 COMPONENTS system filesystem REQUIRED)
 find_library(gdal 2.1.0 REQUIRED)

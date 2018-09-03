@@ -24,11 +24,16 @@
 #include <ctime>
 #include <ctime>
 #include <sqlite3.h>
+
 #ifndef WIN_INSTALL
+
 #include <unistd.h>
+
 #endif
+
 #include <algorithm>
 #include <stdexcept>
+#include <memory>
 //#define with_gdal
 // extra boost include - this requires the installation of boost on the system
 // note that this requires compilation with the -lboost_filesystem and -lboost_system linkers.
@@ -36,9 +41,7 @@
 
 // include fast-csv-parser by Ben Strasser (available from https://github.com/ben-strasser/fast-cpp-csv-parser)
 // for fast file reading
-#ifdef use_csv
-#include "fast-cpp-csv-parser/csv.h"
-#endif
+
 /**
 * @defgroup DEFINES Preprocessor Definitions
 */
@@ -49,6 +52,9 @@
 *https://github.com/ben-strasser/fast-cpp-csv-parser).
 * This enables much faster csv reading, but can cause problems on systems where this module is not fully tested.
 */
+#ifdef use_csv
+#include "fast-cpp-csv-parser/csv.h"
+#endif
 
 /**
 *@ingroup DEFINES
@@ -74,7 +80,7 @@
 #include "Community.h"
 #include "Setup.h"
 #include "DispersalCoordinator.h"
-#include "ReproductionMap.h"
+#include "ActivityMap.h"
 #include "Logger.h"
 
 using namespace std;
@@ -89,15 +95,17 @@ class SpatialTree : public virtual Tree
 protected:
 	// Our dispersal coordinator for getting dispersal distances and managing calls from the landscape
 	DispersalCoordinator dispersal_coordinator;
-	// The reproduction map object
-	ReproductionMap rep_map;
+	// Death probability values across the landscape
+	shared_ptr<ActivityMap> death_map;
+	// Reproduction probability values across the landscape
+	shared_ptr<ActivityMap> reproduction_map;
 	// A species_id_list of new variables which will contain the relevant information for maps and grids.
 	//  strings containing the file names to be imported.
 	string fine_map_input, coarse_map_input;
 	string historical_fine_map_input, historical_coarse_map_input;
 	// Landscape object containing both the coarse and fine maps for checking whether or not there is habitat at a
 	// particular location.
-	Landscape landscape;
+	shared_ptr<Landscape> landscape;
 	// An indexing spatial positioning of the lineages
 	Matrix<SpeciesList> grid;
 	unsigned long desired_specnum;
@@ -105,14 +113,13 @@ protected:
 	DataMask samplegrid;
 public:
 	/**
-	 * @brief The constructor for the tree object.
-	 *
-	 * Sets all uninitiated variables to false, except log_all.
-	 * log_all should be changed to false if minimal text output during simulations is desired.
+	 * @brief The constructor for SpatialTree.
 	 */
-	SpatialTree() : Tree(), dispersal_coordinator(), rep_map(), fine_map_input("none"), coarse_map_input("none"),
-					historical_fine_map_input("none"), historical_coarse_map_input("none"), landscape(), grid(),
-					desired_specnum(1), samplegrid()
+	SpatialTree() : Tree(), dispersal_coordinator(), death_map(make_shared<ActivityMap>()),
+					reproduction_map(make_shared<ActivityMap>()),
+					fine_map_input("none"), coarse_map_input("none"), historical_fine_map_input("none"),
+					historical_coarse_map_input("none"), landscape(make_shared<Landscape>()),
+					grid(), desired_specnum(1), samplegrid()
 	{
 
 	}
@@ -160,9 +167,9 @@ public:
 	void importMaps();
 
 	/**
-	 * @brief Imports the reproduction map from file.
+	 * @brief Imports the activity maps from the relevant files.
 	 */
-	void importReproductionMap();
+	void importActivityMaps();
 
 	/**
 	 * @brief Counts the number of individuals that exist on the spatial grid.
@@ -332,6 +339,7 @@ public:
 	 * @param out the output file stream to save the object to
 	 */
 	void dumpGrid(ofstream &out);
+
 	/**
 	 * @brief Resumes the simulation from a previous state.
 	 *
@@ -356,7 +364,7 @@ public:
 	/**
 	 * @brief Checks that the reproduction map makes sense with the fine density map.
 	 */
-	void verifyReproductionMap();
+	void verifyActivityMaps();
 
 	/**
 	 * @brief Adds the lineage to the correct point in the linked list of active lineages

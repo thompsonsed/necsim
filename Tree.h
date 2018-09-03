@@ -43,7 +43,7 @@ protected:
 	// Stores the command line parameters and parses the required information.
 	SimParameters sim_parameters;
 	// random number generator
-	NRrand NR;
+	shared_ptr<NRrand> NR;
 	// Storing the speciation rates for later reference.
 	vector<long double> speciation_rates;
 	// flag for having set the simulation seed.
@@ -113,11 +113,12 @@ protected:
 	// variable for storing the paused sim location if files have been moved during paused/resumed simulations!
 	string pause_sim_directory;
 public:
-	Tree() : data(), enddata(0), sim_parameters(), NR(), speciation_rates(), seeded(false), the_seed(-1), the_task(-1),
-			 times_file("null"), reference_times(), uses_temporal_sampling(false), start(0), sim_start(0), sim_end(0),
-			 now(0), sim_finish(0), out_finish(0), time_taken(0), active(), endactive(0), startendactive(0),
-			 maxsimsize(0), community(&data), steps(0), maxtime(0), generation(0.0), deme(0), deme_sample(0.0),
-			 spec(0.0), out_directory(""), database(nullptr), sim_complete(false), has_imported_vars(false),
+	Tree() : data(), enddata(0), sim_parameters(), NR(make_shared<NRrand>()), speciation_rates(), seeded(false),
+			 the_seed(-1), the_task(-1), times_file("null"), reference_times(), uses_temporal_sampling(false),
+			 start(0), sim_start(0), sim_end(0), now(0), sim_finish(0), out_finish(0), time_taken(0), active(),
+			 endactive(0), startendactive(0), maxsimsize(0), community(&data), steps(0), maxtime(0), generation(0.0),
+			 deme(0), deme_sample(0.0), spec(0.0), out_directory(""), database(nullptr), sim_complete(false),
+			 has_imported_vars(false),
 #ifdef sql_ram
 			 outdatabase(nullptr),
 #endif //sql_ram

@@ -38,7 +38,7 @@ class SimulateDispersal
 {
 protected:
 	// The density map object
-	Landscape density_landscape;
+	shared_ptr<Landscape> density_landscape;
 	// The samplemask object
 	DataMask dataMask;
 	// Dispersal coordinator
@@ -46,7 +46,7 @@ protected:
 	// Stores all key simulation parameters for the Landscape object
 	SimParameters  * simParameters;
 	// The random number generator object
-	NRrand random;
+	shared_ptr<NRrand> random;
 	// The random number seed
 	unsigned long seed;
 	// The sqlite3 database object for storing outputs
@@ -68,7 +68,8 @@ protected:
 	// Reference number for this set of parameters in the database output
 	unsigned long max_parameter_reference;
 public:
-	SimulateDispersal() : distances(), num_steps()
+	SimulateDispersal() : density_landscape(make_shared<Landscape>()), random(make_shared<NRrand>()), distances(),
+						  num_steps()
 	{
 		simParameters = nullptr;
 		num_repeats = 0;
@@ -120,8 +121,8 @@ public:
 	void setSeed(unsigned long s)
 	{
 		seed = s;
-		random.wipeSeed();
-		random.setSeed(s);
+		random->wipeSeed();
+		random->setSeed(s);
 	}
 
 	/**

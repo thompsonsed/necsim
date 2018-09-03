@@ -20,6 +20,7 @@
  * Note that the maximum size of the list is constrained by the maximum size of unsigned long. Any simulation requiring
  * more individuals per cell than this will unlikely finish in any reasonable time anyway.
  */
+#include <memory>
 #include "Matrix.h"
 #include "NRrand.h"
 using namespace std;
@@ -132,7 +133,7 @@ public:
 	 * @param rand_no the random number object to pass (for maintaining the same seed throughout simulations).
 	 * @return the reference of the random lineage. 0 indicates an empty space.
 	 */
-	unsigned long getRandLineage(NRrand &rand_no);
+	unsigned long getRandLineage(shared_ptr<NRrand> rand_no);
 	
 	/**
 	 * @brief Get the species reference number from a particular entry.

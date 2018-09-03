@@ -231,7 +231,7 @@ double DataMask::getExactValue(const long &x, const long &y, const long &xwrap, 
 	return (this->*getProportionfptr)(x, y, xwrap, ywrap);
 }
 
-void DataMask::convertBoolean(Landscape &map1, const double &deme_sampling, const double &generation)
+void DataMask::convertBoolean(shared_ptr<Landscape> map1, const double &deme_sampling, const double &generation)
 {
 	// Clear the old boolean object and set the new size
 	sample_mask.setSize(y_dim, x_dim);
@@ -244,7 +244,7 @@ void DataMask::convertBoolean(Landscape &map1, const double &deme_sampling, cons
 			long tmp_xwrap = 0;
 			long tmp_ywrap = 0;
 			recalculateCoordinates(tmp_x, tmp_y, tmp_xwrap, tmp_ywrap);
-			double density = map1.getVal(tmp_x, tmp_y, tmp_xwrap, tmp_ywrap, generation) * deme_sampling;
+			double density = map1->getVal(tmp_x, tmp_y, tmp_xwrap, tmp_ywrap, generation) * deme_sampling;
 			sample_mask[y][x] = density >= 1.0;
 		}
 	}

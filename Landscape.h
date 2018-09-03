@@ -270,8 +270,9 @@ public:
 	/**
 	 * @brief Checks if an update needs to be performed to the map configuration, and if it does, performs the update.
 	 * @param generation the current generation timer
+	 * @return true if the map has been updated
 	 */
-	void updateMap(double generation);
+	bool updateMap(double generation);
 
 	/**
 	 * @brief Updates the historical map configuration.

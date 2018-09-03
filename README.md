@@ -16,7 +16,7 @@ See file **LICENSE.txt** or go to [here](https://opensource.org/licenses/MIT) fo
 
 ## INTRODUCTION ##
 
-necsim is a generic spatial coalescence simulator for neutral systems. It applies the model to map objects, which can change over time, for a specific set of supplied parameters, and outputs information for each individual to a SQL database. 
+necsim is a generic spatial coalescence simulator for neutral systems. It applies the model to temporally and spatially varying density maps for a specific set of supplied parameters, and outputs information for each individual to a SQL database. 
 
 necsim includes functionality for applying varying speciation rates after simulations are complete. This enables the main simulation to be run with the *minimum* speciation rate required and afterwards analysis can be completed using different speciation rates.
 
@@ -26,7 +26,7 @@ You are free to modify and distribute the code as per the license specified in *
 
 ## INSTRUCTIONS ##
 ###Compiling the program###
-See the Requirements section for a full species_id_list of the necessary prerequisites. Once these are installed, compiling the program should be relatively easy. NECSim requires a linker to the boost libraries, as well as the sqlite3 library. It is recommended to run with the maximum optimisation possible.
+See the Requirements section for a full species_id_list of the necessary prerequisites. Once these are installed, compiling the program should be relatively easy. necsim requires a linker to the boost libraries, as well as the sqlite3 library. It is recommended to run with the maximum optimisation possible.
 
 
 Additionally, if support is required for tif files (an alternative to importing csv files), the [gdal library](http://www.gdal.org/) is required. See the online documentation for help compiling gdal for your operating system. When compiling using gdal, use the ```-D with_gdal``` compilation flag.
@@ -35,6 +35,7 @@ For compilation on High Performance Computing (HPC) systems, they will likely us
 for the application of different speciation rates.
 
 ###Running simulations###
+Note that the recommended method of running and analysing simulations is through the [**pycoalescence**](https://pycoalescence.readthedocs.io) python package.
 The routine relies on supplying command line arguments (see below) for all the major simulation variables. Alternatively, supplying a config .txt file and using the command line arguments `./necsim -c /path/to/config.txt` can be used for parsing command line arguments from the text file. 
 
 ####Command Line Arguments ####
@@ -140,7 +141,7 @@ where `i` represents a positive integer, `d` is a decimal value between 0 and 1,
 Upon successful completion of a simulation, necsim will produce an SQLite database file in the output directory in an SQL\_data folder. This database contains several tables, which can be accessed using a program like [DB Browser for SQLite](http://sqlitebrowser.org/) or Microsoft Access. Alternatively, most programming languages have an SQLite interface ([RSQlite](https://cran.r-project.org/web/packages/RSQLite/index.html), [python sqlite3](https://docs.python.org/2/library/sqlite3.html))
 
 * The main table within the database is the SPECIES\_LIST table, which is the location and inheritence of every lineage recorded. Several other important data structures (such as whether it is a "tip" of the phylogenetic tree of not) which are used  when re-constructing the species identity.
-* A secondary output from necims is a SIMULATION\_PARAMETERS table for identifying the exact parameters with which the model is run.
+* A secondary output from necsims is a SIMULATION\_PARAMETERS table for identifying the exact parameters with which the model is run.
 * SpeciationCounter also produces a SPECIES_ABUNDANCES table containing species abundances across the whole sample map, plus (optionally) a table of SPECIES\_LOCATIONS (containing the x,y location of every individual) and FRAGMENT\_ABUNDANCES (species abundances for each habitat fragment separately).
 
 ## REQUIREMENTS ##
@@ -183,7 +184,7 @@ A brief description of the important classes is given below. Some classes also c
 	- Handles the positioning of individuals in space within a grid cell.
 * The `ConfigOption` class
 	- Contains basic functions for importing command line arguments from a config file, providing an alternative way of setting up simulations.
-* The `TreeList` class
+* The `Community` class
 	 - Provides the routines for applying different speciation rates to a phylogenetic tree, to be used either immediately after simulation within necsim, or at a later time using SpeciationCounter.cpp
 	 
 ## KNOWN BUGS ##

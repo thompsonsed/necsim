@@ -451,7 +451,7 @@ void Landscape::validateMaps()
 	writeInfo(os.str());
 }
 
-void Landscape::updateMap(double generation)
+bool Landscape::updateMap(double generation)
 {
 	// only update the map if the historical state has not been reached.
 	if(!mapvars->is_historical && has_historical)
@@ -469,9 +469,11 @@ void Landscape::updateMap(double generation)
 				coarse_max = historical_coarse_max;
 				coarse_map = historical_coarse_map;
 				doUpdate();
+				return true;
 			}
 		}
 	}
+	return false;
 }
 
 void Landscape::doUpdate()

@@ -11,31 +11,42 @@
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 #include "DispersalCoordinator.h"
+#include <utility>
 #include "CustomExceptions.h"
 #include "Logger.h"
 
-DispersalCoordinator::DispersalCoordinator()
+DispersalCoordinator::DispersalCoordinator() : dispersal_prob_map(), raw_dispersal_prob_map(), NR(nullptr),
+											   landscape(make_shared<Landscape>()),
+											   reproduction_map(make_shared<ActivityMap>()), generation(nullptr),
+											   doDispersal(nullptr), checkEndPointFptr(nullptr), xdim(0), ydim(0)
 {
+
 }
 
 DispersalCoordinator::~DispersalCoordinator()
-{
+= default;
 
+void DispersalCoordinator::setRandomNumber(shared_ptr <NRrand> NR_ptr)
+{
+	NR = std::move(NR_ptr);
 }
 
-void DispersalCoordinator::setRandomNumber(NRrand *NR_ptr)
-{
-	NR = NR_ptr;
-}
 
-void DispersalCoordinator::setHabitatMap(Landscape *map_ptr)
+void DispersalCoordinator::setMaps(shared_ptr <Landscape> landscape_ptr, shared_ptr <ActivityMap> repr_map_ptr)
 {
-	landscape = map_ptr;
-	if(!map_ptr)
+	landscape = landscape_ptr;
+	reproduction_map = std::move(repr_map_ptr);
+	if(!landscape_ptr)
 	{
 		throw FatalException("Attempting to set map pointer to null pointer in DispersalCoordinator.");
 	}
 	xdim = landscape->getSimParameters()->fine_map_x_size;
+	ydim = landscape->getSimParameters()->fine_map_y_size;
+}
+
+void DispersalCoordinator::setMaps(shared_ptr<Landscape> landscape_ptr)
+{
+	setMaps(landscape_ptr, make_shared<ActivityMap>());
 }
 
 void DispersalCoordinator::setGenerationPtr(double *generation_ptr)
@@ -60,29 +71,19 @@ void DispersalCoordinator::setDispersal(const string &dispersal_method, const st
 		NR->setDispersalParams(sigmain, tauin);
 		NR->setDispersalMethod(dispersal_method, m_probin, cutoffin);
 		doDispersal = &DispersalCoordinator::disperseDensityMap;
+		reproduction_map->standardiseValues();
 	}
 	else if(dispersal_file == "null")
 	{
 		writeInfo("Using null dispersal file.\n");
 		doDispersal = &DispersalCoordinator::disperseNullDispersalMap;
+		reproduction_map->standardiseValues();
 	}
 	else
 	{
 		writeInfo("Using dispersal file.\n");
 		doDispersal = &DispersalCoordinator::disperseDispersalMap;
-		// Check file existance
-		ifstream infile(dispersal_file);
-		if(!infile.good())
-		{
-			string msg =
-					"Could not access dispersal map file " + dispersal_file + ". Check file exists and is readable.";
-			throw FatalException(msg);
-		}
-		infile.close();
-		dispersal_prob_map.setSize(dispersal_x * dispersal_y, dispersal_x * dispersal_y);
-		dispersal_prob_map.import(dispersal_file);
-		fixDispersal();
-		dispersal_prob_map.close();
+		importDispersal(dispersal_x * dispersal_y, dispersal_file);
 	}
 }
 
@@ -95,6 +96,95 @@ void DispersalCoordinator::setDispersal(SimParameters *simParameters)
 	setDispersal(simParameters->dispersal_method, simParameters->dispersal_file,
 				 simParameters->fine_map_x_size, simParameters->fine_map_y_size, simParameters->m_prob,
 				 simParameters->cutoff, simParameters->sigma, simParameters->tau, simParameters->restrict_self);
+}
+
+void DispersalCoordinator::importDispersal(const unsigned long &dispersal_dim, const string &dispersal_file)
+{
+	// Check file existance
+	ifstream infile(dispersal_file);
+	if(!infile.good())
+	{
+		string msg =
+				"Could not access dispersal map file " + dispersal_file + ". Check file exists and is readable.";
+		throw FatalException(msg);
+	}
+	infile.close();
+	dispersal_prob_map.setSize(dispersal_dim, dispersal_dim);
+	dispersal_prob_map.import(dispersal_file);
+	if(landscape->hasHistorical())
+	{
+		setRawDispersalMap();
+	}
+	*generation = 0.0;
+	addDensity();
+	addReproduction();
+	fixDispersal();
+	dispersal_prob_map.close();
+	verifyDispersalMapSetup();
+}
+
+void DispersalCoordinator::setRawDispersalMap()
+{
+	raw_dispersal_prob_map = dispersal_prob_map;
+}
+
+void DispersalCoordinator::addDensity()
+{
+	for(unsigned long i = 0; i < ydim; i++)
+	{
+		for(unsigned long j = 0; j < xdim; j++)
+		{
+			unsigned long index = j + i * xdim;
+			for(unsigned long k = 0; k < dispersal_prob_map.getRows(); k++)
+			{
+				auto density = landscape->getValFine(j, i, *generation);
+				if(dispersal_prob_map[k][index] > 0.0 && density == 0)
+				{
+					Step origin_step;
+					calculateCellCoordinates(origin_step, k);
+					stringstream ss;
+					Step destination_step;
+					calculateCellCoordinates(destination_step, j + (i * xdim));
+					ss << "Dispersal from " << origin_step.oldx << ", " << origin_step.oldy << " (";
+					ss << origin_step.oldxwrap << ", " << origin_step.oldywrap << ") to ";
+					ss << destination_step.oldx << ", " << destination_step.oldy << " ("
+					   << destination_step.oldxwrap;
+					ss << ", " << destination_step.oldywrap << ")" << endl;
+					ss << "Source row: " << k << " destination row: " << index << endl;
+					ss << "Dispersal map value: " << dispersal_prob_map[k][index] << endl;
+					ss << "Origin density: " << landscape->getVal(origin_step.oldx, origin_step.oldy,
+																  origin_step.oldxwrap,
+																  origin_step.oldywrap, 0.0) << endl;
+					ss << "Destination density: " << landscape->getValFine(j, i, *generation) << endl;
+					writeError(ss.str());
+					throw FatalException("Dispersal map is non zero where density is 0.");
+				}
+				dispersal_prob_map[k][index] *= density;
+			}
+		}
+	}
+}
+
+void DispersalCoordinator::addReproduction()
+{
+	if(reproduction_map != nullptr)
+	{
+		if(!reproduction_map->isNull())
+		{
+			for(unsigned long i = 0; i < ydim; i++)
+			{
+				for(unsigned long j = 0; j < xdim; j++)
+				{
+					unsigned long index = j + i * xdim;
+					for(unsigned long k = 0; k < dispersal_prob_map.getRows(); k++)
+					{
+
+						dispersal_prob_map[k][index] *= (*reproduction_map)[i][j];
+					}
+				}
+			}
+		}
+	}
 }
 
 void DispersalCoordinator::fixDispersal()
@@ -149,11 +239,11 @@ bool DispersalCoordinator::checkDispersalRow(unsigned long row)
 	return false;
 }
 
-void DispersalCoordinator::verifyDispersalMap()
+void DispersalCoordinator::verifyDispersalMapSetup()
 {
 	if(dispersal_prob_map.getCols() > 0)
 	{
-		writeInfo("Verifying dispersal...\n");
+		writeInfo("Verifying dispersal setup...\n");
 		if(dispersal_prob_map.getCols() != dispersal_prob_map.getRows())
 		{
 			throw FatalException("Dispersal probability map dimensions do not match.");
@@ -173,11 +263,13 @@ void DispersalCoordinator::verifyDispersalMap()
 			{
 				Step destination_step;
 				calculateCellCoordinates(destination_step, x);
+#ifdef DEBUG
 				assertReferenceMatches(x);
+#endif // DEBUG
 				bool destination_value = landscape->getVal(destination_step.oldx, destination_step.oldy,
 														   destination_step.oldxwrap,
 														   destination_step.oldywrap, 0.0) > 0;
-				double dispersal_prob = 0.0;
+				double dispersal_prob;
 				if(x == 0)
 				{
 					dispersal_prob = dispersal_prob_map[y][0];
@@ -227,6 +319,18 @@ void DispersalCoordinator::verifyDispersalMap()
 	}
 }
 
+void DispersalCoordinator::updateDispersalMap()
+{
+	if(dispersal_prob_map.getRows() > 0)
+	{
+		dispersal_prob_map = raw_dispersal_prob_map;
+		addDensity();
+		addReproduction();
+	}
+}
+
+#ifdef DEBUG
+
 void DispersalCoordinator::assertReferenceMatches(unsigned long expected)
 {
 	unsigned long row_ref = expected;
@@ -246,11 +350,21 @@ void DispersalCoordinator::assertReferenceMatches(unsigned long expected)
 	}
 }
 
+#endif // DEBUG
+
 void DispersalCoordinator::disperseNullDispersalMap(Step &this_step)
 {
 	// Pick a random cell - that's all we need
-	this_step.oldx = floor(NR->d01() * (xdim - 1));
-	this_step.oldy = floor(NR->d01() * (xdim - 1));
+	long rand_x;
+	long rand_y;
+	// rejection sample based on reproduction values.
+	do
+	{
+		rand_x = floor(NR->d01() * (xdim - 1));
+		rand_y = floor(NR->d01() * (ydim - 1));
+	}
+	while(!reproduction_map->actionOccurs(rand_x, rand_y, 0, 0));
+	calculateCellCoordinates(this_step, rand_x + rand_y * xdim);
 }
 
 void DispersalCoordinator::disperseDispersalMap(Step &this_step)
@@ -338,7 +452,8 @@ void DispersalCoordinator::disperseDensityMap(Step &this_step)
 			}
 			angle = NR->direction();
 			density = landscape->runDispersal(dist, angle, this_step.oldx,
-											  this_step.oldy, this_step.oldxwrap, this_step.oldywrap, fail, *generation);
+											  this_step.oldy, this_step.oldxwrap, this_step.oldywrap, fail,
+											  *generation);
 			if(!fail)
 			{
 				fail = !checkEndPoint(density, this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap,
@@ -384,11 +499,25 @@ void DispersalCoordinator::setEndPointFptr(const bool &restrict_self)
 {
 	if(restrict_self)
 	{
-		checkEndPointFptr = &DispersalCoordinator::checkEndPointRestricted;
+		if(reproduction_map->isNull())
+		{
+			checkEndPointFptr = &DispersalCoordinator::checkEndPointRestricted;
+		}
+		else
+		{
+			checkEndPointFptr = &DispersalCoordinator::checkEndPointDensityRestrictedReproduction;
+		}
 	}
 	else
 	{
-		checkEndPointFptr = &DispersalCoordinator::checkEndPointDensity;
+		if(reproduction_map->isNull())
+		{
+			checkEndPointFptr = &DispersalCoordinator::checkEndPointDensity;
+		}
+		else
+		{
+			checkEndPointFptr = &DispersalCoordinator::checkEndPointDensityReproduction;
+		}
 	}
 }
 
@@ -424,6 +553,50 @@ bool DispersalCoordinator::checkEndPointRestricted(const unsigned long &density,
 		return false;
 	}
 	return checkEndPointDensity(density, oldx, oldy, oldxwrap, oldywrap, startx, starty, startxwrap, startywrap);
+}
+
+bool DispersalCoordinator::checkEndPointDensityReproduction(const unsigned long &density, long &oldx, long &oldy,
+															long &oldxwrap, long &oldywrap, const long &startx,
+															const long &starty, const long &startxwrap,
+															const long &startywrap)
+{
+	if(checkEndPointDensity(density, oldx, oldy, oldxwrap, oldywrap, startx, starty, startxwrap, startywrap))
+	{
+		if(!reproduction_map->actionOccurs(oldx, oldy, oldxwrap, oldywrap))
+		{
+			oldx = startx;
+			oldy = starty;
+			oldxwrap = startxwrap;
+			oldywrap = startywrap;
+			return false;
+		}
+		return true;
+	}
+	return false;
+
+}
+
+bool DispersalCoordinator::checkEndPointDensityRestrictedReproduction(const unsigned long &density, long &oldx,
+																	  long &oldy,
+																	  long &oldxwrap, long &oldywrap,
+																	  const long &startx,
+																	  const long &starty, const long &startxwrap,
+																	  const long &startywrap)
+{
+	if(checkEndPointRestricted(density, oldx, oldy, oldxwrap, oldywrap, startx, starty, startxwrap, startywrap))
+	{
+		if(!reproduction_map->actionOccurs(oldx, oldy, oldxwrap, oldywrap))
+		{
+			oldx = startx;
+			oldy = starty;
+			oldxwrap = startxwrap;
+			oldywrap = startywrap;
+			return false;
+		}
+		return true;
+	}
+	return false;
+
 }
 
 void DispersalCoordinator::disperse(Step &this_step)

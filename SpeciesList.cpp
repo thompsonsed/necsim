@@ -152,7 +152,7 @@ void SpeciesList::changePercentCover(unsigned long newmaxsize)
 	maxsize = newmaxsize;
 }
 
-unsigned long SpeciesList::getRandLineage(NRrand &rand_no)
+unsigned long SpeciesList::getRandLineage(shared_ptr<NRrand> rand_no)
 {
 	double rand_index;
 	if(maxsize <= list_size)
@@ -162,7 +162,7 @@ unsigned long SpeciesList::getRandLineage(NRrand &rand_no)
 		{
 			do
 			{
-				rand_index = rand_no.d01();
+				rand_index = rand_no->d01();
 				rand_index *= species_id_list.size();
 				//os << "ref: " << rand_index << ", " << species_id_list[round(rand_index)] << endl;
 			} while(species_id_list[floor(rand_index)] == 0);
@@ -176,7 +176,7 @@ unsigned long SpeciesList::getRandLineage(NRrand &rand_no)
 	}
 	else
 	{
-		rand_index =  rand_no.d01();
+		rand_index =  rand_no->d01();
 //		os << "rand_index: " << rand_index << endl;
 		rand_index  *= maxsize;
 		if(rand_index >= species_id_list.size())

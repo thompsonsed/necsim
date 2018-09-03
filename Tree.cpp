@@ -173,7 +173,7 @@ void Tree::setSeed(long long seed_in)
 {
 	if(!seeded)
 	{
-		NR.setSeed(seed_in);
+		NR->setSeed(seed_in);
 		the_seed = seed_in;
 		seeded = true;
 	}
@@ -370,7 +370,7 @@ unsigned long Tree::fillObjects(const unsigned long &initial_count)
 		// end of the simulation.
 		// This also contains the start x and y position of the species.
 		data[number_start].setup(true);
-		data[number_start].setSpec(NR.d01());
+		data[number_start].setSpec(NR->d01());
 		endactive++;
 		enddata++;
 	}
@@ -561,7 +561,7 @@ void Tree::chooseRandomLineage()
 {
 	incrementGeneration();
 	// choose a random lineage to die and be reborn out of those currently active
-	this_step.chosen = NR.i0(endactive - 1) + 1;  // cannot be 0
+	this_step.chosen = NR->i0(endactive - 1) + 1;  // cannot be 0
 	// Rejection sample based on reproductive potential
 	updateStepCoalescenceVariables();
 }
@@ -636,7 +636,7 @@ void Tree::switchPositions(const unsigned long &chosen)
 
 void Tree::calcNextStep()
 {
-	unsigned long random_lineage = NR.i0(static_cast<unsigned long>(deme)) + 1;
+	unsigned long random_lineage = NR->i0(static_cast<unsigned long>(deme)) + 1;
 	if(random_lineage != this_step.chosen && random_lineage <= endactive)
 	{
 		// then we have a coalescence event
@@ -668,7 +668,7 @@ void Tree::coalescenceEvent(const unsigned long &chosen, unsigned long &coalchos
 				active[chosen].getMinmax()));  // set the new minmax to the maximum of the two minimums.
 	active[chosen].setMinmax(active[coalchosen].getMinmax());
 	data[enddata].setGenerationRate(0);
-	data[enddata].setSpec(NR.d01());
+	data[enddata].setSpec(NR->d01());
 	active[chosen].setReference(enddata);
 	active[coalchosen].setReference(enddata);
 	//		removeOldPosition(chosen);
@@ -722,13 +722,13 @@ void Tree::addLineages(double generation_in)
 		endactive++;
 		active[endactive].setup(enddata, endactive, 1.0);
 		data[enddata].setup(true, 0, 0, 0, 0, generation_in);
-		data[enddata].setSpec(NR.d01());
+		data[enddata].setSpec(NR->d01());
 	}
 }
 
 bool Tree::checkProportionAdded(const double &proportion_added)
 {
-	return NR.d01() < proportion_added;
+	return NR->d01() < proportion_added;
 }
 
 void Tree::checkSimSize(unsigned long req_data, unsigned long req_active)
@@ -774,7 +774,7 @@ void Tree::convertTip(unsigned long i, double generationin, vector<TreeNode> &da
 	auto data_pos = enddata + data_added.size() + 1;
 	data[active[i].getReference()].setParent(data_pos);
 	tmp_tree_node.setGenerationRate(0);
-	tmp_tree_node.setSpec(NR.d01());
+	tmp_tree_node.setSpec(NR->d01());
 	active[i].setReference(data_pos);
 	data_added.emplace_back(tmp_tree_node);
 }
@@ -1387,7 +1387,7 @@ void Tree::dumpMain(ofstream &out)
 		out << endactive << "\n" << startendactive << "\n" << maxsimsize << "\n" << steps << "\n";
 		out << generation << "\n" << "\n" << maxtime << "\n";
 		out << deme_sample << "\n" << spec << "\n" << deme << "\n";
-		out << sql_output_database << "\n" << NR << "\n" << sim_parameters << "\n";
+		out << sql_output_database << "\n" << *NR << "\n" << sim_parameters << "\n";
 		// now output the protracted speciation variables (there should be two of these).
 		out << getProtractedVariables();
 	}
@@ -1510,7 +1510,7 @@ void Tree::loadMainSave(ifstream &in1)
 		in1 >> deme_sample >> spec >> deme;
 		in1.ignore();
 		getline(in1, sql_output_database);
-		in1 >> NR;
+		in1 >> *NR;
 		in1.ignore();
 		in1 >> sim_parameters;
 		if(maxtime == 0)
@@ -1523,7 +1523,7 @@ void Tree::loadMainSave(ifstream &in1)
 			throw FatalException("Time set to 0 on resume!");
 		}
 #endif
-		NR.setDispersalMethod(sim_parameters.dispersal_method, sim_parameters.m_prob, sim_parameters.cutoff);
+		NR->setDispersalMethod(sim_parameters.dispersal_method, sim_parameters.m_prob, sim_parameters.cutoff);
 		if(has_imported_pause)
 		{
 			sim_parameters.output_directory = out_directory;

@@ -510,14 +510,49 @@ public:
 		}
 	}
 
+	/**
+	 * @brief Output operator
+	 * @param os the output stream
+	 * @param m the object to write out
+	 * @return the modified output stream
+	 */
 	friend ostream &operator>>(ostream &os, const Map &m)
 	{
 		return Matrix<T>::writeOut(os, m);
 	}
 
+	/**
+	 * @brief Input operator
+	 * @param is the input stream
+	 * @param m the object to write in
+	 * @return the modified input stream
+	 */
 	friend istream &operator<<(istream &is, Map &m)
 	{
 		return Matrix<T>::readIn(is, m);
+	}
+
+	/**
+	 * @brief Equality operator
+	 * @param m the Map object to copy from
+	 * @return the self Map object
+	 */
+	Map &operator=(const Map &m)
+	{
+		Matrix<T>::operator=(m);
+		this->poDataset = m.poDataset;
+		this->poBand = m.poBand;
+		this->blockXSize = m.blockXSize;
+		this->blockYSize = m.blockYSize;
+		this->noDataValue = m.noDataValue;
+		this->filename = m.filename;
+		this->dt = m.dt;
+		this->cplErr = m.cplErr;
+		this->upper_left_x = m.upper_left_x;
+		this->upper_left_y = m.upper_left_y;
+		this->x_res = m.x_res;
+		this->y_res = m.y_res;
+		return *this;
 	}
 
 };

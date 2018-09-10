@@ -29,26 +29,26 @@ bool DataMask::isNull()
 	return isNullSample;
 }
 
-void DataMask::setup(const SimParameters &sim_parameters)
+void DataMask::setup(const shared_ptr<SimParameters> sim_parameters)
 {
 #ifdef DEBUG
-	if((sim_parameters.grid_x_size > sim_parameters.sample_x_size ||
-		sim_parameters.grid_y_size > sim_parameters.sample_y_size) && !isNullSample)
+	if((sim_parameters->grid_x_size > sim_parameters->sample_x_size ||
+		sim_parameters->grid_y_size > sim_parameters->sample_y_size) && !isNullSample)
 	{
-		writeLog(50, "Grid size: " + to_string(sim_parameters.grid_x_size) + ", " +
-					 to_string(sim_parameters.grid_y_size));
-		writeLog(50, "Sample mask size: " + to_string(sim_parameters.sample_x_size) + ", " +
-					 to_string(sim_parameters.sample_y_size));
+		writeLog(50, "Grid size: " + to_string(sim_parameters->grid_x_size) + ", " +
+					 to_string(sim_parameters->grid_y_size));
+		writeLog(50, "Sample mask size: " + to_string(sim_parameters->sample_x_size) + ", " +
+					 to_string(sim_parameters->sample_y_size));
 		throw FatalException("Datamask dimensions do not make sense");
 	}
 #endif // DEBUG
-	inputfile = sim_parameters.sample_mask_file;
-	x_dim = sim_parameters.grid_x_size;
-	y_dim = sim_parameters.grid_y_size;
-	mask_x_dim = sim_parameters.sample_x_size;
-	mask_y_dim = sim_parameters.sample_y_size;
-	x_offset = sim_parameters.sample_x_offset;
-	y_offset = sim_parameters.sample_y_offset;
+	inputfile = sim_parameters->sample_mask_file;
+	x_dim = sim_parameters->grid_x_size;
+	y_dim = sim_parameters->grid_y_size;
+	mask_x_dim = sim_parameters->sample_x_size;
+	mask_y_dim = sim_parameters->sample_y_size;
+	x_offset = sim_parameters->sample_x_offset;
+	y_offset = sim_parameters->sample_y_offset;
 	if(x_dim != mask_x_dim || y_dim != mask_y_dim)
 	{
 		isGridOffset = true;
@@ -59,13 +59,13 @@ void DataMask::setup(const SimParameters &sim_parameters)
 	}
 }
 
-bool DataMask::checkCanUseDefault(const SimParameters &sim_parameters)
+bool DataMask::checkCanUseDefault(const shared_ptr<SimParameters> sim_parameters)
 {
-	if(sim_parameters.sample_mask_file == "null")
+	if(sim_parameters->sample_mask_file == "null")
 	{
-		if(sim_parameters.fine_map_x_size == sim_parameters.sample_x_size &&
-		   sim_parameters.fine_map_y_size == sim_parameters.sample_y_size &&
-		   sim_parameters.fine_map_x_offset == 0 && sim_parameters.fine_map_y_offset == 0)
+		if(sim_parameters->fine_map_x_size == sim_parameters->sample_x_size &&
+		   sim_parameters->fine_map_y_size == sim_parameters->sample_y_size &&
+		   sim_parameters->fine_map_x_offset == 0 && sim_parameters->fine_map_y_offset == 0)
 		{
 			isNullSample = true;
 		}
@@ -76,7 +76,7 @@ bool DataMask::checkCanUseDefault(const SimParameters &sim_parameters)
 	}
 	else
 	{
-		isNullSample = sim_parameters.sample_mask_file == "none";
+		isNullSample = sim_parameters->sample_mask_file == "none";
 	}
 	return isNullSample;
 }
@@ -85,14 +85,14 @@ void DataMask::importBooleanMask(unsigned long xdim, unsigned long ydim, unsigne
 								 unsigned long mask_ydim,
 								 unsigned long xoffset, unsigned long yoffset, string inputfile_in)
 {
-	SimParameters tmp_sim_parameters;
-	tmp_sim_parameters.sample_mask_file = inputfile_in;
-	tmp_sim_parameters.grid_x_size = xdim;
-	tmp_sim_parameters.grid_y_size = ydim;
-	tmp_sim_parameters.sample_x_size = mask_xdim;
-	tmp_sim_parameters.sample_y_size = mask_ydim;
-	tmp_sim_parameters.sample_x_offset = xoffset;
-	tmp_sim_parameters.sample_y_offset = yoffset;
+	shared_ptr<SimParameters> tmp_sim_parameters = make_shared<SimParameters>();
+	tmp_sim_parameters->sample_mask_file = inputfile_in;
+	tmp_sim_parameters->grid_x_size = xdim;
+	tmp_sim_parameters->grid_y_size = ydim;
+	tmp_sim_parameters->sample_x_size = mask_xdim;
+	tmp_sim_parameters->sample_y_size = mask_ydim;
+	tmp_sim_parameters->sample_x_offset = xoffset;
+	tmp_sim_parameters->sample_y_offset = yoffset;
 	setup(tmp_sim_parameters);
 	isNullSample = inputfile_in == "null" || inputfile_in == "none";
 	if(!isNullSample)
@@ -116,9 +116,9 @@ void DataMask::completeBoolImport()
 	getProportionfptr = &DataMask::getBoolProportion;
 }
 
-void DataMask::setupNull(SimParameters &mapvarin)
+void DataMask::setupNull(const shared_ptr<SimParameters> mapvarin)
 {
-	sample_mask.setSize(mapvarin.fine_map_y_size, mapvarin.fine_map_x_size);
+	sample_mask.setSize(mapvarin->fine_map_y_size, mapvarin->fine_map_x_size);
 	for(unsigned long i = 0; i < sample_mask.getRows(); i++)
 	{
 		for(unsigned long j = 0; j < sample_mask.getCols(); j++)
@@ -129,7 +129,7 @@ void DataMask::setupNull(SimParameters &mapvarin)
 	completeBoolImport();
 }
 
-void DataMask::importSampleMask(SimParameters &mapvarin)
+void DataMask::importSampleMask(const shared_ptr<SimParameters> mapvarin)
 {
 	setup(mapvarin);
 	if(!checkCanUseDefault(mapvarin))
@@ -138,7 +138,7 @@ void DataMask::importSampleMask(SimParameters &mapvarin)
 		{
 			setupNull(mapvarin);
 		}
-		else if(mapvarin.uses_spatial_sampling)
+		else if(mapvarin->uses_spatial_sampling)
 		{
 #ifdef DEBUG
 			writeLog(10, "Using spatial sampling.");
@@ -158,7 +158,7 @@ void DataMask::importSampleMask(SimParameters &mapvarin)
 	}
 	else
 	{
-		if(mapvarin.uses_spatial_sampling)
+		if(mapvarin->uses_spatial_sampling)
 		{
 			// This could perhaps be a warning, but I'd prefer to have the warning/prohibit potential in python
 			// and throw a full exception here.

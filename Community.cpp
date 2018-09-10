@@ -284,7 +284,7 @@ void Samplematrix::removeFragment()
 	bIsFragment = false;
 }
 
-void Community::setList(Row<TreeNode> *l)
+void Community::setList(shared_ptr<Row<TreeNode>> l)
 {
 	nodes = l;
 }
@@ -1477,6 +1477,7 @@ void Community::calcFragments(string fragment_file)
 		os << "Importing fragments from " << fragment_file << endl;
 		writeInfo(os.str());
 #ifdef use_csv
+		writeInfo("Using fast-cpp-csv-parse");
 		// Then use the fast-cpp-csv-parser
 		// There is a config file to import - here we use a specific piece of import code to parse the csv file.
 		// first count the number of lines
@@ -1580,6 +1581,13 @@ void Community::calcFragments(string fragment_file)
 			// Fragment name and dimensions
 			try
 			{
+				for(auto &item : (*this_fragment))
+				{
+					if(item.empty())
+					{
+						throw invalid_argument("Cannot convert empty argument.");
+					}
+				}
 				fragments[i].name = (*this_fragment)[0];
 				fragments[i].x_west = stoi((*this_fragment)[1]);
 				fragments[i].y_north = stoi((*this_fragment)[2]);
@@ -1646,7 +1654,7 @@ void Community::applyFragments()
 	writeInfo("done!\n");
 }
 
-void Community::setSimParameters(const SimParameters *sim_parameters)
+void Community::setSimParameters(const shared_ptr<SimParameters> sim_parameters)
 {
 	if(!has_imported_data)
 	{
@@ -1746,6 +1754,16 @@ void Community::importSimParameters(string file)
 		throw SpeciesException(er.what());
 	}
 	has_imported_data = true;
+}
+
+void Community::forceSimCompleteParameter()
+{
+	if(!bSqlConnection)
+	{
+		openSqlConnection(spec_sim_parameters->filename);
+	}
+	string update_command = "UPDATE SIMULATION_PARAMETERS SET sim_complete=1 WHERE sim_complete=0;";
+	sqlite3_exec(database, update_command.c_str(), nullptr, nullptr, nullptr);
 }
 
 bool Community::isSetDatabase()
@@ -2217,6 +2235,116 @@ void Community::writeNewMetacommuntyParameters()
 	}
 }
 
+void Community::createSpeciesList()
+{
+	string create_species_list;
+	create_species_list =
+			"CREATE TABLE SPECIES_LIST (ID int PRIMARY KEY NOT NULL, unique_spec INT NOT NULL, xval INT NOT NULL,";
+	create_species_list += "yval INT NOT NULL, xwrap INT NOT NULL, ywrap INT NOT NULL, tip INT NOT NULL, speciated INT NOT "
+					"NULL, parent INT NOT NULL, existence INT NOT NULL, randnum DOUBLE NOT NULL, gen_alive INT NOT "
+					"NULL, gen_added DOUBLE NOT NULL);";
+
+	// Create the table within the SQL database
+	char *sErrMsg = nullptr;
+	int rc = sqlite3_exec(database, create_species_list.c_str(), nullptr, nullptr, &sErrMsg);
+	if(rc != SQLITE_OK)
+	{
+		stringstream ss;
+		ss << "Error creating SPECIES_LIST table in database: " << sErrMsg << endl;
+		throw FatalException(ss.str());
+	}
+}
+
+void Community::deleteSpeciesList()
+{
+	string wipe_species_list;
+	wipe_species_list =
+			"DROP TABLE IF EXISTS SPECIES_LIST;";
+	// Drop the table from the SQL database
+	char *sErrMsg = nullptr;
+	int rc = sqlite3_exec(database, wipe_species_list.c_str(), nullptr, nullptr, &sErrMsg);
+	if(rc != SQLITE_OK)
+	{
+		stringstream ss;
+		ss << "Error dropping SPECIES_LIST table in database: " << sErrMsg << endl;
+		throw FatalException(ss.str());
+	}
+}
+
+void Community::writeSpeciesList(const unsigned long &enddata)
+{
+	sqlite3_stmt *stmt = nullptr;
+	char *sErrMsg = nullptr;
+	// Now create the prepared statement into which we shall insert the values from the table
+	string insert_species_list = "INSERT INTO SPECIES_LIST "
+				   "(ID,unique_spec,xval,yval,xwrap,ywrap,tip,speciated,parent,existence,randnum,gen_alive,gen_added) "
+				   "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
+	sqlite3_prepare_v2(database, insert_species_list.c_str(), static_cast<int>(strlen(insert_species_list.c_str())),
+					   &stmt, nullptr);
+
+	// Start the transaction
+	int rc = sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, &sErrMsg);
+	if(rc != SQLITE_OK)
+	{
+		writeError("ERROR_SQL_008: Cannot start SQL transaction. Check memory database assignment and SQL commands.");
+	}
+	for(unsigned int i = 0; i <= enddata; i++)
+	{
+		sqlite3_bind_int(stmt, 1, i);
+		sqlite3_bind_int(stmt, 2, static_cast<int>((*nodes)[i].getSpeciesID()));
+		sqlite3_bind_int(stmt, 3, static_cast<int>((*nodes)[i].getXpos()));
+		sqlite3_bind_int(stmt, 4, static_cast<int>((*nodes)[i].getYpos()));
+		sqlite3_bind_int(stmt, 5, static_cast<int>((*nodes)[i].getXwrap()));
+		sqlite3_bind_int(stmt, 6, static_cast<int>((*nodes)[i].getYwrap()));
+		sqlite3_bind_int(stmt, 7, (*nodes)[i].isTip());
+		sqlite3_bind_int(stmt, 8, (*nodes)[i].hasSpeciated());
+		sqlite3_bind_int(stmt, 9, static_cast<int>((*nodes)[i].getParent()));
+		sqlite3_bind_int(stmt, 10, (*nodes)[i].getExistence());
+		sqlite3_bind_double(stmt, 11, static_cast<double>((*nodes)[i].getSpecRate()));
+		sqlite3_bind_int(stmt, 12, static_cast<int>((*nodes)[i].getGenRate()));
+		sqlite3_bind_double(stmt, 13, static_cast<double>((*nodes)[i].getGeneration()));
+		sqlite3_step(stmt);
+		sqlite3_clear_bindings(stmt);
+		sqlite3_reset(stmt);
+	}
+	stringstream os;
+	os << "\r    Executing SQL commands...." << flush;
+	writeInfo(os.str());
+	// execute the command and close the connection to the database
+	rc = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, &sErrMsg);
+	if(rc != SQLITE_OK)
+	{
+		stringstream ss;
+		ss << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
+			  "commands. Ensure SQL statements are properly cleared."
+		   << endl;
+		ss << "Error code: " << rc << endl;
+		// try again
+		int i = 0;
+		while((rc != SQLITE_OK && rc != SQLITE_DONE) && i < 10)
+		{
+			sleep(1);
+			i++;
+			rc = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, &sErrMsg);
+			ss << "Attempt " << i << " failed..." << endl;
+			ss << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
+				  "commands. Ensure SQL statements are properly cleared." << endl;
+		}
+		writeError(ss.str());
+	}
+	// Need to finalise the statement
+	rc = sqlite3_finalize(stmt);
+	if(rc != SQLITE_OK)
+	{
+		stringstream ss;
+		ss << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
+			  "commands. Ensure SQL statements are properly cleared."
+		   << endl;
+		ss << "Error code: " << rc << endl;
+	}
+
+}
+
 void Community::updateCommunityParameters()
 {
 	for(auto parameter : past_communities.communityParameters)
@@ -2357,7 +2485,7 @@ void Community::printEndTimes(time_t tStart, time_t tEnd)
 	writeInfo(os.str());
 }
 
-void Community::apply(SpecSimParameters *sp)
+void Community::apply(shared_ptr<SpecSimParameters> sp)
 {
 	time_t tStart{};
 	time_t tEnd{};
@@ -2368,20 +2496,20 @@ void Community::apply(SpecSimParameters *sp)
 	printEndTimes(tStart, tEnd);
 }
 
-void Community::applyNoOutput(SpecSimParameters *sp)
+void Community::applyNoOutput(shared_ptr<SpecSimParameters> sp)
 {
 	doApplication(sp);
 }
 
 
 
-void Community::doApplication(SpecSimParameters *sp)
+void Community::doApplication(shared_ptr<SpecSimParameters> sp)
 {
-	Row<TreeNode> data;
-	doApplication(sp, &data);
+	shared_ptr<Row<TreeNode>> data = make_shared<Row<TreeNode>>();
+	doApplication(sp, data);
 }
 
-void Community::doApplication(SpecSimParameters *sp, Row<TreeNode> *data)
+void Community::doApplication(shared_ptr<SpecSimParameters> sp, shared_ptr<Row<TreeNode>> data)
 {
 	spec_sim_parameters = sp;
 	writeSpeciationRates();
@@ -2401,10 +2529,33 @@ void Community::doApplication(SpecSimParameters *sp, Row<TreeNode> *data)
 	calculateTree();
 }
 
-void Community::doApplicationInternal(SpecSimParameters *sp, Row<TreeNode> *data)
+void Community::doApplicationInternal(shared_ptr<SpecSimParameters> sp, shared_ptr<Row<TreeNode>> data)
 {
 	setInternalDatabase();
 	doApplication(sp, data);
+}
+
+void Community::speciateRemainingLineages(const string &filename)
+{
+	importSimParameters(filename);
+	importSamplemask("null");
+	importData(filename);
+	spec_sim_parameters->filename= filename;
+	// Skip the first entry as it's always blank
+	for(unsigned long i = 1; i < nodes->size(); i++)
+	{
+		TreeNode * this_node = &(*nodes)[i];
+		if(this_node->getParent() == 0 && !checkSpeciation(this_node->getSpecRate(),
+														   min_spec_rate, this_node->getGenRate()))
+		{
+			this_node->setSpec(0.0);
+		}
+	}
+	deleteSpeciesList();
+	createSpeciesList();
+	writeSpeciesList(nodes->size());
+	forceSimCompleteParameter();
+	exportDatabase();
 
 }
 

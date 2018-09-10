@@ -81,7 +81,7 @@ unsigned long archimedesSpiralY(const double &centre_x, const double &centre_y, 
 	return static_cast<unsigned long>(floor(radius * sin(theta) + centre_y));
 }
 
-void Landscape::setDims(SimParameters *mapvarsin)
+void Landscape::setDims(shared_ptr<SimParameters> mapvarsin)
 {
 	if(!check_set_dim)  // checks to make sure it hasn't been run already.
 	{
@@ -761,7 +761,7 @@ unsigned long Landscape::getInitialCount(double dSample, DataMask &samplemask)
 	return toret;
 }
 
-SimParameters *Landscape::getSimParameters()
+shared_ptr<SimParameters> Landscape::getSimParameters()
 {
 	if(!mapvars)
 	{

@@ -44,7 +44,7 @@ protected:
 	// Dispersal coordinator
 	DispersalCoordinator dispersal_coordinator{};
 	// Stores all key simulation parameters for the Landscape object
-	SimParameters  * simParameters;
+	shared_ptr<SimParameters> simParameters;
 	// The random number generator object
 	shared_ptr<NRrand> random;
 	// The random number seed
@@ -68,10 +68,9 @@ protected:
 	// Reference number for this set of parameters in the database output
 	unsigned long max_parameter_reference;
 public:
-	SimulateDispersal() : density_landscape(make_shared<Landscape>()), random(make_shared<NRrand>()), distances(),
-						  num_steps()
+	SimulateDispersal() : density_landscape(make_shared<Landscape>()), simParameters(make_shared<SimParameters>()),
+						  random(make_shared<NRrand>()), distances(), num_steps()
 	{
-		simParameters = nullptr;
 		num_repeats = 0;
 		database = nullptr;
 		seed = 0;
@@ -97,7 +96,7 @@ public:
 	 * @param sim_parameters pointer to the simulation parameters to use
 	 * @param print if true, writes the parameters out using writeInfo()
 	 */
-	void setSimulationParameters(SimParameters * sim_parameters, bool print=true);
+	void setSimulationParameters(shared_ptr<SimParameters> sim_parameters, bool print = true);
 
 	/**
 	 * @brief Import the maps from the simulation parameters.

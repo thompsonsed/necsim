@@ -20,6 +20,7 @@
 #include <string>
 #include <sqlite3.h>
 #include <set>
+#include <memory>
 #include "Community.h"
 #include "Tree.h"
 #include "NRrand.h"
@@ -95,7 +96,7 @@ public:
 	 * for the metacommunity structure, but doesn't write the output
  	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure.
  	 */
-	void applyNoOutput(SpecSimParameters *sp) override ;
+	void applyNoOutput(shared_ptr<SpecSimParameters> sp) override ;
 
 
 };

@@ -23,7 +23,7 @@ void SimulateDispersal::setSequential(bool bSequential)
 	is_sequential = bSequential;
 }
 
-void SimulateDispersal::setSimulationParameters(SimParameters * sim_parameters, bool print)
+void SimulateDispersal::setSimulationParameters(shared_ptr<SimParameters> sim_parameters, bool print)
 {
 	if(print)
 	{
@@ -54,7 +54,7 @@ void SimulateDispersal::importMaps()
 	density_landscape->calcHistoricalCoarseMap();
 	density_landscape->setLandscape(simParameters->landscape_type);
 	density_landscape->recalculateHabitatMax();
-	dataMask.importSampleMask(*simParameters);
+	dataMask.importSampleMask(simParameters);
 }
 
 void SimulateDispersal::setSizes()

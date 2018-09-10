@@ -87,7 +87,7 @@ void DispersalCoordinator::setDispersal(const string &dispersal_method, const st
 	}
 }
 
-void DispersalCoordinator::setDispersal(SimParameters *simParameters)
+void DispersalCoordinator::setDispersal(shared_ptr<SimParameters> simParameters)
 {
 	if(!simParameters)
 	{

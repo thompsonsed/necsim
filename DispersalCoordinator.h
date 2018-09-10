@@ -124,7 +124,7 @@ public:
 	 * @brief Sets the dispersal parameters from the SimParameters object.
 	 * @param simParameters pointer to the simulation parameters to set
 	 */
-	void setDispersal(SimParameters *simParameters);
+	void setDispersal(shared_ptr<SimParameters> simParameters);
 
 	/**
 	 * @brief Imports the dispersal map and fixes the values based on the density and reproduction probabilities.

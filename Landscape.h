@@ -12,14 +12,15 @@
 #ifndef LANDSCAPE_H
 #define LANDSCAPE_H
 
-# include <string>
-# include <cstdio>
-# include <vector>
-# include <iostream>
-# include <fstream>
-# include <cmath>
-# include <stdexcept>
-# include <boost/filesystem.hpp>
+#include <string>
+#include <cstdio>
+#include <vector>
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <stdexcept>
+#include <memory>
+#include <boost/filesystem.hpp>
 
 #include "Map.h"
 #include "DataMask.h"
@@ -91,7 +92,7 @@ protected:
 	// the historical coarser map.
 	Map<uint32_t> historical_coarse_map;
 	// for importing and storing the simulation set-up options.
-	SimParameters *mapvars;
+	shared_ptr<SimParameters> mapvars;
 	// the minimum values for each dimension for offsetting.
 	long fine_x_min{}, fine_y_min{}, coarse_x_min{}, coarse_y_min{};
 	// the maximum values for each dimension for offsetting.
@@ -151,9 +152,8 @@ public:
 	/**
 	 * @brief The default constructor.
 	 */
-	Landscape()
+	Landscape() : mapvars(make_shared<SimParameters>())
 	{
-		mapvars = nullptr;
 		check_set_dim = false; // sets the check to false.
 		is_historical = false;
 		current_map_time = 0;
@@ -187,7 +187,7 @@ public:
 	 * 
 	 * @param mapvarsin the SimParameters object containing the map variables to import
 	 */
-	void setDims(SimParameters *mapvarsin);
+	void setDims(shared_ptr<SimParameters> mapvarsin);
 
 	/**
 	 * @brief Checks that the map files exist (or are none/null).
@@ -479,7 +479,7 @@ public:
 	 * @brief Gets the mapvars object pointer for referencing simulation parameters.
 	 * @return 
 	 */
-	SimParameters *getSimParameters();
+	shared_ptr<SimParameters> getSimParameters();
 
 	/**
 	 * @brief Checks whether the point is habitat or non-habitat.

@@ -23,13 +23,13 @@
 
 void Tree::importSimulationVariables(const string &configfile)
 {
-	sim_parameters.importParameters(configfile);
+	sim_parameters->importParameters(configfile);
 	runFileChecks();
 }
 
 void Tree::importSimulationVariables(ConfigOption config)
 {
-	sim_parameters.importParameters(config);
+	sim_parameters->importParameters(config);
 	runFileChecks();
 }
 
@@ -42,11 +42,10 @@ void Tree::runFileChecks()
 
 void Tree::wipeSimulationVariables()
 {
-	SimParameters tmpSimParameters;
-	sim_parameters = tmpSimParameters;
+	sim_parameters = make_shared<SimParameters>();
 }
 
-void Tree::internalSetup(const SimParameters &sim_parameters_in)
+void Tree::internalSetup(shared_ptr<SimParameters> sim_parameters_in)
 {
 	sim_parameters = sim_parameters_in;
 	setup();
@@ -54,16 +53,16 @@ void Tree::internalSetup(const SimParameters &sim_parameters_in)
 
 bool Tree::checkOutputDirectory()
 {
-	if(sim_parameters.output_directory != "null")
+	if(sim_parameters->output_directory != "null")
 	{
 		try
 		{
-			doesExist(sim_parameters.output_directory);
+			doesExist(sim_parameters->output_directory);
 		}
 		catch(runtime_error &re)
 		{
 			writeInfo("Output folder does not exist... creating...");
-			bool bOutputFolder = boost::filesystem::create_directory(sim_parameters.output_directory);
+			bool bOutputFolder = boost::filesystem::create_directory(sim_parameters->output_directory);
 			if(bOutputFolder)
 			{
 				writeInfo("done!\n");
@@ -83,7 +82,7 @@ bool Tree::checkOutputDirectory()
 
 void Tree::checkSims()
 {
-	checkSims(sim_parameters.output_directory, sim_parameters.the_seed, sim_parameters.the_task);
+	checkSims(sim_parameters->output_directory, sim_parameters->the_seed, sim_parameters->the_task);
 }
 
 void Tree::checkSims(string output_dir, long seed_in, long task_in)
@@ -104,9 +103,9 @@ void Tree::checkSims(string output_dir, long seed_in, long task_in)
 		writeInfo(os.str());
 		if(!has_imported_pause)
 		{
-			setResumeParameters(sim_parameters.output_directory, sim_parameters.output_directory,
-								static_cast<unsigned long>(sim_parameters.the_seed),
-								static_cast<unsigned long>(sim_parameters.the_task), sim_parameters.max_time);
+			setResumeParameters(sim_parameters->output_directory, sim_parameters->output_directory,
+								static_cast<unsigned long>(sim_parameters->the_seed),
+								static_cast<unsigned long>(sim_parameters->the_task), sim_parameters->max_time);
 		}
 		has_paused = true;
 	}
@@ -122,17 +121,17 @@ void Tree::setParameters()
 {
 	if(!has_imported_vars)
 	{
-		out_directory = sim_parameters.output_directory;
+		out_directory = sim_parameters->output_directory;
 
-		the_task = sim_parameters.the_task;
-		the_seed = sim_parameters.the_seed;
+		the_task = sim_parameters->the_task;
+		the_seed = sim_parameters->the_seed;
 
-		deme = sim_parameters.deme;
-		deme_sample = sim_parameters.deme_sample;
-		spec = sim_parameters.spec;
-		maxtime = sim_parameters.max_time;
-		times_file = sim_parameters.times_file;
-		setProtractedVariables(sim_parameters.min_speciation_gen, sim_parameters.max_speciation_gen);
+		deme = sim_parameters->deme;
+		deme_sample = sim_parameters->deme_sample;
+		spec = sim_parameters->spec;
+		maxtime = sim_parameters->max_time;
+		times_file = sim_parameters->times_file;
+		setProtractedVariables(sim_parameters->min_speciation_gen, sim_parameters->max_speciation_gen);
 		has_imported_vars = true;
 	}
 	else
@@ -188,7 +187,7 @@ unsigned long Tree::setObjectSizes()
 {
 	unsigned long initial_count = getInitialCount();
 	active.setSize(initial_count + 1);
-	data.setSize(2 * initial_count + 1);
+	data->setSize(2 * initial_count + 1);
 	return initial_count;
 }
 
@@ -218,7 +217,7 @@ void Tree::setInitialValues()
 	// Set the seed
 	setSeed(the_seed);
 	setTimes();
-	sim_parameters.printVars();
+	sim_parameters->printVars();
 	// Determine the speciation rates which will be applied after the simulation completes.
 	determineSpeciationRates();
 }
@@ -260,7 +259,7 @@ void Tree::setTimes()
 	if(times_file == "set")
 	{
 		uses_temporal_sampling = true;
-		reference_times = sim_parameters.times;
+		reference_times = sim_parameters->times;
 		sort(reference_times.begin(), reference_times.end());
 	}
 	if(reference_times.size() <= 1)
@@ -275,9 +274,9 @@ void Tree::determineSpeciationRates()
 {
 	if(bConfig)
 	{
-		if(sim_parameters.configs.hasSection("spec_rates"))
+		if(sim_parameters->configs.hasSection("spec_rates"))
 		{
-			vector<string> spec_rates = sim_parameters.configs.getSectionValues("spec_rates");
+			vector<string> spec_rates = sim_parameters->configs.getSectionValues("spec_rates");
 			for(const auto &spec_rate : spec_rates)
 			{
 				speciation_rates.push_back(stod(spec_rate));
@@ -369,8 +368,8 @@ unsigned long Tree::fillObjects(const unsigned long &initial_count)
 		// Add a tip in the TreeNode for calculation of the coalescence tree at the
 		// end of the simulation.
 		// This also contains the start x and y position of the species.
-		data[number_start].setup(true);
-		data[number_start].setSpec(NR->d01());
+		(*data)[number_start].setup(true);
+		(*data)[number_start].setSpec(NR->d01());
 		endactive++;
 		enddata++;
 	}
@@ -398,7 +397,7 @@ bool Tree::runSimulation()
 
 	writeSimStartToConsole();
 	// Main while loop to process while there is still time left and the simulation is not complete.
-	// Ensure that the step object contains no data.
+	// Ensure that the step object contains no data->
 	this_step.wipeData();
 	setSimStartVariables();
 	if(endactive < 2)
@@ -415,10 +414,10 @@ bool Tree::runSimulation()
 		if(this_step.bContinueSim)
 		{
 			// increase the counter of the number of moves (or generations) the lineage has undergone.
-			data[active[this_step.chosen].getReference()].increaseGen();
+			(*data)[active[this_step.chosen].getReference()].increaseGen();
 			// Check if speciation happens
-			if(calcSpeciation(data[active[this_step.chosen].getReference()].getSpecRate(), 0.99999 * spec,
-							  data[active[this_step.chosen].getReference()].getGenRate()))
+			if(calcSpeciation((*data)[active[this_step.chosen].getReference()].getSpecRate(), 0.99999 * spec,
+							  (*data)[active[this_step.chosen].getReference()].getGenRate()))
 			{
 				speciation(this_step.chosen);
 			}
@@ -447,7 +446,7 @@ bool Tree::runSimulation()
 			{
 				// Then we need to expand the map
 				// This is a hack, I know it's a hack and is wrong, and I aint gonna change it :)
-				data[active[endactive].getReference()].setSpec(0.0);
+				(*data)[active[endactive].getReference()].setSpec(0.0);
 				// First speciate the remaining lineage
 				speciation(endactive);
 				generation = reference_times[this_step.time_reference] + 0.000000000001;
@@ -461,7 +460,7 @@ bool Tree::runSimulation()
 		}
 	}
 	while((endactive > 1) && (steps < 100 || difftime(sim_end, start) < maxtime) && this_step.bContinueSim);
-// If the simulations finish correctly, output the completed data.
+// If the simulations finish correctly, output the completed data->
 // Otherwise, pause the simulation and save objects to file.
 	return stopSimulation();
 }
@@ -487,7 +486,7 @@ bool Tree::stopSimulation()
 		for(unsigned int i = 0; i <= endactive; i++)
 		{
 			speciateLineage(active[i].getReference());
-			data[active[i].getReference()].setSpec(0.0);
+			(*data)[active[i].getReference()].setSpec(0.0);
 		}
 		sim_complete = true;
 		time(&sim_finish);
@@ -578,7 +577,7 @@ void Tree::speciation(const unsigned long &chosen)
 	unsigned long data_position = active[chosen].getReference();
 #ifdef DEBUG
 	// Store debug information in DEBUG mode
-	if(data[data_position].hasSpeciated())
+	if((*data)[data_position].hasSpeciated())
 	{
 		stringstream ss;
 		ss << "Chosen: " << chosen << endl;
@@ -586,7 +585,7 @@ void Tree::speciation(const unsigned long &chosen)
 		ss.str("");
 		ss << "Endactive: " << endactive << endl;
 		writeLog(50, ss);
-		data[data_position].logLineageInformation(50);
+		(*data)[data_position].logLineageInformation(50);
 		active[chosen].logActive(50);
 		throw FatalException("ERROR_MOVE_028: Attempting to speciate a speciated species.");
 	}
@@ -599,7 +598,7 @@ void Tree::speciation(const unsigned long &chosen)
 
 void Tree::speciateLineage(const unsigned long &data_position)
 {
-	data[data_position].speciate();
+	(*data)[data_position].speciate();
 }
 
 void Tree::removeOldPosition(const unsigned long &chosen)
@@ -655,20 +654,20 @@ bool Tree::calcSpeciation(const long double &random_number,
 void Tree::coalescenceEvent(const unsigned long &chosen, unsigned long &coalchosen)
 {
 	// coalescence occured, so we need to adjust the data appropriatedly
-	// our chosen lineage has merged with the coalchosen lineage, so we need to sync up the data.
+	// our chosen lineage has merged with the coalchosen lineage, so we need to sync up the data->
 	enddata++;
-	data[enddata].setup(0, active[chosen].getXpos(), active[chosen].getYpos(), active[chosen].getXwrap(),
+	(*data)[enddata].setup(0, active[chosen].getXpos(), active[chosen].getYpos(), active[chosen].getXwrap(),
 						active[chosen].getYwrap(), generation);
 
 	// First perform the move
-	data[active[chosen].getReference()].setParent(enddata);
-	data[active[coalchosen].getReference()].setParent(enddata);
+	(*data)[active[chosen].getReference()].setParent(enddata);
+	(*data)[active[coalchosen].getReference()].setParent(enddata);
 	active[coalchosen].setMinmax(
 			max(active[coalchosen].getMinmax(),
 				active[chosen].getMinmax()));  // set the new minmax to the maximum of the two minimums.
 	active[chosen].setMinmax(active[coalchosen].getMinmax());
-	data[enddata].setGenerationRate(0);
-	data[enddata].setSpec(NR->d01());
+	(*data)[enddata].setGenerationRate(0);
+	(*data)[enddata].setSpec(NR->d01());
 	active[chosen].setReference(enddata);
 	active[coalchosen].setReference(enddata);
 	//		removeOldPosition(chosen);
@@ -714,15 +713,15 @@ void Tree::addLineages(double generation_in)
 	for(auto & item : data_to_add)
 	{
 		enddata ++;
-		data[enddata] = item;
+		(*data)[enddata] = item;
 	}
 	for(unsigned long i = 0; i < number_added; i++)
 	{
 		enddata++;
 		endactive++;
 		active[endactive].setup(enddata, endactive, 1.0);
-		data[enddata].setup(true, 0, 0, 0, 0, generation_in);
-		data[enddata].setSpec(NR->d01());
+		(*data)[enddata].setup(true, 0, 0, 0, 0, generation_in);
+		(*data)[enddata].setSpec(NR->d01());
 	}
 }
 
@@ -737,10 +736,10 @@ void Tree::checkSimSize(unsigned long req_data, unsigned long req_active)
 	unsigned long min_data = enddata + req_data + 2;
 	// Take into account future coalescence events
 	min_data += min_active * 2;
-	if(data.size() < min_data)
+	if(data->size() < min_data)
 	{
 		// change the size of data
-		data.resize(min_data);
+		data->resize(min_data);
 	}
 
 	if(active.size() < min_active)
@@ -753,14 +752,14 @@ void Tree::checkSimSize(unsigned long req_data, unsigned long req_active)
 void Tree::makeTip(const unsigned long &tmp_active, const double &generationin, vector<TreeNode> &data_added)
 {
 	unsigned long reference = active[tmp_active].getReference();
-	if(data[reference].isTip())
+	if((*data)[reference].isTip())
 	{
 		convertTip(tmp_active, generationin, data_added);
 	}
 	else
 	{
-		data[active[tmp_active].getReference()].setGeneration(generationin);
-		data[active[tmp_active].getReference()].setTip(true);
+		(*data)[active[tmp_active].getReference()].setGeneration(generationin);
+		(*data)[active[tmp_active].getReference()].setTip(true);
 	}
 }
 
@@ -772,7 +771,7 @@ void Tree::convertTip(unsigned long i, double generationin, vector<TreeNode> &da
 						active[i].getYwrap(), generationin);
 	// Now link the old tip to the new tip
 	auto data_pos = enddata + data_added.size() + 1;
-	data[active[i].getReference()].setParent(data_pos);
+	(*data)[active[i].getReference()].setParent(data_pos);
 	tmp_tree_node.setGenerationRate(0);
 	tmp_tree_node.setSpec(NR->d01());
 	active[i].setReference(data_pos);
@@ -781,7 +780,7 @@ void Tree::convertTip(unsigned long i, double generationin, vector<TreeNode> &da
 
 void Tree::applySpecRate(long double sr, double t)
 {
-	setupTreeGeneration(sr, t);
+	setupCommunityCalculation(sr, t);
 	community.createDatabase();
 #ifdef record_space
 	community.recordSpatial();
@@ -790,7 +789,7 @@ void Tree::applySpecRate(long double sr, double t)
 
 void Tree::applySpecRateInternal(long double sr, double t)
 {
-	setupTreeGeneration(sr, t);
+	setupCommunityCalculation(sr, t);
 	community.calcSpecies();
 	community.calcSpeciesAbundance();
 }
@@ -800,11 +799,11 @@ Row<unsigned long> *Tree::getCumulativeAbundances()
 	return community.getCumulativeAbundances();
 }
 
-void Tree::setupTreeGeneration(long double sr, double t)
+ProtractedSpeciationParameters Tree::setupCommunity()
 {
 	if(!community.hasImportedData())
 	{
-		community.setSimParameters(&sim_parameters);
+		community.setSimParameters(sim_parameters);
 		community.setDatabase(database);
 	}
 	community.resetTree();
@@ -814,6 +813,12 @@ void Tree::setupTreeGeneration(long double sr, double t)
 	tmp.max_speciation_gen = getProtractedGenerationMax();
 	community.overrideProtractedParameters(tmp);
 	community.setProtracted(getProtracted());
+	return tmp;
+}
+
+void Tree::setupCommunityCalculation(long double sr, double t)
+{
+	auto tmp = setupCommunity();
 	community.addCalculationPerformed(sr, t, false, 0, 0.0, tmp);
 }
 
@@ -997,12 +1002,12 @@ unsigned long Tree::sortData()
 	os.str("");
 	// coalescence finished - process speciation
 	// check the data structure
-	if(enddata > data.size())
+	if(enddata > data->size())
 	{
 #ifdef DEBUG
 		stringstream ss;
 		ss << "enddata: " << enddata << endl;
-		ss << "data.size(): " << data.size() << endl;
+		ss << "data->size(): " << data->size() << endl;
 		writeLog(50, ss);
 #endif // DEBUG
 		throw FatalException("Enddata greater than data size. Programming error likely.");
@@ -1010,23 +1015,23 @@ unsigned long Tree::sortData()
 	// Now make sure those left in endactive will definitely speciate.
 	for(unsigned long i = 1; i <= endactive; i++)
 	{
-		data[active[i].getReference()].setSpec(0.0);
+		(*data)[active[i].getReference()].setSpec(0.0);
 	}
 	// Double check speciation events have been counted.
 	unsigned long spec_up_to = 0;
 	for(unsigned int i = 1; i <= enddata; i++)
 	{
-		if(calcSpeciation(data[i].getSpecRate(), spec, data[i].getGenRate()))
+		if(calcSpeciation((*data)[i].getSpecRate(), spec, (*data)[i].getGenRate()))
 		{
 			spec_up_to++;
-			data[i].speciate();
+			(*data)[i].speciate();
 		}
 	}
 	try
 	{
 		for(unsigned long i = 1; i <= enddata; i++)
 		{
-			if((!(data[i].hasSpeciated())) && (data[i].getParent() == 0 && data[i].getExistence()))
+			if((!((*data)[i].hasSpeciated())) && ((*data)[i].getParent() == 0 && (*data)[i].getExistence()))
 			{
 				throw FatalException(string("ERROR_MAIN_004: " + to_string((long long) i) +
 											" has not speciated and parent is 0."));
@@ -1035,12 +1040,12 @@ unsigned long Tree::sortData()
 		// here we check the data is valid - alternative validity check.
 		for(unsigned long i = 1; i <= enddata; i++)
 		{
-			if(!(data[i].hasSpeciated()) && data[i].getExistence())
+			if(!((*data)[i].hasSpeciated()) && (*data)[i].getExistence())
 			{
 				long j = i;
-				while(!(data[j].hasSpeciated()))
+				while(!((*data)[j].hasSpeciated()))
 				{
-					j = data[j].getParent();
+					j = (*data)[j].getParent();
 					if(j == 0)
 					{
 						throw FatalException("ERROR_MAIN_005: 0 found in parent while following speciation trail.");
@@ -1055,7 +1060,7 @@ unsigned long Tree::sortData()
 		writeLog(30, me.what());
 		writeLog(30, "Returning max possible size (may cause RAM issues).");
 #endif // DEBUG
-		return data.size();
+		return data->size();
 	}
 	writeInfo("done!\n");
 	return spec_up_to;
@@ -1103,6 +1108,34 @@ void Tree::sqlCreate()
 	writeInfo(os.str());
 	os.str("");
 	// Create the folder if it doesn't exist
+	setupOutputDirectory();
+	os.str("");
+	os << "\r    Generating species list....              " << flush;
+	writeInfo(os.str());
+	// for outputting the full data from the simulation in to a SQL file.
+	char *sErrMsg = nullptr;
+	int rc = 0;
+// Open a SQL database in memory. This will be written to disk later.
+// A check here can be done to write to disc directly instead to massively reduce RAM consumption
+	openSQLDatabase();
+	setupCommunity();
+	// Create the command to be executed by adding to the string.
+	community.createSpeciesList();
+	community.writeSpeciesList(enddata);
+	// Vacuum the file so that the file size is reduced (reduces by around 3%)
+	rc = sqlite3_exec(database, "VACUUM;", nullptr, nullptr, &sErrMsg);
+	if(rc != SQLITE_OK)
+	{
+		stringstream ss;
+		ss << "ERROR_SQL_014: Cannot vacuum the database. Error message: " << sErrMsg << endl;
+		writeError(ss.str());
+	}
+	sqlCreateSimulationParameters();
+	writeInfo("done!\n");
+}
+
+void Tree::setupOutputDirectory()
+{
 	sql_output_database = out_directory;
 	string sqlfolder = out_directory;
 	try
@@ -1119,120 +1152,6 @@ void Tree::sqlCreate()
 		sql_output_database = string("data_") + to_string(the_task) + "_" + to_string(the_seed) + ".db";
 	}
 	remove(sql_output_database.c_str());
-	os.str("");
-	os << "\r    Generating species list....              " << flush;
-	writeInfo(os.str());
-	// for outputting the full data from the simulation in to a SQL file.
-	sqlite3_stmt *stmt = nullptr;
-	char *sErrMsg = nullptr;
-	int rc = 0;
-// Open a SQL database in memory. This will be written to disk later.
-// A check here can be done to write to disc directly instead to massively reduce RAM consumption
-	openSQLDatabase();
-	// Create the command to be executed by adding to the string.
-	string all_commands;
-	all_commands =
-			"CREATE TABLE SPECIES_LIST (ID int PRIMARY KEY NOT NULL, unique_spec INT NOT NULL, xval INT NOT NULL,";
-	all_commands += "yval INT NOT NULL, xwrap INT NOT NULL, ywrap INT NOT NULL, tip INT NOT NULL, speciated INT NOT "
-					"NULL, parent INT NOT NULL, existence INT NOT NULL, randnum DOUBLE NOT NULL, gen_alive INT NOT "
-					"NULL, gen_added DOUBLE NOT NULL);";
-
-	// Create the table within the SQL database
-	rc = sqlite3_exec(database, all_commands.c_str(), nullptr, nullptr, &sErrMsg);
-	if(rc != SQLITE_OK)
-	{
-#ifndef sql_ram
-		sqlite3_close(database);
-		// delete any old database files - this is risky, but there isn't a better way of ensuring that the file
-		// actually gets created.
-		remove(sql_output_database.c_str());
-		rc = sqlite3_open(sql_output_database.c_str(), &database);
-		rc = sqlite3_exec(database, all_commands.c_str(), nullptr, nullptr, &sErrMsg);
-		if(rc != SQLITE_OK)
-		{
-			stringstream ss;
-			ss << "Database file creation failed. Check file system." << endl;
-			ss << "Error code: " << rc << endl;
-			throw FatalException(ss.str());
-		}
-#endif
-	}
-	// Now create the prepared statement into which we shall insert the values from the table
-	all_commands = "INSERT INTO SPECIES_LIST "
-				   "(ID,unique_spec,xval,yval,xwrap,ywrap,tip,speciated,parent,existence,randnum,gen_alive,gen_added) "
-				   "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
-	sqlite3_prepare_v2(database, all_commands.c_str(), static_cast<int>(strlen(all_commands.c_str())), &stmt, nullptr);
-
-	// Start the transaction
-	rc = sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, &sErrMsg);
-	if(rc != SQLITE_OK)
-	{
-		writeError("ERROR_SQL_008: Cannot start SQL transaction. Check memory database assignment and SQL commands.");
-	}
-	for(unsigned int i = 0; i <= enddata; i++)
-	{
-		sqlite3_bind_int(stmt, 1, i);
-		sqlite3_bind_int(stmt, 2, static_cast<int>(data[i].getSpeciesID()));
-		sqlite3_bind_int(stmt, 3, static_cast<int>(data[i].getXpos()));
-		sqlite3_bind_int(stmt, 4, static_cast<int>(data[i].getYpos()));
-		sqlite3_bind_int(stmt, 5, static_cast<int>(data[i].getXwrap()));
-		sqlite3_bind_int(stmt, 6, static_cast<int>(data[i].getYwrap()));
-		sqlite3_bind_int(stmt, 7, data[i].isTip());
-		sqlite3_bind_int(stmt, 8, data[i].hasSpeciated());
-		sqlite3_bind_int(stmt, 9, static_cast<int>(data[i].getParent()));
-		sqlite3_bind_int(stmt, 10, data[i].getExistence());
-		sqlite3_bind_double(stmt, 11, static_cast<double>(data[i].getSpecRate()));
-		sqlite3_bind_int(stmt, 12, static_cast<int>(data[i].getGenRate()));
-		sqlite3_bind_double(stmt, 13, static_cast<double>(data[i].getGeneration()));
-		sqlite3_step(stmt);
-		sqlite3_clear_bindings(stmt);
-		sqlite3_reset(stmt);
-	}
-	os.str("");
-	os << "\r    Executing SQL commands...." << flush;
-	writeInfo(os.str());
-	// execute the command and close the connection to the database
-	rc = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, &sErrMsg);
-	if(rc != SQLITE_OK)
-	{
-		stringstream ss;
-		ss << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
-			  "commands. Ensure SQL statements are properly cleared."
-		   << endl;
-		ss << "Error code: " << rc << endl;
-		// try again
-		int i = 0;
-		while((rc != SQLITE_OK && rc != SQLITE_DONE) && i < 10)
-		{
-			sleep(1);
-			i++;
-			rc = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, &sErrMsg);
-			ss << "Attempt " << i << " failed..." << endl;
-			ss << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
-				  "commands. Ensure SQL statements are properly cleared." << endl;
-		}
-		writeError(ss.str());
-	}
-	// Need to finalise the statement
-	rc = sqlite3_finalize(stmt);
-	if(rc != SQLITE_OK)
-	{
-		stringstream ss;
-		ss << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
-			  "commands. Ensure SQL statements are properly cleared."
-		   << endl;
-		ss << "Error code: " << rc << endl;
-	}
-	// Vacuum the file so that the file size is reduced (reduces by around 3%)
-	rc = sqlite3_exec(database, "VACUUM;", nullptr, nullptr, &sErrMsg);
-	if(rc != SQLITE_OK)
-	{
-		stringstream ss;
-		ss << "ERROR_SQL_014: Cannot vacuum the database. Error message: " << sErrMsg << endl;
-		writeError(ss.str());
-	}
-	sqlCreateSimulationParameters();
-	writeInfo("done!\n");
 }
 
 void Tree::sqlCreateSimulationParameters()
@@ -1287,9 +1206,9 @@ string Tree::simulationParametersSqlInsertion()
 	to_execute += to_string(0.0) + "," + to_string((long long) deme) + ",";
 	to_execute += to_string((long double) deme_sample) + "," + to_string((long long) maxtime) + ",";
 	to_execute += to_string(0.0) + "," + to_string(0.0) + ",";
-	to_execute += to_string((long double) sim_parameters.habitat_change_rate) + ",";
+	to_execute += to_string((long double) sim_parameters->habitat_change_rate) + ",";
 	to_execute +=
-			to_string((long double) sim_parameters.gen_since_historical) + ",'" + sim_parameters.times_file + "','";
+			to_string((long double) sim_parameters->gen_since_historical) + ",'" + sim_parameters->times_file + "','";
 	to_execute += "none', 0, 0, 0, 0, 0, 'null', 0, 0, 0, 0, 'none', 1, 1, 1, 1, 0, 0, 'none', 'none',";
 	to_execute += to_string(sim_complete);
 	to_execute += ", 'none', 0.0, 0, 0, 'none', ";
@@ -1307,14 +1226,6 @@ string Tree::protractedVarsToString()
 
 void Tree::simPause()
 {
-	// Completely changed how this sections works - it won't currently allow restarting of the simulations, but will
-	// dump the data file to memory. - simply calls sqlCreate and sqlOutput.
-	// sqlCreate();
-	// sqlOutput();
-
-	// This function saves the data to 4 files. One contains the main simulation parameters, the other 3 contain the
-	// simulation results thus far
-	// including the grid object, data object and active object.
 	auto out1 = initiatePause();
 	dumpMain(out1);
 	dumpActive(out1);
@@ -1387,7 +1298,7 @@ void Tree::dumpMain(ofstream &out)
 		out << endactive << "\n" << startendactive << "\n" << maxsimsize << "\n" << steps << "\n";
 		out << generation << "\n" << "\n" << maxtime << "\n";
 		out << deme_sample << "\n" << spec << "\n" << deme << "\n";
-		out << sql_output_database << "\n" << *NR << "\n" << sim_parameters << "\n";
+		out << sql_output_database << "\n" << *NR << "\n" << *sim_parameters << "\n";
 		// now output the protracted speciation variables (there should be two of these).
 		out << getProtractedVariables();
 	}
@@ -1419,7 +1330,7 @@ void Tree::dumpData(ofstream &out)
 	try
 	{
 		// Output the data object
-		out << data;
+		out << *data;
 	}
 	catch(exception &e)
 	{
@@ -1512,10 +1423,10 @@ void Tree::loadMainSave(ifstream &in1)
 		getline(in1, sql_output_database);
 		in1 >> *NR;
 		in1.ignore();
-		in1 >> sim_parameters;
+		in1 >> *sim_parameters;
 		if(maxtime == 0)
 		{
-			sim_parameters.max_time = tempmaxtime;
+			sim_parameters->max_time = tempmaxtime;
 		}
 #ifdef DEBUG
 		if(maxtime == 0 && tempmaxtime == 0)
@@ -1523,10 +1434,10 @@ void Tree::loadMainSave(ifstream &in1)
 			throw FatalException("Time set to 0 on resume!");
 		}
 #endif
-		NR->setDispersalMethod(sim_parameters.dispersal_method, sim_parameters.m_prob, sim_parameters.cutoff);
+		NR->setDispersalMethod(sim_parameters->dispersal_method, sim_parameters->m_prob, sim_parameters->cutoff);
 		if(has_imported_pause)
 		{
-			sim_parameters.output_directory = out_directory;
+			sim_parameters->output_directory = out_directory;
 		}
 		setParameters();
 		double tmp1, tmp2;
@@ -1571,7 +1482,7 @@ void Tree::loadDataSave(ifstream &in1)
 		stringstream os;
 		os << "\rLoading data from temp file...data..." << flush;
 		writeInfo(os.str());
-		in1 >> data;
+		in1 >> *data;
 	}
 	catch(exception &e)
 	{
@@ -1666,7 +1577,7 @@ void Tree::validateLineages()
 		{
 			ss << "\nFailure in map expansion. Please report this bug." << endl;
 			ss << "active reference: " << i << endl;
-			data[active[i].getReference()].logLineageInformation(50);
+			(*data)[active[i].getReference()].logLineageInformation(50);
 			throw FatalException(ss.str());
 		}
 	}
@@ -1719,9 +1630,9 @@ void Tree::debugCoalescence()
 	   active[this_step.coalchosen].getYwrap() != active[this_step.chosen].getYwrap())
 	{
 		writeLog(50, "Logging chosen: " + to_string(this_step.chosen));
-		data[active[this_step.chosen].getReference()].logLineageInformation(50);
+		(*data)[active[this_step.chosen].getReference()].logLineageInformation(50);
 		writeLog(50, "Logging coalchosen: " + to_string(this_step.coalchosen));
-		data[active[this_step.coalchosen].getReference()].logLineageInformation(50);
+		(*data)[active[this_step.coalchosen].getReference()].logLineageInformation(50);
 		ss << "ERROR_MOVE_006: NON FATAL. Nwrap not set correctly. Check move programming function." << endl;
 		throw FatalException(ss.str());
 	}
@@ -1731,9 +1642,9 @@ void Tree::debugCoalescence()
 	   active[this_step.coalchosen].getYwrap() != this_step.oldywrap)
 	{
 		writeLog(50, "Logging chosen: " + to_string(this_step.chosen));
-		data[active[this_step.chosen].getReference()].logLineageInformation(50);
+		(*data)[active[this_step.chosen].getReference()].logLineageInformation(50);
 		writeLog(50, "Logging coalchosen: " + to_string(this_step.coalchosen));
-		data[active[this_step.coalchosen].getReference()].logLineageInformation(50);
+		(*data)[active[this_step.coalchosen].getReference()].logLineageInformation(50);
 		ss << "ERROR_MOVE_006: NON FATAL. Nwrap not set correctly. Check move programming function." << endl;
 		throw FatalException(ss.str());
 	}
@@ -1755,10 +1666,10 @@ void Tree::miniCheck(const unsigned long &chosen)
 	{
 		throw FatalException("Active reference should not be 0.");
 	}
-	if(data[active[chosen].getReference()].getParent() != 0)
+	if((*data)[active[chosen].getReference()].getParent() != 0)
 	{
 		writeLog(50, "Active: " + to_string(chosen));
-		data[active[chosen].getReference()].logLineageInformation(50);
+		(*data)[active[chosen].getReference()].logLineageInformation(50);
 		throw FatalException("Parent not set to 0 for active lineage.");
 	}
 }

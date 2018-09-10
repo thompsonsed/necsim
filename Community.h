@@ -20,7 +20,12 @@
 # include <boost/filesystem.hpp>
 #include <boost/lexical_cast.hpp>
 #include <set>
-
+#include <utility>
+#include <memory>
+#ifdef WIN_INSTALL
+#include <windows.h>
+#define sleep Sleep
+#endif
 #include "TreeNode.h"
 #include "Matrix.h"
 #include "DataMask.h"
@@ -352,7 +357,7 @@ protected:
 	bool database_set; // boolean for whether the database has been set already.
 	sqlite3 *database; // stores the in-memory database connection.
 	bool bSqlConnection; // true if the data connection has been established.
-	Row<TreeNode> *nodes; // in older versions this was called species_id_list. Changed to avoid confusion with the built-in class.
+	shared_ptr<Row<TreeNode>> nodes; // in older versions this was called species_id_list. Changed to avoid confusion with the built-in class.
 	Row<unsigned long> row_out;
 	unsigned long iSpecies;
 	bool has_imported_samplemask; // checks whether the samplemask has already been imported.
@@ -375,22 +380,26 @@ protected:
 	ProtractedSpeciationParameters applied_protracted_parameters;
 	unsigned long max_species_id, max_fragment_id, max_locations_id;
 	// Does not need to be stored during simulation pause
-	SpecSimParameters *spec_sim_parameters;
+	shared_ptr<SpecSimParameters> spec_sim_parameters;
 public:
 
 	/**
 	 * @brief Contructor for the community linking to Treenode list.
 	 * @param r Row of TreeNode objects to link to.
 	 */
-	Community(Row<TreeNode> *r) : in_mem(false), database_set(false), database(nullptr),
-								  bSqlConnection(false), nodes(r), row_out(), iSpecies(0),
-								  has_imported_samplemask(false), has_imported_data(false), samplemask(),
-								  fragments(), current_community_parameters(nullptr), min_spec_rate(0.0),
-								  grid_x_size(0), grid_y_size(0), samplemask_x_size(0), samplemask_y_size(0),
-								  samplemask_x_offset(0), samplemask_y_offset(0), past_communities(),
-								  past_metacommunities(), protracted(false), min_speciation_gen(0.0),
-								  max_speciation_gen(0.0), applied_protracted_parameters(), max_species_id(0),
-								  max_fragment_id(0), max_locations_id(0), spec_sim_parameters(nullptr)
+	explicit Community(shared_ptr<Row<TreeNode>> r) : in_mem(false), database_set(false), database(nullptr),
+													  bSqlConnection(false), nodes(std::move(r)), row_out(),
+													  iSpecies(0), has_imported_samplemask(false),
+													  has_imported_data(false), samplemask(), fragments(),
+													  current_community_parameters(nullptr), min_spec_rate(0.0),
+													  grid_x_size(0), grid_y_size(0), samplemask_x_size(0),
+													  samplemask_y_size(0), samplemask_x_offset(0),
+													  samplemask_y_offset(0), past_communities(),
+													  past_metacommunities(), protracted(false),
+													  min_speciation_gen(0.0), max_speciation_gen(0.0),
+													  applied_protracted_parameters(), max_species_id(0),
+													  max_fragment_id(0), max_locations_id(0),
+													  spec_sim_parameters(make_shared<SpecSimParameters>())
 	{
 
 	}
@@ -398,16 +407,16 @@ public:
 	/**
 	 * @brief Default constructor
 	 */
-	Community() : Community(nullptr)
+	Community() : Community(make_shared<Row<TreeNode>>())
 	{
 	}
 
-	 /**
-	 * @brief Default destructor
-	 */
-	 virtual ~Community()
+	/**
+	* @brief Default destructor
+	*/
+	virtual ~Community()
 	{
-		nodes = nullptr;
+		nodes.reset();
 		sqlite3_close(database);
 	}
 
@@ -415,7 +424,7 @@ public:
 	 * @brief Set the nodes object to the input Row of Treenode objects.
 	 * @param l the Row of Treenode objects to link to.
 	 */
-	void setList(Row<TreeNode> *l);
+	void setList(shared_ptr<Row<TreeNode>> l);
 
 	/**
 	 * @brief Sets the database object for the sqlite functions.
@@ -505,6 +514,7 @@ public:
 	 * @brief Safely destroys the SQL connection.
 	 */
 	void closeSqlConnection();
+
 	/**
 	 * @brief Opens a connection to an in-memory database. This will eventually be written to the output file.
 	 */
@@ -529,7 +539,7 @@ public:
 	 * @brief Sets the simulation parameters from a SimParameters object.
 	 * @param sim_parameters pointer to the SimParameters object to set from
 	 */
-	void setSimParameters(const SimParameters *sim_parameters);
+	void setSimParameters(shared_ptr<SimParameters> sim_parameters);
 
 	/**
 	 * @brief Imports the simulation parameters by reading the SIMULATION_PARAMETERS table in the provided file.
@@ -543,6 +553,12 @@ public:
 	 * @param file the sqlite database simulation output which will be used for coalescence tree generation.
 	 */
 	void importSimParameters(string file);
+
+	/**
+	 * @brief Forces the sim_complete parameter to be true in SIMULATION_PARAMETERS.
+	 * Used when speciating all remaining lineages to force a simulation to completion.
+	 */
+	void forceSimCompleteParameter();
 
 	/**
 	 * @brief Gets if the database has been set yet.
@@ -741,6 +757,21 @@ public:
 	void writeNewMetacommuntyParameters();
 
 	/**
+	 * @brief Creates a new table, SPECIES_LIST in the output database.
+	 */
+	void createSpeciesList();
+
+	/**
+	 * @brief Drops the SPECIES_LIST table from the database.
+	 */
+	void deleteSpeciesList();
+
+	/**
+	 * @brief Writes the coalescence tree to a table called SPECIES_LIST.
+	 */
+	void writeSpeciesList(const unsigned long &enddata);
+
+	/**
 	 * @brief Updates the fragments tag on those simulations which now have had fragments added.
 	 */
 	void updateCommunityParameters();
@@ -772,26 +803,26 @@ public:
 	 * Overridden for metacommunity application.
 	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
 	 */
-	void apply(SpecSimParameters *sp);
+	void apply(shared_ptr<SpecSimParameters> sp);
 
 	/**
 	 * @brief Applies the given speciation parameters to the coalescence tree, but does not write the output.
 	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure.
 	 */
-	virtual void applyNoOutput(SpecSimParameters *sp);
+	virtual void applyNoOutput(shared_ptr<SpecSimParameters> sp);
 
 	/**
 	 * @brief Creates the coalescence tree for the given speciation parameters.
 	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
 	 */
-	void doApplication(SpecSimParameters *sp);
+	void doApplication(shared_ptr<SpecSimParameters> sp);
 
 	/**
 	 * @brief Creates the coalescence tree for the given speciation parameters.
 	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
 	 * @param data the Row of TreeNodes that contains the coalescence tree.
 	 */
-	void doApplication(SpecSimParameters *sp, Row<TreeNode> *data);
+	void doApplication(shared_ptr<SpecSimParameters> sp, shared_ptr<Row<TreeNode>> data);
 
 	/**
 	 * @brief Creates the coalescence tree for the given speciation parameters, using internal file referencing
@@ -799,8 +830,12 @@ public:
 	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
 	 * @param data the Row of TreeNodes that contains the coalescence tree.
 	 */
-	void doApplicationInternal(SpecSimParameters *sp, Row<TreeNode> *data);
+	void doApplicationInternal(shared_ptr<SpecSimParameters> sp, shared_ptr<Row<TreeNode>> data);
 
+	/**
+	 * @brief Speciates the remaining lineages in an incomplete simulation to force it to appear complete.
+	 */
+	void speciateRemainingLineages(const string &filename);
 };
 
 #endif

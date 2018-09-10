@@ -221,7 +221,7 @@ void SpatialTree::checkFolders()
 	bool bFineMap, bCoarseMap, bFineMapHistorical, bCoarseMapHistorical, bSampleMask, bOutputFolder;
 	try
 	{
-		bFineMap = doesExistNull(sim_parameters.fine_map_file);
+		bFineMap = doesExistNull(sim_parameters->fine_map_file);
 	}
 	catch(FatalException &fe)
 	{
@@ -230,7 +230,7 @@ void SpatialTree::checkFolders()
 	}
 	try
 	{
-		bCoarseMap = doesExistNull(sim_parameters.coarse_map_file);
+		bCoarseMap = doesExistNull(sim_parameters->coarse_map_file);
 	}
 	catch(FatalException &fe)
 	{
@@ -239,7 +239,7 @@ void SpatialTree::checkFolders()
 	}
 	try
 	{
-		bFineMapHistorical = doesExistNull(sim_parameters.historical_fine_map_file);
+		bFineMapHistorical = doesExistNull(sim_parameters->historical_fine_map_file);
 	}
 	catch(FatalException &fe)
 	{
@@ -248,7 +248,7 @@ void SpatialTree::checkFolders()
 	}
 	try
 	{
-		bCoarseMapHistorical = doesExistNull(sim_parameters.historical_coarse_map_file);
+		bCoarseMapHistorical = doesExistNull(sim_parameters->historical_coarse_map_file);
 	}
 	catch(FatalException &fe)
 	{
@@ -258,7 +258,7 @@ void SpatialTree::checkFolders()
 	bOutputFolder = checkOutputDirectory();
 	try
 	{
-		bSampleMask = doesExistNull(sim_parameters.sample_mask_file);
+		bSampleMask = doesExistNull(sim_parameters->sample_mask_file);
 	}
 	catch(FatalException &fe)
 	{
@@ -284,19 +284,19 @@ void SpatialTree::setParameters()
 	{
 		Tree::setParameters();
 		// Set the variables equal to the value from the Mapvars object.
-		fine_map_input = sim_parameters.fine_map_file;
-		coarse_map_input = sim_parameters.coarse_map_file;
+		fine_map_input = sim_parameters->fine_map_file;
+		coarse_map_input = sim_parameters->coarse_map_file;
 		// historical map information
-		historical_fine_map_input = sim_parameters.historical_fine_map_file;
-		historical_coarse_map_input = sim_parameters.historical_coarse_map_file;
-		desired_specnum = sim_parameters.desired_specnum;
-		if(sim_parameters.landscape_type == "none")
+		historical_fine_map_input = sim_parameters->historical_fine_map_file;
+		historical_coarse_map_input = sim_parameters->historical_coarse_map_file;
+		desired_specnum = sim_parameters->desired_specnum;
+		if(sim_parameters->landscape_type == "none")
 		{
-			sim_parameters.landscape_type = "closed";
+			sim_parameters->landscape_type = "closed";
 		}
-		if(sim_parameters.dispersal_method == "none")
+		if(sim_parameters->dispersal_method == "none")
 		{
-			sim_parameters.dispersal_method = "normal";
+			sim_parameters->dispersal_method = "normal";
 		}
 	}
 	else
@@ -310,7 +310,7 @@ void SpatialTree::importMaps()
 	if(has_imported_vars)
 	{
 		// Set the dimensions
-		landscape->setDims(&sim_parameters);
+		landscape->setDims(sim_parameters);
 		try
 		{
 			// Set the time variables
@@ -345,21 +345,21 @@ void SpatialTree::importMaps()
 
 void SpatialTree::importActivityMaps()
 {
-	death_map->import(sim_parameters.death_file, sim_parameters.fine_map_x_size, sim_parameters.fine_map_y_size,
+	death_map->import(sim_parameters->death_file, sim_parameters->fine_map_x_size, sim_parameters->fine_map_y_size,
 					  NR);
-	death_map->setOffsets(sim_parameters.coarse_map_x_offset, sim_parameters.fine_map_y_offset,
-						  sim_parameters.grid_x_size, sim_parameters.grid_y_size);
-	if(sim_parameters.death_file == sim_parameters.reproduction_file)
+	death_map->setOffsets(sim_parameters->coarse_map_x_offset, sim_parameters->fine_map_y_offset,
+						  sim_parameters->grid_x_size, sim_parameters->grid_y_size);
+	if(sim_parameters->death_file == sim_parameters->reproduction_file)
 	{
 		reproduction_map = death_map;
 	}
 	else
 	{
 
-		reproduction_map->import(sim_parameters.reproduction_file, sim_parameters.fine_map_x_size,
-								 sim_parameters.fine_map_y_size, NR);
-		reproduction_map->setOffsets(sim_parameters.coarse_map_x_offset, sim_parameters.fine_map_y_offset,
-									 sim_parameters.grid_x_size, sim_parameters.grid_y_size);
+		reproduction_map->import(sim_parameters->reproduction_file, sim_parameters->fine_map_x_size,
+								 sim_parameters->fine_map_y_size, NR);
+		reproduction_map->setOffsets(sim_parameters->coarse_map_x_offset, sim_parameters->fine_map_y_offset,
+									 sim_parameters->grid_x_size, sim_parameters->grid_y_size);
 	}
 	// Now verify that the reproduction map is always non-zero when the density is non-zero.
 	verifyActivityMaps();
@@ -374,12 +374,12 @@ unsigned long SpatialTree::getInitialCount()
 		long max_x, max_y;
 		if(samplegrid.isNull())
 		{
-			max_x = sim_parameters.fine_map_x_size;
-			max_y = sim_parameters.fine_map_y_size;
+			max_x = sim_parameters->fine_map_x_size;
+			max_y = sim_parameters->fine_map_y_size;
 		}
 		else
 		{
-			if(sim_parameters.uses_spatial_sampling)
+			if(sim_parameters->uses_spatial_sampling)
 			{
 				max_x = samplegrid.sample_mask_exact.getCols();
 				max_y = samplegrid.sample_mask_exact.getRows();
@@ -429,10 +429,10 @@ void SpatialTree::setupDispersalCoordinator()
 	dispersal_coordinator.setMaps(landscape, reproduction_map);
 	dispersal_coordinator.setRandomNumber(NR);
 	dispersal_coordinator.setGenerationPtr(&generation);
-	dispersal_coordinator.setDispersal(sim_parameters.dispersal_method, sim_parameters.dispersal_file,
-									   sim_parameters.fine_map_x_size, sim_parameters.fine_map_y_size,
-									   sim_parameters.m_prob, sim_parameters.cutoff, sim_parameters.sigma,
-									   sim_parameters.tau, sim_parameters.restrict_self);
+	dispersal_coordinator.setDispersal(sim_parameters->dispersal_method, sim_parameters->dispersal_file,
+									   sim_parameters->fine_map_x_size, sim_parameters->fine_map_y_size,
+									   sim_parameters->m_prob, sim_parameters->cutoff, sim_parameters->sigma,
+									   sim_parameters->tau, sim_parameters->restrict_self);
 }
 
 void SpatialTree::setup()
@@ -452,7 +452,7 @@ void SpatialTree::setup()
 		setParameters();
 		setInitialValues();
 		importMaps();
-		landscape->setLandscape(sim_parameters.landscape_type);
+		landscape->setLandscape(sim_parameters->landscape_type);
 		setupDispersalCoordinator();
 #ifdef DEBUG
 		landscape->validateMaps();
@@ -464,7 +464,7 @@ void SpatialTree::setup()
 unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 {
 	active[0].setup(0, 0, 0, 0, 0, 0, 0);
-	grid.setSize(sim_parameters.grid_y_size, sim_parameters.grid_x_size);
+	grid.setSize(sim_parameters->grid_y_size, sim_parameters->grid_x_size);
 	unsigned long number_start = 0;
 	stringstream os;
 	os << "\rSetting up simulation...filling grid                           " << flush;
@@ -475,9 +475,9 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 	{
 		long x, y;
 		long x_wrap, y_wrap;
-		for(unsigned long i = 0; i < sim_parameters.sample_x_size; i++)
+		for(unsigned long i = 0; i < sim_parameters->sample_x_size; i++)
 		{
-			for(unsigned long j = 0; j < sim_parameters.sample_y_size; j++)
+			for(unsigned long j = 0; j < sim_parameters->sample_y_size; j++)
 			{
 
 				x = i;
@@ -521,8 +521,8 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 								// Add a tip in the TreeNode for calculation of the coalescence tree at the
 								// end of the simulation.
 								// This also contains the start x and y position of the species.
-								data[number_start].setup(true, x, y, 0, 0);
-								data[number_start].setSpec(NR->d01());
+								(*data)[number_start].setup(true, x, y, 0, 0);
+								(*data)[number_start].setSpec(NR->d01());
 								endactive++;
 								enddata++;
 							}
@@ -555,8 +555,8 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 								// Add a tip in the TreeNode for calculation of the coalescence tree at the
 								// end of the simulation.
 								// This also contains the start x and y position of the species.
-								data[number_start].setup(true, x, y, x_wrap, y_wrap);
-								data[number_start].setSpec(NR->d01());
+								(*data)[number_start].setup(true, x, y, x_wrap, y_wrap);
+								(*data)[number_start].setSpec(NR->d01());
 								endactive++;
 								enddata++;
 							}
@@ -566,7 +566,7 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 
 			}
 		}
-		if(sim_parameters.uses_spatial_sampling)
+		if(sim_parameters->uses_spatial_sampling)
 		{
 
 			samplegrid.convertBoolean(landscape, deme_sample, generation);
@@ -610,7 +610,7 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 unsigned long SpatialTree::getIndividualsSampled(const long &x, const long &y, const long &x_wrap,
 												 const long &y_wrap, const double &current_gen)
 {
-//	if(sim_parameters.uses_spatial_sampling)
+//	if(sim_parameters->uses_spatial_sampling)
 //	{
 	return static_cast<unsigned long>(max(floor(deme_sample * landscape->getVal(x, y, x_wrap, y_wrap, current_gen)
 												* samplegrid.getExactValue(x, y, x_wrap, y_wrap)), 0.0));
@@ -760,15 +760,15 @@ long double SpatialTree::calcMinMax(const unsigned long &current)
 	// need to allow for the case that the number of gens was 0
 	long double newminmax = 1;
 	long double oldminmax = active[current].getMinmax();
-	if(data[active[current].getReference()].getGenRate() == 0)
+	if((*data)[active[current].getReference()].getGenRate() == 0)
 	{
-		newminmax = data[active[current].getReference()].getSpecRate();
+		newminmax = (*data)[active[current].getReference()].getSpecRate();
 	}
 	else
 	{
 		// variables need to be defined separately for the decimal division to function properly.
-		long double tmpdSpec = data[active[current].getReference()].getSpecRate();
-		long double tmpiGen = data[active[current].getReference()].getGenRate();
+		long double tmpdSpec = (*data)[active[current].getReference()].getSpecRate();
+		long double tmpiGen = (*data)[active[current].getReference()].getGenRate();
 		newminmax = 1 - (pow(1 - tmpdSpec, (1 / tmpiGen)));
 	}
 	long double toret = min(newminmax, oldminmax);
@@ -1175,23 +1175,23 @@ unsigned long SpatialTree::estSpecnum()
 	}
 	for(unsigned long i = 0; i <= enddata; i++)
 	{
-		if(data[i].isTip())
+		if((*data)[i].isTip())
 		{
-			data[i].setExistence(true);
+			(*data)[i].setExistence(true);
 		}
 		double maxret = 1;
-		if(data[i].getGenRate() == 0)
+		if((*data)[i].getGenRate() == 0)
 		{
 			maxret = 1;
 		}
 		else
 		{
-			maxret = data[i].getGenRate();
+			maxret = (*data)[i].getGenRate();
 		}
 		// This is the line that compares the individual random numbers against the speciation rate.
-		if(data[i].getSpecRate() < (1 - pow(double(1 - dMinmax), maxret)))
+		if((*data)[i].getSpecRate() < (1 - pow(double(1 - dMinmax), maxret)))
 		{
-			data[i].speciate();
+			(*data)[i].speciate();
 		}
 	}
 	bool loop = true;
@@ -1200,24 +1200,24 @@ unsigned long SpatialTree::estSpecnum()
 		loop = false;
 		for(unsigned int i = 0; i <= enddata; i++)
 		{
-			if(data[i].getExistence() && !data[data[i].getParent()].getExistence() && !data[i].hasSpeciated())
+			if((*data)[i].getExistence() && !(*data)[(*data)[i].getParent()].getExistence() && !(*data)[i].hasSpeciated())
 			{
 				loop = true;
-				data[data[i].getParent()].setExistence(true);
+				(*data)[(*data)[i].getParent()].setExistence(true);
 			}
 		}
 	}
 	unsigned long iSpecies = 0;
 	for(unsigned int i = 0; i <= enddata; i++)
 	{
-		if(data[i].getExistence() && data[i].hasSpeciated())
+		if((*data)[i].getExistence() && (*data)[i].hasSpeciated())
 		{
 			iSpecies++;
 		}
 	}
 	for(unsigned int i = 0; i <= enddata; i++)
 	{
-		data[i].qReset();
+		(*data)[i].qReset();
 	}
 	//		os << "Estimated species number is: " << iSpecies << endl;
 	return iSpecies;
@@ -1292,13 +1292,13 @@ void SpatialTree::addLineages(double generation_in)
 	// Store all added active lineages in a vector
 	vector<DataPoint> active_added{};
 	// Update the sample grid boolean mask, if required.
-	if(sim_parameters.uses_spatial_sampling)
+	if(sim_parameters->uses_spatial_sampling)
 	{
 		samplegrid.convertBoolean(landscape, deme_sample, generation_in);
 	}
-	for(unsigned long i = 0; i < sim_parameters.sample_x_size; i++)
+	for(unsigned long i = 0; i < sim_parameters->sample_x_size; i++)
 	{
-		for(unsigned long j = 0; j < sim_parameters.sample_y_size; j++)
+		for(unsigned long j = 0; j < sim_parameters->sample_y_size; j++)
 		{
 			long x, y;
 			x = i;
@@ -1320,7 +1320,7 @@ void SpatialTree::addLineages(double generation_in)
 	for(auto & item : data_added)
 	{
 		enddata ++;
-		data[enddata] = item;
+		(*data)[enddata] = item;
 	}
 	for(auto & item : active_added)
 	{
@@ -1332,7 +1332,7 @@ void SpatialTree::addLineages(double generation_in)
 		}
 	}
 	// double check sizes
-	if(enddata >= data.size() || endactive >= active.size())
+	if(enddata >= data->size() || endactive >= active.size())
 	{
 		throw FatalException("ERROR_MAIN_012: FATAL. Enddata or endactive is greater than the size of the "
 							 "relevant object. Programming error likely.");
@@ -1352,38 +1352,38 @@ string SpatialTree::simulationParametersSqlInsertion()
 	to_execute = "INSERT INTO SIMULATION_PARAMETERS VALUES(" + to_string((long long) the_seed) + "," +
 				 to_string((long long) the_task);
 	to_execute += ",'" + out_directory + "'," + boost::lexical_cast<std::string>((long double) spec) + "," +
-				  to_string((long double) sim_parameters.sigma) + ",";
-	to_execute += to_string((long double) sim_parameters.tau) + "," + to_string((long long) sim_parameters.deme) + ",";
-	to_execute += to_string((long double) sim_parameters.deme_sample) + "," + to_string((long long) maxtime) + ",";
-	to_execute += to_string((long double) sim_parameters.dispersal_relative_cost) + "," +
+				  to_string((long double) sim_parameters->sigma) + ",";
+	to_execute += to_string((long double) sim_parameters->tau) + "," + to_string((long long) sim_parameters->deme) + ",";
+	to_execute += to_string((long double) sim_parameters->deme_sample) + "," + to_string((long long) maxtime) + ",";
+	to_execute += to_string((long double) sim_parameters->dispersal_relative_cost) + "," +
 				  to_string((long long) desired_specnum) + ",";
-	to_execute += to_string((long double) sim_parameters.habitat_change_rate) + ",";
+	to_execute += to_string((long double) sim_parameters->habitat_change_rate) + ",";
 	to_execute +=
-			to_string((long double) sim_parameters.gen_since_historical) + ",'" + sim_parameters.times_file + "','";
-	to_execute += coarse_map_input + "'," + to_string((long long) sim_parameters.coarse_map_x_size) + ",";
-	to_execute += to_string((long long) sim_parameters.coarse_map_y_size) + "," +
-				  to_string((long long) sim_parameters.coarse_map_x_offset) + ",";
-	to_execute += to_string((long long) sim_parameters.coarse_map_y_offset) + "," +
-				  to_string((long long) sim_parameters.coarse_map_scale) + ",'";
-	to_execute += fine_map_input + "'," + to_string((long long) sim_parameters.fine_map_x_size) + "," +
-				  to_string((long long) sim_parameters.fine_map_y_size);
-	to_execute += "," + to_string((long long) sim_parameters.fine_map_x_offset) + "," +
-				  to_string((long long) sim_parameters.fine_map_y_offset) + ",'";
-	to_execute += sim_parameters.sample_mask_file + "'," + to_string((long long) sim_parameters.grid_x_size) + "," +
-				  to_string((long long) sim_parameters.grid_y_size) + "," +
-				  to_string((long long) sim_parameters.sample_x_size) + ", ";
-	to_execute += to_string((long long) sim_parameters.sample_y_size) + ", ";
-	to_execute += to_string((long long) sim_parameters.sample_x_offset) + ", ";
-	to_execute += to_string((long long) sim_parameters.sample_y_offset) + ", '";
+			to_string((long double) sim_parameters->gen_since_historical) + ",'" + sim_parameters->times_file + "','";
+	to_execute += coarse_map_input + "'," + to_string((long long) sim_parameters->coarse_map_x_size) + ",";
+	to_execute += to_string((long long) sim_parameters->coarse_map_y_size) + "," +
+				  to_string((long long) sim_parameters->coarse_map_x_offset) + ",";
+	to_execute += to_string((long long) sim_parameters->coarse_map_y_offset) + "," +
+				  to_string((long long) sim_parameters->coarse_map_scale) + ",'";
+	to_execute += fine_map_input + "'," + to_string((long long) sim_parameters->fine_map_x_size) + "," +
+				  to_string((long long) sim_parameters->fine_map_y_size);
+	to_execute += "," + to_string((long long) sim_parameters->fine_map_x_offset) + "," +
+				  to_string((long long) sim_parameters->fine_map_y_offset) + ",'";
+	to_execute += sim_parameters->sample_mask_file + "'," + to_string((long long) sim_parameters->grid_x_size) + "," +
+				  to_string((long long) sim_parameters->grid_y_size) + "," +
+				  to_string((long long) sim_parameters->sample_x_size) + ", ";
+	to_execute += to_string((long long) sim_parameters->sample_y_size) + ", ";
+	to_execute += to_string((long long) sim_parameters->sample_x_offset) + ", ";
+	to_execute += to_string((long long) sim_parameters->sample_y_offset) + ", '";
 	to_execute += historical_coarse_map_input + "','" + historical_fine_map_input + "'," + to_string(sim_complete);
-	to_execute += ", '" + sim_parameters.dispersal_method + "', ";
-	to_execute += boost::lexical_cast<std::string>(sim_parameters.m_prob) + ", ";
-	to_execute += to_string((long double) sim_parameters.cutoff) + ", ";
-	to_execute += to_string(sim_parameters.restrict_self) + ", '";
-	to_execute += sim_parameters.landscape_type + "', ";
+	to_execute += ", '" + sim_parameters->dispersal_method + "', ";
+	to_execute += boost::lexical_cast<std::string>(sim_parameters->m_prob) + ", ";
+	to_execute += to_string((long double) sim_parameters->cutoff) + ", ";
+	to_execute += to_string(sim_parameters->restrict_self) + ", '";
+	to_execute += sim_parameters->landscape_type + "', ";
 	// Now save the protracted speciation variables (not relevant in this simulation scenario)
 	to_execute += protractedVarsToString();
-	to_execute += ", '" + sim_parameters.dispersal_file + "'";
+	to_execute += ", '" + sim_parameters->dispersal_file + "'";
 	to_execute += ");";
 	return to_execute;
 }
@@ -1443,12 +1443,12 @@ void SpatialTree::simResume()
 	loadDataSave(is);
 	time(&sim_start);
 	writeInfo("\rLoading data from temp file...done!\n");
-	sim_parameters.printVars();
+	sim_parameters->printVars();
 }
 
 void SpatialTree::loadGridSave(ifstream &in1)
 {
-	grid.setSize(sim_parameters.grid_y_size, sim_parameters.grid_x_size);
+	grid.setSize(sim_parameters->grid_y_size, sim_parameters->grid_x_size);
 	in1 >> grid;
 	try
 	{
@@ -1457,9 +1457,9 @@ void SpatialTree::loadGridSave(ifstream &in1)
 		// New method for re-creating grid data from active lineages
 		// First initialise the empty grid object
 		writeInfo(os.str());
-		for(unsigned long i = 0; i < sim_parameters.grid_y_size; i++)
+		for(unsigned long i = 0; i < sim_parameters->grid_y_size; i++)
 		{
-			for(unsigned long j = 0; j < sim_parameters.grid_x_size; j++)
+			for(unsigned long j = 0; j < sim_parameters->grid_x_size; j++)
 			{
 				grid[i][j].initialise(landscape->getVal(j, i, 0, 0, generation));
 			}
@@ -1502,7 +1502,7 @@ void SpatialTree::loadMapSave(ifstream &in1)
 		stringstream os;
 		os << "\rLoading data from temp file...map..." << flush;
 		writeInfo(os.str());
-		landscape->setDims(&sim_parameters);
+		landscape->setDims(sim_parameters);
 		in1 >> *landscape;
 		samplegrid.importSampleMask(sim_parameters);
 		importActivityMaps();
@@ -1518,11 +1518,11 @@ void SpatialTree::loadMapSave(ifstream &in1)
 void SpatialTree::verifyActivityMaps()
 {
 	bool has_printed = false;
-	if(!(sim_parameters.death_file == "none" || sim_parameters.death_file == "null") && !death_map->isNull())
+	if(!(sim_parameters->death_file == "none" || sim_parameters->death_file == "null") && !death_map->isNull())
 	{
-		for(unsigned long i = 0; i < sim_parameters.fine_map_y_size; i++)
+		for(unsigned long i = 0; i < sim_parameters->fine_map_y_size; i++)
 		{
-			for(unsigned long j = 0; j < sim_parameters.fine_map_x_size; j++)
+			for(unsigned long j = 0; j < sim_parameters->fine_map_x_size; j++)
 			{
 				if((*death_map)[i][j] == 0.0 && landscape->getValFine(j, i, 0.0) != 0)
 				{
@@ -1561,13 +1561,13 @@ void SpatialTree::verifyActivityMaps()
 		writeLog(10, "\nActivity map validation complete.");
 #endif // DEBUG
 	}
-	if(!(sim_parameters.reproduction_file == "none" || sim_parameters.reproduction_file == "null") &&
+	if(!(sim_parameters->reproduction_file == "none" || sim_parameters->reproduction_file == "null") &&
 	   !reproduction_map->isNull())
 	{
 		has_printed = false;
-		for(unsigned long i = 0; i < sim_parameters.fine_map_y_size; i++)
+		for(unsigned long i = 0; i < sim_parameters->fine_map_y_size; i++)
 		{
-			for(unsigned long j = 0; j < sim_parameters.fine_map_x_size; j++)
+			for(unsigned long j = 0; j < sim_parameters->fine_map_x_size; j++)
 			{
 				if((*reproduction_map)[i][j] == 0.0 && landscape->getValFine(j, i, 0.0) != 0)
 				{
@@ -1708,9 +1708,9 @@ void SpatialTree::expandCell(long x, long y, long x_wrap, long y_wrap, double ge
 				listpos = grid[y][x].addSpecies(endactive + active_added.size() + 1);
 			}
 			tmp_data_point.setup(x, y, x_wrap, y_wrap, enddata + data_added.size() + 1, listpos, 1);
-			if(enddata >= data.size())
+			if(enddata >= data->size())
 			{
-				throw FatalException("Cannot add lineage - no space in data. "
+				throw FatalException("Cannot add lineage - no space in data-> "
 									 "Check size calculations.");
 			}
 			if(endactive >= active.size())
@@ -1738,13 +1738,13 @@ void SpatialTree::validateLineages()
 	writeInfo("\nStarting lineage validation...");
 	unsigned long printed = 0;
 	// Basic checks
-	if(endactive >= active.size() || enddata >= data.size())
+	if(endactive >= active.size() || enddata >= data->size())
 	{
 		stringstream ss;
 		ss << "Endactive (size):" << endactive << "(" << active.size() << ")" << endl;
-		ss << "Enddata (size):" << enddata << "(" << data.size() << ")" << endl;
+		ss << "Enddata (size):" << enddata << "(" << data->size() << ")" << endl;
 		writeCritical(ss.str());
-		throw FatalException("Endactive out of range of active or enddata out of range of data. "
+		throw FatalException("Endactive out of range of active or enddata out of range of data-> "
 							 "Please report this bug.");
 	}
 	for(unsigned long i = 1; i < endactive; i++)
@@ -1819,10 +1819,10 @@ void SpatialTree::validateLineages()
 			ss << "Endactive: " << endactive << endl;
 			ss << "Active size: " << active.size() << endl;
 			ss << "Enddata: " << enddata << endl;
-			ss << "Data size: " << data.size() << endl;
+			ss << "Data size: " << data->size() << endl;
 			writeLog(50, ss);
 			tmp_datapoint.logActive(50);
-			data[tmp_datapoint.getReference()].logLineageInformation(50);
+			(*data)[tmp_datapoint.getReference()].logLineageInformation(50);
 			throw FatalException("Failure in lineage validation. Please report this bug.");
 		}
 	}

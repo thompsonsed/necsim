@@ -59,53 +59,53 @@ void SpeciationCommands::parseArgs()
 	}
 	else
 	{
-		sp.samplemask = comargs[3];
-		sp.filename = comargs[1];
-		sp.times_file = comargs[4];
+		sp->samplemask = comargs[3];
+		sp->filename = comargs[1];
+		sp->times_file = comargs[4];
 	}
 	if(argc > 7)
 	{
-		sp.bMultiRun = true;
+		sp->bMultiRun = true;
 		int i = 6;
 		while(i < argc)
 		{
-			sp.all_speciation_rates.push_back(stof(comargs[i]));
+			sp->all_speciation_rates.push_back(stof(comargs[i]));
 			i++;
 		}
 	}
 	else if(argc == 7 && !bInvalidArguments && !bAskHelp)
 	{
-		sp.bMultiRun = false;
-		sp.all_speciation_rates.push_back(stod(comargs[6]));
+		sp->bMultiRun = false;
+		sp->all_speciation_rates.push_back(stod(comargs[6]));
 	}
 	if(!bInvalidArguments && !bAskHelp && !bRunDefault)
 	{
 		if(comargs[2] == "true" || comargs[2] == "True" || comargs[2] == "T" || comargs[2] == "TRUE" ||
 		   comargs[2] == "t")
 		{
-			sp.use_spatial = true;
+			sp->use_spatial = true;
 		}
 		else
 		{
-			sp.use_spatial = false;
+			sp->use_spatial = false;
 		}
 		if(comargs[5] == "false" || comargs[5] == "False" || comargs[5] == "F" || comargs[5] == "FALSE" ||
 		   comargs[5] == "f")
 		{
-			sp.use_fragments = false;
+			sp->use_fragments = false;
 		}
 		else
 		{
 			if(comargs[5] == "true" || comargs[5] == "True" || comargs[5] == "T" || comargs[5] == "TRUE" ||
 			   comargs[5] == "t")
 			{
-				sp.fragment_config_file = "null";
+				sp->fragment_config_file = "null";
 			}
 			else
 			{
-				sp.fragment_config_file = comargs[5];
+				sp->fragment_config_file = comargs[5];
 			}
-			sp.use_fragments = true;
+			sp->use_fragments = true;
 		}
 	}
 	if(bInvalidArguments || bAskHelp)
@@ -142,13 +142,13 @@ void SpeciationCommands::parseArgs()
 	}
 	if(comargs[1] == "-d" || bRunDefault)
 	{
-		sp.filename = "../../Data/Coal_sim/Test_output/data_0_1.db";
-		sp.all_speciation_rates.push_back(0.001);
-		sp.samplemask = "null";
-		sp.times_file = "null";
-		sp.fragment_config_file = "null";
-		sp.use_fragments = false;
-		sp.use_spatial = true;
+		sp->filename = "../../Data/Coal_sim/Test_output/data_0_1.db";
+		sp->all_speciation_rates.push_back(0.001);
+		sp->samplemask = "null";
+		sp->times_file = "null";
+		sp->fragment_config_file = "null";
+		sp->use_fragments = false;
+		sp->use_spatial = true;
 	}
 }
 
@@ -159,7 +159,7 @@ int SpeciationCommands::applyFromComargs(int argc_in, char** argv)
 	importArgs(static_cast<const unsigned int &>(argc), argv, comargs);
 	parseArgs();
 	Community tree_list;
-	tree_list.apply(&sp);
+	tree_list.apply(sp);
 	return 0;
 }
 

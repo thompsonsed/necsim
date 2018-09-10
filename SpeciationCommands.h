@@ -16,7 +16,7 @@
 
 
 #include <cstdio>
-
+#include <memory>
 #include "Community.h"
 #include "TreeNode.h"
 #include "SpecSimParameters.h"
@@ -29,9 +29,7 @@ class SpeciationCommands
 {
 private:
 	// Contains all speciation parameters
-	SpecSimParameters sp;
-	// Set up for the output coalescence tree
-	Row<TreeNode> data;
+	shared_ptr<SpecSimParameters> sp;
 	// Command-line arguments for parsing
 	vector<string> comargs;
 	// number of command-line arguments
@@ -43,7 +41,7 @@ public:
 	/**
 	 * @brief Default constructor for SpeciationCommands class.
 	 */
-	SpeciationCommands()
+	SpeciationCommands() : sp(make_shared<SpecSimParameters>())
 	{
 		
 	}

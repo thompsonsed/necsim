@@ -74,8 +74,8 @@ void Metacommunity::createMetacommunityNSENeutralModel()
 	writeLog(10, "Running spatially-implicit model for metacommunity generation.");
 #endif //DEBUG
 	// First set up a non-spatial coalescence simulation to generate our metacommunity
-	SimParameters temp_parameters;
-	temp_parameters.setMetacommunityParameters(community_size, speciation_rate, seed, task);
+	shared_ptr<SimParameters> temp_parameters = make_shared<SimParameters>();
+	temp_parameters->setMetacommunityParameters(community_size, speciation_rate, seed, task);
 	metacommunity_tree.internalSetup(temp_parameters);
 	// Run our simulation and calculate the species abundance distribution (as this is all that needs to be stored).
 	if(!metacommunity_tree.runSimulation())
@@ -136,7 +136,7 @@ unsigned long Metacommunity::selectLineageFromMetacommunity()
 	return min_indices;
 }
 
-void Metacommunity::applyNoOutput(SpecSimParameters *sp)
+void Metacommunity::applyNoOutput(shared_ptr<SpecSimParameters> sp)
 {
 #ifdef DEBUG
 	writeLog(10, "********************");

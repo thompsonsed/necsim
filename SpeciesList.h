@@ -20,7 +20,11 @@
  * Note that the maximum size of the list is constrained by the maximum size of unsigned long. Any simulation requiring
  * more individuals per cell than this will unlikely finish in any reasonable time anyway.
  */
+#ifdef CXX14_SUPPORT
+#include "memory.h"
+#else
 #include <memory>
+#endif
 #include "Matrix.h"
 #include "NRrand.h"
 using namespace std;

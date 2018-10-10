@@ -117,7 +117,7 @@ void Landscape::setDims(shared_ptr<SimParameters> mapvarsin)
 
 bool Landscape::checkMapExists()
 {
-	for(unsigned int i = 0; i < mapvars->configs.getSectionOptionsSize(); i++)
+	for(unsigned long i = 0; i < mapvars->configs.getSectionOptionsSize(); i++)
 	{
 		string tmppath = mapvars->configs[i].getOption("path");
 		if(!doesExistNull(tmppath))
@@ -1012,19 +1012,32 @@ double Landscape::distanceToNearestHabitat(const long & start_x, const long & st
 	long end_y = start_y;
 	double theta = 0;
 	double radius = 1.0;
-	while(!getVal(end_x, end_y, start_x_wrap, start_y_wrap, generation))
+	if(!getVal(end_x, end_y, start_x_wrap, start_y_wrap, generation))
 	{
-		theta += 0.1 * M_PI / (2.0 * max(radius, 1.0));
-		radius = theta / (2 * M_PI);
-		end_x = archimedesSpiralX(start_x, start_y, radius, theta);
-		end_y = archimedesSpiralY(start_x, start_y, radius, theta);
-
-		// Double check that the distance is not greater than the map size
-		// This acts as a fail-safe in case someone presents a historical map with no habitat cells on
-		if(!isOnMap(end_x, end_y, start_x_wrap, start_y_wrap))
+		while(true)
 		{
-			throw FatalException("Could not find a habitat cell for parent. Check that your map files always have a "
-						"place for lineages to disperse from.");
+			theta += 0.5 * M_PI / (2.0 * max(radius, 1.0));
+			radius = theta / (2 * M_PI);
+			end_x = archimedesSpiralX(start_x, start_y, radius, theta);
+			end_y = archimedesSpiralY(start_x, start_y, radius, theta);
+
+			// Double check that the distance is not greater than the map size
+			// This acts as a fail-safe in case someone presents a historical map with no habitat cells on
+			if(!isOnMap(end_x, end_y, start_x_wrap, start_y_wrap))
+			{
+				if(radius > fine_map.getCols() && radius > fine_map.getRows() &&
+				   radius > coarse_map.getCols() * scale && radius > coarse_map.getRows() * scale)
+					throw FatalException(
+							"Could not find a habitat cell for parent. Check that your map files always have a "
+							"place for lineages to disperse from.");
+			}
+			else
+			{
+				if(getVal(end_x, end_y, start_x_wrap, start_y_wrap, generation))
+				{
+					break;
+				}
+			}
 		}
 	}
 	return pow(pow((start_x - end_x), 2) + pow((start_y - end_y), 2), 0.5);

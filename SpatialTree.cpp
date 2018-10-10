@@ -1400,12 +1400,12 @@ void SpatialTree::simPause()
 	completePause(out1);
 }
 
-void SpatialTree::dumpMap(ofstream &out)
+void SpatialTree::dumpMap(shared_ptr<ofstream> out)
 {
 	try
 	{
 		// Output the data object
-		out << *landscape;
+		*out << *landscape;
 	}
 	catch(exception &e)
 	{
@@ -1415,12 +1415,12 @@ void SpatialTree::dumpMap(ofstream &out)
 	}
 }
 
-void SpatialTree::dumpGrid(ofstream &out)
+void SpatialTree::dumpGrid(shared_ptr<ofstream> out)
 {
 	try
 	{
 		// Output the data object
-		out << grid;
+		*out << grid;
 	}
 	catch(exception &e)
 	{
@@ -1446,10 +1446,10 @@ void SpatialTree::simResume()
 	sim_parameters->printVars();
 }
 
-void SpatialTree::loadGridSave(ifstream &in1)
+void SpatialTree::loadGridSave(shared_ptr<ifstream> in1)
 {
 	grid.setSize(sim_parameters->grid_y_size, sim_parameters->grid_x_size);
-	in1 >> grid;
+	*in1 >> grid;
 	try
 	{
 		stringstream os;
@@ -1494,7 +1494,7 @@ void SpatialTree::loadGridSave(ifstream &in1)
 	}
 }
 
-void SpatialTree::loadMapSave(ifstream &in1)
+void SpatialTree::loadMapSave(shared_ptr<ifstream> in1)
 {
 	// Input the map object
 	try
@@ -1503,7 +1503,7 @@ void SpatialTree::loadMapSave(ifstream &in1)
 		os << "\rLoading data from temp file...map..." << flush;
 		writeInfo(os.str());
 		landscape->setDims(sim_parameters);
-		in1 >> *landscape;
+		*in1 >> *landscape;
 		samplegrid.importSampleMask(sim_parameters);
 		importActivityMaps();
 	}

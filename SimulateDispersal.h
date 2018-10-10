@@ -40,7 +40,7 @@ protected:
 	// The density map object
 	shared_ptr<Landscape> density_landscape;
 	// The samplemask object
-	DataMask dataMask;
+	DataMask data_mask;
 	// Dispersal coordinator
 	DispersalCoordinator dispersal_coordinator{};
 	// Stores all key simulation parameters for the Landscape object
@@ -68,8 +68,9 @@ protected:
 	// Reference number for this set of parameters in the database output
 	unsigned long max_parameter_reference;
 public:
-	SimulateDispersal() : density_landscape(make_shared<Landscape>()), simParameters(make_shared<SimParameters>()),
-						  random(make_shared<NRrand>()), distances(), num_steps()
+	SimulateDispersal() : density_landscape(make_shared<Landscape>()), data_mask(), dispersal_coordinator(),
+						  simParameters(make_shared<SimParameters>()),
+						  random(make_shared<NRrand>()), distances(), parameter_references(), cells(), num_steps()
 	{
 		num_repeats = 0;
 		database = nullptr;

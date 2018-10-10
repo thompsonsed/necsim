@@ -156,13 +156,13 @@ public:
 	 * @param index the index of the SectionOption to obtain, must be less than configs.size()
 	 * @return the section option at the index
 	 */
-	SectionOption operator[](int index);
+	SectionOption operator[](unsigned long index);
 
 /**
 	 * @brief Gets the size of the key options vector.
 	 * @return the size of the configuration vector.
 	 */
-	unsigned int getSectionOptionsSize();
+	unsigned long getSectionOptionsSize();
 
 	/**
 	 * @brief Gets the sections contained in the SectionOptions object.

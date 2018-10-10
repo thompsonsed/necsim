@@ -800,16 +800,6 @@ void Community::importData(string inputfile)
 		auto existence = bool(sqlite3_column_int(stmt, 9));
 		double dSpec = sqlite3_column_double(stmt, 10);
 		long double generationin = sqlite3_column_double(stmt, 12);
-		//			os << xval << ", " << yval << endl;
-		// ignored lineages are now not ignored!
-		// TODO fix this properly and check functionality
-//		if(tip && !samplemask.getVal(xval, yval) && generationin > generation && false)
-//		{
-//			ignored_lineages++;
-//			sqlite3_step(stmt);
-//		}
-//		else
-//		{
 		// the -1 is to ensure that the species_id_list includes all lineages, but fills the output from the beginning
 		unsigned long index = i - 1 - ignored_lineages;
 		(*nodes)[index].setup(tip, xval, yval, xwrap, ywrap, generationin);
@@ -2109,8 +2099,8 @@ void Community::writeNewCommunityParameters()
 			sqlite3_bind_int(stmt, 5, static_cast<int>(item.metacommunity_reference));
 			if(protracted)
 			{
-				sqlite3_bind_int(stmt, 6, static_cast<int>(item.protracted_parameters.min_speciation_gen));
-				sqlite3_bind_int(stmt, 7, static_cast<int>(item.protracted_parameters.max_speciation_gen));
+				sqlite3_bind_double(stmt, 6, item.protracted_parameters.min_speciation_gen);
+				sqlite3_bind_double(stmt, 7, item.protracted_parameters.max_speciation_gen);
 			}
 			time_t start_check, end_check;
 			time(&start_check);
@@ -2498,7 +2488,7 @@ void Community::apply(shared_ptr<SpecSimParameters> sp)
 
 void Community::applyNoOutput(shared_ptr<SpecSimParameters> sp)
 {
-	doApplication(sp);
+	doApplication(std::move(sp));
 }
 
 
@@ -2506,7 +2496,7 @@ void Community::applyNoOutput(shared_ptr<SpecSimParameters> sp)
 void Community::doApplication(shared_ptr<SpecSimParameters> sp)
 {
 	shared_ptr<Row<TreeNode>> data = make_shared<Row<TreeNode>>();
-	doApplication(sp, data);
+	doApplication(std::move(sp), data);
 }
 
 void Community::doApplication(shared_ptr<SpecSimParameters> sp, shared_ptr<Row<TreeNode>> data)
@@ -2514,7 +2504,7 @@ void Community::doApplication(shared_ptr<SpecSimParameters> sp, shared_ptr<Row<T
 	spec_sim_parameters = sp;
 	writeSpeciationRates();
 	// Set up the objects
-	setList(data);
+	setList(std::move(data));
 	importSimParameters(sp->filename);
 	importSamplemask(sp->samplemask);
 	importData(sp->filename);
@@ -2532,7 +2522,7 @@ void Community::doApplication(shared_ptr<SpecSimParameters> sp, shared_ptr<Row<T
 void Community::doApplicationInternal(shared_ptr<SpecSimParameters> sp, shared_ptr<Row<TreeNode>> data)
 {
 	setInternalDatabase();
-	doApplication(sp, data);
+	doApplication(sp, std::move(data));
 }
 
 void Community::speciateRemainingLineages(const string &filename)
@@ -2557,5 +2547,86 @@ void Community::speciateRemainingLineages(const string &filename)
 	forceSimCompleteParameter();
 	exportDatabase();
 
+}
+
+unsigned long Community::getSpeciesRichness(const unsigned long community_reference)
+{
+	if(!bSqlConnection)
+	{
+		throw FatalException("Attempted to get from sql database without opening database connection.");
+	}
+
+	sqlite3_stmt *stmt = nullptr;
+	// Now find out the max size of the species_id_list, so we have a count to work from
+	string count_command = "SELECT COUNT(DISTINCT(species_id)) FROM SPECIES_ABUNDANCES WHERE no_individuals > 0 ";
+	count_command += "AND community_reference == ";
+	count_command += to_string(community_reference) + ";";
+	sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
+					   nullptr);
+	sqlite3_step(stmt);
+	int tmp_val = sqlite3_column_int(stmt, 0);
+	// close the old statement
+	sqlite3_finalize(stmt);
+	return static_cast<unsigned long>(tmp_val);
+}
+
+map<unsigned long, unsigned long> Community::getSpeciesAbundances(const unsigned long community_reference)
+{
+	if(!bSqlConnection)
+	{
+		throw FatalException("Attempted to get from sql database without opening database connection.");
+	}
+	// Check that the table exists
+	sqlite3_stmt *stmt1;
+	string call1 = "select count(type) from sqlite_master where type='table' and name='SPECIES_ABUNDANCES'";
+	int rc = sqlite3_prepare_v2(database, call1.c_str(), static_cast<int>(strlen(call1.c_str())), &stmt1, nullptr);
+	if(rc != SQLITE_DONE && rc != SQLITE_OK)
+	{
+		sqlite3_close(database);
+		throw SpeciesException("Could not check for SPECIES_ABUNDANCES table. Error code: " +
+							   to_string(rc));
+	}
+	sqlite3_step(stmt1);
+	auto has_species_abundances = static_cast<bool>(sqlite3_column_int(stmt1, 0));
+	sqlite3_step(stmt1);
+	sqlite3_finalize(stmt1);
+	// Get the number of species in the table matching the community reference
+	if(!has_species_abundances)
+	{
+		throw SpeciesException("No SPECIES_ABUNDANCES table has been written yet.");
+	}
+	string call2 = "select count(distinct(species_id)) from SPECIES_ABUNDANCES where no_individuals>0 and ";
+	call2 += "community_reference == " + to_string(community_reference);
+	rc = sqlite3_prepare_v2(database, call2.c_str(), static_cast<int>(strlen(call2.c_str())), &stmt1, nullptr);
+	if(rc != SQLITE_DONE && rc != SQLITE_OK)
+	{
+		sqlite3_close(database);
+		throw SpeciesException("Could not check for SPECIES_ABUNDANCES table. Error code: " +
+							   to_string(rc));
+	}
+	sqlite3_step(stmt1);
+	sqlite3_finalize(stmt1);
+	auto no_species = static_cast<bool>(sqlite3_column_int(stmt1, 0));
+	sqlite3_step(stmt1);
+	sqlite3_finalize(stmt1);
+	// Now fetch the species abundances
+	string all_commands = "SELECT species_id, no_individuals FROM SPECIES_ABUNDANCES WHERE community_reference ==";
+	all_commands += to_string(community_reference) + ";";
+	sqlite3_prepare_v2(database, all_commands.c_str(), static_cast<int>(strlen(all_commands.c_str())), &stmt1, nullptr);
+	sqlite3_step(stmt1);
+	// Copy the data across to the TreeNode data structure.
+	// For storing the number of ignored lineages so this can be subtracted off the parent number.
+	map<unsigned long, unsigned long> output_species_abundances;
+	for(unsigned long i = 0; i < no_species; i++)
+	{
+		auto species_id = static_cast<unsigned long>(sqlite3_column_int(stmt1, 1));
+		auto no_individuals = static_cast<unsigned long>(sqlite3_column_int(stmt1, 2));
+		// the -1 is to ensure that the species_id_list includes all lineages, but fills the output from the beginning
+		output_species_abundances[species_id] = no_individuals;
+		sqlite3_step(stmt1);
+	}
+	// Now we need to blank all objects
+	sqlite3_finalize(stmt1);
+	return output_species_abundances;
 }
 

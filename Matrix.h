@@ -253,7 +253,7 @@ public:
 		copy(&m.matrix[0][0], &m.matrix[numRows][numCols], matrix);
 	}
 
-	/**
+	virtual /**
 	 * @brief The destructor.
 	 */
 	~Matrix()

@@ -1233,7 +1233,7 @@ void Tree::simPause()
 	completePause(out1);
 }
 
-ofstream Tree::initiatePause()
+shared_ptr<ofstream> Tree::initiatePause()
 {
 	stringstream os;
 	os << "Pausing simulation..." << endl << "Saving data to temp file in " << out_directory << "/Pause/ ..." << flush;
@@ -1260,15 +1260,15 @@ ofstream Tree::initiatePause()
 		}
 	}
 	string file_to_open = pause_folder + "Dump_main_" + to_string(the_task) + "_" + to_string(the_seed) + ".csv";
-	ofstream out;
-	out.open(file_to_open.c_str());
-	out << setprecision(64);
+	shared_ptr<ofstream> out = make_shared<ofstream>();
+	out->open(file_to_open.c_str());
+	*out << setprecision(64);
 	return out;
 }
 
-void Tree::completePause(ofstream &out)
+void Tree::completePause(shared_ptr<ofstream> out)
 {
-	out.close();
+	out->close();
 	stringstream os;
 	os << "done!" << endl;
 	os << "SQL dump started" << endl;
@@ -1283,24 +1283,24 @@ void Tree::completePause(ofstream &out)
 	writeTimes();
 }
 
-void Tree::dumpMain(ofstream &out)
+void Tree::dumpMain(shared_ptr<ofstream> out)
 {
 	try
 	{
 		// Save that this simulation was not a protracted speciation sim
-		out << bIsProtracted << "\n";
+		*out << bIsProtracted << "\n";
 		// Saving the initial data to one file.
-		out << enddata << "\n" << seeded << "\n" << the_seed << "\n" << the_task << "\n" << times_file << "\n"
+		*out << enddata << "\n" << seeded << "\n" << the_seed << "\n" << the_task << "\n" << times_file << "\n"
 			<< uses_temporal_sampling << "\n";
-		out << out_directory << "\n";
-		out << has_imported_vars << "\n" << start << "\n" << sim_start << "\n";
-		out << sim_end << "\n" << now << "\n" << time_taken << "\n" << sim_finish << "\n" << out_finish << "\n";
-		out << endactive << "\n" << startendactive << "\n" << maxsimsize << "\n" << steps << "\n";
-		out << generation << "\n" << "\n" << maxtime << "\n";
-		out << deme_sample << "\n" << spec << "\n" << deme << "\n";
-		out << sql_output_database << "\n" << *NR << "\n" << *sim_parameters << "\n";
+		*out << out_directory << "\n";
+		*out << has_imported_vars << "\n" << start << "\n" << sim_start << "\n";
+		*out << sim_end << "\n" << now << "\n" << time_taken << "\n" << sim_finish << "\n" << out_finish << "\n";
+		*out << endactive << "\n" << startendactive << "\n" << maxsimsize << "\n" << steps << "\n";
+		*out << generation << "\n" << "\n" << maxtime << "\n";
+		*out << deme_sample << "\n" << spec << "\n" << deme << "\n";
+		*out << sql_output_database << "\n" << *NR << "\n" << *sim_parameters << "\n";
 		// now output the protracted speciation variables (there should be two of these).
-		out << getProtractedVariables();
+		*out << getProtractedVariables();
 	}
 	catch(exception &e)
 	{
@@ -1310,12 +1310,12 @@ void Tree::dumpMain(ofstream &out)
 	}
 }
 
-void Tree::dumpActive(ofstream &out)
+void Tree::dumpActive(shared_ptr<ofstream> out)
 {
 	try
 	{
 		// Output the active object
-		out << active;
+		*out << active;
 	}
 	catch(exception &e)
 	{
@@ -1325,12 +1325,12 @@ void Tree::dumpActive(ofstream &out)
 	}
 }
 
-void Tree::dumpData(ofstream &out)
+void Tree::dumpData(shared_ptr<ofstream> out)
 {
 	try
 	{
 		// Output the data object
-		out << *data;
+		*out << *data;
 	}
 	catch(exception &e)
 	{
@@ -1349,13 +1349,13 @@ void Tree::setResumeParameters()
 	}
 }
 
-ifstream Tree::openSaveFile()
+shared_ptr<ifstream> Tree::openSaveFile()
 {
-	ifstream in1;
+	shared_ptr<ifstream> in1 = make_shared<ifstream>();
 	string file_to_open = pause_sim_directory + string("/Pause/Dump_main_") + to_string(the_task) + "_" +
 						  to_string(the_seed) + string(".csv");
-	in1.open(file_to_open);
-	if(!in1)
+	in1->open(file_to_open);
+	if(!*in1)
 	{
 		stringstream es;
 		es << "Cannot open file at " << file_to_open << endl;
@@ -1378,7 +1378,7 @@ void Tree::setResumeParameters(
 	}
 }
 
-void Tree::loadMainSave(ifstream &in1)
+void Tree::loadMainSave(shared_ptr<ifstream> in1)
 {
 	try
 	{
@@ -1391,7 +1391,7 @@ void Tree::loadMainSave(ifstream &in1)
 		// First read our boolean which just determines whether the simulation is a protracted simulation or not.
 		// For these simulations, it should not be.
 		bool tmp;
-		in1 >> tmp;
+		*in1 >> tmp;
 		if(tmp != getProtracted())
 		{
 			if(getProtracted())
@@ -1405,25 +1405,25 @@ void Tree::loadMainSave(ifstream &in1)
 									 "Cannot be resumed by this program. Please report this bug");
 			}
 		}
-		in1 >> enddata >> seeded >> the_seed >> the_task;
-		in1.ignore(); // Ignore the endline character
-		getline(in1, times_file);
-		in1 >> uses_temporal_sampling;
-		in1.ignore();
-		getline(in1, string1);
+		*in1 >> enddata >> seeded >> the_seed >> the_task;
+		in1->ignore(); // Ignore the endline character
+		getline(*in1, times_file);
+		*in1 >> uses_temporal_sampling;
+		in1->ignore();
+		getline(*in1, string1);
 		time_t tmp_time;
-		in1 >> has_imported_vars >> tmp_time;
-		in1 >> sim_start >> sim_end >> now;
-		in1 >> time_taken >> sim_finish >> out_finish >> endactive >> startendactive >> maxsimsize >> steps;
+		*in1 >> has_imported_vars >> tmp_time;
+		*in1 >> sim_start >> sim_end >> now;
+		*in1 >> time_taken >> sim_finish >> out_finish >> endactive >> startendactive >> maxsimsize >> steps;
 		unsigned long tempmaxtime = maxtime;
-		in1 >> generation >> maxtime;
+		*in1 >> generation >> maxtime;
 		has_imported_vars = false;
-		in1 >> deme_sample >> spec >> deme;
-		in1.ignore();
-		getline(in1, sql_output_database);
-		in1 >> *NR;
-		in1.ignore();
-		in1 >> *sim_parameters;
+		*in1 >> deme_sample >> spec >> deme;
+		in1->ignore();
+		getline(*in1, sql_output_database);
+		*in1 >> *NR;
+		in1->ignore();
+		*in1 >> *sim_parameters;
 		if(maxtime == 0)
 		{
 			sim_parameters->max_time = tempmaxtime;
@@ -1441,7 +1441,7 @@ void Tree::loadMainSave(ifstream &in1)
 		}
 		setParameters();
 		double tmp1, tmp2;
-		in1 >> tmp1 >> tmp2;
+		*in1 >> tmp1 >> tmp2;
 		setProtractedVariables(tmp1, tmp2);
 		if(times_file == "null")
 		{
@@ -1475,14 +1475,14 @@ void Tree::loadMainSave(ifstream &in1)
 	}
 }
 
-void Tree::loadDataSave(ifstream &in1)
+void Tree::loadDataSave(shared_ptr<ifstream> in1)
 {
 	try
 	{
 		stringstream os;
 		os << "\rLoading data from temp file...data..." << flush;
 		writeInfo(os.str());
-		in1 >> *data;
+		*in1 >> *data;
 	}
 	catch(exception &e)
 	{
@@ -1492,7 +1492,7 @@ void Tree::loadDataSave(ifstream &in1)
 	}
 }
 
-void Tree::loadActiveSave(ifstream &in1)
+void Tree::loadActiveSave(shared_ptr<ifstream> in1)
 {
 	string file_to_open;
 	try
@@ -1501,7 +1501,7 @@ void Tree::loadActiveSave(ifstream &in1)
 		os << "\rLoading data from temp file...active..." << flush;
 		writeInfo(os.str());
 		// Input the active object
-		in1 >> active;
+		*in1 >> active;
 	}
 	catch(exception &e)
 	{

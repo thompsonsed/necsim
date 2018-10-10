@@ -54,7 +54,7 @@ void SimulateDispersal::importMaps()
 	density_landscape->calcHistoricalCoarseMap();
 	density_landscape->setLandscape(simParameters->landscape_type);
 	density_landscape->recalculateHabitatMax();
-	dataMask.importSampleMask(simParameters);
+	data_mask.importSampleMask(simParameters);
 }
 
 void SimulateDispersal::setSizes()
@@ -136,7 +136,7 @@ void SimulateDispersal::storeCellList()
 	{
 		for(unsigned long j = 0; j < simParameters->sample_x_size; j++)
 		{
-			if(dataMask.getVal(j, i, 0, 0))
+			if(data_mask.getVal(j, i, 0, 0))
 			{
 				cell_total++;
 				total += density_landscape->getVal(j, i, 0, 0, 0.0);

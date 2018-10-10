@@ -332,13 +332,13 @@ public:
 	 * @brief Saves the map object to file.
 	 * @param out the output file stream to save the object to
 	 */
-	void dumpMap(ofstream &out);
+	void dumpMap(shared_ptr<ofstream> out);
 
 	/**
 	 * @brief Saves the grid object to file
 	 * @param out the output file stream to save the object to
 	 */
-	void dumpGrid(ofstream &out);
+	void dumpGrid(shared_ptr<ofstream> out);
 
 	/**
 	 * @brief Resumes the simulation from a previous state.
@@ -352,14 +352,14 @@ public:
 	 *
 	 * @note Requires that both the simulation parameters and the maps have already been loaded.
 	 */
-	void loadGridSave(ifstream &in1);
+	void loadGridSave(shared_ptr<ifstream> in1);
 
 	/**
 	 * @brief Loads the map from the save file into memory.
 	 *
 	 * @note Requires that the simulation parameters have already been loaded.
 	 */
-	void loadMapSave(ifstream &in1);
+	void loadMapSave(shared_ptr<ifstream> in1);
 
 	/**
 	 * @brief Checks that the reproduction map makes sense with the fine density map.

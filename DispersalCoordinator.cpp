@@ -439,17 +439,17 @@ void DispersalCoordinator::disperseDensityMap(Step &this_step)
 	// greater than or equal to that distance.
 	if(!landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap, *generation))
 	{
-		// TODO add proper unittests for this scenario
 		auto min_distance = landscape->distanceToNearestHabitat(this_step.oldx, this_step.oldy, this_step.oldxwrap,
 																this_step.oldywrap, *generation);
 		while(fail)
 		{
 			dist = NR->dispersalMinDistance(min_distance);
-			// TODO move to debug
+#ifdef DEBUG
 			if(dist < min_distance)
 			{
 				throw FatalException("Distance is less than minimum distance: please report this bug.");
 			}
+#endif // DEBUG
 			angle = NR->direction();
 			density = landscape->runDispersal(dist, angle, this_step.oldx,
 											  this_step.oldy, this_step.oldxwrap, this_step.oldywrap, fail,

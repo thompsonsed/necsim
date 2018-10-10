@@ -257,7 +257,6 @@ void DataMask::clearSpatialMask()
 
 void DataMask::recalculateCoordinates(long &x, long &y, long &x_wrap, long &y_wrap)
 {
-	// TODO FIX THIS AND FIGURE OUT WTF IS GOING ON
 	if(isGridOffset)
 	{
 		x_wrap = (long) ((floor((x - (double) x_offset) / (double) x_dim)));

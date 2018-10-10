@@ -223,12 +223,12 @@ void ConfigOption::setSectionOption(string section, string reference, string val
 	section_option->val.emplace_back(value);
 }
 
-SectionOption ConfigOption::operator[](int index)
+SectionOption ConfigOption::operator[](unsigned long index)
 {
 	return configs[index];
 }
 
-unsigned int ConfigOption::getSectionOptionsSize()
+unsigned long ConfigOption::getSectionOptionsSize()
 {
 	return configs.size();
 }
@@ -379,7 +379,7 @@ int ConfigOption::importConfig(vector<string> &comargs)
 		// remove the file name from the command line arguments to maintain the vector format.
 		comargs.erase(comargs.begin() + 2);
 	}
-	return comargs.size();
+	return static_cast<int>(comargs.size());
 }
 
 ostream &operator<<(ostream &os, const ConfigOption &c)

@@ -328,19 +328,19 @@ struct SimParameters
 			gen_since_historical = time_fine[0];
 		}
 		if(time_fine.size() != rate_fine.size() || rate_fine.size() != number_fine.size() ||
-		   number_fine.size() != time_fine.size())
+		   number_fine.size() != path_fine.size())
 		{
 			stringstream ss;
 			ss << "Lengths of historical fine map variables lists must be the same: " <<  time_fine.size() << "!=";
-			ss << rate_fine.size() << "!=" << number_fine.size() << "!=" << time_fine.size() << endl;
+			ss << rate_fine.size() << "!=" << number_fine.size() << "!=" << path_fine.size() << endl;
 			throw FatalException(ss.str());
 		}
 		if(time_coarse.size() != rate_coarse.size() || rate_coarse.size() != number_coarse.size() ||
-		   number_coarse.size() != time_coarse.size())
+		   number_coarse.size() != path_coarse.size())
 		{
 			stringstream ss;
 			ss << "Lengths of historical coarse map variables lists must be the same: " <<  time_coarse.size() << "!=";
-			ss << rate_coarse.size() << "!=" << number_coarse.size() << "!=" << time_coarse.size() << endl;
+			ss << rate_coarse.size() << "!=" << number_coarse.size() << "!=" << path_coarse.size() << endl;
 			throw FatalException(ss.str());
 		}
 		for(unsigned long i = 0; i < time_fine.size(); i ++)
@@ -431,7 +431,7 @@ struct SimParameters
 		bool finemapcheck = false;
 		bool coarsemapcheck = false;
 		// Loop over each element in the config file (each line) and check if it is historical fine or historical coarse.
-		for(unsigned int i = 0; i < configs.getSectionOptionsSize(); i ++ )
+		for(unsigned long i = 0; i < configs.getSectionOptionsSize(); i ++ )
 		{
 			if(configs[i].section.find("historical_fine") == 0)
 			{

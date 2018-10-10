@@ -836,6 +836,15 @@ public:
 	 * @brief Speciates the remaining lineages in an incomplete simulation to force it to appear complete.
 	 */
 	void speciateRemainingLineages(const string &filename);
+
+	/**
+	 * @brief Gets the species richness for the community reference from the database.
+	 * @param community_reference the community reference to obtain the species richness for
+	 * @return the number of species
+	 */
+	unsigned long getSpeciesRichness(const unsigned long community_reference);
+
+	map<unsigned long, unsigned long> getSpeciesAbundances(const unsigned long community_reference);
 };
 
 #endif

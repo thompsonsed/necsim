@@ -14,7 +14,6 @@
 #include <cmath>
 #include <sqlite3.h>
 #include <cstring>
-#include <cmath>
 #include <stdexcept>
 #include <string>
 # include <boost/filesystem.hpp>
@@ -22,13 +21,16 @@
 #include <set>
 #include <utility>
 #include <memory>
+
 #ifdef WIN_INSTALL
 #include <windows.h>
 #define sleep Sleep
 #endif
+
 #include "TreeNode.h"
 #include "Matrix.h"
 #include "DataMask.h"
+#include "parameters.h"
 #include "SpecSimParameters.h"
 
 using namespace std;
@@ -44,239 +46,6 @@ using std::string;
  */
 bool checkSpeciation(const long double &random_number, const long double &speciation_rate,
 					 const unsigned long &no_generations);
-
-/**
- * @struct CommunityParameters
- * @brief A struct for containing pairs of previous calculations to make sure that aren't repeated.
- */
-struct CommunityParameters
-{
-	unsigned long reference;
-	long double speciation_rate;
-	long double time;
-	bool fragment;
-	unsigned long metacommunity_reference; // will be 0 if no metacommunity used.
-	// protracted speciation parameters
-	/**
-	 * @brief The protracted speciation parameters for this object
-	 */
-	ProtractedSpeciationParameters protracted_parameters;
-	bool updated; // set to true if the fragment reference needs updating in the database
-
-	CommunityParameters() : reference(0), speciation_rate(0.0), time(0), fragment(false), metacommunity_reference(0),
-							protracted_parameters(), updated(false){}
-
-	/**
-	 * @brief Constructor for CommunityParameters, for storing a pairs of previous calculations, requiring a speciation rate
-	 * and a time.
-	 * Overloaded version with setup routines.
-	 * @param reference_in the reference to set for this CommunityParameters set
-	 * @param speciation_rate_in the speciation rate of the previous calculation
-	 * @param time_in the time of the previous calculation
-	 * @param fragment_in bool of whether fragments  were used in the previous calculation
-	 * @param metacommunity_reference_in the metacommunity reference, or 0 for no metacommunity
-	 * @param protracted_params protracted speciation parameters to add
-	 */
-	CommunityParameters(unsigned long reference_in, long double speciation_rate_in, long double time_in,
-						bool fragment_in, unsigned long metacommunity_reference_in,
-						const ProtractedSpeciationParameters &protracted_params);
-
-	/**
-	 * @brief Sets up the CommunityParameters object
-	 * @param reference_in the reference to set for this CommunityParameters set
-	 * @param speciation_rate_in the speciation rate of the previous calculation
-	 * @param time_in the time of the previous calculation
-	 * @param fragment_in bool of whether fragments  were used in the previous calculation
-	 * @param metacommunity_reference_in the metacommunity reference, or 0 for no metacommunity
-	 * @param protracted_params protracted speciation parameters to add
-	 */
-	void setup(unsigned long reference_in, long double speciation_rate_in, long double time_in, bool fragment_in,
-			   unsigned long metacommunity_reference_in, const ProtractedSpeciationParameters &protracted_params);
-
-	/**
-	 * @brief Compare these set of parameters with the input set. If they match, return true, otherwise return false
-	 * @param speciation_rate_in speciation rate to compare with stored community parameter
-	 * @param time_in time to compare with stored community parameter
-	 * @param fragment_in if fragments are being used on this database
-	 * @param metacommunity_reference_in metacommunity reference to compare with stored community parameter
-	 * @param protracted_params the minimum number of generations required for existance before speciation
-	 * @param protracted_params protracted speciation parameters to add
-	 * @return
-	 */
-	bool compare(long double speciation_rate_in, long double time_in, bool fragment_in,
-				 unsigned long metacommunity_reference_in,
-				 const ProtractedSpeciationParameters &protracted_params);
-
-	/**
-	 * @brief Compare these set of parameters with the input set. If they match, return true, otherwise return false
-	 * Overloaded version ignoring the fragments parameter
-	 * @param speciation_rate_in speciation rate to compare with stored community parameter
-	 * @param time_in time to compare with stored community parameter
-	 * @param metacommunity_reference_in metacommunity reference to compare with stored community parameter
-	 * @param protracted_params protracted speciation parameters to add
-	 * @return
-	 */
-	bool compare(long double speciation_rate_in, long double time_in,
-				 unsigned long metacommunity_reference_in,
-				 const ProtractedSpeciationParameters &protracted_params);
-
-	/**
-	 * @brief Checks if the supplied reference is the same in the community parameter
-	 * @param reference_in
-	 * @return
-	 */
-	bool compare(unsigned long reference_in);
-};
-
-/**
- * @brief A structure for containing an array of previous calculation information, including which fragments have been
- * already calculated for.
- */
-struct CommunitiesArray
-{
-	/**
-	 * @brief The array of CommunityParameters which have been stored.
-	 */
-	vector<CommunityParameters> communityParameters;
-
-	/**
-	 * @brief Adds an extra CommunityParameters object to the calc_array vector with the supplied variables
-	 * @param reference the reference for this set of community parameters
-	 * @param speciation_rate the speciation rate of the past calculation
-	 * @param time the time of the past calculation
-	 * @param fragment bool of whether fragments were used in the past calculation
-	 * @param metacommunity_reference reference for the metacommunity parameters, or 0 if no metacommunity
-	 * @param protracted_params protracted speciation parameters to add
-	 */
-	void pushBack(unsigned long reference, long double speciation_rate, long double time, bool fragment,
-				  unsigned long metacommunity_reference,
-				  const ProtractedSpeciationParameters &protracted_params);
-
-	/**
-	 * @brief Adds the provided CommunityParameters object to the calc_array vector
-	 * @param tmp_param the set of community parameters to add
-	 */
-	void pushBack(CommunityParameters tmp_param);
-
-	/**
-	 * @brief Adds a new communities calculation paremeters reference, with a new unique reference
-	 * @param speciation_rate the speciation rate of the new calculation
-	 * @param time the time used in the new calculation
-	 * @param fragment true if fragments were used in the new calculation
-	 * @param metacommunity_reference the reference to the set of metacommunity parameters (0 for none)
-	 * @param protracted_params protracted speciation parameters to add
-	 * @return reference to the new CommunityParameters object added
-	 */
-	CommunityParameters &addNew(long double speciation_rate, long double time, bool fragment,
-								unsigned long metacommunity_reference,
-								const ProtractedSpeciationParameters &protracted_params);
-
-	/**
-	 * @brief Checks whether the calculation with the supplied variables has already been performed.
-	 *
-	 * @note
-	 * @param speciation_rate the speciation rate to check for
-	 * @param time the time to check for
-	 * @param fragment bool for checking if fragments were used
-	 * @param metacommunity_reference the reference to the set of metacommunity parameters (0 for none)
-	 * @param protracted_params protracted speciation parameters to add
-	 * @return true if the reference exists in past community parameters
-	 */
-	bool hasPair(long double speciation_rate, double time, bool fragment,
-				 unsigned long metacommunity_reference,
-				 const ProtractedSpeciationParameters &protracted_params);
-
-};
-
-/**
- * @brief Contains a set of metacommunity parameters that have been applied, or are to be applied, to the coalescence
- * tree.
- */
-struct MetacommunityParameters
-{
-	unsigned long reference;
-	unsigned long metacommunity_size;
-	long double speciation_rate;
-
-	/**
-	 * @brief Constructor for MetacommunityParameters, storing a previously applied metacommunity
-	 * @param reference_in the metacommunity reference number
-	 * @param speciation_rate_in the speciation rate used for metacommunity generation
-	 * @param metacommunity_size_in size of the tested metacommunity
-	 */
-	MetacommunityParameters(unsigned long reference_in, long double speciation_rate_in,
-							unsigned long metacommunity_size_in);
-
-	/**
-	 * @brief Compare these set of parameters with the input set. If they match, return true, otherwise return false
-	 * @param speciation_rate_in speciation rate to compare with stored community parameter
-	 * @param metacommunity_size_in size of the tested metacommunity
-	 * @return
-	 */
-	bool compare(long double speciation_rate_in, unsigned long metacommunity_size_in);
-
-	/**
-	 * @brief Checks if the supplied reference is the same in the metacommunity reference
-	 * @param reference_in the reference to check against
-	 * @return
-	 */
-	bool compare(unsigned long reference_in);
-};
-
-/**
- * @brief Contains an array of MetacommunityParameters that have been applied to the coalescence tree.
- */
-struct MetacommunitiesArray
-{
-	vector<MetacommunityParameters> calc_array;
-
-	/**
-	 * @brief Adds an extra CommunityParameters object to the calc_array vector with the supplied variables
-	 * @param reference the reference for this set of metacommunity parameters
-	 * @param speciation_rate the speciation rate used in generation of the metacommunity
-	 * @param metacommunity_size the size of the metacommunity used
-	 */
-	void pushBack(unsigned long reference, long double speciation_rate, unsigned long metacommunity_size);
-
-	/**
-	 * @brief Adds the provided PastMetacommunityParameters object to the calc_array vector
-	 * @param tmp_param the set of metacommunity parameters to add
-	 */
-	void pushBack(MetacommunityParameters tmp_param);
-
-	/**
-	 * @brief Adds a new metacommunities calculation paremeters reference, with a new unique reference
-	 * @param speciation_rate the speciation rate of the new calculation
-	 * @param metacommunity_size the size of the metacommunity in the new calculation
-	 * @return the new reference number, which should be unique
-	 */
-	unsigned long addNew(long double speciation_rate, unsigned long metacommunity_size);
-
-	/**
-	 * @brief Checks whether the calculation with the supplied variables has already been performed.
-	 * @param speciation_rate the speciation rate to check for
-	 * @param metacommunity_size the size of metacommunity to check for
-	 * @return true if the reference exists in past metacommunity parameters
-	 */
-	bool hasPair(long double speciation_rate, unsigned long metacommunity_size);
-
-	/**
-	 * @brief Checks whether the calculation with the supplied reference has already been performed.
-	 * Overloaded version for checking references.
-	 * @param reference the reference to check for in past metacommunity parameters
-	 * @return true if the reference exists in past metacommunity parameters
-	 */
-	bool hasPair(unsigned long reference);
-
-	/**
-	 * @brief Gets the metacommunity reference for the provided parameters, or returns 0 if it doesn't exist
-	 * @param speciation_rate the metacommunity speciation rate to obtain for
-	 * @param metacommunity_size the metacommunity size to apply for
-	 * @param fragment bool for checking if fragments were used
-	 * @return the metacommunity reference number, or 0 if it doesn't exist
-	 */
-	unsigned long getReference(long double speciation_rate, unsigned long metacommunity_size);
-};
 
 /**
  * @brief Contains the information needed for defining a fragment.
@@ -357,14 +126,15 @@ protected:
 	bool database_set; // boolean for whether the database has been set already.
 	sqlite3 *database; // stores the in-memory database connection.
 	bool bSqlConnection; // true if the data connection has been established.
-	shared_ptr<Row<TreeNode>> nodes; // in older versions this was called species_id_list. Changed to avoid confusion with the built-in class.
-	Row<unsigned long> row_out;
+	shared_ptr<vector<TreeNode>> nodes; // in older versions this was called species_id_list. Changed to avoid confusion with the built-in class.
+	shared_ptr<vector<unsigned long>> species_abundances;
 	unsigned long iSpecies;
 	bool has_imported_samplemask; // checks whether the samplemask has already been imported.
 	bool has_imported_data; // checks whether the main sim data has been imported.
 	Samplematrix samplemask; // the samplemask object for defining the areas we want to sample from.
 	vector<Fragment> fragments; // a vector of fragments for storing each fragment's coordinates.
-	CommunityParameters *current_community_parameters;
+	shared_ptr<CommunityParameters> current_community_parameters;
+	shared_ptr<MetacommunityParameters> current_metacommunity_parameters;
 	// the minimum speciation rate the original simulation was run with (this is read from the database SIMULATION_PARAMETERS table)
 	long double min_spec_rate;
 	// The dimensions of the sample grid size.
@@ -374,7 +144,7 @@ protected:
 	// Vector containing past speciation rates
 	CommunitiesArray past_communities;
 	MetacommunitiesArray past_metacommunities;
-	// Protracted speciation parameters
+	// Protracted speciation current_metacommunity_parameters
 	bool protracted;
 	double min_speciation_gen, max_speciation_gen;
 	ProtractedSpeciationParameters applied_protracted_parameters;
@@ -387,11 +157,15 @@ public:
 	 * @brief Contructor for the community linking to Treenode list.
 	 * @param r Row of TreeNode objects to link to.
 	 */
-	explicit Community(shared_ptr<Row<TreeNode>> r) : in_mem(false), database_set(false), database(nullptr),
-													  bSqlConnection(false), nodes(std::move(r)), row_out(),
+	explicit Community(shared_ptr<vector<TreeNode>> r) : in_mem(false), database_set(false), database(nullptr),
+													  bSqlConnection(false), nodes(std::move(r)),
+													  species_abundances(make_shared<vector<unsigned long>>()),
 													  iSpecies(0), has_imported_samplemask(false),
 													  has_imported_data(false), samplemask(), fragments(),
-													  current_community_parameters(nullptr), min_spec_rate(0.0),
+													  current_community_parameters(make_shared<CommunityParameters>()),
+													  current_metacommunity_parameters(
+															  make_shared<MetacommunityParameters>()),
+													  min_spec_rate(0.0),
 													  grid_x_size(0), grid_y_size(0), samplemask_x_size(0),
 													  samplemask_y_size(0), samplemask_x_offset(0),
 													  samplemask_y_offset(0), past_communities(),
@@ -407,7 +181,7 @@ public:
 	/**
 	 * @brief Default constructor
 	 */
-	Community() : Community(make_shared<Row<TreeNode>>())
+	Community() : Community(make_shared<vector<TreeNode>>())
 	{
 	}
 
@@ -424,7 +198,7 @@ public:
 	 * @brief Set the nodes object to the input Row of Treenode objects.
 	 * @param l the Row of Treenode objects to link to.
 	 */
-	void setList(shared_ptr<Row<TreeNode>> l);
+	void setList(shared_ptr<vector<TreeNode>> l);
 
 	/**
 	 * @brief Sets the database object for the sqlite functions.
@@ -579,7 +353,7 @@ public:
 	 * value = rOut[i] - rOut[i-1]
 	 * @return pointer to sorted Row of species abundances
 	 */
-	Row<unsigned long> *getCumulativeAbundances();
+	shared_ptr<vector<unsigned long>> getCumulativeAbundances();
 
 	/**
 	 * @brief Returns the row_out object, which should contain species abundances or cumulative abundances
@@ -588,7 +362,7 @@ public:
 	 * @note Returns a copy, so could cause problems for extremely large simulations with immense numbers of species.
 	 * @return row_out, the species abundances, or the cumulative abundances if getCumulativeAbundances has been called
 	 */
-	Row<unsigned long> getRowOut();
+	shared_ptr<vector<unsigned long>> getRowOut();
 
 	/**
 	 * @brief Gets the number of species in the most recent calculation.
@@ -663,9 +437,9 @@ public:
 	 * @param proc_parameters protracted speciation parameters to add
 	 * @return
 	 */
-	bool checkCalculationsPerformed(long double speciation_rate, double time, bool fragments,
-									unsigned long metacommunity_size, long double metacommunity_speciation_rate,
-									ProtractedSpeciationParameters proc_parameters);
+	bool checkCalculationsPerformed(const long double &speciation_rate, const double &time, const bool &fragments,
+									const MetacommunityParameters &metacomm_parameters,
+									const ProtractedSpeciationParameters &proc_parameters);
 
 	/**
 	 * @brief Adds a performed calculation to the lists of calculations. Also sets the current_community_parameters
@@ -676,11 +450,11 @@ public:
 	 * @param fragments if true, fragments were used
 	 * @param metacommunity_size the metacommunity size of the performed calculation
 	 * @param metacommunity_speciation_rate the metacommunity speciation rate of the performed calculation
-	 * @param protracted_params protracted speciation parameters to add
+	 * @param protracted_parameters protracted speciation parameters to add
 	 */
-	void addCalculationPerformed(long double speciation_rate, double time, bool fragments,
-								 unsigned long metacommunity_size, long double metacommunity_speciation_rate,
-								 const ProtractedSpeciationParameters &protracted_params);
+	void addCalculationPerformed(const long double &speciation_rate, const double &time, const bool &fragments,
+								 const MetacommunityParameters &metacomm_parameters,
+								 const ProtractedSpeciationParameters &protracted_parameters);
 
 	/**
 	 * @brief Creates a new table in the database file and outputs the database object to the same file as the input file.
@@ -754,7 +528,7 @@ public:
 	/**
 	 * @brief Write all performed calculations to the output database
 	 */
-	void writeNewMetacommuntyParameters();
+	void writeNewMetacommunityParameters();
 
 	/**
 	 * @brief Creates a new table, SPECIES_LIST in the output database.
@@ -785,6 +559,10 @@ public:
 	 * @brief Calculates the coalescence tree for each set of parameters in speciation_parameters;
 	 */
 	void calculateTree();
+
+	void makeSpeciationRatesUnique();
+
+	void makeTimesUnique();
 
 	/**
 	 * @brief Outputs the data to the SQL database.
@@ -822,7 +600,7 @@ public:
 	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
 	 * @param data the Row of TreeNodes that contains the coalescence tree.
 	 */
-	void doApplication(shared_ptr<SpecSimParameters> sp, shared_ptr<Row<TreeNode>> data);
+	void doApplication(shared_ptr<SpecSimParameters> sp, shared_ptr<vector<TreeNode>> data);
 
 	/**
 	 * @brief Creates the coalescence tree for the given speciation parameters, using internal file referencing
@@ -830,7 +608,7 @@ public:
 	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
 	 * @param data the Row of TreeNodes that contains the coalescence tree.
 	 */
-	void doApplicationInternal(shared_ptr<SpecSimParameters> sp, shared_ptr<Row<TreeNode>> data);
+	void doApplicationInternal(shared_ptr<SpecSimParameters> sp, shared_ptr<vector<TreeNode>> data);
 
 	/**
 	 * @brief Speciates the remaining lineages in an incomplete simulation to force it to appear complete.
@@ -842,9 +620,20 @@ public:
 	 * @param community_reference the community reference to obtain the species richness for
 	 * @return the number of species
 	 */
-	unsigned long getSpeciesRichness(const unsigned long community_reference);
+	unsigned long getSpeciesRichness(const unsigned long &community_reference);
 
-	map<unsigned long, unsigned long> getSpeciesAbundances(const unsigned long community_reference);
+	/**
+	 * @brief Gets the species abundances of the community
+	 * @param community_reference the reference of the desired community
+	 * @return a map of species ids to species abundances
+	 */
+	shared_ptr<map<unsigned long, unsigned long>> getSpeciesAbundances(const unsigned long &community_reference);
+
+	/**
+	 * @brief Gets the species abundance from the species_abundances internal object
+	 * @return the species abundances
+	 */
+	shared_ptr<vector<unsigned long>> getSpeciesAbundances();
 };
 
 #endif

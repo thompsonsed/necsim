@@ -72,8 +72,10 @@ private:
 
 	typedef double (NRrand::*fptr)(); // once setup will contain the dispersal function to use for this simulation.
 	fptr dispersalFunction;
+
 	// once setup will contain the dispersal function for the minimum dispersal distance.
 	typedef double (NRrand::*fptr2)(const double &min_distance);
+
 	fptr2 dispersalFunctionMinDistance;
 	// the probability that dispersal comes from the uniform distribution. This is only relevant for uniform dispersals.
 	double m_prob{};
@@ -224,7 +226,7 @@ public:
 	double rayleighMinDist(const double &dist)
 	{
 		double min_prob = rayleighCDF(dist);
-		double rand_prob = min_prob + (1-min_prob) * d01();
+		double rand_prob = min_prob + (1 - min_prob) * d01();
 		double out = sigma * pow(-2 * log(rand_prob), 0.5);
 		if(out < dist)
 		{
@@ -277,9 +279,10 @@ public:
 	 * @param distance the distance to obtain the cumulative probability for
 	 * @return the probability of dispersing less than or equal to distance
 	 */
-	double fattailCDF(const double & distance)
+	double fattailCDF(const double &distance)
 	{
-		return (1.0/(2.0*M_PI*sigma*sigma)) * pow(1 + (distance*distance/(tau*sigma*sigma)), -(tau + 2.0)/2.0);
+		return (1.0 / (2.0 * M_PI * sigma * sigma)) *
+			   pow(1 + (distance * distance / (tau * sigma * sigma)), -(tau + 2.0) / 2.0);
 	}
 
 	/**
@@ -287,10 +290,10 @@ public:
 	 * @param min_distance the minimum distance to return
 	 * @return a fat-tailed distance greater than the minimum
 	 */
-	double fattailMinDistance(const double & min_distance)
+	double fattailMinDistance(const double &min_distance)
 	{
 		double prob = fattailCDF(min_distance);
-		double random_number = prob + d01() * (1-prob);
+		double random_number = prob + d01() * (1 - prob);
 		return (sigma * pow((tau * (pow(random_number, -2.0 / tau)) - 1.0), 0.5));
 	}
 
@@ -377,7 +380,7 @@ public:
 	 * @param dist the minimum distance to generate
 	 * @return a random distance greater than the minimum provided
 	 */
-	double normUniformMinDistance(const double & min_distance)
+	double normUniformMinDistance(const double &min_distance)
 	{
 		if(d01() < m_prob)
 		{
@@ -402,7 +405,7 @@ public:
 	 * @param dist the minimum distance to generate
 	 * @return a random distance greater than the minimum provided
 	 */
-	double uniformMinDistance(const double & min_distance)
+	double uniformMinDistance(const double &min_distance)
 	{
 		if(min_distance > cutoff)
 		{
@@ -438,7 +441,7 @@ public:
 	 * @param dist the minimum distance to generate
 	 * @return a random distance greater than the minimum provided
 	 */
-	double uniformUniformMinDistance(const double & min_distance)
+	double uniformUniformMinDistance(const double &min_distance)
 	{
 		if(d01() < 0.5)
 		{
@@ -538,7 +541,39 @@ public:
 		return min(double(LONG_MAX), (this->*dispersalFunctionMinDistance)(min_distance));
 	}
 
-	// to reconstruct distribution, use x = fattail/squrt(1+direction) , y = fattail/squrt(1+(direction^-1))
+	/**
+	 * @brief Sample from a logarithmic distribution
+	 *
+	 * Uses the LK sampling method for generating random numbers from a logarithmic distribution, as described by
+	 * Kemp (1981).
+	 *
+	 * @param alpha alpha parameter for the logarithmic distribution
+	 * @return the randomly generated logarithmic number
+	 */
+	unsigned long randomLogarithmic(long double alpha)
+	{
+		double u_2 = d01();
+		if(u_2 > alpha)
+		{
+			return 1;
+		}
+		long double h = log(1 - alpha);
+		double u_1 = d01();
+		long double q = 1 - exp(u_1 * h);
+		if(u_2 < (q * q))
+		{
+			return static_cast<unsigned long>(floor(1 + log(u_2) / log(q)));
+		}
+		else if(u_2 > q)
+		{
+			return 1;
+		}
+		else
+		{
+			return 2;
+		}
+
+	}
 
 	/**
 	 * @brief Outputs the NRrand object to the output stream.

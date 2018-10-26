@@ -352,7 +352,7 @@ public:
 	 * @param m the matrix to add to this matrix.
 	 * @return the matrix object which is the sum of the two matrices.
 	 */
-	const Matrix operator+(const Matrix &m)
+	Matrix operator+(const Matrix &m) const
 	{
 		//Since addition creates a new matrix, we don't want to return a reference, but an actual matrix object.
 		unsigned long newnumcols, newnumrows;
@@ -389,7 +389,7 @@ public:
 	 * @param m the matrix to subtract from this matrix.
 	 * @return the matrix object which is the subtraction of the two matrices.
 	 * */
-	const Matrix operator-(const Matrix &m)
+	Matrix operator-(const Matrix &m) const
 	{
 		unsigned long newnumcols, newnumrows;
 		if(numCols > m.numCols)
@@ -490,7 +490,7 @@ public:
 	 * @param s the constant to scale the matrix by.
 	 * @return the scaled matrix.
 	 */
-	const Matrix operator*(const double s)
+	Matrix operator*(const double s) const
 	{
 		Matrix result(numRows, numCols);
 		for(unsigned long r = 0; r < numRows; r++)
@@ -509,7 +509,7 @@ public:
 	 * @param m the matrix to multiply with
 	 * @return the product of each ith,jth value of the matrix.
 	 */
-	const Matrix operator*(Matrix &m)
+	Matrix operator*(Matrix &m) const
 	{
 		unsigned long newnumcols;
 		if(numCols > m.numRows)

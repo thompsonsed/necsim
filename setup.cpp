@@ -10,7 +10,7 @@
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
  
-#include "Setup.h"
+#include "setup.h"
 #include "Logging.h"
 // the old stdout
 int saved_stdout;

@@ -14,9 +14,9 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include "ConfigFileParser.h"
+#include "ConfigParser.h"
 #include "Logger.h"
-#include "CustomExceptions.h"
+#include "custom_exceptions.h"
 
 using namespace std;
 /************************************************************
@@ -75,7 +75,7 @@ struct SimParameters
 	// vector of times
 	vector<double> times;
 	// Stores the full list of configs imported from file
-	ConfigOption configs;
+	ConfigParser configs;
 	// Set to true if the oldest historical state has been reached.
 	bool is_historical{};
 	// if the sample file is not null, this variable tells us whether different points in space require different
@@ -85,7 +85,7 @@ struct SimParameters
 	bool uses_spatial_sampling{};
 	// This can be closed, infinite and tiled (which is also infinite)
 	string landscape_type;
-	// The protracted speciation parameters - these DON'T need to be stored upon pausing simulations
+	// The protracted speciation current_metacommunity_parameters - these DON'T need to be stored upon pausing simulations
 	bool is_protracted{};
 	double min_speciation_gen{}, max_speciation_gen{};
 
@@ -129,7 +129,7 @@ struct SimParameters
 	 * Assumes that the parameters have already been parsed from the config file.
 	 * @param configOption the parsed ConfigOption object
 	 */
-	void importParameters(ConfigOption configOption)
+	void importParameters(ConfigParser configOption)
 	{
 		configs = std::move(configOption);
 		importParameters();
@@ -552,7 +552,7 @@ struct SimParameters
 	}
 
 	void setMetacommunityParameters(const unsigned long &metacommunity_size,
-									const double &speciation_rate,
+									const long double &speciation_rate,
 									const unsigned long &seed,
 									const unsigned long &job)
 	{

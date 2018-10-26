@@ -89,27 +89,27 @@ struct SectionOption
 };
 
 /**
- * @brief Config option class to store and import options from a file.
+ * @brief Stores and parses configuration options from the command line and config files.
  */
-class ConfigOption
+class ConfigParser
 {
 private:
-	string configfile;
-	bool bConfig;
-	bool bMain;  // is true if this is the main command line import (and therefore we want to delete the first few
+	string config_file;
+	bool configSet;
+	bool isMain;  // is true if this is the main command line import (and therefore we want to delete the first few
 	// command line options)
-	bool bFullParse;  // if this is true, each KeyOption structure will be returned after each read.
+	bool isFullParser;  // if this is true, each KeyOption structure will be returned after each read.
 	vector<SectionOption> configs;  // all config data if full parse is true.
 public:
 	/**
 	 * @brief default construtor for ConfigOption
 	 */
-	ConfigOption() : configs()
+	ConfigParser() : configs()
 	{
-		configfile = "none";
-		bConfig = false;
-		bMain = false;
-		bFullParse = false;
+		config_file = "none";
+		configSet = false;
+		isMain = false;
+		isFullParser = false;
 	}
 
 	/**
@@ -218,7 +218,7 @@ public:
 	 * @param c the ConfigOption object.
 	 * @return os the output stream.
 	 */
-	friend ostream &operator<<(ostream &os, const ConfigOption &c);
+	friend ostream &operator<<(ostream &os, const ConfigParser &c);
 
 	/**
 	 * @brief Overloading the >> operator for inputting from an input stream.
@@ -227,7 +227,7 @@ public:
 	 * @param c the ConfigOption object
 	 * @return is the input stream
 	 */
-	friend istream &operator>>(istream &is, ConfigOption &c);
+	friend istream &operator>>(istream &is, ConfigParser &c);
 };
 
 #endif

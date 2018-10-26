@@ -12,7 +12,7 @@
  */
 #include "DispersalCoordinator.h"
 #include <utility>
-#include "CustomExceptions.h"
+#include "custom_exceptions.h"
 #include "Logger.h"
 
 DispersalCoordinator::DispersalCoordinator() : dispersal_prob_map(), raw_dispersal_prob_map(), NR(nullptr),
@@ -91,7 +91,7 @@ void DispersalCoordinator::setDispersal(shared_ptr<SimParameters> simParameters)
 {
 	if(!simParameters)
 	{
-		throw FatalException("Simulation parameters pointer has not been set for DispersalCoordinator.");
+		throw FatalException("Simulation current_metacommunity_parameters pointer has not been set for DispersalCoordinator.");
 	}
 	setDispersal(simParameters->dispersal_method, simParameters->dispersal_file,
 				 simParameters->fine_map_x_size, simParameters->fine_map_y_size, simParameters->m_prob,

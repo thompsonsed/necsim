@@ -12,8 +12,8 @@
 
 #include "SimulateDispersal.h"
 #include "Logger.h"
-#include "CustomExceptions.h"
-#include "Filesystem.h"
+#include "custom_exceptions.h"
+#include "file_system.h"
 #include "Community.h"
 
 #include <utility>
@@ -28,7 +28,7 @@ void SimulateDispersal::setSimulationParameters(shared_ptr<SimParameters> sim_pa
 	if(print)
 	{
 		writeInfo("********************************\n");
-		writeInfo("Setting simulation parameters...\n");
+		writeInfo("Setting simulation current_metacommunity_parameters...\n");
 	}
 	simParameters = sim_parameters;
 	if(print)
@@ -42,7 +42,7 @@ void SimulateDispersal::importMaps()
 	writeInfo("Starting map import...\n");
 	if(simParameters == nullptr)
 	{
-		throw FatalException("Simulation parameters have not been set.");
+		throw FatalException("Simulation current_metacommunity_parameters have not been set.");
 	}
 	density_landscape->setDims(simParameters);
 	dispersal_coordinator.setMaps(density_landscape);
@@ -264,7 +264,7 @@ void SimulateDispersal::writeDatabase(string table_name)
 			message += "  is not one of 'DISTANCES_TRAVELLED' or 'DISPERSAL_DISTANCES'.";
 			throw FatalException(message);
 		}
-		// Write out the parameters
+		// Write out the current_metacommunity_parameters
 		checkMaxParameterReference();
 		writeParameters(table_name);
 		// Do the sql output
@@ -353,7 +353,7 @@ void SimulateDispersal::writeDatabase(string table_name)
 
 void SimulateDispersal::writeParameters(string table_name)
 {
-	// Now add the parameters
+	// Now add the current_metacommunity_parameters
 	string create_table = "CREATE TABLE IF NOT EXISTS PARAMETERS (ref INT PRIMARY KEY not null,";
 	create_table += "simulation_type TEXT not null, ";
 	create_table += " sigma DOUBLE not null, tau DOUBLE not null, m_prob DOUBLE not null, cutoff DOUBLE NOT NULL,";

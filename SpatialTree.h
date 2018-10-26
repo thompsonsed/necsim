@@ -78,7 +78,7 @@
 #include "SpeciesList.h"
 #include "Landscape.h"
 #include "Community.h"
-#include "Setup.h"
+#include "setup.h"
 #include "DispersalCoordinator.h"
 #include "ActivityMap.h"
 #include "Logger.h"

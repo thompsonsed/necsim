@@ -69,14 +69,14 @@ void SpeciationCommands::parseArgs()
 		int i = 6;
 		while(i < argc)
 		{
-			sp->all_speciation_rates.push_back(stof(comargs[i]));
+			sp->all_speciation_rates.insert(stof(comargs[i]));
 			i++;
 		}
 	}
 	else if(argc == 7 && !bInvalidArguments && !bAskHelp)
 	{
 		sp->bMultiRun = false;
-		sp->all_speciation_rates.push_back(stod(comargs[6]));
+		sp->all_speciation_rates.insert(stod(comargs[6]));
 	}
 	if(!bInvalidArguments && !bAskHelp && !bRunDefault)
 	{
@@ -143,7 +143,7 @@ void SpeciationCommands::parseArgs()
 	if(comargs[1] == "-d" || bRunDefault)
 	{
 		sp->filename = "../../Data/Coal_sim/Test_output/data_0_1.db";
-		sp->all_speciation_rates.push_back(0.001);
+		sp->all_speciation_rates.insert(0.001);
 		sp->samplemask = "null";
 		sp->times_file = "null";
 		sp->fragment_config_file = "null";

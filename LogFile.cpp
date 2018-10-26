@@ -11,8 +11,8 @@
 #include <iomanip>
 #include <boost/filesystem.hpp>
 #include "LogFile.h"
-#include "Filesystem.h"
-#include "CustomExceptions.h"
+#include "file_system.h"
+#include "custom_exceptions.h"
 
 string getTime()
 {

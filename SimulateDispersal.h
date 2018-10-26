@@ -43,7 +43,7 @@ protected:
 	DataMask data_mask;
 	// Dispersal coordinator
 	DispersalCoordinator dispersal_coordinator{};
-	// Stores all key simulation parameters for the Landscape object
+	// Stores all key simulation current_metacommunity_parameters for the Landscape object
 	shared_ptr<SimParameters> simParameters;
 	// The random number generator object
 	shared_ptr<NRrand> random;
@@ -65,7 +65,7 @@ protected:
 	double generation;
 	// If true, sequentially selects dispersal probabilities, default is true
 	bool is_sequential;
-	// Reference number for this set of parameters in the database output
+	// Reference number for this set of current_metacommunity_parameters in the database output
 	unsigned long max_parameter_reference;
 public:
 	SimulateDispersal() : density_landscape(make_shared<Landscape>()), data_mask(), dispersal_coordinator(),

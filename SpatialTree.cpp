@@ -139,9 +139,9 @@ void SpatialTree::parseArgs(vector<string> &comargs)
 			bCheckUser = false;
 			os << "Possible command line arguments: " << endl;
 			os << "-h/-help: Show the help file." << endl;
-			os << "-d/-D: Run with default small parameters." << endl;
-			os << "-dl/-DL: Run with default large parameters." << endl;
-			os << "-dx/-DX: Run with the default very large parameters." << endl;
+			os << "-d/-D: Run with default small current_metacommunity_parameters." << endl;
+			os << "-dl/-DL: Run with default large current_metacommunity_parameters." << endl;
+			os << "-dx/-DX: Run with the default very large current_metacommunity_parameters." << endl;
 			os << "-c/-config: Run with the supplied config file." << endl;
 			throw FatalException(
 					os.str()); // exit the program right away as there is no need to continue if there is no simulation to run!
@@ -154,7 +154,7 @@ void SpatialTree::parseArgs(vector<string> &comargs)
 		if(argc != 6)
 		{
 			stringstream ss;
-			ss << "Incorrect number of parameters provided for resuming simulation. Expecting:" << endl;
+			ss << "Incorrect number of current_metacommunity_parameters provided for resuming simulation. Expecting:" << endl;
 			ss << "1: -r flag" << endl;
 			ss << "2: the folder containing the paused simulation (should hold a 'Pause' folder)" << endl;
 			ss << "3: the simulation seed" << endl;
@@ -165,7 +165,7 @@ void SpatialTree::parseArgs(vector<string> &comargs)
 		bResume = true;
 		has_paused = true;
 	}
-	// Import the default parameters if required.
+	// Import the default current_metacommunity_parameters if required.
 	if(comargs[1] == "-d" || comargs[1] == "-D" || bCheckUser)
 	{
 		runAsDefault(comargs);

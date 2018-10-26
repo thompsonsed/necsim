@@ -21,12 +21,12 @@
 #include <sstream>
 #include "Matrix.h"
 #include "Logger.h"
-#include "CustomExceptions.h"
-#include "CPLCustomHandlerNecsim.h"
+#include "custom_exceptions.h"
+#include "cpl_custom_handler.h"
 
 using namespace std;
 #ifdef DEBUG
-#include "CustomExceptions.h"
+#include "custom_exceptions.h"
 #endif // DEBUG
 
 /**

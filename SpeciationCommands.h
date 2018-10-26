@@ -28,7 +28,7 @@
 class SpeciationCommands
 {
 private:
-	// Contains all speciation parameters
+	// Contains all speciation current_metacommunity_parameters
 	shared_ptr<SpecSimParameters> sp;
 	// Command-line arguments for parsing
 	vector<string> comargs;

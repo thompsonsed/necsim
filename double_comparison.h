@@ -24,8 +24,6 @@
  */
 bool doubleCompare(double d1, double d2, double epsilon);
 
-
-
 /**
  * @brief Compares two doubles and returns a boolean of whether they are equal, within the epsilon deviation.
  * This is useful for floating point errors in saving and reading doubles from file.

@@ -15,7 +15,7 @@
 #include <stdexcept>
 #include <sstream>
 #include "LogFile.h"
-#include "CPLCustomHandlerNecsim.h"
+#include "cpl_custom_handler.h"
 
 using namespace std;
 

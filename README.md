@@ -16,7 +16,7 @@ See file **LICENSE.txt** or go to [here](https://opensource.org/licenses/MIT) fo
 
 ## INTRODUCTION ##
 
-necsim is a generic spatial coalescence simulator for neutral systems. It applies the model to temporally and spatially varying density maps for a specific set of supplied parameters, and outputs information for each individual to a SQL database. 
+necsim is a generic spatial coalescence simulator for neutral systems. It applies the model to temporally and spatially varying density maps for a specific set of supplied current_metacommunity_parameters, and outputs information for each individual to a SQL database.
 
 necsim includes functionality for applying varying speciation rates after simulations are complete. This enables the main simulation to be run with the *minimum* speciation rate required and afterwards analysis can be completed using different speciation rates.
 
@@ -58,7 +58,7 @@ The command line options to be specified are:
 13. the minimum number of species known to exist. (Currently has no effect).
 14. (and onwards) speciation rates to apply after simulation.
 
-In this set up, the map config file contains a file on each line, with tab separation between the different variables. The "ref" flag contains the object type, followed by all other parameters. An example is given below.
+In this set up, the map config file contains a file on each line, with tab separation between the different variables. The "ref" flag contains the object type, followed by all other current_metacommunity_parameters. An example is given below.
 
 ref=sample_grid	path=/path/to/file	x=100	y=200	mask=/path/to/mask
 ref=fine_map	path=/path/to/file	x=100	y=200	x_off=10	y_off=20
@@ -135,13 +135,13 @@ speciationrate1 = d
 speciationrate2 = d
 ...
 ```
-where `i` represents a positive integer, `d` is a decimal value between 0 and 1, and `f` is any positive number (float). Whilst this does help with readability of the code, the order of the arguments is essential at this stage (i.e. don't switch the order of the lines). Future versions may alter the system of reading such that the parameters are set according to their key. Any number of speciation rates (or 0) can be at the end of the file.
+where `i` represents a positive integer, `d` is a decimal value between 0 and 1, and `f` is any positive number (float). Whilst this does help with readability of the code, the order of the arguments is essential at this stage (i.e. don't switch the order of the lines). Future versions may alter the system of reading such that the current_metacommunity_parameters are set according to their key. Any number of speciation rates (or 0) can be at the end of the file.
 
 ####Outputs####
 Upon successful completion of a simulation, necsim will produce an SQLite database file in the output directory in an SQL\_data folder. This database contains several tables, which can be accessed using a program like [DB Browser for SQLite](http://sqlitebrowser.org/) or Microsoft Access. Alternatively, most programming languages have an SQLite interface ([RSQlite](https://cran.r-project.org/web/packages/RSQLite/index.html), [python sqlite3](https://docs.python.org/2/library/sqlite3.html))
 
 * The main table within the database is the SPECIES\_LIST table, which is the location and inheritence of every lineage recorded. Several other important data structures (such as whether it is a "tip" of the phylogenetic tree of not) which are used  when re-constructing the species identity.
-* A secondary output from necsims is a SIMULATION\_PARAMETERS table for identifying the exact parameters with which the model is run.
+* A secondary output from necsims is a SIMULATION\_PARAMETERS table for identifying the exact current_metacommunity_parameters with which the model is run.
 * SpeciationCounter also produces a SPECIES_ABUNDANCES table containing species abundances across the whole sample map, plus (optionally) a table of SPECIES\_LOCATIONS (containing the x,y location of every individual) and FRAGMENT\_ABUNDANCES (species abundances for each habitat fragment separately).
 
 ## REQUIREMENTS ##
@@ -182,7 +182,7 @@ A brief description of the important classes is given below. Some classes also c
 * The `SpeciesList` class
 	- Contains the species_id_list of individuals, for application in a matrix, to essentially create a 3D array.
 	- Handles the positioning of individuals in space within a grid cell.
-* The `ConfigOption` class
+* The `ConfigParser` class
 	- Contains basic functions for importing command line arguments from a config file, providing an alternative way of setting up simulations.
 * The `Community` class
 	 - Provides the routines for applying different speciation rates to a phylogenetic tree, to be used either immediately after simulation within necsim, or at a later time using SpeciationCounter.cpp

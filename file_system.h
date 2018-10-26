@@ -14,6 +14,7 @@
  */
 
 #define _USE_MATH_DEFINES
+
 #include <cmath>
 #include <sqlite3.h>
 #include <string>
@@ -30,7 +31,7 @@ using namespace std;
  * @param database_name
  * @param database
  */
-void openSQLiteDatabase(const string &database_name, sqlite3 *& database);
+void openSQLiteDatabase(const string &database_name, sqlite3 *&database);
 
 /**
  * @brief Checks that parent folder to the supplied file exists, and if it doesn't creates it.
@@ -38,11 +39,10 @@ void openSQLiteDatabase(const string &database_name, sqlite3 *& database);
  */
 void createParent(string file);
 
-
 /**
 * @brief Checks the existance of a file on the hard drive.
 * @param testfile the file to examine
-* @return if true, file exists
+* @return should always return true, or raise an error (if the file doesn't exist)
 */
 bool doesExist(string testfile);
 
@@ -75,6 +75,46 @@ unsigned long cantorPairing(unsigned long x1, unsigned long x2);
  * @param str the input stream from the csv file.
  * @return a vector where each element corresponds to the respective row from the csv.
  */
-vector<string> getCsvLineAndSplitIntoTokens(istream& str);
+vector<string> getCsvLineAndSplitIntoTokens(istream &str);
+
+/**
+ * @brief Overload the output operator for vectors
+ * @tparam T the template type of the vector
+ * @param os the output stream to write to
+ * @param v the vector to write out
+ * @return the modified output operator
+ */
+template<class T>
+ostream &operator<<(ostream &os, const vector<T> &v)
+{
+	os << v.size() << ",";
+	for(const auto &item: v)
+	{
+		os << item << ",";
+	}
+	return os;
+}
+
+/**
+ * @brief Overloading the << operator for inputting from an input stream.
+ * @param is the input stream.
+ * @param r the Row object to input to.
+ * @return the input stream.
+ */
+template<class T>
+istream &operator>>(istream &is, vector<T> &v)
+{
+	char delim;
+	int n;
+	is >> n;
+	v.resize(n);
+	is >> delim;
+	for(unsigned long c = 0; c < static_cast<unsigned long>(n); c++)
+	{
+		is >> v[c];
+		is >> delim;
+	}
+	return is;
+}
 
 #endif //SPECIATIONCOUNTER_FILESYSTEM_H

@@ -7,7 +7,7 @@
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 #include <sstream>
-#include "CPLCustomHandlerNecsim.h"
+#include "cpl_custom_handler.h"
 #include "Logging.h"
 
 #ifdef with_gdal

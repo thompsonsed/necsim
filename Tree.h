@@ -25,10 +25,9 @@
 #include "NRrand.h"
 #include "DataPoint.h"
 #include "Community.h"
-#include "Filesystem.h"
-#include "CustomExceptions.h"
+#include "file_system.h"
+#include "custom_exceptions.h"
 #include "Step.h"
-
 
 /**
  * @brief Main simulation class for performing a non-spatial neutral simulation and generating the phylogenetic tree of
@@ -38,10 +37,10 @@ class Tree
 {
 protected:
 	// storing the coalescence tree itself
-	shared_ptr<Row<TreeNode>> data;
+	shared_ptr<vector<TreeNode>> data;
 	// a reference for the last written point in data.
 	unsigned long enddata;
-	// Stores the command line parameters and parses the required information.
+	// Stores the command line current_metacommunity_parameters and parses the required information.
 	shared_ptr<SimParameters> sim_parameters;
 	// random number generator
 	shared_ptr<NRrand> NR;
@@ -63,7 +62,7 @@ protected:
 	time_t start, sim_start, sim_end, now, sim_finish, out_finish;
 	time_t time_taken;
 	// Active lineages stored as a row of datapoints
-	Row<DataPoint> active;
+	vector<DataPoint> active;
 	// Stores the point of the end of the active vector. 0 is reserved as null
 	unsigned long endactive;
 	// the maximum size of endactive
@@ -114,7 +113,7 @@ protected:
 	// variable for storing the paused sim location if files have been moved during paused/resumed simulations!
 	string pause_sim_directory;
 public:
-	Tree() : data(make_shared<Row<TreeNode>>()), enddata(0), sim_parameters(make_shared<SimParameters>()),
+	Tree() : data(make_shared<vector<TreeNode>>()), enddata(0), sim_parameters(make_shared<SimParameters>()),
 			 NR(make_shared<NRrand>()), speciation_rates(), seeded(false),
 			 the_seed(-1), the_task(-1), times_file("null"), reference_times(), uses_temporal_sampling(false),
 			 start(0), sim_start(0), sim_end(0), now(0), sim_finish(0), out_finish(0), time_taken(0), active(),
@@ -138,7 +137,6 @@ public:
 #endif
 	}
 
-
 	/**
 	 * @brief Import the simulation variables from the command line structure.
 	 *
@@ -159,7 +157,8 @@ public:
 
 	 * @param config the set of config parameters to import
 	 */
-	void importSimulationVariables(ConfigOption config);
+	void importSimulationVariables(ConfigParser config);
+
 	/**
 	 * @brief Runs the basic file existence checks.
 	 * Checks for paused simulations and file existence.
@@ -170,6 +169,7 @@ public:
 	 * @brief Resets all the simulation variables.
 	 */
 	void wipeSimulationVariables();
+
 	/**
 	 * @brief Sets up the simulation parameters from the one provided.
 	 *
@@ -184,7 +184,6 @@ public:
 	 * @return true if output creates successfully
 	 */
 	bool checkOutputDirectory();
-
 
 	/**
 	 * @brief Checks for existing paused simulations to resume from
@@ -303,6 +302,7 @@ public:
 	 * @brief Adds the speciation rates to those to be applied.
 	 */
 	void addSpeciationRates(vector<long double> spec_rates_in);
+
 	/**
 	 * @brief Assigns the objects sizes in memory and fills with the starting lineages.
 	 */
@@ -321,7 +321,7 @@ public:
 	 * simulation.
 	 * At the end of the simulation, returns true if the simulation is complete, false otherwise.
 	 */
-	 virtual bool runSimulation();
+	virtual bool runSimulation();
 
 	/**
 	 * @brief Writes to the console that the simulation is beginning
@@ -364,6 +364,7 @@ public:
 	 * @param data_position the position in the array of TreeNodes for this lineage
 	 */
 	virtual void speciateLineage(const unsigned long &data_position);
+
 	/**
 	 * @brief Removes the old position within active.
 	 * @param chosen the desired active reference to remove from the grid.
@@ -416,7 +417,7 @@ public:
 	 * @param proportion_added the proportion of lineages that should be added
 	 * @return true if the lineage should be added, false otherwise
 	 */
-	bool checkProportionAdded(const double & proportion_added);
+	bool checkProportionAdded(const double &proportion_added);
 
 	/**
 	 * @brief Checks the size of the main active and data objects is large enough
@@ -424,7 +425,6 @@ public:
 	 * @param req_active the required active object size
 	 */
 	void checkSimSize(unsigned long req_data, unsigned long req_active);
-
 
 	/**
 	 * @brief Sets the active reference to a tip, if it isn't one already. Otherwise, creates a new tip for the new
@@ -470,7 +470,20 @@ public:
 	 * For use with metacommunity applications
 	 * @return row of cumulative species abundances
 	 */
-	Row<unsigned long> *getCumulativeAbundances();
+	shared_ptr<vector<unsigned long>> getCumulativeAbundances();
+
+	/**
+	 * @brief Gets the species abundances from the internal tree.
+	 * @param community_reference the community reference
+	 * @return the species abundances
+	 */
+	shared_ptr<map<unsigned long, unsigned long>> getSpeciesAbundances(const unsigned long &community_reference);
+
+	/**
+	 * @brief Gets the species abundances from the internal tree.
+	 * @return the species abundances
+	 */
+	shared_ptr<vector<unsigned long>> getSpeciesAbundances();
 
 	/**
 	 * @brief Sets up Community member to point to the same output database as the simulation.
@@ -529,7 +542,6 @@ public:
 	 */
 	virtual double getProtractedGenerationMax();
 
-
 	/**
 	 * @brief Copy the in-memory database to file.
 	 *
@@ -579,6 +591,7 @@ public:
 	 * output name.
 	 */
 	void setupOutputDirectory();
+
 	/**
 	 * @brief Creates the SIMULATION_PARAMETERS table in the SQL database.
 	 */
@@ -599,7 +612,6 @@ public:
 	 * @return string containing a list of the protracted speciation variables.
 	 */
 	virtual string protractedVarsToString();
-
 
 	/**
 	 * @brief Pause the simulation and dump data from memory.
@@ -683,6 +695,7 @@ public:
 	 * Reads in the parameters and objects from file and re-starts the simulation.
 	 */
 	virtual void simResume();
+
 #ifdef DEBUG
 
 	/**
@@ -720,6 +733,5 @@ public:
 	void miniCheck(const unsigned long &chosen);
 #endif // DEBUG
 };
-
 
 #endif //TREE_H

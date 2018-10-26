@@ -17,7 +17,7 @@
 #include <string>
 #include <sstream>
 #include "Logger.h"
-#include "CustomExceptions.h"
+#include "custom_exceptions.h"
 
 /**
  * @brief Gets the [2] element from the vector (which should contain the config file from command-line arguments

@@ -27,7 +27,7 @@ void Tree::importSimulationVariables(const string &configfile)
 	runFileChecks();
 }
 
-void Tree::importSimulationVariables(ConfigOption config)
+void Tree::importSimulationVariables(ConfigParser config)
 {
 	sim_parameters->importParameters(config);
 	runFileChecks();
@@ -186,8 +186,8 @@ unsigned long Tree::getInitialCount()
 unsigned long Tree::setObjectSizes()
 {
 	unsigned long initial_count = getInitialCount();
-	active.setSize(initial_count + 1);
-	data->setSize(2 * initial_count + 1);
+	active.resize(initial_count + 1);
+	data->resize(2 * initial_count + 1);
 	return initial_count;
 }
 
@@ -794,10 +794,22 @@ void Tree::applySpecRateInternal(long double sr, double t)
 	community.calcSpeciesAbundance();
 }
 
-Row<unsigned long> *Tree::getCumulativeAbundances()
+shared_ptr<vector<unsigned long>> Tree::getCumulativeAbundances()
 {
 	return community.getCumulativeAbundances();
 }
+
+shared_ptr<map<unsigned long, unsigned long>> Tree::getSpeciesAbundances(const unsigned long &community_reference)
+{
+	return community.getSpeciesAbundances(community_reference);
+}
+
+shared_ptr<vector<unsigned long>> Tree::getSpeciesAbundances()
+{
+	return community.getSpeciesAbundances();
+};
+
+
 
 ProtractedSpeciationParameters Tree::setupCommunity()
 {
@@ -819,7 +831,8 @@ ProtractedSpeciationParameters Tree::setupCommunity()
 void Tree::setupCommunityCalculation(long double sr, double t)
 {
 	auto tmp = setupCommunity();
-	community.addCalculationPerformed(sr, t, false, 0, 0.0, tmp);
+	MetacommunityParameters null_parameters;
+	community.addCalculationPerformed(sr, t, false, null_parameters, tmp);
 }
 
 void Tree::applySpecRate(long double sr)
@@ -1157,7 +1170,7 @@ void Tree::setupOutputDirectory()
 void Tree::sqlCreateSimulationParameters()
 {
 	char *sErrMsg;
-// Now additionally store the simulation parameters (extremely useful data)
+// Now additionally store the simulation current_metacommunity_parameters (extremely useful data)
 	string to_execute = "CREATE TABLE SIMULATION_PARAMETERS (seed INT PRIMARY KEY not null, job_type INT NOT NULL,";
 	to_execute += "output_dir TEXT NOT NULL, speciation_rate DOUBLE NOT NULL, sigma DOUBLE NOT NULL,tau DOUBLE NOT "
 				  "NULL, deme INT NOT NULL, ";
@@ -1457,7 +1470,7 @@ void Tree::loadMainSave(shared_ptr<ifstream> in1)
 				throw runtime_error("uses_temporal_sampling should not be false");
 			}
 			vector<string> tmpimport;
-			ConfigOption tmpconfig;
+			ConfigParser tmpconfig;
 			tmpconfig.setConfig(times_file, false);
 			tmpconfig.importConfig(tmpimport);
 			for(const auto &i : tmpimport)
@@ -1470,7 +1483,7 @@ void Tree::loadMainSave(shared_ptr<ifstream> in1)
 	catch(exception &e)
 	{
 		string msg;
-		msg = "Failure to import parameters from temp main: " + string(e.what());
+		msg = "Failure to import current_metacommunity_parameters from temp main: " + string(e.what());
 		throw FatalException(msg);
 	}
 }

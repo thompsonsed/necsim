@@ -13,8 +13,8 @@
  */
 
 #include <boost/filesystem/operations.hpp>
-#include "ConfigFileParser.h"
-#include "CustomExceptions.h"
+#include "ConfigParser.h"
+#include "custom_exceptions.h"
 #include "Logger.h"
 
 void importArgs(const unsigned int &argc, char *argv[], vector<string> &comargs)
@@ -81,14 +81,14 @@ istream &operator>>(istream &is, SectionOption &k)
 	return is;
 }
 
-void ConfigOption::setConfig(const string &file, bool main, bool full_parse)
+void ConfigParser::setConfig(const string &file, bool main, bool full_parse)
 {
-	if(!bConfig)
+	if(!configSet)
 	{
-		bMain = main;
-		configfile = file;
-		bConfig = true;
-		bFullParse = full_parse;
+		isMain = main;
+		config_file = file;
+		configSet = true;
+		isFullParser = full_parse;
 	}
 	else
 	{
@@ -96,18 +96,18 @@ void ConfigOption::setConfig(const string &file, bool main, bool full_parse)
 	}
 }
 
-void ConfigOption::parseConfig()
+void ConfigParser::parseConfig()
 {
 	ifstream is_file;
-	if(!boost::filesystem::exists(configfile))
+	if(!boost::filesystem::exists(config_file))
 	{
 		stringstream ss;
-		ss << "No config file found at " << configfile << ". Check file exists." << endl;
+		ss << "No config file found at " << config_file << ". Check file exists." << endl;
 		throw ConfigException(ss.str());
 	}
 	try
 	{
-		is_file.open(configfile);
+		is_file.open(config_file);
 	}
 	catch(...)
 	{
@@ -125,7 +125,7 @@ void ConfigOption::parseConfig()
 	}
 }
 
-void ConfigOption::parseConfig(istream &istream1)
+void ConfigParser::parseConfig(istream &istream1)
 {
 	if(!istream1.fail() || !istream1.good())
 	{
@@ -191,17 +191,17 @@ void ConfigOption::parseConfig(istream &istream1)
 	else
 	{
 		throw ConfigException(
-				"ERROR_CONF_004b: Could not open the config file " + configfile +
+				"ERROR_CONF_004b: Could not open the config file " + config_file +
 				". Check file exists and is readable.");
 	}
 }
 
-vector<SectionOption> ConfigOption::getSectionOptions()
+vector<SectionOption> ConfigParser::getSectionOptions()
 {
 	return configs;
 }
 
-void ConfigOption::setSectionOption(string section, string reference, string value)
+void ConfigParser::setSectionOption(string section, string reference, string value)
 {
 	SectionOption *section_option = nullptr;
 	for(auto &option : configs)
@@ -223,17 +223,17 @@ void ConfigOption::setSectionOption(string section, string reference, string val
 	section_option->val.emplace_back(value);
 }
 
-SectionOption ConfigOption::operator[](unsigned long index)
+SectionOption ConfigParser::operator[](unsigned long index)
 {
 	return configs[index];
 }
 
-unsigned long ConfigOption::getSectionOptionsSize()
+unsigned long ConfigParser::getSectionOptionsSize()
 {
 	return configs.size();
 }
 
-vector<string> ConfigOption::getSections()
+vector<string> ConfigParser::getSections()
 {
 	vector<string> toret;
 	for(auto &config : configs)
@@ -243,7 +243,7 @@ vector<string> ConfigOption::getSections()
 	return toret;
 }
 
-bool ConfigOption::hasSection(const string &sec)
+bool ConfigParser::hasSection(const string &sec)
 {
 	for(auto &config : configs)
 	{
@@ -255,7 +255,7 @@ bool ConfigOption::hasSection(const string &sec)
 	return false;
 }
 
-vector<string> ConfigOption::getSectionValues(string sec)
+vector<string> ConfigParser::getSectionValues(string sec)
 {
 	for(auto &config : configs)
 	{
@@ -267,7 +267,7 @@ vector<string> ConfigOption::getSectionValues(string sec)
 	throw ConfigException("Section not found in config file: " + sec);
 }
 
-string ConfigOption::getSectionOptions(string section, string ref)
+string ConfigParser::getSectionOptions(string section, string ref)
 {
 	for(auto &config : configs)
 	{
@@ -288,7 +288,7 @@ string ConfigOption::getSectionOptions(string section, string ref)
 	return "null";
 }
 
-string ConfigOption::getSectionOptions(string section, string ref, string def)
+string ConfigParser::getSectionOptions(string section, string ref, string def)
 {
 	for(auto &config : configs)
 	{
@@ -306,10 +306,10 @@ string ConfigOption::getSectionOptions(string section, string ref, string def)
 	return def;
 }
 
-int ConfigOption::importConfig(vector<string> &comargs)
+int ConfigParser::importConfig(vector<string> &comargs)
 {
 	// Check that the previous arguments have already been imported.
-	if(bMain)
+	if(isMain)
 	{
 		if(comargs.size() != 3)
 		{
@@ -320,7 +320,7 @@ int ConfigOption::importConfig(vector<string> &comargs)
 	ifstream is_file;
 	try
 	{
-		is_file.open(configfile);
+		is_file.open(config_file);
 	}
 	catch(...)
 	{
@@ -374,7 +374,7 @@ int ConfigOption::importConfig(vector<string> &comargs)
 	{
 		throw ConfigException("ERROR_CONF_002: End of file not reached. Check input file formating.");
 	}
-	if(bMain)
+	if(isMain)
 	{
 		// remove the file name from the command line arguments to maintain the vector format.
 		comargs.erase(comargs.begin() + 2);
@@ -382,9 +382,9 @@ int ConfigOption::importConfig(vector<string> &comargs)
 	return static_cast<int>(comargs.size());
 }
 
-ostream &operator<<(ostream &os, const ConfigOption &c)
+ostream &operator<<(ostream &os, const ConfigParser &c)
 {
-	os << c.configfile << "\n" << c.bConfig << "\n" << c.bMain << "\n" << c.bFullParse << "\n" << c.configs.size()
+	os << c.config_file << "\n" << c.configSet << "\n" << c.isMain << "\n" << c.isFullParser << "\n" << c.configs.size()
 	   << "\n";
 	for(const auto &config : c.configs)
 	{
@@ -393,12 +393,12 @@ ostream &operator<<(ostream &os, const ConfigOption &c)
 	return os;
 }
 
-istream &operator>>(istream &is, ConfigOption &c)
+istream &operator>>(istream &is, ConfigParser &c)
 {
 	unsigned int configsize;
 	is.ignore();
-	getline(is, c.configfile);
-	is >> c.bConfig >> c.bMain >> c.bFullParse >> configsize;
+	getline(is, c.config_file);
+	is >> c.configSet >> c.isMain >> c.isFullParser >> configsize;
 	SectionOption tmpoption;
 	if(configsize > 10000)
 	{

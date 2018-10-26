@@ -25,8 +25,10 @@
 #include "Tree.h"
 #include "NRrand.h"
 #include "SpecSimParameters.h"
+#include "SpeciesAbundancesHandler.h"
 
 using namespace std;
+
 /**
  * @brief Generates a metacommunity using spatially-implicit neutral simulations, which is used to draw individuals
  * from a community.
@@ -34,17 +36,13 @@ using namespace std;
 class Metacommunity : public virtual Community
 {
 protected:
-	// The number of individuals in the metacommunity
-	unsigned long community_size;
-	// The speciation rate used for creation of the metacommunity
-	long double speciation_rate;
 	// Simulation seed and task (read from the output database or set to 1)
 	unsigned long seed;
 	unsigned long task;
 	bool parameters_checked;
-	Row<unsigned long> * metacommunity_cumulative_abundances;
-	NRrand random;
-	Tree metacommunity_tree;
+	shared_ptr<SpeciesAbundancesHandler> species_abundances_handler;
+	shared_ptr<NRrand> random;
+	unique_ptr<Tree> metacommunity_tree;
 public:
 
 	Metacommunity();
@@ -56,8 +54,10 @@ public:
 	 * @param community_size_in the number of individuals in the metacommunity
 	 * @param speciation_rate_in the speciation rate to use for metacommunity creation
 	 * @param database_name_in the path to the database to store the metacommunity in
+	 * @param metacommunity_option_in the metacommunity option, either "simulated", "analytical" or a path to a file
+	 * @param metacommunity_reference_in the metacommunity reference in the input metacommunity database
 	 */
-	void setCommunityParameters(unsigned long community_size_in, long double speciation_rate_in);
+	void setCommunityParameters(shared_ptr<MetacommunityParameters> metacommunity_parameters);
 
 	/**
 	 * @brief Gets the seed and the task from the SIMULATION_PARAMETERS database and stores them in the relevant
@@ -84,22 +84,28 @@ public:
 	void createMetacommunityNSENeutralModel();
 
 	/**
-	 * @brief Selects a random lineage from the metacommunity (rOut), which should be a cumulative sum of species
-	 * abundances.
-	 * Performs a binary search on rOut
-	 * @return the species id for the lineage
-	 */
-	unsigned long selectLineageFromMetacommunity();
-
-	/**
 	 * @brief Applies the speciation parameters to the completed simulation, including running the spatially-implicit
 	 * for the metacommunity structure, but doesn't write the output
  	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure.
  	 */
-	void applyNoOutput(shared_ptr<SpecSimParameters> sp) override ;
+	void applyNoOutput(shared_ptr<SpecSimParameters> sp) override;
 
+	/**
+	 * @brief Approximates the SAD from a NSE neutral model, based on Chisholm and Pacala (2010).
+	 */
+	void approximateSAD();
+
+	/**
+	 * @brief Reads the SAD from the database provided in metacommunity_option.
+	 * The database must exist and have a table called SPECIES_ABUNDANCES with the relevant community parameter.
+	 */
+	void readSAD();
+
+	/**
+	 * @brief Prints the metacommunity parameters to the logger.
+	 */
+	void printMetacommunityParameters();
 
 };
-
 
 #endif //SPECIATIONCOUNTER_METACOMMUNITY_H

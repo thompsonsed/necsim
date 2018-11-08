@@ -1,10 +1,10 @@
-//This file is part of NECSim project which is released under MIT license.
+//This file is part of necsim project which is released under MIT license.
 //See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 // 
 /**
  * @author Sam Thompson
  * @file Setup.h
- * @brief Contains declarations for the command line parsing and setup options for NECSim.
+ * @brief Contains declarations for the command line parsing and setup options for necsim.
  * 
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
  * @copyright <a href="https://opensource.org/licenses/MIT">MIT Licence.</a>

@@ -1,4 +1,4 @@
-// This file is part of NECSim project which is released under MIT license.
+// This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
@@ -49,9 +49,9 @@ protected:
 	// flag for having set the simulation seed.
 	bool seeded;
 	// random seed
-	long long the_seed;
+	long long seed;
 	// for file naming - good to know which task in a series is being executed here
-	long long the_task;
+	long long task;
 	// The map file containing the times that we want to expand the model and record all lineages again.
 	// If this is null, uses_temporal_sampling will be false and the vector will be empty.
 	string times_file;
@@ -115,7 +115,7 @@ protected:
 public:
 	Tree() : data(make_shared<vector<TreeNode>>()), enddata(0), sim_parameters(make_shared<SimParameters>()),
 			 NR(make_shared<NRrand>()), speciation_rates(), seeded(false),
-			 the_seed(-1), the_task(-1), times_file("null"), reference_times(), uses_temporal_sampling(false),
+			 seed(-1), task(-1), times_file("null"), reference_times(), uses_temporal_sampling(false),
 			 start(0), sim_start(0), sim_end(0), now(0), sim_finish(0), out_finish(0), time_taken(0), active(),
 			 endactive(0), startendactive(0), maxsimsize(0), community(data), steps(0), maxtime(0), generation(0.0),
 			 deme(0), deme_sample(0.0), spec(0.0), out_directory(""), database(nullptr), sim_complete(false),

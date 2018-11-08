@@ -1,4 +1,4 @@
-// This file is part of NECSim project which is released under MIT license.
+// This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
@@ -67,7 +67,20 @@ bool doesExistNull(string testfile);
  * @param x2 the second integer reference
  * @return a unique reference for the two provided integers
  */
-unsigned long cantorPairing(unsigned long x1, unsigned long x2);
+unsigned long cantorPairing(const unsigned long &x1, const unsigned long &x2);
+
+/**
+ * @brief A more elegant version of cantor pairing, which allows for storing of a greater number of digits without
+ * experiencing integer overflow issues.
+ *
+ * @note For scenarios when performance is critical, and the integers are known to be small, cantorPairing provides
+ * equivalent functionality.
+ *
+ * @param x1 the first integer
+ * @param x2
+ * @return
+ */
+unsigned long elegantPairing(const unsigned long &x1, const unsigned long &x2);
 
 /**
  * @brief Gets the next line from a csv filestream and splits the row into a vector of strings, where each string is the

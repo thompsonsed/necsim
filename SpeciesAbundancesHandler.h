@@ -1,4 +1,4 @@
-// This file is part of NECSim project which is released under MIT license.
+// This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
@@ -27,10 +27,7 @@ using namespace std;
 class SpeciesAbundancesHandler
 {
 protected:
-	// Maps abundance values to a vector containing species ids
-	map<unsigned long, vector<unsigned long>> species_abundances;
-	// Maps abundance values to the maximum number of species expected to be contained.
-	map<unsigned long, unsigned long> species_richness_per_abundance;
+
 	shared_ptr<NRrand> random;
 	unsigned long max_species_id;
 	unsigned long community_size;
@@ -53,13 +50,14 @@ public:
 	 * @param community_size the number of individuals in the community
 	 * @param speciation_rate the speciation rate of the community
 	 */
-	void setup(shared_ptr<NRrand> random, const unsigned long &community_size, const long double &speciation_rate);
+	virtual void setup(shared_ptr<NRrand> random, const unsigned long &community_size,
+					   const long double &speciation_rate);
 
 	/**
 	 * @brief Gets a randomly generated species identity.
 	 * @return the species identity
 	 */
-	unsigned long getRandomSpeciesID();
+	virtual unsigned long getRandomSpeciesID() = 0;
 
 	/**
 	 * @brief Sets the abundance list.
@@ -77,14 +75,17 @@ public:
 	 * @brief Gets a random species abundance.
 	 * @return the randomly generated abundance
 	 */
-	virtual unsigned long getRandomAbundance() = 0;
+	virtual unsigned long getRandomAbundanceOfIndividual();
 
 	/**
 	 * @brief Gets the species richness of a particular abundance class.
 	 * @param abundance the abundance class of the species
 	 * @return the number of species with that abundance
 	 */
-	virtual unsigned long getSpeciesRichnessOfAbundance(const unsigned long &abundance) = 0;
+	virtual unsigned long getSpeciesRichnessOfAbundance(const unsigned long &abundance)
+	{
+		return 0;
+	}
 
 };
 

@@ -1,4 +1,4 @@
-// This file is part of NECSim project which is released under MIT license.
+// This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
@@ -156,7 +156,7 @@ unsigned long Community::calcSpecies()
 #endif
 		importSamplemask("null");
 	}
-	unsigned long iSpecCount = 0;  // start at 2 because the last species has been burnt already.
+	unsigned long species_count = 0;  // start at 2 because the last species has been burnt already.
 	// check that tips exist within the spatial and temporal frame of interest.
 #ifdef DEBUG
 	writeLog(10, "Assigning tips.");
@@ -217,7 +217,7 @@ unsigned long Community::calcSpecies()
 		{
 			TreeNode *this_node = &(*nodes)[i];
 			// check if any parents exist
-			if(!(*nodes)[this_node->getParent()].getExistence() && this_node->getExistence() &&
+			if(!(*nodes)[this_node->getParent()].exists() && this_node->exists() &&
 			   !this_node->hasSpeciated())
 			{
 				bSorter = true;
@@ -228,39 +228,50 @@ unsigned long Community::calcSpecies()
 #ifdef DEBUG
 	writeLog(10, "Speciating lineages.");
 #endif // DEBUG
-	iSpecCount = 0;
+	species_count = 0;
 	set<unsigned long> species_list;
 	// Now loop again, creating a new species for each species that actually exists.
-	for(unsigned long i = 1; i < nodes->size(); i++)
+	auto start = nodes->begin();
+	start++;
+	for(auto item = start; item != nodes->end(); item++)
 	{
-		TreeNode *this_node = &(*nodes)[i];
-		if(this_node->getExistence() && this_node->hasSpeciated())
+		if(item->exists() && item->hasSpeciated())
 		{
-			addSpecies(iSpecCount, this_node, species_list);
+			addSpecies(species_count, &(*item), species_list);
 		}
 	}
+
 	// Compress the species IDs so that the we have full mapping of species_ids to integers in range 0:n
 	// Only do so if the numbers do not match initially
+
 #ifdef DEBUG
 	writeLog(10, "Counting species.");
 #endif // DEBUG
-	if(!species_list.empty() && iSpecCount != *species_list.rbegin())
+	if(!species_list.empty() && species_count != *species_list.rbegin())
 	{
+		stringstream ss;
+		ss << "initial count is " << species_count << " species" << endl;
+		writeInfo(ss.str());
+		ss.str("");
+		ss << "Rescaling species ids for " << species_list.size() << " species...";
+		writeInfo(ss.str());
+		unsigned long initial_species_count = species_count;
 		unsigned long tmp_species_count = 0;
-		unordered_map<unsigned long, unsigned long> ids_map;
-		ids_map.reserve(iSpecCount);
+		// Maps old to new species ids
+		map<unsigned long, unsigned long> old_ids_to_new_ids;
+//		old_ids_to_new_ids.reserve(species_count);
 		for(unsigned long i = 1; i < nodes->size(); i++)
 		{
 			TreeNode *this_node = &(*nodes)[i];
-			if(this_node->hasSpeciated() && this_node->getExistence())
+			if(this_node->hasSpeciated() && this_node->exists())
 			{
-				auto map_id = ids_map.find(this_node->getSpeciesID());
-				if(map_id == ids_map.end())
+				auto map_id = old_ids_to_new_ids.find(this_node->getSpeciesID());
+				if(map_id == old_ids_to_new_ids.end())
 				{
 					tmp_species_count++;
+					old_ids_to_new_ids[this_node->getSpeciesID()] = tmp_species_count;
 					this_node->resetSpecies();
 					this_node->burnSpecies(tmp_species_count);
-					ids_map.emplace(this_node->getSpeciesID(), tmp_species_count);
 				}
 				else
 				{
@@ -269,18 +280,27 @@ unsigned long Community::calcSpecies()
 				}
 			}
 		}
-		iSpecCount = tmp_species_count;
+		if(tmp_species_count > initial_species_count)
+		{
+			writeInfo("\n");
+			stringstream ss;
+			ss << "Number of generated species (" << tmp_species_count << ") is more than the initial species count ";
+			ss << "(" << initial_species_count << ") - please report this bug." << endl;
+			throw FatalException(ss.str());
+		}
+		species_count = tmp_species_count;
+		writeInfo("done!\n");
 	}
 	else
 	{
-		iSpecCount = 0;
+		species_count = 0;
 		for(unsigned long i = 0; i < nodes->size(); i++)
 		{
 			TreeNode *this_node = &(*nodes)[i];
 			// count all speciation events, not just the ones that exist!
-			if(this_node->hasSpeciated() && this_node->getExistence() && this_node->getSpeciesID() != 0)
+			if(this_node->hasSpeciated() && this_node->exists() && this_node->getSpeciesID() != 0)
 			{
-				iSpecCount++;
+				species_count++;
 			}
 		}
 	}
@@ -299,7 +319,7 @@ unsigned long Community::calcSpecies()
 		{
 			TreeNode *this_node = &(*nodes)[i];
 			//				os << i << endl;
-			if(this_node->getSpeciesID() == 0 && this_node->getExistence())
+			if(this_node->getSpeciesID() == 0 && this_node->exists())
 			{
 				loopon = true;
 				this_node->burnSpecies((*nodes)[this_node->getParent()].getSpeciesID());
@@ -334,9 +354,9 @@ unsigned long Community::calcSpecies()
 #ifdef DEBUG
 	writeLog(10, "Completed tree creation.");
 #endif // DEBUG
-	iSpecies = iSpecCount;
+	iSpecies = species_count;
 	//		os << "iSpecies: " << iSpecies << endl;
-	return iSpecCount;
+	return species_count;
 }
 
 void Community::addSpecies(unsigned long &species_count, TreeNode *tree_node, set<unsigned long> &species_list)
@@ -349,16 +369,12 @@ void Community::calcSpeciesAbundance()
 {
 	species_abundances = make_shared<vector<unsigned long>>();
 	species_abundances->resize(iSpecies + 1, 0);
-	for(unsigned long i = 0; i < species_abundances->size(); i++)
-	{
-		species_abundances->operator[](i) = 0;
-	}
 	for(unsigned long i = 1; i < nodes->size(); i++)
 	{
 		TreeNode *this_node = &(*nodes)[i];
 		if(this_node->isTip() &&
 		   doubleCompare(this_node->getGeneration(), current_community_parameters->time, 0.0001) &&
-		   this_node->getExistence())
+		   this_node->exists())
 		{
 #ifdef DEBUG
 			if(this_node->getSpeciesID() >= species_abundances->size())
@@ -375,7 +391,7 @@ void Community::calcSpeciesAbundance()
 			{
 				stringstream ss;
 				ss << "x,y " << (*nodes)[i].getXpos() << ", " << (*nodes)[i].getYpos() << endl;
-				ss << "tip: " << (*nodes)[i].isTip() << " Existance: " << (*nodes)[i].getExistence()
+				ss << "tip: " << (*nodes)[i].isTip() << " Existance: " << (*nodes)[i].exists()
 					 << " samplemask: " << samplemask.getMaskVal(this_node->getXpos(), this_node->getYpos(),
 																 this_node->getXwrap(), this_node->getYwrap()) << endl;
 				ss
@@ -399,7 +415,7 @@ void Community::calcSpeciesAbundance()
 				ss << "samplemask: " << samplemask.getVal(this_node->getXpos(), this_node->getYpos(),
 														  this_node->getXwrap(), this_node->getYwrap()) << endl;
 				ss << "parent (tip, exists, generations): " << p_node->isTip() << ", "
-				   << p_node->getExistence() << ", " << p_node->getGeneration() << endl;
+				   << p_node->exists() << ", " << p_node->getGeneration() << endl;
 				ss << "species id zero - i: " << i << " parent: " << p_node->getParent()
 				   << " speciation_probability: " << p_node->getSpecRate() << "has speciated: " << p_node->hasSpeciated()
 				   << endl;
@@ -414,9 +430,9 @@ void Community::calcSpeciesAbundance()
 
 void Community::resetTree()
 {
-	for(unsigned long i = 0; i < nodes->size(); i++)
+	for(auto &item: *nodes)
 	{
-		(*nodes)[i].qReset();
+		item.qReset();
 	}
 }
 
@@ -1050,10 +1066,10 @@ void Community::recordSpatial()
 	for(unsigned long i = 1; i < nodes->size(); i++)
 	{
 		TreeNode *this_node = &(*nodes)[i];
-		//			os << nodes[i].getExistence() << endl;
+		//			os << nodes[i].exists() << endl;
 		if(this_node->isTip() &&
-		   this_node->getExistence() && doubleCompare(static_cast<double>(this_node->getGeneration()),
-													  static_cast<double>(current_community_parameters->time), 0.0001))
+		   this_node->exists() && doubleCompare(static_cast<double>(this_node->getGeneration()),
+												static_cast<double>(current_community_parameters->time), 0.0001))
 		{
 			if(samplemask.getMaskVal(this_node->getXpos(), this_node->getYpos(),
 									 this_node->getXwrap(), this_node->getYwrap()))
@@ -1579,7 +1595,8 @@ void Community::getPreviousCalcs()
 	if(rc != SQLITE_DONE && rc != SQLITE_OK)
 	{
 		stringstream ss;
-		ss << "Could not detect COMMUNITY_PARAMETERS table while finding previous calculations. Error code: " << rc << ": ";
+		ss << "Could not detect COMMUNITY_PARAMETERS table while finding previous calculations. Error code: " << rc
+		   << ": ";
 		ss << sqlite3_errmsg(database) << endl;
 		sqlite3_close(database);
 		throw FatalException(ss.str());
@@ -2078,7 +2095,7 @@ void Community::writeSpeciesList(const unsigned long &enddata)
 		sqlite3_bind_int(stmt, 7, (*nodes)[i].isTip());
 		sqlite3_bind_int(stmt, 8, (*nodes)[i].hasSpeciated());
 		sqlite3_bind_int(stmt, 9, static_cast<int>((*nodes)[i].getParent()));
-		sqlite3_bind_int(stmt, 10, (*nodes)[i].getExistence());
+		sqlite3_bind_int(stmt, 10, (*nodes)[i].exists());
 		sqlite3_bind_double(stmt, 11, static_cast<double>((*nodes)[i].getSpecRate()));
 		sqlite3_bind_int(stmt, 12, static_cast<int>((*nodes)[i].getGenRate()));
 		sqlite3_bind_double(stmt, 13, static_cast<double>((*nodes)[i].getGeneration()));

@@ -1,4 +1,4 @@
-// This file is part of NECSim project which is released under MIT license.
+// This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 /**
  * @author Sam Thompson
@@ -17,6 +17,7 @@
 #include "ConfigParser.h"
 #include "Logger.h"
 #include "custom_exceptions.h"
+#include "file_system.h"
 
 using namespace std;
 /************************************************************
@@ -32,7 +33,7 @@ struct SimParameters
 	string fine_map_file, coarse_map_file, output_directory;
 	string historical_fine_map_file, historical_coarse_map_file, sample_mask_file;
 	 // for file naming purposes.
-	long long the_task{}, the_seed{};
+	long long task{}, seed{};
 	// the variables for the grid containing the initial individuals.
 	unsigned long grid_x_size{}, grid_y_size{};
 	// The variables for the sample grid, which may or may not be the same as the main simulation grid
@@ -192,8 +193,8 @@ struct SimParameters
 		death_file = configs.getSectionOptions("death", "map", "none");
 		reproduction_file = configs.getSectionOptions("reproduction", "map", "none");
 		output_directory = configs.getSectionOptions("main", "output_directory", "Default");
-		the_seed = stol(configs.getSectionOptions("main", "seed", "0"));
-		the_task = stol(configs.getSectionOptions("main", "job_type", "0"));
+		seed = stol(configs.getSectionOptions("main", "seed", "0"));
+		task = stol(configs.getSectionOptions("main", "job_type", "0"));
 		tau = stod(configs.getSectionOptions("main", "tau", "0.0"));
 		sigma = stod(configs.getSectionOptions("main", "sigma", "0.0"));
 		deme = stoul(configs.getSectionOptions("main", "deme"));
@@ -237,8 +238,8 @@ struct SimParameters
 	void setKeyParameters(const long long &task_in, const long long &seed_in, const string &output_directory_in,
 						  const unsigned long &max_time_in, unsigned long desired_specnum_in, const string &times_file_in)
 	{
-		the_task = task_in;
-		the_seed = seed_in;
+		task = task_in;
+		seed = seed_in;
 		output_directory = output_directory_in;
 		max_time = max_time_in;
 		desired_specnum = desired_specnum_in;
@@ -488,13 +489,13 @@ struct SimParameters
 	void printVars()
 	{
 		stringstream os;
-		os << "Seed: " << the_seed << endl;
+		os << "Seed: " << seed << endl;
 		os << "Speciation rate: " << spec << endl;
 		if(is_protracted)
 		{
 			os << "Protracted variables: " << min_speciation_gen << ", " << max_speciation_gen << endl;
 		}
-		os << "Job Type: " << the_task << endl;
+		os << "Job Type: " << task << endl;
 		os << "Max time: " << max_time << endl;
 		printSpatialVars();
 		os << "-deme sample: " << deme_sample << endl;
@@ -554,12 +555,12 @@ struct SimParameters
 	void setMetacommunityParameters(const unsigned long &metacommunity_size,
 									const long double &speciation_rate,
 									const unsigned long &seed,
-									const unsigned long &job)
+									const unsigned long &task)
 	{
 		output_directory = "Default";
 		// randomise the seed slightly so that we get a different starting number to the initial simulation
-		the_seed = static_cast<long long int>(seed * job);
-		the_task = (long long int) job;
+		this->seed = static_cast<long long int>(elegantPairing(seed, task));
+		this->task = (long long int) task;
 		deme = metacommunity_size;
 		deme_sample = 1.0;
 		spec = speciation_rate;
@@ -582,7 +583,7 @@ struct SimParameters
 	{
 		os << m.fine_map_file << "\n" << m.coarse_map_file << "\n" << m.historical_fine_map_file << "\n";
 		os << m.historical_coarse_map_file << "\n" << m.sample_mask_file << "\n";
-		os << m.the_seed << "\n" <<  m.the_task << "\n" <<  m.grid_x_size << "\n" << m.grid_y_size << "\n";
+		os << m.seed << "\n" <<  m.task << "\n" <<  m.grid_x_size << "\n" << m.grid_y_size << "\n";
 		os << m.sample_x_size << "\n" << m.sample_y_size << "\n" << m.sample_x_offset << "\n" << m.sample_y_offset << "\n";
 		os << m.fine_map_x_size << "\n" << m.fine_map_y_size << "\n";
 		os << m.fine_map_x_offset << "\n" << m.fine_map_y_offset << "\n" << m.coarse_map_x_size << "\n" << m.coarse_map_y_size << "\n" << m.coarse_map_x_offset << "\n";
@@ -614,7 +615,7 @@ struct SimParameters
 		getline(is, m.historical_fine_map_file);
 		getline(is, m.historical_coarse_map_file);
 		getline(is, m.sample_mask_file);
-		is >> m.the_seed >> m.the_task >>  m.grid_x_size >> m.grid_y_size;
+		is >> m.seed >> m.task >>  m.grid_x_size >> m.grid_y_size;
 		is >> m.sample_x_size >> m.sample_y_size >> m.sample_x_offset >> m.sample_y_offset;
 		is >> m.fine_map_x_size >> m.fine_map_y_size;
 		is >> m.fine_map_x_offset >> m.fine_map_y_offset >> m.coarse_map_x_size >> m.coarse_map_y_size >> m.coarse_map_x_offset ;

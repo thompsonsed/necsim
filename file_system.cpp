@@ -1,4 +1,4 @@
-// This file is part of NECSim project which is released under MIT license.
+// This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
@@ -16,14 +16,15 @@
 #include <string>
 #include <sstream>
 #include <boost/filesystem.hpp>
+
 #ifdef WIN_INSTALL
 #include <windows.h>
 #define sleep Sleep
 #endif
+
 #include "file_system.h"
 #include "custom_exceptions.h"
 #include "Logger.h"
-
 
 void openSQLiteDatabase(const string &database_name, sqlite3 *&database)
 {
@@ -79,10 +80,10 @@ void createParent(string file)
 	// Boost < 1.59 support
 	boost::filesystem::path file_path(file);
 	auto parent = file_path.parent_path().string();
-	if (parent.length() > 0)
+	if(parent.length() > 0)
 	{
 		std::string::iterator it = parent.end() - 1;
-		if (*it == '/')
+		if(*it == '/')
 		{
 			parent.erase(it);
 		}
@@ -120,9 +121,18 @@ bool doesExistNull(string testfile)
 	return testfile == "null" || testfile == "none" || doesExist(testfile);
 }
 
-unsigned long cantorPairing(unsigned long x1, unsigned long x2)
+unsigned long cantorPairing(const unsigned long &x1, const unsigned long &x2)
 {
 	return ((x1 + x2) * (x1 + x2 + 1) / 2) + x2;
+}
+
+unsigned long elegantPairing(const unsigned long &x1, const unsigned long &x2)
+{
+	if(x1 > x2)
+	{
+		return static_cast<unsigned long>(pow(x1, 2) + x1 + x2);
+	}
+	return static_cast<unsigned long>(pow(x2, 2) + x1);
 }
 
 vector<string> getCsvLineAndSplitIntoTokens(istream &str)

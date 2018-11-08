@@ -1,6 +1,16 @@
-//
-// Created by Sam Thompson on 16/10/2018.
-//
+// This file is part of necsim project which is released under MIT license.
+// See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
+
+/**
+ * @author Samuel Thompson
+ * @file AnalyticalSpeciesAbundancesHandler.h
+ *
+ * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
+ * @brief Class for repeatedly selecting random species from a distribution of species abundances using analytical
+ * solutions from Vallade and Houchmandzadeh (2003) and Alonso and McKane (2004).
+ *
+ * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
+ */
 
 #ifndef ANALYICAL_SPECIES_ABUNDANCES_H
 #define ANALYICAL_SPECIES_ABUNDANCES_H
@@ -14,43 +24,61 @@ using namespace std;
 
 class AnalyticalSpeciesAbundancesHandler : public virtual SpeciesAbundancesHandler
 {
+protected:
+	unsigned long seen_no_individuals;
+	// Store all previous species ids in a map of cumulative numbers of individuals for searching for ids
+	map<unsigned long, unsigned long> ind_to_species;
 public:
 
+	/**
+	 * @brief Default constructor
+	 */
+	AnalyticalSpeciesAbundancesHandler();
 
+	/**
+	 * @brief Default destructor
+	 */
+	~AnalyticalSpeciesAbundancesHandler() override = default;
+
+	/**
+	 * @brief Creates the SpeciesAbundancesHandler object
+	 * @param random the random number generator
+	 * @param community_size the number of individuals in the community
+	 * @param speciation_rate the speciation rate of the community
+	 */
+	void setup(shared_ptr<NRrand> random, const unsigned long &community_size,
+			   const long double &speciation_rate) override;
+
+	/**
+	 * @brief Generates the species abundances using the analytical approximation.
+	 */
+	void generateSpeciesAbundances();
+
+	/**
+	 * @brief Gets a randomly generated species identity.
+	 * @return the species identity
+	 */
+	unsigned long getRandomSpeciesID() override;
+
+	/**
+	 * @brief Picks out a random individual from previously-seen individuals.
+	 * @param individual_id the individual id number to pick
+	 * @return species id of the individual
+	 */
+	unsigned long pickPreviousIndividual(const unsigned long &individual_id);
+
+	/**
+	 * @brief Picks out a new individual/species id with a random species abundance.
+	 * @return the species id of the new individual
+	 */
+	void addNewSpecies();
 
 	/**
 	 * @brief Gets a random species abundance by sampling from the logarithmic distribution.
 	 * @return the randomly generated abundance
 	 */
-	unsigned long getRandomAbundance() override
-	{
-		return static_cast<unsigned long>(max(static_cast<unsigned long>(
-													  min(random->randomLogarithmic(1.0 - speciation_rate),
-														  community_size)), (unsigned long) 1));
-	}
+	unsigned long getRandomAbundanceOfSpecies();
 
-
-	/**
-	 * @brief Gets the species richness of a particular abundance class.
-	 *
-	 * This method is slightly incorrect, as it does not account for the variance in the species abundance, but
-	 * will approximate the mean behaviour.
-	 *
-	 * @param abundance the abundance class of the species
-	 * @return the number of species with that abundance
-	 */
-	unsigned long getSpeciesRichnessOfAbundance(const unsigned long &abundance) override
-	{
-		auto random_number_species = na::nseMetacommunitySpeciesWithAbundance(abundance, community_size,
-																			  speciation_rate);
-		auto min_species_number = static_cast<unsigned long>(floor(random_number_species));
-		if(random->d01() < random_number_species - min_species_number)
-		{
-			min_species_number ++;
-		}
-		return min_species_number;
-
-	}
 };
 
 #endif //ANALYICAL_SPECIES_ABUNDANCES_H

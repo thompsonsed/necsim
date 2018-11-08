@@ -1,4 +1,4 @@
-//This file is part of NECSim project which is released under MIT license.
+//This file is part of necsim project which is released under MIT license.
 //See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
@@ -10,7 +10,7 @@
  * @brief Contains the SpeciationCommands class for performing calculations of the coalescence tree structure and generating
  *  the SQL database objects.
  * 
- * For use on the SQL database outputs of NECSim v3.1+. It requires command line parameters and generates a data object from them.
+ * For use on the SQL database outputs of necsim v3.1+. It requires command line parameters and generates a data object from them.
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
  */
 

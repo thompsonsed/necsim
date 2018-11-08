@@ -1,4 +1,4 @@
-// This file is part of NECSim project which is released under MIT license.
+// This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
@@ -8,7 +8,7 @@
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  * @brief Contains the Metacommunity class for generating a neutral metacommunity.
  *
- * For use with completed simulations from NECSim, using the SpeciationCounter program. Individuals will be drawn from
+ * For use with completed simulations from necsim, using the SpeciationCounter program. Individuals will be drawn from
  * the metacommunity for each speciation event, instead of creating a new species each time.
  *
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
@@ -27,7 +27,7 @@ namespace na = neutral_analytical;
 
 Metacommunity::Metacommunity() : seed(0), task(0), parameters_checked(false),
 								 species_abundances_handler(static_pointer_cast<SpeciesAbundancesHandler>(
-								 		make_shared<SimulatedSpeciesAbundancesHandler>())),
+										 make_shared<SimulatedSpeciesAbundancesHandler>())),
 								 random(make_shared<NRrand>()),
 								 metacommunity_tree(make_unique<Tree>())
 {
@@ -75,7 +75,7 @@ void Metacommunity::checkSimulationParameters()
 			throw FatalException(ss.str());
 		}
 		sqlite3_step(stmt);
-		seed = static_cast<unsigned long>(sqlite3_column_int(stmt, 1));
+		seed = static_cast<unsigned long>(sqlite3_column_int(stmt, 0));
 		random->setSeed(seed);
 		task = static_cast<unsigned long>(sqlite3_column_int(stmt, 1));
 		sqlite3_step(stmt);
@@ -88,11 +88,17 @@ void Metacommunity::addSpecies(unsigned long &species_count, TreeNode *tree_node
 {
 
 	auto species_id = species_abundances_handler->getRandomSpeciesID();
-	if(species_list.empty() || species_list.find(species_id) != species_list.end())
+	if(species_list.empty() || species_list.find(species_id) == species_list.end())
 	{
 		species_list.insert(species_id);
 		species_count++;
 	}
+#ifdef DEBUG
+	if(tree_node->getSpeciesID() != 0)
+	{
+		throw FatalException("Trying to add species for lineages with non-zero species id. Please report this bug.");
+	}
+#endif // DEBUG
 	tree_node->burnSpecies(species_id);
 }
 
@@ -103,8 +109,15 @@ void Metacommunity::createMetacommunityNSENeutralModel()
 #endif //DEBUG
 	// First set up a non-spatial coalescence simulation to generate our metacommunity
 	shared_ptr<SimParameters> temp_parameters = make_shared<SimParameters>();
+	// Generate a new unique seed by adding 1073741823 if the seed is 0 - this ensures that 0 and 1 never appear as
+	// random seeds, which cause autocorrelation in simulation outputs.
+	if(seed == 0)
+	{
+		seed = 1073741823;
+	}
 	temp_parameters->setMetacommunityParameters(current_metacommunity_parameters->metacommunity_size,
-												current_metacommunity_parameters->speciation_rate, seed, task);
+												current_metacommunity_parameters->speciation_rate, seed,
+												task);
 	// Dispose of any previous Tree object and create a new one
 	metacommunity_tree = make_unique<Tree>();
 	metacommunity_tree->internalSetup(temp_parameters);
@@ -119,10 +132,13 @@ void Metacommunity::createMetacommunityNSENeutralModel()
 	// Make it cumulative to increase the speed of indexing using binary search.
 	species_abundances_handler = make_shared<SimulatedSpeciesAbundancesHandler>();
 	species_abundances_handler->setup(random, current_metacommunity_parameters->metacommunity_size,
-							  current_metacommunity_parameters->speciation_rate);
+									  current_metacommunity_parameters->speciation_rate);
 	auto tmp_species_abundances = metacommunity_tree->getSpeciesAbundances();
+	if(tmp_species_abundances->empty())
+	{
+		throw FatalException("Simulated species abundance list is empty. Please report this bug.");
+	}
 	// Remove the 0 at the start
-	tmp_species_abundances->erase(tmp_species_abundances->begin());
 	species_abundances_handler->setAbundanceList(tmp_species_abundances);
 #ifdef DEBUG
 	writeLog(10, "Spatially-implicit simulation completed.");
@@ -169,9 +185,10 @@ void Metacommunity::applyNoOutput(shared_ptr<SpecSimParameters> sp)
 
 void Metacommunity::approximateSAD()
 {
-	species_abundances_handler = static_pointer_cast<SpeciesAbundancesHandler>(make_shared<AnalyticalSpeciesAbundancesHandler>());
+	species_abundances_handler = static_pointer_cast<SpeciesAbundancesHandler>(
+			make_shared<AnalyticalSpeciesAbundancesHandler>());
 	species_abundances_handler->setup(random, current_metacommunity_parameters->metacommunity_size,
-							  current_metacommunity_parameters->speciation_rate);
+									  current_metacommunity_parameters->speciation_rate);
 }
 
 void Metacommunity::readSAD()
@@ -183,9 +200,8 @@ void Metacommunity::readSAD()
 	species_abundances_handler = static_pointer_cast<SpeciesAbundancesHandler>(
 			make_shared<SimulatedSpeciesAbundancesHandler>());
 	species_abundances_handler->setup(random, current_metacommunity_parameters->metacommunity_size,
-							  current_metacommunity_parameters->speciation_rate);
+									  current_metacommunity_parameters->speciation_rate);
 	species_abundances_handler->setAbundanceList(sad);
-
 }
 
 void Metacommunity::printMetacommunityParameters()

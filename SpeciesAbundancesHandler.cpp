@@ -1,4 +1,4 @@
-// This file is part of NECSim project which is released under MIT license.
+// This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
@@ -12,9 +12,9 @@
  */
 
 #include "SpeciesAbundancesHandler.h"
+#include "custom_exceptions.h"
 
-SpeciesAbundancesHandler::SpeciesAbundancesHandler() : species_abundances(), species_richness_per_abundance(),
-													   random(make_shared<NRrand>()), max_species_id(0),
+SpeciesAbundancesHandler::SpeciesAbundancesHandler() : random(make_shared<NRrand>()), max_species_id(0),
 													   community_size(0), speciation_rate(0.0){}
 
 void SpeciesAbundancesHandler::setup(shared_ptr<NRrand> random, const unsigned long &community_size,
@@ -25,26 +25,6 @@ void SpeciesAbundancesHandler::setup(shared_ptr<NRrand> random, const unsigned l
 	SpeciesAbundancesHandler::speciation_rate = speciation_rate;
 }
 
-unsigned long SpeciesAbundancesHandler::getRandomSpeciesID()
-{
-	unsigned long random_abundance = getRandomAbundance();
-	if(species_abundances.count(random_abundance) == 0)
-	{
-		max_species_id++;
-		species_abundances[random_abundance].push_back(max_species_id);
-		species_richness_per_abundance[random_abundance] = getSpeciesRichnessOfAbundance(random_abundance);
-		return max_species_id;
-	}
-	unsigned long random_species_index = random->i0(species_richness_per_abundance[random_abundance]-1);
-	if(random_species_index >= species_abundances[random_abundance].size())
-	{
-		max_species_id++;
-		species_abundances[random_abundance].push_back(max_species_id);
-		return max_species_id;
-	}
-	return species_abundances[random_abundance][random_species_index];
-}
-
 void SpeciesAbundancesHandler::setAbundanceList(const shared_ptr<map<unsigned long, unsigned long>> &abundance_list_in)
 {
 
@@ -53,4 +33,9 @@ void SpeciesAbundancesHandler::setAbundanceList(const shared_ptr<map<unsigned lo
 void SpeciesAbundancesHandler::setAbundanceList(shared_ptr<vector<unsigned long>> abundance_list_in)
 {
 
+}
+
+unsigned long SpeciesAbundancesHandler::getRandomAbundanceOfIndividual()
+{
+	return 0;
 }

@@ -1,4 +1,4 @@
-//This file is part of NECSim project which is released under MIT license.
+//This file is part of necsim project which is released under MIT license.
 //See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
@@ -107,10 +107,10 @@ public:
 		{
 			idum2 = 123456789;
 			iy = 0;
-			idum = seed;
+			idum = abs(seed);
 			if(idum < 1) idum = 1;
 			//Be sure to prevent idum = 0.
-			idum2 = (idum);
+			idum2 = idum;
 			for(j = NTAB + 7; j >= 0; j--)
 			{
 				//Load the shuffle table (after 8 warm-ups).
@@ -558,8 +558,7 @@ public:
 			return 1;
 		}
 		long double h = log(1 - alpha);
-		double u_1 = d01();
-		long double q = 1 - exp(u_1 * h);
+		long double q = 1 - exp(d01() * h);
 		if(u_2 < (q * q))
 		{
 			return static_cast<unsigned long>(floor(1 + log(u_2) / log(q)));

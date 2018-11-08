@@ -1,4 +1,4 @@
-//This file is part of NECSim project which is released under MIT license.
+//This file is part of necsim project which is released under MIT license.
 //See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 /**
  * @author Samuel Thompson
@@ -193,73 +193,73 @@ public:
 	 * @brief Getter for the existence boolean.
 	 * @return the existence boolean.
 	 */
-	bool getExistence();
+	bool exists() const;
 	
 	/**
 	 * @brief Getter for the tip boolean.
 	 * @return the tip boolean.
 	 */
-	bool isTip();
+	bool isTip() const;
 	
 	/**
 	 * @brief Getter for the parent location.
 	 * @return the parent reference.
 	 */
-	unsigned long getParent();
+	unsigned long getParent() const;
 
 	/**
 	 * @brief Getter for the x position.
 	 * @return the x position.
 	 */
-	unsigned long getXpos();
+	unsigned long getXpos() const;
 	
 	/**
 	 * @brief Getter for the y position.
 	 * @return the y position.
 	 */
-	unsigned long getYpos();
+	unsigned long getYpos() const;
 	
 	/**
 	 * @brief Getter for the number of times the lineage is wrapped in the x dimension.
 	 * @return the number of times the lineage is wrapped in the x dimension.
 	 */
-	long getXwrap();
+	long getXwrap() const;
 	
 	/**
 	 * @brief Getter for the number of times the lineage is wrapped in the y dimension.
 	 * @return the number of times the lineage is wrapped in the y dimension.
 	 */
-	long getYwrap();
+	long getYwrap() const;
 	
 	/**
 	 * @brief Getter for the speciation boolean.
 	 * @return the speciation boolean.
 	 */
-	bool hasSpeciated();
+	bool hasSpeciated() const;
 	
 	/**
 	 * @brief Getter for the species ID.
 	 * @return the species ID.
 	 */
-	unsigned long getSpeciesID();
+	unsigned long getSpeciesID() const;
 	
 	/**
 	 * @brief Getter for the randomly generated speciation probability.
 	 * @return the speciation probability.
 	 */
-	long double getSpecRate();
+	long double getSpecRate() const;
 	
 	/**
 	 * @brief Getter for the number of generations the lineage has existed.
 	 * @return the number of generations of existence.
 	 */
-	unsigned long getGenRate();
+	unsigned long getGenRate() const;
 	
 	/**
 	 * @brief Getter for the generation the lineage was created.
 	 * @return the generation counter the lineage was created.
 	 */
-	long double getGeneration();
+	long double getGeneration() const;
 
 	/**
 	 * @brief Sets the speciation boolean to true.

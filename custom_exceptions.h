@@ -1,11 +1,11 @@
-//This file is part of NECSim project which is released under MIT license.
+//This file is part of necsim project which is released under MIT license.
 //See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 // Author: Samuel Thompson
 // Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
 /**
  * @author Samuel Thompson
  * @file CustomExceptions.h
- * @brief Contains the various exceptions used by NECSim.
+ * @brief Contains the various exceptions used by necsim.
  * 
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */

@@ -1,4 +1,4 @@
-//This file is part of NECSim project which is released under MIT license.
+//This file is part of necsim project which is released under MIT license.
 //See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 /**
  * @file Community.h
@@ -280,7 +280,7 @@ public:
 	 * @brief Opens the connection to the sql database file
 	 * Note that this imports the database to memory, so functionality should be changed for extremely large database 
 	 * files.
-	 * @param inputfile the sql database output from a NECSim simulation.
+	 * @param inputfile the sql database output from a necsim simulation.
 	 */
 	void openSqlConnection(string inputfile);
 

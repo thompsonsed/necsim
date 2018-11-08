@@ -1,4 +1,4 @@
-// This file is part of NECSim project which is released under MIT license.
+// This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
@@ -109,7 +109,7 @@ void SpatialTree::parseArgs(vector<string> &comargs)
 			os << "19: the deme sample size (as a proportion of deme size)." << endl;
 			os << "20: the time to run the simulation (in seconds)." << endl;
 			os << "21: dispersal_relative_cost - the relative cost of moving through non-forest." << endl;
-			os << "22: the_task - for referencing the specific task later on." << endl;
+			os << "22: task - for referencing the specific task later on." << endl;
 			os << "23: the minimum number of species the system is known to contain." << endl;
 			os << "24: the historical fine map file to use." << endl;
 			os << "25: the historical coarse map file to use." << endl;
@@ -1200,7 +1200,7 @@ unsigned long SpatialTree::estSpecnum()
 		loop = false;
 		for(unsigned int i = 0; i <= enddata; i++)
 		{
-			if((*data)[i].getExistence() && !(*data)[(*data)[i].getParent()].getExistence() && !(*data)[i].hasSpeciated())
+			if((*data)[i].exists() && !(*data)[(*data)[i].getParent()].exists() && !(*data)[i].hasSpeciated())
 			{
 				loop = true;
 				(*data)[(*data)[i].getParent()].setExistence(true);
@@ -1210,7 +1210,7 @@ unsigned long SpatialTree::estSpecnum()
 	unsigned long iSpecies = 0;
 	for(unsigned int i = 0; i <= enddata; i++)
 	{
-		if((*data)[i].getExistence() && (*data)[i].hasSpeciated())
+		if((*data)[i].exists() && (*data)[i].hasSpeciated())
 		{
 			iSpecies++;
 		}
@@ -1349,8 +1349,8 @@ void SpatialTree::addLineages(double generation_in)
 string SpatialTree::simulationParametersSqlInsertion()
 {
 	string to_execute;
-	to_execute = "INSERT INTO SIMULATION_PARAMETERS VALUES(" + to_string((long long) the_seed) + "," +
-				 to_string((long long) the_task);
+	to_execute = "INSERT INTO SIMULATION_PARAMETERS VALUES(" + to_string((long long) seed) + "," +
+				 to_string((long long) task);
 	to_execute += ",'" + out_directory + "'," + boost::lexical_cast<std::string>((long double) spec) + "," +
 				  to_string((long double) sim_parameters->sigma) + ",";
 	to_execute += to_string((long double) sim_parameters->tau) + "," + to_string((long long) sim_parameters->deme) + ",";

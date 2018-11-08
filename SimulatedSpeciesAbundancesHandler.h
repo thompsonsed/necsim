@@ -1,4 +1,4 @@
-// This file is part of NECSim project which is released under MIT license.
+// This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
@@ -37,8 +37,12 @@ using namespace std;
 class SimulatedSpeciesAbundancesHandler : public virtual SpeciesAbundancesHandler
 {
 protected:
-	// List of species abundances
-	shared_ptr<vector<unsigned long>> abundance_list;
+	// Maps abundance values to a vector containing species ids
+	map<unsigned long, vector<unsigned long>> species_abundances;
+	// Maps abundance values to the maximum number of species expected to be contained.
+	map<unsigned long, unsigned long> species_richness_per_abundance;
+	// Maps cumulative probabilities of choosing each abundance to abundance values
+	shared_ptr<map<unsigned long, unsigned long>> cumulative_abundance_map;
 	// Total species number
 	double total_species_number;
 	unsigned long number_of_individuals;
@@ -54,6 +58,8 @@ public:
 	 */
 	~SimulatedSpeciesAbundancesHandler() override = default;
 
+	unsigned long getRandomSpeciesID() override;
+
 	/**
 	 * @brief Sets the abundance list.
 	 * @param abundance_list_in map of species ids to abundances
@@ -65,16 +71,25 @@ public:
 	 * @param abundance_list_in vector of species abundances
 	 */
 	void setAbundanceList(shared_ptr<vector<unsigned long>> abundance_list_in) override;
+
 	/**
 	 * @brief Generates the species abundance hash tables for efficiently storing the species identities.
+	 * @param abundance_list vector of species abundances
 	 */
-	void generateAbundanceTable();
+	void generateAbundanceTable(shared_ptr<vector<unsigned long>> abundance_list);
+
+	/**
+	 * @brief Generates the cumulative abundances, rescaled from 0-1, for randomly choosing an abundance using binary
+	 * search
+	 * @param abundance_list vector of species abundances
+	 */
+	void generateCumulativeAbundances(shared_ptr<vector<unsigned long>> abundance_list);
 
 	/**
 	 * @brief Gets a random species abundance.
 	 * @return the randomly generated abundance
 	 */
-	unsigned long getRandomAbundance() override;
+	unsigned long getRandomAbundanceOfIndividual() override;
 
 	/**
 	 * @brief Gets the species richness of a particular abundance class.

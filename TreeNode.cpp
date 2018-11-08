@@ -1,4 +1,4 @@
-//This file is part of NECSim project which is released under MIT license.
+//This file is part of necsim project which is released under MIT license.
 //See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 /**
  * @author Samuel Thompson
@@ -117,62 +117,62 @@ void TreeNode::increaseGen()
 	generations_existed++;
 }
 
-bool TreeNode::getExistence()
+bool TreeNode::exists() const
 {
 	return does_exist;
 }
 
-bool TreeNode::isTip()
+bool TreeNode::isTip() const
 {
 	return tip;
 }
 
-unsigned long TreeNode::getParent()
+unsigned long TreeNode::getParent() const
 {
 	return parent;
 }
 
-unsigned long TreeNode::getXpos()
+unsigned long TreeNode::getXpos() const
 {
 	return xpos;
 }
 
-unsigned long TreeNode::getYpos()
+unsigned long TreeNode::getYpos() const
 {
 	return ypos;
 }
 
-long TreeNode::getXwrap()
+long TreeNode::getXwrap() const
 {
 	return xwrap;
 }
 
-long TreeNode::getYwrap()
+long TreeNode::getYwrap() const
 {
 	return ywrap;
 }
 
-bool TreeNode::hasSpeciated()
+bool TreeNode::hasSpeciated() const
 {
 	return speciated;
 }
 
-unsigned long TreeNode::getSpeciesID()
+unsigned long TreeNode::getSpeciesID() const
 {
 	return species_id;
 }
 
-long double TreeNode::getSpecRate()
+long double TreeNode::getSpecRate() const
 {
 	return speciation_probability;
 }
 
-unsigned long TreeNode::getGenRate()
+unsigned long TreeNode::getGenRate() const
 {
 	return generations_existed;
 }
 
-long double TreeNode::getGeneration()
+long double TreeNode::getGeneration() const
 {
 	return generation_added;
 }

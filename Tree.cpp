@@ -1,4 +1,4 @@
-// This file is part of NECSim project which is released under MIT license.
+// This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
@@ -47,7 +47,7 @@ void Tree::wipeSimulationVariables()
 
 void Tree::internalSetup(shared_ptr<SimParameters> sim_parameters_in)
 {
-	sim_parameters = sim_parameters_in;
+	sim_parameters = std::move(sim_parameters_in);
 	setup();
 }
 
@@ -82,7 +82,7 @@ bool Tree::checkOutputDirectory()
 
 void Tree::checkSims()
 {
-	checkSims(sim_parameters->output_directory, sim_parameters->the_seed, sim_parameters->the_task);
+	checkSims(sim_parameters->output_directory, sim_parameters->seed, sim_parameters->task);
 }
 
 void Tree::checkSims(string output_dir, long seed_in, long task_in)
@@ -93,7 +93,7 @@ void Tree::checkSims(string output_dir, long seed_in, long task_in)
 	ifstream out;
 	string file_to_open;
 //	char file_to_open[100];
-//	sprintf (file_to_open, "%s/Pause/Data_%i.csv",outdirect,int(the_task));
+//	sprintf (file_to_open, "%s/Pause/Data_%i.csv",outdirect,int(task));
 	file_to_open = output_dir + string("/Pause/Dump_main_") + to_string((unsigned long long) task_in) + "_" +
 				   to_string((unsigned long long) seed_in) + string(".csv");
 	out.open(file_to_open);
@@ -104,8 +104,8 @@ void Tree::checkSims(string output_dir, long seed_in, long task_in)
 		if(!has_imported_pause)
 		{
 			setResumeParameters(sim_parameters->output_directory, sim_parameters->output_directory,
-								static_cast<unsigned long>(sim_parameters->the_seed),
-								static_cast<unsigned long>(sim_parameters->the_task), sim_parameters->max_time);
+								static_cast<unsigned long>(sim_parameters->seed),
+								static_cast<unsigned long>(sim_parameters->task), sim_parameters->max_time);
 		}
 		has_paused = true;
 	}
@@ -123,8 +123,8 @@ void Tree::setParameters()
 	{
 		out_directory = sim_parameters->output_directory;
 
-		the_task = sim_parameters->the_task;
-		the_seed = sim_parameters->the_seed;
+		task = sim_parameters->task;
+		seed = sim_parameters->seed;
 
 		deme = sim_parameters->deme;
 		deme_sample = sim_parameters->deme_sample;
@@ -165,15 +165,23 @@ vector<double> Tree::getTemporalSampling()
 
 long long Tree::getSeed()
 {
-	return the_seed;
+	return seed;
 }
 
 void Tree::setSeed(long long seed_in)
 {
 	if(!seeded)
 	{
+		// There are problems if the random seed is ever 0 as it will produce an identical output to if the seed is 1
+		// therefore the user should be informed (but an error is not thrown).
+		if(seed_in == 0)
+		{
+			stringstream ss;
+			ss << "Seed is set as 0 - this will produce identical behaviour to if the seed is 1." << endl;
+			writeCritical(ss.str());
+		}
 		NR->setSeed(seed_in);
-		the_seed = seed_in;
+		seed = seed_in;
 		seeded = true;
 	}
 }
@@ -215,7 +223,7 @@ void Tree::setInitialValues()
 	steps = 0;
 	generation = 0;
 	// Set the seed
-	setSeed(the_seed);
+	setSeed(seed);
 	setTimes();
 	sim_parameters->printVars();
 	// Determine the speciation rates which will be applied after the simulation completes.
@@ -1044,7 +1052,7 @@ unsigned long Tree::sortData()
 	{
 		for(unsigned long i = 1; i <= enddata; i++)
 		{
-			if((!((*data)[i].hasSpeciated())) && ((*data)[i].getParent() == 0 && (*data)[i].getExistence()))
+			if((!((*data)[i].hasSpeciated())) && ((*data)[i].getParent() == 0 && (*data)[i].exists()))
 			{
 				throw FatalException(string("ERROR_MAIN_004: " + to_string((long long) i) +
 											" has not speciated and parent is 0."));
@@ -1053,7 +1061,7 @@ unsigned long Tree::sortData()
 		// here we check the data is valid - alternative validity check.
 		for(unsigned long i = 1; i <= enddata; i++)
 		{
-			if(!((*data)[i].hasSpeciated()) && (*data)[i].getExistence())
+			if(!((*data)[i].hasSpeciated()) && (*data)[i].exists())
 			{
 				long j = i;
 				while(!((*data)[j].hasSpeciated()))
@@ -1157,12 +1165,12 @@ void Tree::setupOutputDirectory()
 		{
 			createParent(sqlfolder);
 		}
-		sql_output_database += string("/data_") + to_string(the_task) + "_" + to_string(the_seed) + ".db";
+		sql_output_database += string("/data_") + to_string(task) + "_" + to_string(seed) + ".db";
 	}
 	catch(FatalException &fe)
 	{
 		writeWarning(fe.what());
-		sql_output_database = string("data_") + to_string(the_task) + "_" + to_string(the_seed) + ".db";
+		sql_output_database = string("data_") + to_string(task) + "_" + to_string(seed) + ".db";
 	}
 	remove(sql_output_database.c_str());
 }
@@ -1212,8 +1220,8 @@ void Tree::sqlCreateSimulationParameters()
 string Tree::simulationParametersSqlInsertion()
 {
 	string to_execute;
-	to_execute = "INSERT INTO SIMULATION_PARAMETERS VALUES(" + to_string((long long) the_seed) + "," +
-				 to_string((long long) the_task);
+	to_execute = "INSERT INTO SIMULATION_PARAMETERS VALUES(" + to_string((long long) seed) + "," +
+				 to_string((long long) task);
 	to_execute += ",'" + out_directory + "'," + boost::lexical_cast<std::string>((long double) spec) + "," +
 				  to_string(0.0) + ",";
 	to_execute += to_string(0.0) + "," + to_string((long long) deme) + ",";
@@ -1272,7 +1280,7 @@ shared_ptr<ofstream> Tree::initiatePause()
 			pause_folder = out_directory;
 		}
 	}
-	string file_to_open = pause_folder + "Dump_main_" + to_string(the_task) + "_" + to_string(the_seed) + ".csv";
+	string file_to_open = pause_folder + "Dump_main_" + to_string(task) + "_" + to_string(seed) + ".csv";
 	shared_ptr<ofstream> out = make_shared<ofstream>();
 	out->open(file_to_open.c_str());
 	*out << setprecision(64);
@@ -1303,7 +1311,7 @@ void Tree::dumpMain(shared_ptr<ofstream> out)
 		// Save that this simulation was not a protracted speciation sim
 		*out << bIsProtracted << "\n";
 		// Saving the initial data to one file.
-		*out << enddata << "\n" << seeded << "\n" << the_seed << "\n" << the_task << "\n" << times_file << "\n"
+		*out << enddata << "\n" << seeded << "\n" << seed << "\n" << task << "\n" << times_file << "\n"
 			<< uses_temporal_sampling << "\n";
 		*out << out_directory << "\n";
 		*out << has_imported_vars << "\n" << start << "\n" << sim_start << "\n";
@@ -1365,8 +1373,8 @@ void Tree::setResumeParameters()
 shared_ptr<ifstream> Tree::openSaveFile()
 {
 	shared_ptr<ifstream> in1 = make_shared<ifstream>();
-	string file_to_open = pause_sim_directory + string("/Pause/Dump_main_") + to_string(the_task) + "_" +
-						  to_string(the_seed) + string(".csv");
+	string file_to_open = pause_sim_directory + string("/Pause/Dump_main_") + to_string(task) + "_" +
+						  to_string(seed) + string(".csv");
 	in1->open(file_to_open);
 	if(!*in1)
 	{
@@ -1384,8 +1392,8 @@ void Tree::setResumeParameters(
 	{
 		pause_sim_directory = move(pausedir);
 		out_directory = move(outdir);
-		the_seed = static_cast<long long int>(seed);
-		the_task = static_cast<long long int>(task);
+		this->seed = static_cast<long long int>(seed);
+		this->task = static_cast<long long int>(task);
 		maxtime = new_max_time;
 		has_imported_pause = true;
 	}
@@ -1418,7 +1426,7 @@ void Tree::loadMainSave(shared_ptr<ifstream> in1)
 									 "Cannot be resumed by this program. Please report this bug");
 			}
 		}
-		*in1 >> enddata >> seeded >> the_seed >> the_task;
+		*in1 >> enddata >> seeded >> seed >> task;
 		in1->ignore(); // Ignore the endline character
 		getline(*in1, times_file);
 		*in1 >> uses_temporal_sampling;
@@ -1538,8 +1546,8 @@ void Tree::initiateResume()
 #ifdef DEBUG
 	writeLog(10, "Paused directory: " + pause_sim_directory);
 	writeLog(10, "Output directory: " + out_directory);
-	writeLog(10, "Seed: " + to_string(the_seed));
-	writeLog(10, "Task: " + to_string(the_task));
+	writeLog(10, "Seed: " + to_string(seed));
+	writeLog(10, "Task: " + to_string(task));
 	writeLog(10, "Max time: " + to_string(maxtime));
 #endif // DEBUG
 	os << "Resuming simulation..." << endl << "Loading data from temp file..." << flush;

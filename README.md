@@ -20,7 +20,7 @@ necsim is a generic spatial coalescence simulator for neutral systems. It applie
 
 necsim includes functionality for applying varying speciation rates after simulations are complete. This enables the main simulation to be run with the *minimum* speciation rate required and afterwards analysis can be completed using different speciation rates.
 
-The recommended method of usage is through the pycoalescence package, using a python interface for installation, simulation setup and running. See [here](http://pycoalescence.readthedocs.io/) for more details.
+The recommended method of usage is through the pycoalescence package, using a Python interface for installation, simulation setup and running. See [here](http://pycoalescence.readthedocs.io/) for more details.
 
 You are free to modify and distribute the code as per the license specified in **LICENCE.txt** to suit any additional neutral simulation requirements (or any other purpose).
 
@@ -35,7 +35,7 @@ For compilation on High Performance Computing (HPC) systems, they will likely us
 for the application of different speciation rates.
 
 ###Running simulations###
-Note that the recommended method of running and analysing simulations is through the [**pycoalescence**](https://pycoalescence.readthedocs.io) python package.
+Note that the recommended method of running and analysing simulations is through the [**pycoalescence**](https://pycoalescence.readthedocs.io) Python package.
 The routine relies on supplying command line arguments (see below) for all the major simulation variables. Alternatively, supplying a config .txt file and using the command line arguments `./necsim -c /path/to/config.txt` can be used for parsing command line arguments from the text file. 
 
 ####Command Line Arguments ####
@@ -87,7 +87,7 @@ Alternatively, by specifying the -f flag, (full mode) as the first argument, the
 19. the deme sample size (as a proportion of deme size)
 20. the time to run the simulation (in seconds).
 21. lambda - the relative cost of moving through non-forest
-22. the_task - for referencing the specific task later on.
+22. task - for referencing the specific task later on.
 23. the minimum number of species the system is known to contain.
 24. the historical fine map file to use
 25. the historical coarse map file to use
@@ -138,7 +138,7 @@ speciationrate2 = d
 where `i` represents a positive integer, `d` is a decimal value between 0 and 1, and `f` is any positive number (float). Whilst this does help with readability of the code, the order of the arguments is essential at this stage (i.e. don't switch the order of the lines). Future versions may alter the system of reading such that the current_metacommunity_parameters are set according to their key. Any number of speciation rates (or 0) can be at the end of the file.
 
 ####Outputs####
-Upon successful completion of a simulation, necsim will produce an SQLite database file in the output directory in an SQL\_data folder. This database contains several tables, which can be accessed using a program like [DB Browser for SQLite](http://sqlitebrowser.org/) or Microsoft Access. Alternatively, most programming languages have an SQLite interface ([RSQlite](https://cran.r-project.org/web/packages/RSQLite/index.html), [python sqlite3](https://docs.python.org/2/library/sqlite3.html))
+Upon successful completion of a simulation, necsim will produce an SQLite database file in the output directory in an SQL\_data folder. This database contains several tables, which can be accessed using a program like [DB Browser for SQLite](http://sqlitebrowser.org/) or Microsoft Access. Alternatively, most programming languages have an SQLite interface ([RSQlite](https://cran.r-project.org/web/packages/RSQLite/index.html), [Python sqlite3](https://docs.python.org/2/library/sqlite3.html))
 
 * The main table within the database is the SPECIES\_LIST table, which is the location and inheritence of every lineage recorded. Several other important data structures (such as whether it is a "tip" of the phylogenetic tree of not) which are used  when re-constructing the species identity.
 * A secondary output from necsims is a SIMULATION\_PARAMETERS table for identifying the exact current_metacommunity_parameters with which the model is run.

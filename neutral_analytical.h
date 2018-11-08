@@ -1,4 +1,4 @@
-// This file is part of NECSim project which is released under MIT license.
+// This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
@@ -24,7 +24,7 @@ namespace neutral_analytical
 	 * @brief Calculate the expected number of species with abundance n within a non-spatially explicit
 	 * neutral model.
 	 *
-	 * Implementation of the SAD approximation from Chisholm and Pacala (2010).
+	 * Implementation of the SAD approximation from Vallade and Houchmandzadeh (2003).
 	 *
 	 * @param n the number of individuals expected within the species
 	 * @param community_size the total number of individuals in the community
@@ -36,6 +36,7 @@ namespace neutral_analytical
 
 	/**
 	 * @brief Gets the fundamental biodiversity number for the system.
+	 *
 	 * @param community_size the number of individuals in the community
 	 * @param speciation_rate the speciation rate
 	 * @return the fundamental biodiversity number
@@ -58,7 +59,7 @@ namespace neutral_analytical
 	/**
 	 * @brief Gets the expected species richness for a non-spatially explicit neutral model.
 	 *
-	 * Using an analytical approximation discovered by Sam Thompson (but likely an old published result).
+	 * Using an analytical approximation identified here by Sam Thompson (but likely an old published result).
 	 *
 	 * @param community_size the number of individuals in the community
 	 * @param speciation_rate the speciation rate

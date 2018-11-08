@@ -1,4 +1,4 @@
-// This file is part of NECSim project which is released under MIT license.
+// This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 /**
  * @author Sam Thompson
@@ -18,6 +18,13 @@
 #define LOGNAME_FORMAT "%d%m%Y_%H%M%S"
 
 using namespace std;
+
+
+/**
+ * @brief Gets the current system time in string form.
+ * @return the system time in string form
+ */
+string getTime();
 
 /**
  * @brief Gets the default log file path.

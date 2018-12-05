@@ -399,10 +399,10 @@ void SimulateDispersal::checkMaxParameterReference()
 	string to_exec = "SELECT CASE WHEN COUNT(1) > 0 THEN MAX(ref) ELSE 0 END AS [Value] FROM PARAMETERS;";
 	sqlite3_stmt *stmt = nullptr;
 	sqlite3_prepare_v2(database, to_exec.c_str(), static_cast<int>(strlen(to_exec.c_str())), &stmt, nullptr);
-	int rc = sqlite3_step(stmt);
+	sqlite3_step(stmt);
 	max_parameter_reference = static_cast<unsigned long>(sqlite3_column_int(stmt, 0) + 1);
 	// close the old statement
-	rc = sqlite3_finalize(stmt);
+	int rc = sqlite3_finalize(stmt);
 	if(rc != SQLITE_OK && rc != SQLITE_DONE)
 	{
 		stringstream ss;

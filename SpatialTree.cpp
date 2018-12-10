@@ -6,7 +6,7 @@
  * @date 24/03/17
  * @file SpatialTree.cpp
  *
- * @brief  Contains SpatialTree implementation as the main simulation object for spatially-explicit
+ * @brief  Contains SpatialTree implementation as the main simulation object for spatially explicit
  * coalescence simulations.
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */

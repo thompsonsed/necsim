@@ -72,9 +72,10 @@ public:
 		CPLSetErrorHandler(cplNecsimCustomErrorHandler);
 	}
 
-	~Map()
+	~Map() override
 	{
 		close();
+		CPLSetErrorHandler(null);
 	}
 
 	/**

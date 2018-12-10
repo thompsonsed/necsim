@@ -5,7 +5,7 @@
  * @file Tree.h
  * @brief  Contains the main simulation object for spatially-implicit coalescence simulations.
  *
- * Provides the basis for spatially-explicit versions in SpatialTree, and protracted speciation versions in
+ * Provides the basis for spatially explicit versions in SpatialTree, and protracted speciation versions in
  * ProtractedTree and ProtractedSpatialTree.
  *
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>

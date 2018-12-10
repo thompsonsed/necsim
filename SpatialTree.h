@@ -86,7 +86,7 @@
 using namespace std;
 
 /**
-* @brief Represents the output phylogenetic tree, when run on a spatially-explicit landscape.
+* @brief Represents the output phylogenetic tree, when run on a spatially explicit landscape.
 *
 * Contains all functions for running simulations, outputting data and calculating coalescence tree structure.
 */

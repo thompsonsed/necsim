@@ -958,7 +958,7 @@ void Community::exportDatabase()
 			if(rc != SQLITE_OK && rc != SQLITE_DONE)
 			{
 				ss << "Connection to output database cannot be opened at " << spec_sim_parameters->filename;
-				ss << ". Check write access on output folder. Error code " << rc << ":";
+				ss << ". Check write access on output folder. Error code " << rc << ": ";
 				ss << sqlite3_errmsg(outdatabase2) << endl;
 				throw FatalException(ss.str());
 			}
@@ -977,10 +977,17 @@ void Community::exportDatabase()
 		}
 		// Perform the backup
 		rc = sqlite3_backup_step(backupdb, -1);
+		int counter = 0;
+		while(counter < 10 && (rc == SQLITE_BUSY || rc == SQLITE_LOCKED))
+		{
+			counter ++;
+			rc = sqlite3_backup_step(backupdb, -1);
+			sleep(1);
+		}
 		if(rc != SQLITE_OK && rc != SQLITE_DONE)
 		{
 			ss << "Database backup cannot be started to " << spec_sim_parameters->filename;
-			ss << ". Check write access on output folder. Error code " << rc << ":";
+			ss << ". Check write access on output folder. Error code " << rc << ": ";
 			ss << sqlite3_errmsg(outdatabase2) << endl;
 			throw FatalException(ss.str());
 		}
@@ -988,7 +995,7 @@ void Community::exportDatabase()
 		if(rc != SQLITE_OK && rc != SQLITE_DONE)
 		{
 			ss << "Database backup cannot be completed to " << spec_sim_parameters->filename;
-			ss << ". Check write access on output folder. Error code " << rc << ":";
+			ss << ". Check write access on output folder. Error code " << rc << ": ";
 			ss << sqlite3_errmsg(outdatabase2) << endl;
 			throw FatalException(ss.str());
 		}

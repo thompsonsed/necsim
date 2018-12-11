@@ -3,7 +3,7 @@
 
 /**
  * @file Tree.cpp
- * @brief Contains the main simulation object for spatially-implicit coalescence simulations.
+ * @brief Contains the main simulation object for spatially implicit coalescence simulations.
  * Provides the basis for spatially explicit versions in SpatialTree, and protracted speciation versions in
  * ProtractedTree and ProtractedSpatialTree.
  *

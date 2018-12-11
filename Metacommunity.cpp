@@ -105,7 +105,7 @@ void Metacommunity::addSpecies(unsigned long &species_count, TreeNode *tree_node
 void Metacommunity::createMetacommunityNSENeutralModel()
 {
 #ifdef DEBUG
-	writeLog(10, "Running spatially-implicit model for metacommunity generation.");
+	writeLog(10, "Running spatially implicit model for metacommunity generation.");
 #endif //DEBUG
 	// First set up a non-spatial coalescence simulation to generate our metacommunity
 	shared_ptr<SimParameters> temp_parameters = make_shared<SimParameters>();
@@ -141,7 +141,7 @@ void Metacommunity::createMetacommunityNSENeutralModel()
 	// Remove the 0 at the start
 	species_abundances_handler->setAbundanceList(tmp_species_abundances);
 #ifdef DEBUG
-	writeLog(10, "Spatially-implicit simulation completed.");
+	writeLog(10, "Spatially implicit simulation completed.");
 #endif //DEBUG
 }
 

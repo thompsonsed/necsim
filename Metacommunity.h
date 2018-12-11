@@ -9,7 +9,7 @@
  * @brief Generates a neutral metacommunity.
  *
  * Individuals will be drawn from the metacommunity for each speciation event, instead of creating a new species each
- * time. The metacommunity itself is generated using spatially-implicit neutral simulations.
+ * time. The metacommunity itself is generated using spatially implicit neutral simulations.
  *
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
  */
@@ -30,7 +30,7 @@
 using namespace std;
 
 /**
- * @brief Generates a metacommunity using spatially-implicit neutral simulations, which is used to draw individuals
+ * @brief Generates a metacommunity using spatially implicit neutral simulations, which is used to draw individuals
  * from a community.
  */
 class Metacommunity : public virtual Community
@@ -84,7 +84,7 @@ public:
 	void createMetacommunityNSENeutralModel();
 
 	/**
-	 * @brief Applies the speciation parameters to the completed simulation, including running the spatially-implicit
+	 * @brief Applies the speciation parameters to the completed simulation, including running the spatially implicit
 	 * for the metacommunity structure, but doesn't write the output
  	 * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure.
  	 */

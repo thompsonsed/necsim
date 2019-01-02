@@ -27,10 +27,13 @@ void SimulateDispersal::setSimulationParameters(shared_ptr<SimParameters> sim_pa
 {
 	if(print)
 	{
-		writeInfo("********************************\n");
-		writeInfo("Setting simulation current_metacommunity_parameters...\n");
+		writeInfo("********************************\nSetting simulation current_metacommunity_parameters...\n");
 	}
 	simParameters = sim_parameters;
+	if(simParameters == nullptr)
+	{
+		throw FatalException("Simulation parameters are nullptr. Please report this bug.");
+	}
 	if(print)
 	{
 		simParameters->printSpatialVars();

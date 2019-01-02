@@ -180,7 +180,8 @@ public:
 		cplErr = poDataset->GetGeoTransform(geoTransform);
 		if(cplErr >= CE_Warning)
 		{
-			CPLError(cplErr, 6, "No transform present in dataset for %s.", filename.c_str());
+			string message = "No transform present in dataset for " + filename;
+			cplNecsimCustomErrorHandler(cplErr, 6, message.c_str());
 			CPLErrorReset();
 		}
 		upper_left_x = geoTransform[0];

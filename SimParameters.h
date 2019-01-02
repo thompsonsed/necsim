@@ -169,7 +169,7 @@ struct SimParameters
 			grid_x_size = sample_x_size;
 			grid_y_size = sample_y_size;
 		}
-		sample_mask_file = configs.getSectionOptions("sample_grid","mask", "null");
+		sample_mask_file = configs.getSectionOptions("sample_grid","path", "null");
 		fine_map_file = configs.getSectionOptions("fine_map", "path", "none");
 		fine_map_x_size = stoul(configs.getSectionOptions("fine_map", "x", "0"));
 		fine_map_y_size = stoul(configs.getSectionOptions("fine_map", "y", "0"));

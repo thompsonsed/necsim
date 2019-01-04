@@ -549,7 +549,7 @@ void Community::importData(string inputfile)
 	{
 		importSimParameters(inputfile);
 	}
-	if(nodes->size() != 0)
+	if(!nodes->empty())
 	{
 		return;
 	}
@@ -565,14 +565,12 @@ void Community::importData(string inputfile)
 	// skip first row (should be blank)
 	sqlite3_step(stmt);
 	datasize = static_cast<unsigned long>(sqlite3_column_int(stmt, 0));
-	//		os << "datasize: " << datasize << endl;
-	// close the old statement
 	sqlite3_finalize(stmt);
 
 	// Create db query
 	string all_commands = "SELECT * FROM SPECIES_LIST;";
 	sqlite3_prepare_v2(database, all_commands.c_str(), static_cast<int>(strlen(all_commands.c_str())), &stmt, nullptr);
-	nodes->resize(datasize + 1);
+	nodes->resize(datasize);
 	// Check that the file opened correctly.
 	sqlite3_step(stmt);
 	// Copy the data across to the TreeNode data structure.
@@ -581,7 +579,7 @@ void Community::importData(string inputfile)
 #ifdef DEBUG
 	bool has_printed_error = false;
 #endif
-	for(unsigned long i = 1; i <= datasize; i++)
+	for(unsigned long i = 0; i < datasize; i++)
 	{
 		auto species_id = static_cast<unsigned long>(sqlite3_column_int(stmt, 1));
 		//		os << species_id << endl;
@@ -597,7 +595,7 @@ void Community::importData(string inputfile)
 		double dSpec = sqlite3_column_double(stmt, 10);
 		long double generationin = sqlite3_column_double(stmt, 12);
 		// the -1 is to ensure that the species_id_list includes all lineages, but fills the output from the beginning
-		unsigned long index = i - 1 - ignored_lineages;
+		unsigned long index = i - ignored_lineages;
 		(*nodes)[index].setup(tip, xval, yval, xwrap, ywrap, generationin);
 		(*nodes)[index].burnSpecies(species_id);
 		(*nodes)[index].setSpec(dSpec);

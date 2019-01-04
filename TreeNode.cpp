@@ -23,7 +23,7 @@ void TreeNode::setup(bool z, unsigned long xp, unsigned long yp, long xi, long y
 	ypos = yp;
 	xwrap = xi;
 	ywrap = yi;
-	speciation_probability =0;
+	speciation_probability = 0;
 	generations_existed = 0;
 	generation_added = 0;
 }
@@ -33,8 +33,8 @@ void TreeNode::setup(bool z)
 	setup(z, 0, 0, 0, 0);
 }
 
-void TreeNode::setup(const bool &is_tip, const long &xp, const long &yp, const long &xi, const long &yi,
-					 const long double &generation)
+void TreeNode::setup(const bool& is_tip, const long& xp, const long& yp, const long& xi, const long& yi,
+		const long double& generation)
 {
 	tip = is_tip;
 	parent = 0;
@@ -44,7 +44,7 @@ void TreeNode::setup(const bool &is_tip, const long &xp, const long &yp, const l
 	ypos = yp;
 	xwrap = xi;
 	ywrap = yi;
-	speciation_probability =0;
+	speciation_probability = 0;
 	generations_existed = 0;
 	generation_added = generation;
 }
@@ -96,8 +96,7 @@ void TreeNode::setSpeciation(bool s)
 
 void TreeNode::burnSpecies(unsigned long idin)
 {
-	if (species_id == 0)
-	{
+	if (species_id==0) {
 		species_id = idin;
 	}
 }
@@ -182,24 +181,28 @@ void TreeNode::speciate()
 	speciated = true;
 }
 
-ostream &operator<<(ostream &os, const TreeNode &t)
+ostream& operator<<(ostream& os, const TreeNode& t)
 {
 	os << setprecision(64);
-	os <<t.tip << "," << t.parent << "," << t.speciated << "," << t.does_exist << "," << t.species_id << "," << t.xpos << "," << t.ypos << "," << t.xwrap << ",";
-	os << t.ywrap << "," << t.speciation_probability << "," << t.generations_existed << "," << t.generation_added << "\n";
+	os << t.tip << "," << t.parent << "," << t.speciated << "," << t.does_exist << "," << t.species_id << "," << t.xpos
+	   << "," << t.ypos << "," << t.xwrap << ",";
+	os << t.ywrap << "," << t.speciation_probability << "," << t.generations_existed << "," << t.generation_added
+	   << "\n";
 	return os;
 }
 
-istream &operator>>(istream &is, TreeNode &t)
+istream& operator>>(istream& is, TreeNode& t)
 {
 	//is << m.numRows<<" , "<<m.numCols<<" , "<<endl;
 	char delim;
-	is >>t.tip >> delim >> t.parent >> delim >> t.speciated >> delim >> t.does_exist >> delim >> t.species_id >> delim >> t.xpos >> delim;
-	is >> t.ypos >> delim >> t.xwrap >> delim >> t.ywrap >> delim >> t.speciation_probability >> delim >> t.generations_existed >> delim >> t.generation_added;
+	is >> t.tip >> delim >> t.parent >> delim >> t.speciated >> delim >> t.does_exist >> delim >> t.species_id >> delim
+	   >> t.xpos >> delim;
+	is >> t.ypos >> delim >> t.xwrap >> delim >> t.ywrap >> delim >> t.speciation_probability >> delim
+	   >> t.generations_existed >> delim >> t.generation_added;
 	return is;
 }
 
-TreeNode &TreeNode::operator=(const TreeNode &t)
+TreeNode& TreeNode::operator=(const TreeNode& t)
 {
 	tip = t.tip;
 	parent = t.parent;
@@ -217,19 +220,19 @@ TreeNode &TreeNode::operator=(const TreeNode &t)
 }
 
 #ifdef DEBUG
-void TreeNode::logLineageInformation(const int &level)
+
+void TreeNode::logLineageInformation(const int& level)
 {
 	writeLog(level, "Logging lineage information");
-	writeLog(level, "parent: " + to_string(parent));
-	writeLog(level, "tip: " + to_string(tip));
-	writeLog(level, "speciated: " + to_string(speciated));
-	writeLog(level, "existance: " + to_string(does_exist));
-	writeLog(level, "x, y, (x wrap, y wrap): " + to_string(xpos) + ", " + to_string(ypos) + ", " +
-					to_string(xwrap) + ", " + to_string(ywrap));
-	writeLog(level, "speciation rate: " + to_string(speciation_probability));
-	writeLog(level, "generations (added, existed): " + to_string(generation_added) + ", " +
-					to_string(generations_existed));
+	writeLog(level, "parent: "+to_string(parent));
+	writeLog(level, "tip: "+to_string(tip));
+	writeLog(level, "speciated: "+to_string(speciated));
+	writeLog(level, "existance: "+to_string(does_exist));
+	writeLog(level, "x, y, (x wrap, y wrap): "+to_string(xpos)+", "+to_string(ypos)+", "+
+			to_string(xwrap)+", "+to_string(ywrap));
+	writeLog(level, "speciation rate: "+to_string(speciation_probability));
+	writeLog(level, "generations (added, existed): "+to_string(generation_added)+", "+
+			to_string(generations_existed));
 }
-
 
 #endif // DEBUG

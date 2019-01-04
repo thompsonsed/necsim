@@ -34,8 +34,8 @@ using namespace std;
  */
 const long IM1 = 2147483563;
 const long IM2 = 2147483399;
-const double AM = (1.0 / IM1);
-const long IMM1 = (IM1 - 1);
+const double AM = (1.0/IM1);
+const long IMM1 = (IM1-1);
 const long IA1 = 40014;
 const long IA2 = 40692;
 const long IQ1 = 53668;
@@ -43,27 +43,26 @@ const long IQ2 = 5277;
 const long IR1 = 12211;
 const long IR2 = 3791;
 const long NTAB = 32;
-const double NDIV = (1 + IMM1 / NTAB);
+const double NDIV = (1+IMM1/NTAB);
 const double EPS = 1.2e-8;
-const double RNMX(1.0 - EPS);
+const double RNMX(1.0-EPS);
 
 /**
  * @brief Contains the functions for random number generation.
  */
-class NRrand
-{
+class NRrand {
 
 private:
-	long idum{};
-	int j{};
-	long k{};
-	long idum2{};
-	long iy{};
-	long iv[NTAB]{};
-	double temp{};
+	long idum;
+	int j;
+	long k;
+	long idum2;
+	long iy;
+	long iv[NTAB];
+	double temp;
 	bool seeded;
 
-	double lastresult{};
+	double lastresult;
 	bool normflag;
 	// for the L value of the dispersal kernel (the width - does not affect the shape).
 	double tau;
@@ -74,26 +73,25 @@ private:
 	fptr dispersalFunction;
 
 	// once setup will contain the dispersal function for the minimum dispersal distance.
-	typedef double (NRrand::*fptr2)(const double &min_distance);
+	typedef double (NRrand::*fptr2)(const double& min_distance);
 
 	fptr2 dispersalFunctionMinDistance;
+
 	// the probability that dispersal comes from the uniform distribution. This is only relevant for uniform dispersals.
-	double m_prob{};
+	double m_prob;
 	// the cutoff for the uniform dispersal function i.e. the maximum value to be drawn from the uniform distribution.
-	double cutoff{};
+	double cutoff;
 public:
 
 	/**
 	 * @brief Standard constructor.
 	 */
 	NRrand()
+			:idum(0), j(0), k(0), idum2(0), iy(0), iv{0}, temp{0.0}, seeded{false}, lastresult{0.0}, normflag{true},
+			 tau(0.0), sigma(0.0), dispersalFunction(nullptr), dispersalFunctionMinDistance(nullptr), m_prob(0.0),
+			 cutoff(0.0)
 	{
-		seeded = false;
-		normflag = true;
-		dispersalFunction = nullptr;
-		dispersalFunctionMinDistance = nullptr;
-		sigma = 0;
-		tau = 0;
+
 	}
 
 	/**
@@ -103,27 +101,24 @@ public:
 	 */
 	void setSeed(long seed)
 	{
-		if(!seeded)
-		{
+		if (!seeded) {
 			idum2 = 123456789;
 			iy = 0;
 			idum = abs(seed);
-			if(idum < 1) idum = 1;
+			if (idum<1) idum = 1;
 			//Be sure to prevent idum = 0.
 			idum2 = idum;
-			for(j = NTAB + 7; j >= 0; j--)
-			{
+			for (j = NTAB+7; j>=0; j--) {
 				//Load the shuffle table (after 8 warm-ups).
-				k = (idum) / IQ1;
-				idum = IA1 * (idum - k * IQ1) - k * IR1;
-				if(idum < 0) idum += IM1;
-				if(j < NTAB) iv[j] = idum;
+				k = (idum)/IQ1;
+				idum = IA1*(idum-k*IQ1)-k*IR1;
+				if (idum<0) idum += IM1;
+				if (j<NTAB) iv[j] = idum;
 			}
 			iy = iv[0];
 			seeded = true;
 		}
-		else
-		{
+		else {
 			throw runtime_error("Trying to set the seed again: this can only be set once.");
 		}
 	}
@@ -144,23 +139,22 @@ public:
 	 */
 	double d01()
 	{
-		k = (idum) / IQ1;
+		k = (idum)/IQ1;
 		//Start here when not initializing.
-		idum = IA1 * (idum - k * IQ1) - k * IR1;
+		idum = IA1*(idum-k*IQ1)-k*IR1;
 		//Compute idum=(IA1*idum) % IM1 without overflows by Schrage's method. 
-		if(idum < 0) idum += IM1;
-		k = idum2 / IQ2;
-		idum2 = IA2 * (idum2 - k * IQ2) - k * IR2;
+		if (idum<0) idum += IM1;
+		k = idum2/IQ2;
+		idum2 = IA2*(idum2-k*IQ2)-k*IR2;
 		//Compute idum2=(IA2*idum) % IM2 likewise.
-		if(idum2 < 0) idum2 += IM2;
-		j = iy / NDIV;
+		if (idum2<0) idum2 += IM2;
+		j = iy/NDIV;
 		//Will be in the range 0..NTAB-1.
-		iy = iv[j] - idum2;
+		iy = iv[j]-idum2;
 		//Here idum is shuffled, idum and idum2 are combined to generate output. 
 		iv[j] = idum;
-		if(iy < 1) iy += IMM1;
-		if((temp = AM * iy) > RNMX)
-		{
+		if (iy<1) iy += IMM1;
+		if ((temp = AM*iy)>RNMX) {
 			return RNMX; //Because users don't expect endpoint values.
 		}
 		return temp;
@@ -174,7 +168,7 @@ public:
 	 */
 	unsigned long i0(unsigned long max)
 	{
-		return (unsigned long) (d01() * (max + 1));
+		return (unsigned long) (d01()*(max+1));
 	}
 
 	/**
@@ -184,27 +178,24 @@ public:
 	 */
 	double norm()
 	{
-		if(normflag)
-		{
+		if (normflag) {
 			double r2 = 2;
 			double xx = 0;
 			double yy = 0;
-			while(r2 > 1)
-			{
-				xx = 2.0 * d01() - 1.0;
-				yy = 2.0 * d01() - 1.0;
-				r2 = (xx * xx) + (yy * yy);
+			while (r2>1) {
+				xx = 2.0*d01()-1.0;
+				yy = 2.0*d01()-1.0;
+				r2 = (xx*xx)+(yy*yy);
 			}
-			double fac = sqrt(-2.0 * log(r2) / r2);
-			lastresult = xx * fac;
-			double result = yy * fac;
+			double fac = sqrt(-2.0*log(r2)/r2);
+			lastresult = xx*fac;
+			double result = yy*fac;
 			normflag = false;
-			return sigma * result;
+			return sigma*result;
 		}
-		else
-		{
+		else {
 			normflag = true;
-			return sigma * lastresult;
+			return sigma*lastresult;
 		}
 	}
 
@@ -214,7 +205,7 @@ public:
 	 */
 	double rayleigh()
 	{
-		return sigma * pow(-2 * log(d01()), 0.5);
+		return sigma*pow(-2*log(d01()), 0.5);
 	}
 
 	/**
@@ -223,13 +214,12 @@ public:
 	 * @param dist the minimum distance to generate
 	 * @return a random distance greater than the minimum provided
 	 */
-	double rayleighMinDist(const double &dist)
+	double rayleighMinDist(const double& dist)
 	{
 		double min_prob = rayleighCDF(dist);
-		double rand_prob = min_prob + (1 - min_prob) * d01();
-		double out = sigma * pow(-2 * log(rand_prob), 0.5);
-		if(out < dist)
-		{
+		double rand_prob = min_prob+(1-min_prob)*d01();
+		double out = sigma*pow(-2*log(rand_prob), 0.5);
+		if (out<dist) {
 			// This probably means that the rayleigh distribution has a less-than-machine-precision probability of
 			// producing this distance.
 			// Therefore, we just return the distance
@@ -243,9 +233,9 @@ public:
 	 * @param dist the distance to obtain the probability of
 	 * @return the probability of producing the given distance
 	 */
-	double rayleighCDF(const double &dist)
+	double rayleighCDF(const double& dist)
 	{
-		return 1 - exp(-pow(dist, 2.0) / (2.0 * pow(sigma, 2.0)));
+		return 1-exp(-pow(dist, 2.0)/(2.0*pow(sigma, 2.0)));
 	}
 
 	/**
@@ -270,7 +260,7 @@ public:
 	double fattail(double z)
 	{
 		double result;
-		result = pow((pow(d01(), (1.0 / (1.0 - z))) - 1.0), 0.5);
+		result = pow((pow(d01(), (1.0/(1.0-z)))-1.0), 0.5);
 		return result;
 	}
 
@@ -279,10 +269,10 @@ public:
 	 * @param distance the distance to obtain the cumulative probability for
 	 * @return the probability of dispersing less than or equal to distance
 	 */
-	double fattailCDF(const double &distance)
+	double fattailCDF(const double& distance)
 	{
-		return (1.0 / (2.0 * M_PI * sigma * sigma)) *
-			   pow(1 + (distance * distance / (tau * sigma * sigma)), -(tau + 2.0) / 2.0);
+		return (1.0/(2.0*M_PI*sigma*sigma))*
+				pow(1+(distance*distance/(tau*sigma*sigma)), -(tau+2.0)/2.0);
 	}
 
 	/**
@@ -290,11 +280,11 @@ public:
 	 * @param min_distance the minimum distance to return
 	 * @return a fat-tailed distance greater than the minimum
 	 */
-	double fattailMinDistance(const double &min_distance)
+	double fattailMinDistance(const double& min_distance)
 	{
 		double prob = fattailCDF(min_distance);
-		double random_number = prob + d01() * (1 - prob);
-		return (sigma * pow((tau * (pow(random_number, -2.0 / tau)) - 1.0), 0.5));
+		double random_number = prob+d01()*(1-prob);
+		return (sigma*pow((tau*(pow(random_number, -2.0/tau))-1.0), 0.5));
 	}
 
 	// this new version corrects the 1.0 to 2.0 and doesn't require the values to be passed every time.
@@ -309,7 +299,7 @@ public:
 		double result;
 		// old function version (kept for reference)
 //		result = (tau * pow((pow(d01(),(2.0/(2.0-sigma)))-1.0),0.5));
-		result = (sigma * pow((tau * (pow(d01(), -2.0 / tau)) - 1.0), 0.5));
+		result = (sigma*pow((tau*(pow(d01(), -2.0/tau))-1.0), 0.5));
 		return result;
 	}
 
@@ -321,7 +311,7 @@ public:
 	double fattail_old()
 	{
 		double result;
-		result = (sigma * pow((pow(d01(), (2.0 / (2.0 + tau))) - 1.0), 0.5));
+		result = (sigma*pow((pow(d01(), (2.0/(2.0+tau)))-1.0), 0.5));
 		return result;
 	}
 
@@ -331,7 +321,7 @@ public:
 	 */
 	double direction()
 	{
-		return (d01() * 2 * M_PI);
+		return (d01()*2*M_PI);
 	}
 
 	/**
@@ -341,19 +331,16 @@ public:
 	 */
 	bool event(double event_probability)
 	{
-		if(event_probability < 0.000001)
-		{
-			if(d01() <= 0.000001)
-			{
-				return (event(event_probability * 1000000.0));
+		if (event_probability<0.000001) {
+			if (d01()<=0.000001) {
+				return (event(event_probability*1000000.0));
 			}
 			return false;
 		}
-		if(event_probability > 0.999999)
-		{
-			return (!(event(1.0 - event_probability)));
+		if (event_probability>0.999999) {
+			return (!(event(1.0-event_probability)));
 		}
-		return (d01() <= event_probability);
+		return (d01()<=event_probability);
 
 	}
 
@@ -366,8 +353,7 @@ public:
 	double normUniform()
 	{
 		// Check if the dispersal event comes from the uniform distribution
-		if(d01() < m_prob)
-		{
+		if (d01()<m_prob) {
 			// Then it does come from the uniform distribution
 			return uniform();
 		}
@@ -380,10 +366,9 @@ public:
 	 * @param dist the minimum distance to generate
 	 * @return a random distance greater than the minimum provided
 	 */
-	double normUniformMinDistance(const double &min_distance)
+	double normUniformMinDistance(const double& min_distance)
 	{
-		if(d01() < m_prob)
-		{
+		if (d01()<m_prob) {
 			// Then it does come from the uniform distribution
 			return uniformMinDistance(min_distance);
 		}
@@ -396,7 +381,7 @@ public:
 	 */
 	double uniform()
 	{
-		return d01() * cutoff;
+		return d01()*cutoff;
 	}
 
 	/**
@@ -405,17 +390,16 @@ public:
 	 * @param dist the minimum distance to generate
 	 * @return a random distance greater than the minimum provided
 	 */
-	double uniformMinDistance(const double &min_distance)
+	double uniformMinDistance(const double& min_distance)
 	{
-		if(min_distance > cutoff)
-		{
+		if (min_distance>cutoff) {
 			// Note this may introduce problems for studies of extremely isolated islands
 			// I've left this in to make it much easier to deal with scenarios where the
 			// disappearing habitat pixel is further from the nearest habitat pixel than
 			// the maximum dispersal distance
 			return min_distance;
 		}
-		return min_distance + d01() * (cutoff - min_distance);
+		return min_distance+d01()*(cutoff-min_distance);
 	}
 
 	/**
@@ -426,13 +410,12 @@ public:
 	 */
 	double uniformUniform()
 	{
-		if(d01() < 0.5)
-		{
+		if (d01()<0.5) {
 			// Then value comes from the first uniform distribution
-			return (uniform() * 0.1);
+			return (uniform()*0.1);
 		}
 		// Then the value comes from the second uniform distribution
-		return 0.9 * cutoff + (uniform() * 0.1);
+		return 0.9*cutoff+(uniform()*0.1);
 	}
 
 	/**
@@ -441,18 +424,16 @@ public:
 	 * @param dist the minimum distance to generate
 	 * @return a random distance greater than the minimum provided
 	 */
-	double uniformUniformMinDistance(const double &min_distance)
+	double uniformUniformMinDistance(const double& min_distance)
 	{
-		if(d01() < 0.5)
-		{
+		if (d01()<0.5) {
 			// Then value comes from the first uniform distribution
-			if(min_distance > cutoff * 0.1)
-			{
-				return uniformMinDistance(min_distance * 10) * 0.1;
+			if (min_distance>cutoff*0.1) {
+				return uniformMinDistance(min_distance*10)*0.1;
 			}
 		}
 		// Then the value comes from the second uniform distribution
-		return uniformMinDistance(max(min_distance, 0.9 * cutoff));
+		return uniformMinDistance(max(min_distance, 0.9*cutoff));
 	}
 
 	/**
@@ -462,55 +443,45 @@ public:
 	 * @param m_probin the probability of drawing from the uniform distribution. Only relevant for uniform dispersals.
 	 * @param cutoffin the maximum value to be drawn from the uniform dispersal. Only relevant for uniform dispersals.
 	 */
-	void setDispersalMethod(const string &dispersal_method, const double &m_probin, const double &cutoffin)
+	void setDispersalMethod(const string& dispersal_method, const double& m_probin, const double& cutoffin)
 	{
-		if(dispersal_method == "normal")
-		{
+		if (dispersal_method=="normal") {
 			dispersalFunction = &NRrand::rayleigh;
 			dispersalFunctionMinDistance = &NRrand::rayleighMinDist;
-			if(sigma < 0)
-			{
+			if (sigma<0) {
 				throw invalid_argument("Cannot have negative sigma with normal dispersal");
 			}
 		}
-		else if(dispersal_method == "fat-tail" || dispersal_method == "fat-tailed")
-		{
+		else if (dispersal_method=="fat-tail" || dispersal_method=="fat-tailed") {
 			dispersalFunction = &NRrand::fattail;
 			dispersalFunctionMinDistance = &NRrand::fattailMinDistance;
-			if(tau < 0 || sigma < 0)
-			{
+			if (tau<0 || sigma<0) {
 				throw invalid_argument("Cannot have negative sigma or tau with fat-tailed dispersal");
 			}
 		}
-		else if(dispersal_method == "norm-uniform")
-		{
+		else if (dispersal_method=="norm-uniform") {
 			dispersalFunction = &NRrand::normUniform;
 			dispersalFunctionMinDistance = &NRrand::normUniformMinDistance;
-			if(sigma < 0)
-			{
+			if (sigma<0) {
 				throw invalid_argument("Cannot have negative sigma with normal dispersal");
 			}
 		}
-		else if(dispersal_method == "uniform-uniform")
-		{
+		else if (dispersal_method=="uniform-uniform") {
 			// This is just here for testing purposes
 			dispersalFunction = &NRrand::uniformUniform;
 			dispersalFunctionMinDistance = &NRrand::uniformUniformMinDistance;
 		}
 			// Also provided the old version of the fat-tailed dispersal kernel
-		else if(dispersal_method == "fat-tail-old")
-		{
+		else if (dispersal_method=="fat-tail-old") {
 			dispersalFunction = &NRrand::fattail_old;
 			dispersalFunctionMinDistance = &NRrand::fattailMinDistance;
 
-			if(tau > -2 || sigma < 0)
-			{
+			if (tau>-2 || sigma<0) {
 				throw invalid_argument(
 						"Cannot have sigma < 0 or tau > -2 with fat-tailed dispersal (old implementation).");
 			}
 		}
-		else
-		{
+		else {
 			throw runtime_error("Dispersal method not detected. Check implementation exists");
 		}
 		m_prob = m_probin;
@@ -536,7 +507,7 @@ public:
 	 * @param min_distance the minimum distance to disperse
 	 * @return the random dispersal distance greater than or equal to the minimum
 	 */
-	double dispersalMinDistance(const double &min_distance)
+	double dispersalMinDistance(const double& min_distance)
 	{
 		return min(double(LONG_MAX), (this->*dispersalFunctionMinDistance)(min_distance));
 	}
@@ -553,22 +524,18 @@ public:
 	unsigned long randomLogarithmic(long double alpha)
 	{
 		double u_2 = d01();
-		if(u_2 > alpha)
-		{
+		if (u_2>alpha) {
 			return 1;
 		}
-		long double h = log(1 - alpha);
-		long double q = 1 - exp(d01() * h);
-		if(u_2 < (q * q))
-		{
-			return static_cast<unsigned long>(floor(1 + log(u_2) / log(q)));
+		long double h = log(1-alpha);
+		long double q = 1-exp(d01()*h);
+		if (u_2<(q*q)) {
+			return static_cast<unsigned long>(floor(1+log(u_2)/log(q)));
 		}
-		else if(u_2 > q)
-		{
+		else if (u_2>q) {
 			return 1;
 		}
-		else
-		{
+		else {
 			return 2;
 		}
 
@@ -581,7 +548,7 @@ public:
 	 * @param r the NRrand object to output.
 	 * @return the output stream.
 	 */
-	friend ostream &operator<<(ostream &os, const NRrand &r)
+	friend ostream& operator<<(ostream& os, const NRrand& r)
 	{
 		//os << m.numRows<<" , "<<m.numCols<<" , "<<endl; 
 		os << setprecision(64);
@@ -590,8 +557,7 @@ public:
 		os << r.k << ",";
 		os << r.idum2 << ",";
 		os << r.iy << ",";
-		for(long i : r.iv)
-		{
+		for (long i : r.iv) {
 			os << i << ",";
 		}
 		os << r.temp << ",";
@@ -608,7 +574,7 @@ public:
 	 * @param r the NRrand object to input to.
 	 * @return the input stream.
 	 */
-	friend istream &operator>>(istream &is, NRrand &r)
+	friend istream& operator>>(istream& is, NRrand& r)
 	{
 //		os << "starting NR read" << endl;
 		char delim;
@@ -629,8 +595,7 @@ public:
 		is >> delim;
 		is >> r.iy;
 		is >> delim;
-		for(long &i : r.iv)
-		{
+		for (long& i : r.iv) {
 			is >> i;
 			is >> delim;
 		}

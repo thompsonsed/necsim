@@ -176,10 +176,16 @@ public:
 		writeInfo(ss.str());
 		// Check sizes match
 		dt = poBand->GetRasterDataType();
-		double geoTransform[6];
+		double geoTransform[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+		ss.str(""); // TODO consider moving this to DEBUG
+		ss << "Getting geo transform " << endl;
+		writeInfo(ss.str());
 		cplErr = poDataset->GetGeoTransform(geoTransform);
 		if(cplErr >= CE_Warning)
 		{
+			ss.str("");
+			ss << "cpl error detected greater than or equal to warning level." << endl;
+			writeInfo(ss.str());
 			string message = "No transform present in dataset for " + filename;
 			cplNecsimCustomErrorHandler(cplErr, 6, message.c_str());
 			CPLErrorReset();

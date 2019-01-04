@@ -180,6 +180,11 @@ public:
 		ss.str(""); // TODO consider moving this to DEBUG
 		ss << "Getting geo transform " << endl;
 		writeInfo(ss.str());
+		// TODO move this to debug
+		if(poDataset == nullptr)
+		{
+			throw FatalException("poDataset is nullptr. This is likely a problem with gdal. Please report this bug.");
+		}
 		cplErr = poDataset->GetGeoTransform(geoTransform);
 		if(cplErr >= CE_Warning)
 		{

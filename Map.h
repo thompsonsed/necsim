@@ -206,6 +206,7 @@ public:
 			string message = "No transform present in dataset for " + file_name;
 			cplNecsimCustomErrorHandler(cpl_error, 6, message.c_str());
 			CPLErrorReset();
+			cpl_error = CE_None;
 			std::copy(std::begin(default_values), std::end(default_values), std::begin(geoTransform));
 		}
 		writeInfo("done\n");
@@ -330,7 +331,6 @@ public:
 			// Just use the overloaded method for importing between types
 
 			internalImport();
-			writeInfo("Import complete.\n");
 			return true;
 		}
 		return false;
@@ -411,6 +411,7 @@ public:
 	{
 		writeWarning("No type detected for Map type. Attempting default importing (potentially undefined behaviour).");
 		defaultImport();
+		writeInfo("done\n");
 	}
 
 	/**
@@ -489,7 +490,22 @@ public:
 		// create an empty row of type float
 		T2 *t1;
 		t1 = (T2 *) CPLMalloc(sizeof(T2) * num_cols);
+		if(CPLGetLastErrorNo() != CE_None)
+		{
+			stringstream os;
+			os << "Error thrown by CPLMalloc: " <<  CPLGetLastErrorType() << ": " << CPLGetLastErrorMsg() << endl;
+			throw FatalException(os.str());
+		}
 		// import the data a row at a time, using our template row.
+		auto int_block_x_size = static_cast<int>(block_x_size);
+#ifdef DEBUG
+		if(sizeof(T2)*8 != GDALGetDataTypeSize(dt_buff))
+		{
+			stringstream ss0;
+			ss0 << "Size of template (" << sizeof(T2) << ") does not equal size of gdal buffer (";
+			ss0 << GDALGetDataTypeSize(dt_buff) << "). Please report this bug." << endl;
+			throw FatalException(ss0.str());
+		}
 		if(t1 == nullptr)
 		{
 			stringstream ss1;
@@ -498,7 +514,6 @@ public:
 				<< endl;
 			throw FatalException(ss1.str());
 		}
-		int int_block_x_size = static_cast<int>(block_x_size);
 		if(static_cast<unsigned long>(int_block_x_size) != block_x_size)
 		{
 			stringstream ss2;
@@ -506,19 +521,16 @@ public:
 			ss2 << block_x_size << endl;
 			throw FatalException(ss2.str());
 		}
+		if(po_band == nullptr)
+		{
+			throw FatalException("po_band is nullptr during import using buffer - please report this bug.");
+		}
+#endif // DEBUG
 		for(uint32_t j = 0; j < num_rows; j++)
 		{
 			printNumberComplete(j, number_printed);
-//			if(number_printed == 0)
-//			{
-//				cerr << "test2.1.1" << endl; // TODO remove
-//			}
-			cpl_error = po_band->RasterIO(GF_Read, 0, j, int_block_x_size, 1, &t1[0],
+			cpl_error = po_band->RasterIO(GF_Read, 0, j, int_block_x_size, 1, t1,
 										  int_block_x_size, 1, dt_buff, 0, 0);
-//			if(number_printed == 0)
-//			{
-//				cerr << "test2.2" << endl; // TODO remove
-//			}
 			checkTifImportFailure();
 			for(unsigned long i = 0; i < num_cols; i++)
 			{
@@ -569,6 +581,7 @@ public:
 			ss << "\nCPL error thrown during import of " << file_name << endl;
 			cplNecsimCustomErrorHandler(cpl_error, 3, ss.str().c_str());
 			CPLErrorReset();
+			cpl_error = CE_None;
 		}
 	}
 
@@ -626,7 +639,7 @@ public:
 template<>
 inline void Map<bool>::internalImport()
 {
-	if(gdal_data_type <= 7)
+	if(gdal_data_type <= 5)
 	{
 		// Then the tif file type is an int/byte
 		// we can just import as it is

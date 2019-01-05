@@ -286,7 +286,7 @@ public:
 		}
 		else
 		{
-			matrix = null;
+			matrix = nullptr;
 		}
 		num_cols = cols;
 		num_rows = rows;

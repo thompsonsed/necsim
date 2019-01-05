@@ -34,7 +34,6 @@
 #include <algorithm>
 #include <stdexcept>
 #include <memory>
-//#define with_gdal
 // extra boost include - this requires the installation of boost on the system
 // note that this requires compilation with the -lboost_filesystem and -lboost_system linkers.
 #include <boost/filesystem.hpp>

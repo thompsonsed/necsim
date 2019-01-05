@@ -550,7 +550,7 @@ public:
 	 */
 	friend ostream& operator<<(ostream& os, const NRrand& r)
 	{
-		//os << m.numRows<<" , "<<m.numCols<<" , "<<endl; 
+		//os << m.num_rows<<" , "<<m.num_cols<<" , "<<endl;
 		os << setprecision(64);
 		os << r.idum << ",";
 		os << r.j << ",";
@@ -579,7 +579,7 @@ public:
 //		os << "starting NR read" << endl;
 		char delim;
 		//double temp1,temp2;
-		//is << m.numRows<<" , "<<m.numCols<<" , "<<endl; 
+		//is << m.num_rows<<" , "<<m.num_cols<<" , "<<endl;
 		is >> r.idum;
 //		os << r.idum << endl;
 //		string tmp;

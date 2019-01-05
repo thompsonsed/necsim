@@ -37,18 +37,18 @@ template<class T>
 class Map : public virtual Matrix<T>
 {
 protected:
-	GDALDataset *poDataset;
-	GDALRasterBand *poBand;
-	unsigned long blockXSize, blockYSize;
-	double noDataValue;
-	string filename;
-	GDALDataType dt{};
+	GDALDataset *po_dataset;
+	GDALRasterBand *po_band;
+	unsigned long block_x_size, block_y_size;
+	double no_data_value;
+	string file_name;
+	GDALDataType gdal_data_type;
 	// Contains the error object to check for any gdal issues
-	CPLErr cplErr{CE_None};
-	double upper_left_x{}, upper_left_y{}, x_res{}, y_res{};
+	CPLErr cpl_error;
+	double upper_left_x, upper_left_y, x_res, y_res;
 	using Matrix<T>::matrix;
-	using Matrix<T>::numCols;
-	using Matrix<T>::numRows;
+	using Matrix<T>::num_cols;
+	using Matrix<T>::num_rows;
 public:
 	using Matrix<T>::setSize;
 	using Matrix<T>::getCols;
@@ -60,15 +60,11 @@ public:
 	using Matrix<T>::operator+=;
 	using Matrix<T>::operator[];
 
-	Map() : Matrix<T>(0, 0)
+	Map() : Matrix<T>(0, 0), po_dataset(nullptr), po_band(nullptr), block_x_size(0), block_y_size(0),
+			no_data_value(0.0), file_name(""), gdal_data_type(GDT_Unknown), cpl_error(CE_None), upper_left_x(0.0),
+			upper_left_y(0.0), x_res(0.0), y_res(0.0)
 	{
 		GDALAllRegister();
-		poDataset = nullptr;
-		poBand = nullptr;
-		filename = "";
-		blockXSize = 0;
-		blockYSize = 0;
-		noDataValue = 0.0;
 		CPLSetErrorHandler(cplNecsimCustomErrorHandler);
 	}
 
@@ -84,18 +80,18 @@ public:
 	 */
 	void open(const string &filename_in)
 	{
-		if(!poDataset)
+		if(!po_dataset)
 		{
-			filename = filename_in;
-			poDataset = (GDALDataset *) GDALOpen(filename.c_str(), GA_ReadOnly);
+			file_name = filename_in;
+			po_dataset = (GDALDataset *) GDALOpen(file_name.c_str(), GA_ReadOnly);
 		}
 		else
 		{
-			throw FatalException("File already open at " + filename);
+			throw FatalException("File already open at " + file_name);
 		}
-		if(!poDataset)
+		if(!po_dataset)
 		{
-			string s = "File " + filename + " not found.";
+			string s = "File " + file_name + " not found.";
 			throw runtime_error(s);
 		}
 	}
@@ -105,7 +101,7 @@ public:
 	 */
 	void open()
 	{
-		open(filename);
+		open(file_name);
 	}
 
 	/**
@@ -116,7 +112,7 @@ public:
 	 */
 	bool isOpen()
 	{
-		return poDataset != nullptr;
+		return po_dataset != nullptr;
 	}
 
 	/**
@@ -124,15 +120,15 @@ public:
 	 */
 	void close()
 	{
-		if(poDataset)
+		if(po_dataset)
 		{
-			GDALClose(poDataset);
-//			if(poDataset)
+			GDALClose(po_dataset);
+//			if(po_dataset)
 //			{
-//				throw FatalException("poDataset not nullptr after closing, please report this bug.");
+//				throw FatalException("po_dataset not nullptr after closing, please report this bug.");
 //			}
-			poDataset = nullptr;
-			poBand = nullptr;
+			po_dataset = nullptr;
+			po_band = nullptr;
 		}
 	}
 
@@ -141,7 +137,19 @@ public:
 	 */
 	void getRasterBand()
 	{
-		poBand = poDataset->GetRasterBand(1);
+		if(po_dataset->GetRasterCount() < 1)
+		{
+			stringstream ss;
+			ss << "No raster band detected in " << file_name << endl;
+			throw FatalException(ss.str());
+		}
+		po_band = po_dataset->GetRasterBand(1);
+		if(po_band == nullptr)
+		{
+			stringstream ss;
+			ss << "Could not open po_band in " << file_name << ": returned a nullptr" << endl;
+			throw FatalException(ss.str());
+		}
 	}
 
 	/**
@@ -149,8 +157,8 @@ public:
 	 */
 	void getBlockSizes()
 	{
-		blockXSize = static_cast<unsigned long>(poDataset->GetRasterXSize());
-		blockYSize = static_cast<unsigned long>(poDataset->GetRasterYSize());
+		block_x_size = static_cast<unsigned long>(po_dataset->GetRasterXSize());
+		block_y_size = static_cast<unsigned long>(po_dataset->GetRasterYSize());
 	}
 
 	/**
@@ -158,43 +166,53 @@ public:
 	 */
 	void getMetaData()
 	{
+#ifdef DEBUG
+		if(po_dataset == nullptr)
+		{
+			throw FatalException("po_dataset is nullptr. This is likely a problem with gdal. Please report this bug.");
+		}
+		if(po_band == nullptr)
+		{
+			throw FatalException("po_band is nullptr. This is likely a problem with gdal. Please report this bug.");
+		}
+#endif // DEBUG
 		try
 		{
 			int pbSuccess;
-			noDataValue = poBand->GetNoDataValue(&pbSuccess);
+			no_data_value = po_band->GetNoDataValue(&pbSuccess);
 			if(!pbSuccess)
 			{
-				noDataValue = 0.0;
+				no_data_value = 0.0;
 			}
 		}
 		catch(out_of_range &out_of_range1)
 		{
-			noDataValue = 0.0;
+			no_data_value = 0.0;
 		}
 		stringstream ss;
-		ss << "No data value is: " << noDataValue << endl;
+		ss << "No data value is: " << no_data_value << endl;
 		writeInfo(ss.str());
 		// Check sizes match
-		dt = poBand->GetRasterDataType();
-		double geoTransform[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-		ss.str(""); // TODO consider moving this to DEBUG
-		ss << "Getting geo transform " << endl;
-		writeInfo(ss.str());
-		// TODO move this to debug
-		if(poDataset == nullptr)
-		{
-			throw FatalException("poDataset is nullptr. This is likely a problem with gdal. Please report this bug.");
-		}
-		cplErr = poDataset->GetGeoTransform(geoTransform);
-		if(cplErr >= CE_Warning)
+		gdal_data_type = po_band->GetRasterDataType();
+		const static double default_values[6] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+		double geoTransform[6] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
+		writeInfo("Getting geo transform...");
+		cpl_error = po_dataset->GetGeoTransform(geoTransform);
+		if(cpl_error >= CE_Warning)
 		{
 			ss.str("");
 			ss << "cpl error detected greater than or equal to warning level." << endl;
 			writeInfo(ss.str());
-			string message = "No transform present in dataset for " + filename;
-			cplNecsimCustomErrorHandler(cplErr, 6, message.c_str());
+			string message = "No transform present in dataset for " + file_name;
+			cplNecsimCustomErrorHandler(cpl_error, 6, message.c_str());
 			CPLErrorReset();
+			std::copy(std::begin(default_values), std::end(default_values), std::begin(geoTransform));
 		}
+		writeInfo("done\n");
+		ss.str("");
+		ss << "Affine transform is " << geoTransform[0] << ", " << geoTransform[1] << ", " << geoTransform[2] << ", ";
+		ss << geoTransform[3] << ", " << geoTransform[4] << ", " << geoTransform[5] << endl;
+		writeInfo(ss.str());
 		upper_left_x = geoTransform[0];
 		upper_left_y = geoTransform[3];
 		x_res = geoTransform[1];
@@ -209,18 +227,18 @@ public:
 	void printMetaData()
 	{
 		stringstream ss;
-		const char *dt_name = GDALGetDataTypeName(dt);
-		ss << "Filename: " << filename << endl;
+		const char *dt_name = GDALGetDataTypeName(gdal_data_type);
+		ss << "Filename: " << file_name << endl;
 		writeLog(10, ss.str());
 		ss.str("");
-		ss << "data type: " << dt << "(" << dt_name << ")" << endl;
+		ss << "data type: " << gdal_data_type << "(" << dt_name << ")" << endl;
 		writeLog(10, ss.str());
 		ss.str("");
 		ss << "Geo-transform (ulx, uly, x res, y res): " << upper_left_x << ", " << upper_left_y << ", ";
 		ss << x_res << ", " << y_res << ", " <<endl;
 		writeLog(10, ss.str());
 		ss.str("");
-		ss << "No data value: " << noDataValue << endl;
+		ss << "No data value: " << no_data_value << endl;
 		writeLog(10, ss.str());
 
 	}
@@ -269,49 +287,50 @@ public:
 		if(filename.find(".tif") != string::npos)
 		{
 			stringstream ss;
-			ss << "Importing " << filename << " " << flush;
+			ss << "Importing " << filename << " " << endl;
 			writeInfo(ss.str());
 			open(filename);
 			getRasterBand();
 			getBlockSizes();
 			getMetaData();
 			// If the sizes are 0 then use the raster sizes
-			if(numCols == 0 || numRows == 0)
+			if(num_cols == 0 || num_rows == 0)
 			{
-				setSize(blockYSize, blockXSize);
+				setSize(block_y_size, block_x_size);
 			}
 			// Check sizes
-			if((numCols != blockXSize || numRows != blockYSize) || numCols == 0 ||
-			   numRows == 0)
+			if((num_cols != block_x_size || num_rows != block_y_size) || num_cols == 0 ||
+			   num_rows == 0)
 			{
 				stringstream stringstream1;
 				stringstream1 << "Raster data size does not match inputted dimensions for " << filename
 							  << ". Using raster sizes."
 							  << endl;
-				stringstream1 << "Old dimensions: " << numCols << ", " << numRows << endl;
-				stringstream1 << "New dimensions: " << blockXSize << ", " << blockYSize << endl;
+				stringstream1 << "Old dimensions: " << num_cols << ", " << num_rows << endl;
+				stringstream1 << "New dimensions: " << block_x_size << ", " << block_y_size << endl;
 				writeWarning(stringstream1.str());
-				setSize(blockYSize, blockXSize);
+				setSize(block_y_size, block_x_size);
 			}
 			// Check the data types are support
-			const char *dt_name = GDALGetDataTypeName(dt);
-			if(dt == 0 || dt > 7)
+			const char *dt_name = GDALGetDataTypeName(gdal_data_type);
+			if(gdal_data_type == 0 || gdal_data_type > 7)
 			{
 				throw FatalException("Data type of " + string(dt_name) + " is not supported.");
 			}
 #ifdef DEBUG
-			if(sizeof(T) * 8 != gdal_data_sizes[dt])
+			if(sizeof(T) * 8 != gdal_data_sizes[gdal_data_type])
 			{
 				stringstream ss2;
 				ss2 << "Object data size: " << sizeof(T) * 8 << endl;
-				ss2 << "Tif data type: " << dt_name << ": " << gdal_data_sizes[dt] << " bytes" << endl;
-				ss2 << "Tif data type does not match object data size in " << filename << endl;
+				ss2 << "Tif data type: " << dt_name << ": " << gdal_data_sizes[gdal_data_type] << " bytes" << endl;
+				ss2 << "Tif data type does not match object data size in " << file_name << endl;
 				writeWarning(ss2.str());
 			}
 #endif
 			// Just use the overloaded method for importing between types
+
 			internalImport();
-			writeInfo("done!\n");
+			writeInfo("Import complete.\n");
 			return true;
 		}
 		return false;
@@ -361,7 +380,7 @@ public:
 	{
 		auto opened_here = openOffsetMap(offset_map);
 		offset_x = static_cast<long>(round((upper_left_x - offset_map.upper_left_x) / x_res));
-		offset_y = static_cast<long>(round((offset_map.upper_left_y - upper_left_y )/ y_res));
+		offset_y = static_cast<long>(round((offset_map.upper_left_y - upper_left_y) / y_res));
 		closeOffsetMap(offset_map, opened_here);
 	}
 
@@ -401,16 +420,16 @@ public:
 	void defaultImport()
 	{
 		unsigned int number_printed = 0;
-		for(uint32_t j = 0; j < numRows; j++)
+		for(uint32_t j = 0; j < num_rows; j++)
 		{
 			printNumberComplete(j, number_printed);
-			cplErr = poBand->RasterIO(GF_Read, 0, j, static_cast<int>(blockXSize), 1, &matrix[j][0],
-									  static_cast<int>(blockXSize), 1, dt, 0, 0);
+			cpl_error = po_band->RasterIO(GF_Read, 0, j, static_cast<int>(block_x_size), 1, &matrix[j][0],
+										  static_cast<int>(block_x_size), 1, gdal_data_type, 0, 0);
 			checkTifImportFailure();
 			// Now convert the no data values to 0
-			for(uint32_t i = 0; i < numCols; i++)
+			for(uint32_t i = 0; i < num_cols; i++)
 			{
-				if(matrix[j][i] == noDataValue)
+				if(matrix[j][i] == no_data_value)
 				{
 					matrix[j][i] = 0;
 				}
@@ -424,21 +443,22 @@ public:
 	 */
 	void importFromDoubleAndMakeBool()
 	{
+		writeInfo("Importing and converting from double to boolean.\n");
 		unsigned int number_printed = 0;
 		// create an empty row of type float
 		double *t1;
-		t1 = (double *) CPLMalloc(sizeof(double) * numCols);
+		t1 = (double *) CPLMalloc(sizeof(double) * num_cols);
 		// import the data a row at a time, using our template row.
-		for(uint32_t j = 0; j < numRows; j++)
+		for(uint32_t j = 0; j < num_rows; j++)
 		{
 			printNumberComplete(j, number_printed);
-			cplErr = poBand->RasterIO(GF_Read, 0, j, static_cast<int>(blockXSize), 1, &t1[0],
-									  static_cast<int>(blockXSize), 1, GDT_Float64, 0, 0);
+			cpl_error = po_band->RasterIO(GF_Read, 0, j, static_cast<int>(block_x_size), 1, &t1[0],
+										  static_cast<int>(block_x_size), 1, GDT_Float64, 0, 0);
 			checkTifImportFailure();
 			// now copy the data to our Map, converting float to int. Round or floor...? hmm, floor?
-			for(unsigned long i = 0; i < numCols; i++)
+			for(unsigned long i = 0; i < num_cols; i++)
 			{
-				if(t1[i] == noDataValue)
+				if(t1[i] == no_data_value)
 				{
 					matrix[j][i] = false;
 				}
@@ -461,21 +481,48 @@ public:
 	template<typename T2>
 	void importUsingBuffer(GDALDataType dt_buff)
 	{
+		stringstream ss;
+		ss << "Importing using buffer of type " << GDALGetDataTypeName(dt_buff) << " into array of dimensions ";
+		ss << num_cols << " by " << num_rows << " with block size " << block_x_size << ", " << block_y_size << endl;
+		writeInfo(ss.str());
 		unsigned int number_printed = 0;
 		// create an empty row of type float
 		T2 *t1;
-		t1 = (T2 *) CPLMalloc(sizeof(T2) * numCols);
+		t1 = (T2 *) CPLMalloc(sizeof(T2) * num_cols);
 		// import the data a row at a time, using our template row.
-		for(uint32_t j = 0; j < numRows; j++)
+		if(t1 == nullptr)
+		{
+			stringstream ss1;
+			ss1 << "CPL malloc could not acquire " << sizeof(T2) * num_cols << " of space and returned a nullptr.";
+			ss1 << " Please check that your install of gdal is fully functional, and otherwise report this bug."
+				<< endl;
+			throw FatalException(ss1.str());
+		}
+		int int_block_x_size = static_cast<int>(block_x_size);
+		if(static_cast<unsigned long>(int_block_x_size) != block_x_size)
+		{
+			stringstream ss2;
+			ss2 << "Error in integer conversion - please report this bug: " << int_block_x_size << " != ";
+			ss2 << block_x_size << endl;
+			throw FatalException(ss2.str());
+		}
+		for(uint32_t j = 0; j < num_rows; j++)
 		{
 			printNumberComplete(j, number_printed);
-			cplErr = poBand->RasterIO(GF_Read, 0, j, static_cast<int>(blockXSize), 1, &t1[0],
-									  static_cast<int>(blockXSize), 1, dt_buff, 0, 0);
+//			if(number_printed == 0)
+//			{
+//				cerr << "test2.1.1" << endl; // TODO remove
+//			}
+			cpl_error = po_band->RasterIO(GF_Read, 0, j, int_block_x_size, 1, &t1[0],
+										  int_block_x_size, 1, dt_buff, 0, 0);
+//			if(number_printed == 0)
+//			{
+//				cerr << "test2.2" << endl; // TODO remove
+//			}
 			checkTifImportFailure();
-			// now copy the data to our Map, converting float to int. Round or floor...? hmm, floor?
-			for(unsigned long i = 0; i < numCols; i++)
+			for(unsigned long i = 0; i < num_cols; i++)
 			{
-				if(t1[i] == noDataValue)
+				if(t1[i] == no_data_value)
 				{
 					matrix[j][i] = static_cast<T>(0);
 				}
@@ -495,11 +542,11 @@ public:
 	 */
 	void printNumberComplete(const uint32_t &j, unsigned int &number_printed)
 	{
-		double dComplete = ((double) j / (double) numRows) * 20;
+		double dComplete = ((double) j / (double) num_rows) * 20;
 		if(number_printed < dComplete)
 		{
 			stringstream os;
-			os << "\rImporting " << filename << " ";
+			os << "\rImporting " << file_name << " ";
 			number_printed = 0;
 			while(number_printed < dComplete)
 			{
@@ -516,9 +563,11 @@ public:
 	 */
 	void checkTifImportFailure()
 	{
-		if(cplErr >= CE_Warning)
+		if(cpl_error >= CE_Warning)
 		{
-			CPLError(cplErr, 3, "CPL error thrown during import of %s\n", filename.c_str());
+			stringstream ss;
+			ss << "\nCPL error thrown during import of " << file_name << endl;
+			cplNecsimCustomErrorHandler(cpl_error, 3, ss.str().c_str());
 			CPLErrorReset();
 		}
 	}
@@ -553,14 +602,14 @@ public:
 	Map &operator=(const Map &m)
 	{
 		Matrix<T>::operator=(m);
-		this->poDataset = m.poDataset;
-		this->poBand = m.poBand;
-		this->blockXSize = m.blockXSize;
-		this->blockYSize = m.blockYSize;
-		this->noDataValue = m.noDataValue;
-		this->filename = m.filename;
-		this->dt = m.dt;
-		this->cplErr = m.cplErr;
+		this->po_dataset = m.po_dataset;
+		this->po_band = m.po_band;
+		this->block_x_size = m.block_x_size;
+		this->block_y_size = m.block_y_size;
+		this->no_data_value = m.no_data_value;
+		this->file_name = m.file_name;
+		this->gdal_data_type = m.gdal_data_type;
+		this->cpl_error = m.cpl_error;
 		this->upper_left_x = m.upper_left_x;
 		this->upper_left_y = m.upper_left_y;
 		this->x_res = m.x_res;
@@ -577,7 +626,7 @@ public:
 template<>
 inline void Map<bool>::internalImport()
 {
-	if(dt <= 7)
+	if(gdal_data_type <= 7)
 	{
 		// Then the tif file type is an int/byte
 		// we can just import as it is
@@ -592,12 +641,6 @@ inline void Map<bool>::internalImport()
 
 /**
  * @brief Overloaded functions for importing from tifs and matching between gdal and C types.
- * @param filename the path to the filename
- * @param poBand the GDALRasterBand pointer to import from
- * @param nBlockXSize the number of elements per row
- * @param dt the datatype (not required, exists for function overloading)
- * @param r the error reference object
- * @param ndv the no data value
  */
 template<>
 inline void Map<int8_t>::internalImport()
@@ -608,49 +651,49 @@ inline void Map<int8_t>::internalImport()
 template<>
 inline void Map<uint8_t>::internalImport()
 {
-	dt = GDT_Byte;
+	gdal_data_type = GDT_Byte;
 	defaultImport();
 }
 
 template<>
 inline void Map<int16_t>::internalImport()
 {
-	dt = GDT_Int16;
+	gdal_data_type = GDT_Int16;
 	defaultImport();
 }
 
 template<>
 inline void Map<uint16_t>::internalImport()
 {
-	dt = GDT_UInt16;
+	gdal_data_type = GDT_UInt16;
 	defaultImport();
 }
 
 template<>
 inline void Map<int32_t>::internalImport()
 {
-	dt = GDT_Int32;
+	gdal_data_type = GDT_Int32;
 	defaultImport();
 }
 
 template<>
 inline void Map<uint32_t>::internalImport()
 {
-	dt = GDT_UInt32;
+	gdal_data_type = GDT_UInt32;
 	defaultImport();
 }
 
 template<>
 inline void Map<float>::internalImport()
 {
-	dt = GDT_Float32;
+	gdal_data_type = GDT_Float32;
 	defaultImport();
 }
 
 template<>
 inline void Map<double>::internalImport()
 {
-	dt = GDT_Float64;
+	gdal_data_type = GDT_Float64;
 	defaultImport();
 }
 

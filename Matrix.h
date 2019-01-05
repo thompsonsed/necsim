@@ -148,14 +148,14 @@ public:
 	 */
 	T &operator[](unsigned long column)
 	{
-		// assert(column<numCols);
+		// assert(column<num_cols);
 		// check we are within bounds
 #ifdef DEBUG
-		if(column < 0 || column >= numCols)
+		if(column < 0 || column >= num_cols)
 		{
 			string err =
-					"ERROR_MAIN_013b: Tried to call an indices that was out of range of the row. Check row size definition. numCols: " +
-					to_string((long long) numCols) + " index: " + to_string((long long) column);
+					"ERROR_MAIN_013b: Tried to call an indices that was out of range of the row. Check row size definition. num_cols: " +
+					to_string((long long) num_cols) + " index: " + to_string((long long) column);
 			throw out_of_range(err);
 		}
 #endif
@@ -227,8 +227,8 @@ class Matrix
 protected:
 
 	// number of rows and columns
-	unsigned long numCols{};
-	unsigned long numRows{};
+	unsigned long num_cols{};
+	unsigned long num_rows{};
 	// a matrix is an array of rows
 	Row<T> *matrix;
 public:
@@ -238,7 +238,7 @@ public:
 	 * @param rows optionally provide the number of rows.
 	 * @param cols optionally provide the number of columns.
 	 */
-	explicit Matrix(unsigned long rows = 0, unsigned long cols = 0) : matrix(null)
+	explicit Matrix(unsigned long rows = 0, unsigned long cols = 0) : matrix(nullptr)
 	{
 		setSize(rows, cols);
 	}
@@ -247,16 +247,16 @@ public:
 	 * @brief The copy constructor.
 	 * @param m a Matrix object to copy from.
 	 */
-	Matrix(const Matrix &m) : matrix(null)
+	Matrix(const Matrix &m) : matrix(nullptr)
 	{
-		setSize(m.numRows, m.numCols);
-		copy(&m.matrix[0][0], &m.matrix[numRows][numCols], matrix);
+		setSize(m.num_rows, m.num_cols);
+		copy(&m.matrix[0][0], &m.matrix[num_rows][num_cols], matrix);
 	}
 
-	virtual /**
+	 /**
 	 * @brief The destructor.
 	 */
-	~Matrix()
+	 virtual ~Matrix()
 	{
 		if(matrix)
 		{
@@ -288,8 +288,8 @@ public:
 		{
 			matrix = null;
 		}
-		numCols = cols;
-		numRows = rows;
+		num_cols = cols;
+		num_rows = rows;
 	}
 
 	/**
@@ -298,7 +298,7 @@ public:
 	 */
 	unsigned long getCols() const
 	{
-		return numCols;
+		return num_cols;
 	}
 
 	/**
@@ -307,7 +307,7 @@ public:
 	 */
 	unsigned long getRows() const
 	{
-		return numRows;
+		return num_rows;
 	}
 
 	/**
@@ -321,15 +321,15 @@ public:
 	Row<T> &operator[](unsigned long index)
 	{
 #ifdef DEBUG
-		if(index < 0 || index >= numRows)
+		if(index < 0 || index >= num_rows)
 		{
 			string err =
-					"ERROR_MAIN_013: Tried to call an indices that was out of range of the matrix. Check matrix size definition. numRows: " +
-					to_string((long long) numRows) + " index: " + to_string((long long) index);
+					"ERROR_MAIN_013: Tried to call an indices that was out of range of the matrix. Check matrix size definition. num_rows: " +
+					to_string((long long) num_rows) + " index: " + to_string((long long) index);
 			throw out_of_range(err);
 		}
 #endif
-		index = index % numRows;
+		index = index % num_rows;
 		return matrix[index];
 	}
 
@@ -339,8 +339,8 @@ public:
 	 */
 	Matrix &operator=(const Matrix &m)
 	{
-		setSize(m.numRows, m.numCols);
-		for(unsigned long r = 0; r < numRows; r++)
+		setSize(m.num_rows, m.num_cols);
+		for(unsigned long r = 0; r < num_rows; r++)
 		{
 			matrix[r] = Row<T>(m.matrix[r]);
 		}
@@ -356,21 +356,21 @@ public:
 	{
 		//Since addition creates a new matrix, we don't want to return a reference, but an actual matrix object.
 		unsigned long newnumcols, newnumrows;
-		if(numCols > m.numCols)
+		if(num_cols > m.num_cols)
 		{
-			newnumcols = m.numCols;
+			newnumcols = m.num_cols;
 		}
 		else
 		{
-			newnumcols = numCols;
+			newnumcols = num_cols;
 		}
-		if(numRows > m.numRows)
+		if(num_rows > m.num_rows)
 		{
-			newnumrows = m.numRows;
+			newnumrows = m.num_rows;
 		}
 		else
 		{
-			newnumrows = numRows;
+			newnumrows = num_rows;
 		}
 
 		Matrix result(newnumrows, newnumcols);
@@ -392,21 +392,21 @@ public:
 	Matrix operator-(const Matrix &m) const
 	{
 		unsigned long newnumcols, newnumrows;
-		if(numCols > m.numCols)
+		if(num_cols > m.num_cols)
 		{
-			newnumcols = m.numCols;
+			newnumcols = m.num_cols;
 		}
 		else
 		{
-			newnumcols = numCols;
+			newnumcols = num_cols;
 		}
-		if(numRows > m.numRows)
+		if(num_rows > m.num_rows)
 		{
-			newnumrows = m.numRows;
+			newnumrows = m.num_rows;
 		}
 		else
 		{
-			newnumrows = numRows;
+			newnumrows = num_rows;
 		}
 		Matrix result(newnumrows, newnumcols);
 		for(unsigned long r = 0; r < newnumrows; r++)
@@ -426,21 +426,21 @@ public:
 	Matrix &operator+=(const Matrix &m)
 	{
 		unsigned long newnumcols, newnumrows;
-		if(numCols > m.numCols)
+		if(num_cols > m.num_cols)
 		{
-			newnumcols = m.numCols;
+			newnumcols = m.num_cols;
 		}
 		else
 		{
-			newnumcols = numCols;
+			newnumcols = num_cols;
 		}
-		if(numRows > m.numRows)
+		if(num_rows > m.num_rows)
 		{
-			newnumrows = m.numRows;
+			newnumrows = m.num_rows;
 		}
 		else
 		{
-			newnumrows = numRows;
+			newnumrows = num_rows;
 		}
 		for(unsigned long r = 0; r < newnumrows; r++)
 		{
@@ -459,21 +459,21 @@ public:
 	Matrix &operator-=(const Matrix &m)
 	{
 		unsigned long newnumcols, newnumrows;
-		if(numCols > m.numCols)
+		if(num_cols > m.num_cols)
 		{
-			newnumcols = m.numCols;
+			newnumcols = m.num_cols;
 		}
 		else
 		{
-			newnumcols = numCols;
+			newnumcols = num_cols;
 		}
-		if(numRows > m.numRows)
+		if(num_rows > m.num_rows)
 		{
-			newnumrows = m.numRows;
+			newnumrows = m.num_rows;
 		}
 		else
 		{
-			newnumrows = numRows;
+			newnumrows = num_rows;
 		}
 		for(unsigned long r = 0; r < newnumrows; r++)
 		{
@@ -492,10 +492,10 @@ public:
 	 */
 	Matrix operator*(const double s) const
 	{
-		Matrix result(numRows, numCols);
-		for(unsigned long r = 0; r < numRows; r++)
+		Matrix result(num_rows, num_cols);
+		for(unsigned long r = 0; r < num_rows; r++)
 		{
-			for(unsigned long c = 0; c < numCols; c++)
+			for(unsigned long c = 0; c < num_cols; c++)
 			{
 				result[r][c] = matrix[r][c] * s;
 			}
@@ -512,19 +512,19 @@ public:
 	Matrix operator*(Matrix &m) const
 	{
 		unsigned long newnumcols;
-		if(numCols > m.numRows)
+		if(num_cols > m.num_rows)
 		{
-			newnumcols = m.numRows;
+			newnumcols = m.num_rows;
 		}
 		else
 		{
-			newnumcols = numCols;
+			newnumcols = num_cols;
 		}
 
-		Matrix result(numRows, m.numCols);
-		for(unsigned long r = 0; r < numRows; r++)
+		Matrix result(num_rows, m.num_cols);
+		for(unsigned long r = 0; r < num_rows; r++)
 		{
-			for(unsigned long c = 0; c < m.numCols; c++)
+			for(unsigned long c = 0; c < m.num_cols; c++)
 			{
 				for(unsigned long i = 0; i < newnumcols; i++)
 				{
@@ -543,9 +543,9 @@ public:
 	 */
 	friend ostream &writeOut(ostream &os, const Matrix &m)
 	{
-		for(unsigned long r = 0; r < m.numRows; r++)
+		for(unsigned long r = 0; r < m.num_rows; r++)
 		{
-			for(unsigned long c = 0; c < m.numCols; c++)
+			for(unsigned long c = 0; c < m.num_cols; c++)
 			{
 				os << m.matrix[r][c] << ",";
 			}
@@ -563,9 +563,9 @@ public:
 	friend istream &readIn(istream &is, Matrix &m)
 	{
 		char delim;
-		for(unsigned long r = 0; r < m.numRows; r++)
+		for(unsigned long r = 0; r < m.num_rows; r++)
 		{
-			for(unsigned long c = 0; c < m.numCols; c++)
+			for(unsigned long c = 0; c < m.num_cols; c++)
 			{
 				is >> m.matrix[r][c];
 				is >> delim;
@@ -620,7 +620,7 @@ public:
 	{
 		if(!importCsv(filename))
 		{
-			string s = "Type detection failed for " + filename + ". Check filename is correct.";
+			string s = "Type detection failed for " + filename + ". Check file_name is correct.";
 			throw runtime_error(s);
 		}
 	}
@@ -630,20 +630,20 @@ public:
 	 * @param filename the path to the file to import.
 	 */
 #ifdef use_csv
-	bool importCsv(const string &filename)
+	bool importCsv(const string &file_name)
 	{
-	if(filename.find(".csv") != string::npos)
+	if(file_name.find(".csv") != string::npos)
 		{
 			stringstream os;
-			os  << "Importing " << filename << " " << flush;
+			os  << "Importing " << file_name << " " << flush;
 			writeInfo(os.str());
 			// LineReader option
-			io::LineReader in(filename);
+			io::LineReader in(file_name);
 			// Keep track of whether we've printed to terminal or not.
 			bool bPrint = false;
 			// Initialies empty variable so that the setValue operator overloading works properly.
 			unsigned int number_printed = 0;
-			for(unsigned long i =0; i<numRows; i++)
+			for(unsigned long i =0; i<num_rows; i++)
 			{
 				char* line = in.next_line();
 				if(line == nullptr)
@@ -659,7 +659,7 @@ public:
 				{
 					char *dToken;
 					dToken = strtok(line,",");
-					for(unsigned long j = 0; j<numCols; j++)
+					for(unsigned long j = 0; j<num_cols; j++)
 					{
 						if(dToken == nullptr)
 						{
@@ -678,11 +678,11 @@ public:
 						}
 					}
 					// output the percentage complete
-					double dComplete = ((double)i/(double)numRows)*20;
+					double dComplete = ((double)i/(double)num_rows)*20;
 					if( number_printed < dComplete)
 					{
 						stringstream os;
-						os  << "\rImporting " << filename << " ";
+						os  << "\rImporting " << file_name << " ";
 						number_printed = 0;
 						while(number_printed < dComplete)
 						{
@@ -718,19 +718,19 @@ public:
 			ifstream inputstream;
 			inputstream.open(filename.c_str());
 			unsigned long number_printed = 0;
-			for(uint32_t j = 0; j < numRows; j++)
+			for(uint32_t j = 0; j < num_rows; j++)
 			{
 				string line;
 				getline(inputstream, line);
 				istringstream iss(line);
-				for(uint32_t i = 0; i < numCols; i++)
+				for(uint32_t i = 0; i < num_cols; i++)
 				{
 					char delim;
 					T val;
 					iss >> val >> delim;
 					matrix[j][i] = val;
 				}
-				double dComplete = ((double) j / (double) numRows) * 5;
+				double dComplete = ((double) j / (double) num_rows) * 5;
 				if(number_printed < dComplete)
 				{
 					os << "\rImporting " << filename << " " << flush;

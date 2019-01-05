@@ -2206,7 +2206,7 @@ void Community::writeSpeciationRates()
 	if(!spec_sim_parameters->protracted_parameters.empty())
 	{
 		os.str("");
-		os << "Protracted speciation current_metacommunity_parameters (min, max) are: " << endl;
+		os << "Protracted speciation parameters (min, max) are: " << endl;
 		for(const auto i : spec_sim_parameters->protracted_parameters)
 		{
 			os << i.min_speciation_gen << ", " << i.max_speciation_gen << endl;

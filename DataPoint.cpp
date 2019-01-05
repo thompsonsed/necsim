@@ -146,7 +146,7 @@ ostream &operator<<(ostream &os, const DataPoint &d)
 
 istream &operator>>(istream &is, DataPoint &d)
 {
-	//os << m.numRows<<" , "<<m.numCols<<" , "<<endl;
+	//os << m.num_rows<<" , "<<m.num_cols<<" , "<<endl;
 	char delim;
 	//os << "datapoint" << endl;
 	is >> d.xpos >> delim >> d.ypos >> delim >> d.xwrap >> delim >> d.ywrap >> delim >> d.next_lineage >> delim

@@ -63,7 +63,7 @@ ostream &operator<<(ostream &os, const SectionOption &k)
 
 istream &operator>>(istream &is, SectionOption &k)
 {
-	// os << m.numRows<<" , "<<m.numCols<<" , "<<endl;
+	// os << m.num_rows<<" , "<<m.num_cols<<" , "<<endl;
 	unsigned int valsize, refsize;
 	is >> k.section >> valsize >> refsize;
 	is.ignore();

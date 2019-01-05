@@ -68,9 +68,9 @@ public:
 	 * the dimensions of the grid itself for recalculating coordinates.
 	 * @param sim_parameters Simulation parameter to set the data mask from
 	 */
-	void setup(const shared_ptr<SimParameters> sim_parameters);
+	void setup(shared_ptr<SimParameters> sim_parameters);
 
-	bool checkCanUseDefault(const shared_ptr<SimParameters> sim_parameters);
+	bool checkCanUseDefault(shared_ptr<SimParameters> sim_parameters);
 	/**
 	 * @brief Imports the sample mask as a boolean mask and sets the relevant sample mask dimensions.
 	 * Should only be called if the import is actually required (i.e. the map is not null or none).
@@ -98,7 +98,7 @@ public:
 	/**
 	 * @brief Sets up the null sampling map.
 	 */
-	void setupNull(const shared_ptr<SimParameters> mapvarin);
+	void setupNull(shared_ptr<SimParameters> mapvarin);
 
 	/**
 	 * @brief Imports the specified file for the sampling percentage within each cell.
@@ -107,7 +107,7 @@ public:
 	 * actual sampling proportion is equal to the cell value multiplied by global deme sampling proportion.
 	 * @param mapvarin the SimParameters object containing the samplemask file location and dimensions
 	 */
-	void importSampleMask(const shared_ptr<SimParameters> mapvarin);
+	void importSampleMask(shared_ptr<SimParameters> mapvarin);
 
 
 	/**

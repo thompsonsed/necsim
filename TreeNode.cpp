@@ -193,7 +193,7 @@ ostream& operator<<(ostream& os, const TreeNode& t)
 
 istream& operator>>(istream& is, TreeNode& t)
 {
-	//is << m.numRows<<" , "<<m.numCols<<" , "<<endl;
+	//is << m.num_rows<<" , "<<m.num_cols<<" , "<<endl;
 	char delim;
 	is >> t.tip >> delim >> t.parent >> delim >> t.speciated >> delim >> t.does_exist >> delim >> t.species_id >> delim
 	   >> t.xpos >> delim;

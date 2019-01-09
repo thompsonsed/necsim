@@ -765,7 +765,7 @@ void Community::outputSpeciesAbundances()
 		if(checkSpeciesAbundancesReference())
 		{
 			stringstream ss;
-			ss << "Duplicate insertion of " << current_community_parameters->reference << "into SPECIES_ABUNDANCES.";
+			ss << "Duplicate insertion of " << current_community_parameters->reference << " into SPECIES_ABUNDANCES.";
 			ss << endl;
 			writeWarning(ss.str());
 			return;
@@ -1613,7 +1613,6 @@ void Community::getPreviousCalcs()
 	// Read the speciation rates from the community_parameters table
 	if(has_community_parameters)
 	{
-		writeInfo("previous calculations detected.\n");
 		sqlite3_stmt *stmt2;
 		string call2 = "SELECT reference, speciation_rate, time, fragments, metacommunity_reference ";
 		if(protracted)
@@ -1632,6 +1631,14 @@ void Community::getPreviousCalcs()
 			throw SpeciesException(ss.str());
 		}
 		rc = sqlite3_step(stmt2);
+		if(rc == SQLITE_ROW)
+		{
+			writeInfo("previous calculations detected.\n");
+		}
+		else
+		{
+			writeInfo("COMMUNITY_PARAMETERS table detected, but not previous calculations found.\n");
+		}
 		while(rc == SQLITE_ROW)
 		{
 			auto row_val = sqlite3_column_int(stmt2, 0);

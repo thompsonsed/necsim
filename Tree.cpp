@@ -1163,7 +1163,7 @@ void Tree::setupOutputDirectory()
 	{
 		if(!boost::filesystem::exists(boost::filesystem::path(sqlfolder)))
 		{
-			createParent(sqlfolder);
+			boost::filesystem::create_directory(boost::filesystem::path(sqlfolder));
 		}
 		sql_output_database += string("/data_") + to_string(task) + "_" + to_string(seed) + ".db";
 	}
@@ -1172,7 +1172,7 @@ void Tree::setupOutputDirectory()
 		writeWarning(fe.what());
 		sql_output_database = string("data_") + to_string(task) + "_" + to_string(seed) + ".db";
 	}
-	remove(sql_output_database.c_str());
+	boost::filesystem::remove(boost::filesystem::path(sql_output_database));
 }
 
 void Tree::sqlCreateSimulationParameters()

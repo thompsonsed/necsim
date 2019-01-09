@@ -69,6 +69,16 @@ struct SpecSimParameters
 	void setup(string file_in, bool use_spatial_in, string sample_file, const vector<double> &times,
 			   const string &use_fragments_in, vector<double> speciation_rates)
 	{
+		setup(file_in, use_spatial_in, sample_file, times, use_fragments_in);
+		for(auto speciation_rate : speciation_rates)
+		{
+			all_speciation_rates.insert(speciation_rate);
+		}
+	}
+
+	void setup(string file_in, bool use_spatial_in, string sample_file, const vector<double> &times,
+			   const string &use_fragments_in)
+	{
 		filename = std::move(file_in);
 		use_spatial = use_spatial_in;
 		samplemask = std::move(sample_file);
@@ -87,11 +97,7 @@ struct SpecSimParameters
 		}
 		use_fragments = !(use_fragments_in == "F");
 		fragment_config_file = use_fragments_in;
-		bMultiRun = speciation_rates.size() > 1;
-		for(auto speciation_rate : speciation_rates)
-		{
-			all_speciation_rates.insert(speciation_rate);
-		}
+		bMultiRun = all_speciation_rates.size() > 1;
 	}
 
 	/**

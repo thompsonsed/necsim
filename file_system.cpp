@@ -39,6 +39,7 @@ void openSQLiteDatabase(const string &database_name, sqlite3 *&database)
 			ss << " (" << sqlite3_errmsg(database) << ")" << endl;
 			throw FatalException(ss.str());
 		}
+		return;
 	}
 #ifdef WIN_INSTALL
 	rc = sqlite3_open_v2(database_name.c_str(), &database, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, "win32");

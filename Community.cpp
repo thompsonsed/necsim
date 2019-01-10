@@ -978,7 +978,7 @@ void Community::exportDatabase()
 		int counter = 0;
 		while(counter < 10 && (rc == SQLITE_BUSY || rc == SQLITE_LOCKED))
 		{
-			counter ++;
+			counter++;
 			rc = sqlite3_backup_step(backupdb, -1);
 			sleep(1);
 		}

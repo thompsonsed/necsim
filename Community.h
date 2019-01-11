@@ -198,7 +198,10 @@ public:
 	 */
 	void destroyDbConnection()
 	{
-		nodes.reset();
+		if(nodes)
+		{
+			nodes.reset();
+		}
 		sqlite3_close(database);
 	}
 

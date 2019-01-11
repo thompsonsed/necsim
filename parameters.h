@@ -53,8 +53,16 @@ struct CommunityParameters
 	ProtractedSpeciationParameters protracted_parameters;
 	bool updated; // set to true if the fragment reference needs updating in the database
 
+	/**
+	 * @brief Default constructor.
+	 */
 	CommunityParameters() : reference(0), speciation_rate(0.0), time(0), fragment(false), metacommunity_reference(0),
 							protracted_parameters(), updated(false){}
+
+	/**
+	 * @brief Trivial destructor.
+	 */
+	~CommunityParameters() = default;
 
 	/**
 	 * @brief Constructor for CommunityParameters, for storing a pairs of previous calculations, requiring a speciation rate
@@ -135,6 +143,11 @@ struct CommunitiesArray
 	CommunitiesArray();
 
 	/**
+	 * @brief Trivial destructor
+	 */
+	~CommunitiesArray() = default;
+
+	/**
 	 * @brief Adds an extra CommunityParameters object to the calc_array vector with the supplied variables
 	 * @param reference the reference for this set of community parameters
 	 * @param speciation_rate the speciation rate of the past calculation
@@ -201,6 +214,11 @@ struct MetacommunityParameters
 	MetacommunityParameters();
 
 	/**
+	 * @brief Trivial destructor
+	 */
+	~MetacommunityParameters() = default;
+
+	/**
 	 * @brief Constructor for MetacommunityParameters, storing a previously applied metacommunity
 	 * @param reference_in the metacommunity reference number
 	 * @param metacommunity_size_in the speciation rate used for metacommunity generation
@@ -259,9 +277,14 @@ struct MetacommunitiesArray
 	vector<shared_ptr<MetacommunityParameters>> metacomm_parameters;
 
 	/**
-	 * @brief Default constructor
+	 * @brief Default constructor.
 	 */
 	MetacommunitiesArray();
+
+	/**
+	 * @brief Trivial destructor.
+	 */
+	~MetacommunitiesArray() = default;
 
 	/**
 	 * @brief Support for range-based for loop iteration over metacomm_parameters.

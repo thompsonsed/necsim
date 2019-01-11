@@ -40,7 +40,7 @@ protected:
 	unsigned long seed;
 	unsigned long task;
 	bool parameters_checked;
-	shared_ptr<SpeciesAbundancesHandler> species_abundances_handler;
+	unique_ptr<SpeciesAbundancesHandler> species_abundances_handler;
 	shared_ptr<NRrand> random;
 	unique_ptr<Tree> metacommunity_tree;
 public:

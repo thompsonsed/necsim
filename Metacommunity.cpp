@@ -26,8 +26,7 @@
 namespace na = neutral_analytical;
 
 Metacommunity::Metacommunity() : seed(0), task(0), parameters_checked(false),
-								 species_abundances_handler(static_pointer_cast<SpeciesAbundancesHandler>(
-										 make_shared<SimulatedSpeciesAbundancesHandler>())),
+								 species_abundances_handler(make_unique<SimulatedSpeciesAbundancesHandler>()),
 								 random(make_shared<NRrand>()),
 								 metacommunity_tree(make_unique<Tree>())
 {
@@ -130,7 +129,7 @@ void Metacommunity::createMetacommunityNSENeutralModel()
 	metacommunity_tree->applySpecRateInternal(current_metacommunity_parameters->speciation_rate, 0.0);
 	// species_abundances now contains the number of individuals per species
 	// Make it cumulative to increase the speed of indexing using binary search.
-	species_abundances_handler = make_shared<SimulatedSpeciesAbundancesHandler>();
+	species_abundances_handler = make_unique<SimulatedSpeciesAbundancesHandler>();
 	species_abundances_handler->setup(random, current_metacommunity_parameters->metacommunity_size,
 									  current_metacommunity_parameters->speciation_rate);
 	auto tmp_species_abundances = metacommunity_tree->getSpeciesAbundances();
@@ -185,8 +184,7 @@ void Metacommunity::applyNoOutput(shared_ptr<SpecSimParameters> sp)
 
 void Metacommunity::approximateSAD()
 {
-	species_abundances_handler = static_pointer_cast<SpeciesAbundancesHandler>(
-			make_shared<AnalyticalSpeciesAbundancesHandler>());
+	species_abundances_handler = make_unique<AnalyticalSpeciesAbundancesHandler>();
 	species_abundances_handler->setup(random, current_metacommunity_parameters->metacommunity_size,
 									  current_metacommunity_parameters->speciation_rate);
 }
@@ -197,8 +195,7 @@ void Metacommunity::readSAD()
 	external_metacommunity.openSqlConnection(current_metacommunity_parameters->option);
 	shared_ptr<map<unsigned long, unsigned long>> sad = external_metacommunity.getSpeciesAbundances(
 			current_metacommunity_parameters->external_reference);
-	species_abundances_handler = static_pointer_cast<SpeciesAbundancesHandler>(
-			make_shared<SimulatedSpeciesAbundancesHandler>());
+	species_abundances_handler = make_unique<SimulatedSpeciesAbundancesHandler>();
 	species_abundances_handler->setup(random, current_metacommunity_parameters->metacommunity_size,
 									  current_metacommunity_parameters->speciation_rate);
 	species_abundances_handler->setAbundanceList(sad);

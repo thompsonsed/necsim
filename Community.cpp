@@ -481,7 +481,7 @@ void Community::openSqlConnection(string inputfile)
 
 		if(rc != SQLITE_DONE && rc != SQLITE_OK)
 		{
-			sqlite3_close(outdatabase);
+			sqlite3_close_v2(outdatabase);
 			sqlite3_open(inputfile.c_str(), &outdatabase);
 			backupdb = sqlite3_backup_init(database, "main", outdatabase, "main");
 		}
@@ -489,17 +489,17 @@ void Community::openSqlConnection(string inputfile)
 		//			os << "rc: " << rc << endl;
 		if(rc != SQLITE_DONE && rc != SQLITE_OK)
 		{
-			sqlite3_close(database);
-			sqlite3_close(outdatabase);
+			sqlite3_close_v2(database);
+			sqlite3_close_v2(outdatabase);
 			throw SpeciesException("ERROR_SQL_002: FATAL. Source file cannot be opened.");
 		}
-		sqlite3_close(outdatabase);
+		sqlite3_close_v2(outdatabase);
 	}
 	catch(FatalException &fe)
 	{
 		writeWarning("Can't open in-memory database. Writing to file instead (this will be slower).\n");
 		in_mem = false;
-		sqlite3_close(database);
+		sqlite3_close_v2(database);
 		int rc = sqlite3_open_v2(inputfile.c_str(), &database, SQLITE_OPEN_READWRITE, "unix-dotfile");
 		// Revert to different VFS file opening method if the backup hasn't started properly.
 		// Two different versions will be attempted before an error will be thrown.
@@ -516,8 +516,9 @@ void Community::openSqlConnection(string inputfile)
 
 void Community::closeSqlConnection()
 {
-	sqlite3_close(database);
+	sqlite3_close_v2(database);
 	bSqlConnection = false;
+	database = nullptr;
 }
 
 void Community::setInternalDatabase()
@@ -951,7 +952,7 @@ void Community::exportDatabase()
 		if(rc != SQLITE_OK && rc != SQLITE_DONE)
 		{
 			// attempt other output method
-			sqlite3_close(outdatabase2);
+			sqlite3_close_v2(outdatabase2);
 			rc = sqlite3_open(spec_sim_parameters->filename.c_str(), &outdatabase2);
 			if(rc != SQLITE_OK && rc != SQLITE_DONE)
 			{
@@ -997,7 +998,7 @@ void Community::exportDatabase()
 			ss << sqlite3_errmsg(outdatabase2) << endl;
 			throw FatalException(ss.str());
 		}
-		sqlite3_close(outdatabase2);
+		sqlite3_close_v2(outdatabase2);
 		writeInfo("done!\n");
 	}
 	closeSqlConnection();
@@ -1497,7 +1498,7 @@ void Community::importSimParameters(string file)
 			stringstream ss;
 			ss << "Could not open simulation parameters in " << file << ": Error code: " << rc << ": ";
 			ss << sqlite3_errmsg(database);
-			sqlite3_close(database);
+			sqlite3_close_v2(database);
 			throw SpeciesException(ss.str());
 		}
 		sqlite3_step(stmt2);
@@ -1603,7 +1604,7 @@ void Community::getPreviousCalcs()
 		ss << "Could not detect COMMUNITY_PARAMETERS table while finding previous calculations. Error code: " << rc
 		   << ": ";
 		ss << sqlite3_errmsg(database) << endl;
-		sqlite3_close(database);
+		sqlite3_close_v2(database);
 		throw FatalException(ss.str());
 	}
 	sqlite3_step(stmt1);
@@ -1627,7 +1628,7 @@ void Community::getPreviousCalcs()
 			stringstream ss;
 			ss << "Could not select from COMMUNITY_PARAMETERS table. Error code: " << rc << ": ";
 			ss << sqlite3_errmsg(database) << endl;
-			sqlite3_close(database);
+			sqlite3_close_v2(database);
 			throw SpeciesException(ss.str());
 		}
 		rc = sqlite3_step(stmt2);
@@ -1683,7 +1684,7 @@ void Community::getPreviousCalcs()
 	rc = sqlite3_prepare_v2(database, call3.c_str(), static_cast<int>(strlen(call3.c_str())), &stmt3, nullptr);
 	if(rc != SQLITE_DONE && rc != SQLITE_OK)
 	{
-		sqlite3_close(database);
+		sqlite3_close_v2(database);
 		throw SpeciesException(
 				"ERROR_SQL_020: FATAL. Could not check for METACOMMUNITY_PARAMETERS table. Error code: " +
 				to_string(rc));
@@ -1702,7 +1703,7 @@ void Community::getPreviousCalcs()
 								nullptr);
 		if(rc != SQLITE_DONE && rc != SQLITE_OK)
 		{
-			sqlite3_close(database);
+			sqlite3_close_v2(database);
 			throw SpeciesException(
 					"ERROR_SQL_020: FATAL. Could not detect METACOMMUNITY_PARAMETERS table. Error code: " +
 					to_string(rc));
@@ -1776,7 +1777,7 @@ vector<unsigned long> Community::getUniqueCommunityRefs()
 		stringstream ss;
 		ss << "Could not detect COMMUNITY_PARAMETERS table while getting unique community references. Error code: ";
 		ss << rc << ": " << sqlite3_errmsg(database) << endl;
-		sqlite3_close(database);
+		sqlite3_close_v2(database);
 		throw FatalException(ss.str());
 	}
 	sqlite3_step(stmt1);
@@ -1795,7 +1796,7 @@ vector<unsigned long> Community::getUniqueCommunityRefs()
 			stringstream ss;
 			ss << "Could not get distinct references from COMMUNITY_PARAMETERS table. Error code: " << rc << ": ";
 			ss << sqlite3_errmsg(database) << endl;
-			sqlite3_close(database);
+			sqlite3_close_v2(database);
 			throw FatalException(ss.str());
 		}
 		rc = sqlite3_step(stmt2);
@@ -1823,7 +1824,7 @@ vector<unsigned long> Community::getUniqueMetacommunityRefs()
 	int rc = sqlite3_prepare_v2(database, call1.c_str(), static_cast<int>(strlen(call1.c_str())), &stmt1, nullptr);
 	if(rc != SQLITE_DONE && rc != SQLITE_OK)
 	{
-		sqlite3_close(database);
+		sqlite3_close_v2(database);
 		throw SpeciesException(
 				"ERROR_SQL_020: FATAL. Could not check for METACOMMUNITY_PARAMETERS table. Error code: " +
 				to_string(rc));
@@ -1841,7 +1842,7 @@ vector<unsigned long> Community::getUniqueMetacommunityRefs()
 								nullptr);
 		if(rc != SQLITE_DONE && rc != SQLITE_OK)
 		{
-			sqlite3_close(database);
+			sqlite3_close_v2(database);
 			throw SpeciesException(
 					"ERROR_SQL_020: FATAL. Could not detect METACOMMUNITY_PARAMETERS table. Error code: " +
 					to_string(rc));
@@ -2411,7 +2412,7 @@ shared_ptr<map<unsigned long, unsigned long>> Community::getSpeciesAbundances(co
 	int rc = sqlite3_prepare_v2(database, call1.c_str(), static_cast<int>(strlen(call1.c_str())), &stmt1, nullptr);
 	if(rc != SQLITE_DONE && rc != SQLITE_OK)
 	{
-		sqlite3_close(database);
+		sqlite3_close_v2(database);
 		throw SpeciesException("Could not check for SPECIES_ABUNDANCES table. Error code: " +
 							   to_string(rc));
 	}
@@ -2429,7 +2430,7 @@ shared_ptr<map<unsigned long, unsigned long>> Community::getSpeciesAbundances(co
 	rc = sqlite3_prepare_v2(database, call2.c_str(), static_cast<int>(strlen(call2.c_str())), &stmt1, nullptr);
 	if(rc != SQLITE_DONE && rc != SQLITE_OK)
 	{
-		sqlite3_close(database);
+		sqlite3_close_v2(database);
 		throw SpeciesException("Could not check for SPECIES_ABUNDANCES table. Error code: " +
 							   to_string(rc));
 	}

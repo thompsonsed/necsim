@@ -70,7 +70,7 @@ void Metacommunity::checkSimulationParameters()
 			stringstream ss;
 			ss << "Could not read seed and job_type number from SIMULATION_PARAMETERS: Error code: " << rc;
 			ss << ": " << sqlite3_errmsg(database) << endl;
-			sqlite3_close(database);
+			sqlite3_close_v2(database);
 			throw FatalException(ss.str());
 		}
 		sqlite3_step(stmt);

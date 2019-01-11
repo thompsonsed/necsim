@@ -190,19 +190,11 @@ public:
 	*/
 	virtual ~Community()
 	{
-		destroyDbConnection();
-	}
-
-	/**
-	 * @brief Destroys the connection to the database.
-	 */
-	void destroyDbConnection()
-	{
 		if(nodes)
 		{
 			nodes.reset();
 		}
-		sqlite3_close(database);
+		closeSqlConnection();
 	}
 
 	/**

@@ -131,9 +131,9 @@ public:
 
 	virtual ~Tree()
 	{
-		sqlite3_close(database);
+		sqlite3_close_v2(database);
 #ifdef sql_ram
-		sqlite3_close(outdatabase);
+		sqlite3_close_v2(outdatabase);
 #endif
 	}
 

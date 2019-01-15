@@ -763,7 +763,7 @@ void Community::outputSpeciesAbundances()
 	// Only write to SPECIES_ABUNDANCES if the speciation rate has not already been applied
 	if(!current_community_parameters->updated)
 	{
-		writeInfo("\tGenerating SPECIES_ABUNDANCES table...");
+		writeInfo("\tGenerating SPECIES_ABUNDANCES table...\n");
 //#ifdef DEBUG
 		if(checkSpeciesAbundancesReference())
 		{
@@ -1040,7 +1040,7 @@ bool Community::checkSpeciesAbundancesReference()
 
 void Community::recordSpatial()
 {
-	writeInfo("\tRecording species locations...");
+	writeInfo("\tRecording species locations...\n");
 //	os << "Recording spatial data for speciation rate " << current_community_parameters->speciation_rate << "..." << flush;
 	string table_command = "CREATE TABLE IF NOT EXISTS SPECIES_LOCATIONS (ID int PRIMARY KEY NOT NULL, species_id INT "
 						   "NOT NULL, x INT NOT NULL, y INT NOT NULL, community_reference INT NOT NULL);";
@@ -1122,7 +1122,6 @@ void Community::recordSpatial()
 				   "commands. Ensure SQL statements are properly cleared and that you are not attempting to insert "
 				   "repeat IDs into the database.");
 	}
-	writeInfo("done.\n");
 }
 
 void Community::calcFragments(string fragment_file)
@@ -1428,10 +1427,6 @@ void Community::applyFragments()
 		//			os << "done." << endl;
 	}
 	samplemask.removeFragment();
-	if(!fragments.empty())
-	{
-		writeInfo("done.\n");
-	}
 }
 
 void Community::setSimParameters(const shared_ptr<SimParameters> sim_parameters)

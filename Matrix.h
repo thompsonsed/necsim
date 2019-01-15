@@ -695,7 +695,7 @@ public:
 
 				}
 			}
-			writeInfo("done!\n");
+			writeInfo("done.\n");
 			return true;
 		}
 		return false;
@@ -745,7 +745,7 @@ public:
 				}
 			}
 			stringstream os2;
-			os2 << "\rImporting" << filename << "..." << "done!" << "                          " << endl;
+			os2 << "\rImporting" << filename << "..." << "done." << "                          " << endl;
 			inputstream.close();
 			writeInfo(os2.str());
 			return true;

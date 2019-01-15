@@ -84,7 +84,7 @@ void SimulatedSpeciesAbundancesHandler::generateAbundanceTable(shared_ptr<vector
 	{
 		species_richness_per_abundance[item.first] = item.second.size();
 	}
-	writeInfo("done!\n");
+	writeInfo("done.\n");
 }
 
 void SimulatedSpeciesAbundancesHandler::generateCumulativeAbundances(shared_ptr<vector<unsigned long>> abundance_list)
@@ -144,7 +144,7 @@ void SimulatedSpeciesAbundancesHandler::generateCumulativeAbundances(shared_ptr<
 		throw FatalException(ss.str());
 	}
 #endif // DEBUG
-	writeInfo("done!\n");
+	writeInfo("done.\n");
 }
 
 unsigned long SimulatedSpeciesAbundancesHandler::getRandomAbundanceOfIndividual()

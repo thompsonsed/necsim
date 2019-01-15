@@ -209,7 +209,7 @@ public:
 			cpl_error = CE_None;
 			std::copy(std::begin(default_values), std::end(default_values), std::begin(geoTransform));
 		}
-		writeInfo("done\n");
+		writeInfo("done.\n");
 		ss.str("");
 		ss << "Affine transform is " << geoTransform[0] << ", " << geoTransform[1] << ", " << geoTransform[2] << ", ";
 		ss << geoTransform[3] << ", " << geoTransform[4] << ", " << geoTransform[5] << endl;
@@ -328,9 +328,9 @@ public:
 				writeWarning(ss2.str());
 			}
 #endif
-			// Just use the overloaded method for importing between types
-
+			// Use the overloaded method for importing between types
 			internalImport();
+			writeInfo("done.\n");
 			return true;
 		}
 		return false;
@@ -409,9 +409,8 @@ public:
 	 */
 	void internalImport()
 	{
-		writeWarning("No type detected for Map type. Attempting default importing (potentially undefined behaviour).");
+		writeWarning("\nNo type detected for Map type. Attempting default importing (potentially undefined behaviour).");
 		defaultImport();
-		writeInfo("done\n");
 	}
 
 	/**
@@ -444,7 +443,7 @@ public:
 	 */
 	void importFromDoubleAndMakeBool()
 	{
-		writeInfo("Importing and converting from double to boolean.\n");
+		writeInfo("\nConverting from double to boolean.\n");
 		unsigned int number_printed = 0;
 		// create an empty row of type float
 		double *t1;
@@ -483,7 +482,7 @@ public:
 	void importUsingBuffer(GDALDataType dt_buff)
 	{
 		stringstream ss;
-		ss << "Importing using buffer of type " << GDALGetDataTypeName(dt_buff) << " into array of dimensions ";
+		ss << "\nUsing buffer of type " << GDALGetDataTypeName(dt_buff) << " into array of dimensions ";
 		ss << num_cols << " by " << num_rows << " with block size " << block_x_size << ", " << block_y_size << endl;
 		writeInfo(ss.str());
 		unsigned int number_printed = 0;

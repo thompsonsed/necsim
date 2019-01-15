@@ -146,9 +146,8 @@ unsigned long Community::countSpecies()
 	return precount;
 }
 
-unsigned long Community::calcSpecies()
+unsigned long Community::calculateCoalescencetree()
 {
-	resetTree();
 	if(!has_imported_samplemask)
 	{
 #ifdef DEBUG
@@ -156,6 +155,8 @@ unsigned long Community::calcSpecies()
 #endif
 		importSamplemask("null");
 	}
+	writeInfo("\tCalculating coalescence tree...");
+	resetTree();
 	unsigned long species_count = 0;  // start at 2 because the last species has been burnt already.
 	// check that tips exist within the spatial and temporal frame of interest.
 #ifdef DEBUG
@@ -253,7 +254,7 @@ unsigned long Community::calcSpecies()
 		ss << "initial count is " << species_count << " species" << endl;
 		writeInfo(ss.str());
 		ss.str("");
-		ss << "Rescaling species ids for " << species_list.size() << " species...";
+		ss << "\tRescaling species ids for " << species_list.size() << " species...";
 		writeInfo(ss.str());
 		unsigned long initial_species_count = species_count;
 		unsigned long tmp_species_count = 0;
@@ -289,7 +290,8 @@ unsigned long Community::calcSpecies()
 			throw FatalException(ss.str());
 		}
 		species_count = tmp_species_count;
-		writeInfo("done!\n");
+		writeInfo("done.\n");
+		writeInfo("\tAssigning species IDs...\n");
 	}
 	else
 	{
@@ -303,6 +305,7 @@ unsigned long Community::calcSpecies()
 				species_count++;
 			}
 		}
+		writeInfo("\n\tAssigning species IDs...\n");
 	}
 	// now loop to correctly assign each species id
 	bool loopon = true;
@@ -367,6 +370,7 @@ void Community::addSpecies(unsigned long &species_count, TreeNode *tree_node, se
 
 void Community::calcSpeciesAbundance()
 {
+	writeInfo("\tCalculating species abundances...\n");
 	species_abundances = make_shared<vector<unsigned long>>();
 	species_abundances->resize(iSpecies + 1, 0);
 	for(unsigned long i = 1; i < nodes->size(); i++)
@@ -425,7 +429,6 @@ void Community::calcSpeciesAbundance()
 #endif
 		}
 	}
-
 }
 
 void Community::resetTree()
@@ -630,7 +633,7 @@ void Community::importData(string inputfile)
 	// Now we need to blank all objects
 	sqlite3_finalize(stmt);
 	// Now read the useful information from the SIMULATION_PARAMETERS table
-	writeInfo("\rBeginning data import...done\n");
+	writeInfo("\rBeginning data import...done.\n");
 }
 
 void Community::getMaxSpeciesAbundancesID()
@@ -713,11 +716,11 @@ void Community::getMaxFragmentAbundancesID()
 
 void Community::createDatabase()
 {
-	generateCoalescenceTree();
 	stringstream os;
-	os << "Generating new SQL table for speciation rate " << current_community_parameters->speciation_rate
-	   << "..." << flush;
+	os << "Applying speciation rate " << current_community_parameters->speciation_rate;
+	os << " at time " << current_community_parameters->time << "..." << endl;
 	writeInfo(os.str());
+	generateBiodiversity();
 	string table_command = "CREATE TABLE IF NOT EXISTS SPECIES_ABUNDANCES (ID int PRIMARY KEY NOT NULL, "
 						   "species_id INT NOT NULL, no_individuals INT NOT "
 						   "NULL, community_reference INT NOT NULL);";
@@ -730,9 +733,9 @@ void Community::createDatabase()
 	outputSpeciesAbundances();
 }
 
-void Community::generateCoalescenceTree()
+void Community::generateBiodiversity()
 {
-	writeInfo("Calculating tree structure...");
+	writeInfo("\tGenerating biodiversity...\n");
 	// Search through past speciation rates
 	if(current_community_parameters->speciation_rate < min_spec_rate)
 	{
@@ -748,13 +751,11 @@ void Community::generateCoalescenceTree()
 			throw SpeciesException(ss.str());
 		}
 	}
-	unsigned long nspec = calcSpecies();
+	unsigned long nspec = calculateCoalescencetree();
 	calcSpeciesAbundance();
-	stringstream os;
-	os << "done!" << endl;
-	os << "Number of species: " << nspec << endl;
-	writeInfo(os.str());
-	os.str("");
+	stringstream ss;
+	ss << "\tNumber of species: " << nspec << endl;
+	writeInfo(ss.str());
 }
 
 void Community::outputSpeciesAbundances()
@@ -762,6 +763,7 @@ void Community::outputSpeciesAbundances()
 	// Only write to SPECIES_ABUNDANCES if the speciation rate has not already been applied
 	if(!current_community_parameters->updated)
 	{
+		writeInfo("\tGenerating SPECIES_ABUNDANCES table...");
 //#ifdef DEBUG
 		if(checkSpeciesAbundancesReference())
 		{
@@ -823,18 +825,11 @@ void Community::outputSpeciesAbundances()
 					   "SQL commands. Ensure SQL statements are properly cleared and that you are not attempting "
 					   "to insert repeat IDs into the database.");
 		}
-		else
-		{
-			stringstream ss;
-			ss << "\rGenerating new SQL table for speciation rate " << current_community_parameters->speciation_rate
-			   << "...done!" << endl;
-			writeInfo(ss.str());
-		}
 	}
 	else
 	{
 		stringstream ss;
-		ss << "current_metacommunity_parameters already applied, not outputting SPECIES_ABUNDANCES table..." << endl;
+		ss << "\tCurrent_metacommunity_parameters already applied, not outputting SPECIES_ABUNDANCES table..." << endl;
 		writeInfo(ss.str());
 	}
 }
@@ -942,7 +937,7 @@ void Community::exportDatabase()
 	{
 		stringstream ss;
 		stringstream os;
-		os << "Writing out to " << spec_sim_parameters->filename << "..." << flush;
+		os << "Writing out to " << spec_sim_parameters->filename << "..." << endl;
 		// Now write the database to the file object.
 		sqlite3 *outdatabase2;
 		writeInfo(os.str());
@@ -999,7 +994,6 @@ void Community::exportDatabase()
 			throw FatalException(ss.str());
 		}
 		sqlite3_close_v2(outdatabase2);
-		writeInfo("done!\n");
 	}
 	closeSqlConnection();
 }
@@ -1046,6 +1040,7 @@ bool Community::checkSpeciesAbundancesReference()
 
 void Community::recordSpatial()
 {
+	writeInfo("\tRecording species locations...");
 //	os << "Recording spatial data for speciation rate " << current_community_parameters->speciation_rate << "..." << flush;
 	string table_command = "CREATE TABLE IF NOT EXISTS SPECIES_LOCATIONS (ID int PRIMARY KEY NOT NULL, species_id INT "
 						   "NOT NULL, x INT NOT NULL, y INT NOT NULL, community_reference INT NOT NULL);";
@@ -1127,6 +1122,7 @@ void Community::recordSpatial()
 				   "commands. Ensure SQL statements are properly cleared and that you are not attempting to insert "
 				   "repeat IDs into the database.");
 	}
+	writeInfo("done.\n");
 }
 
 void Community::calcFragments(string fragment_file)
@@ -1401,7 +1397,7 @@ void Community::applyFragments()
 	for(unsigned int i = 0; i < fragments.size(); i++)
 	{
 		stringstream os;
-		os << "\rApplying fragments... " << (i + 1) << "/" << fragments.size() << "      " << flush;
+		os << "\r\tApplying fragments... " << (i + 1) << "/" << fragments.size() << "      " << flush;
 		writeInfo(os.str());
 		// Set the new samplemask to the fragment
 		samplemask.setFragment(fragments[i]);
@@ -1429,10 +1425,13 @@ void Community::applyFragments()
 		// database creation will filter these out.
 		calcSpeciesAbundance();
 		createFragmentDatabase(fragments[i]);
-		//			os << "done!" << endl;
+		//			os << "done." << endl;
 	}
 	samplemask.removeFragment();
-	writeInfo("done!\n");
+	if(!fragments.empty())
+	{
+		writeInfo("done.\n");
+	}
 }
 
 void Community::setSimParameters(const shared_ptr<SimParameters> sim_parameters)
@@ -1478,7 +1477,7 @@ void Community::importSimParameters(string file)
 #endif
 		openSqlConnection(file);
 #ifdef DEBUG
-		os << "done!" << endl;
+		os << "done." << endl;
 		writeInfo(os.str());
 #endif
 	}
@@ -1526,7 +1525,7 @@ void Community::importSimParameters(string file)
 		sqlite3_step(stmt2);
 		sqlite3_finalize(stmt2);
 #ifdef DEBUG
-		os << "done!" << endl;
+		os << "done." << endl;
 		writeInfo(os.str());
 #endif
 	}
@@ -2117,7 +2116,7 @@ void Community::writeSpeciesList(const unsigned long &enddata)
 		sqlite3_reset(stmt);
 	}
 	stringstream os;
-	os << "\r    Executing SQL commands...." << flush;
+	os << "\tExecuting SQL commands...." << endl;
 	writeInfo(os.str());
 	// execute the command and close the connection to the database
 	rc = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, &sErrMsg);
@@ -2186,7 +2185,7 @@ void Community::writeSpeciationRates()
 {
 	stringstream os;
 	os << "***************************" << endl;
-	os << "STARTING CALCULATIONS" << endl;
+	os << "STARTING COALESCENCE TREE CALCULATIONS" << endl;
 	os << "Input file is " << spec_sim_parameters->filename << endl;
 	if(!spec_sim_parameters->bMultiRun)
 	{
@@ -2217,17 +2216,27 @@ void Community::writeSpeciationRates()
 		os << "Protracted speciation parameters (min, max) are: " << endl;
 		for(const auto i : spec_sim_parameters->protracted_parameters)
 		{
-			os << i.min_speciation_gen << ", " << i.max_speciation_gen << endl;
+			os << "\t" << i.min_speciation_gen << ", " << i.max_speciation_gen << endl;
 		}
 		writeInfo(os.str());
 	}
 	os.str("");
-	for(const auto &item: spec_sim_parameters->metacommunity_parameters)
+	if(!spec_sim_parameters->metacommunity_parameters.empty())
 	{
-		if(item->metacommunity_size > 0)
+		os << "Metacommunity parameters are: ";
+		for(const auto &item: spec_sim_parameters->metacommunity_parameters)
 		{
-			os << "Metacommunity size: " << item->metacommunity_size << endl;
-			os << "Metacommunity speciation rate: " << item->speciation_rate << endl;
+			if(item->metacommunity_size > 0)
+			{
+				os << "\toption: " << item->option << ", ";
+				os << "size: " << item->metacommunity_size << ", ";
+				os << "speciation rate: " << item->speciation_rate << endl;
+			}
+			else if(item->external_reference != 0)
+			{
+				os << "\tdatabase: " << item->option << ", ";
+				os << "reference: " << item->external_reference << endl;
+			}
 		}
 	}
 	writeInfo(os.str());
@@ -2241,14 +2250,8 @@ void Community::calculateTree()
 		setProtractedParameters(protracted_params);
 		for(const auto &sr : spec_sim_parameters->all_speciation_rates)
 		{
-			os << "Calculating speciation rate " << sr << endl;
-			writeInfo(os.str());
-			os.str("");
 			for(auto time : spec_sim_parameters->all_times)
 			{
-				os.str("");
-				os << "Calculating generation " << time << "\n";
-				writeInfo(os.str());
 				resetTree();
 				if(!checkCalculationsPerformed(sr, time, spec_sim_parameters->use_fragments,
 											   *current_metacommunity_parameters, applied_protracted_parameters))
@@ -2268,7 +2271,7 @@ void Community::calculateTree()
 				else
 				{
 					os.str("");
-					os << "calculation already performed for speciation rate=" << sr << ", time=" << time;
+					os << "Calculation already performed for speciation rate=" << sr << ", time=" << time;
 					os << " and protracted parameters " << protracted_params.min_speciation_gen << ", ";
 					os << protracted_params.max_speciation_gen << endl;
 					writeInfo(os.str());

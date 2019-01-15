@@ -65,7 +65,7 @@ bool Tree::checkOutputDirectory()
 			bool bOutputFolder = boost::filesystem::create_directory(sim_parameters->output_directory);
 			if(bOutputFolder)
 			{
-				writeInfo("done!\n");
+				writeInfo("done.\n");
 			}
 			else
 			{
@@ -99,7 +99,7 @@ void Tree::checkSims(string output_dir, long seed_in, long task_in)
 	out.open(file_to_open);
 	if(out.good())
 	{
-		os << "done!" << endl << "File found containing unfinished simulations." << endl;
+		os << "done." << endl << "File found containing unfinished simulations." << endl;
 		writeInfo(os.str());
 		if(!has_imported_pause)
 		{
@@ -111,7 +111,7 @@ void Tree::checkSims(string output_dir, long seed_in, long task_in)
 	}
 	else
 	{
-		os << "done!" << endl << "No files found containing unfinished simulations." << endl;
+		os << "done." << endl << "No files found containing unfinished simulations." << endl;
 		writeInfo(os.str());
 		has_paused = false;
 	}
@@ -333,7 +333,7 @@ void Tree::generateObjects()
 	endactive = 0;
 	unsigned long number_start = fillObjects(initial_count);
 	stringstream os;
-	os << "\rSetting up simulation...done!                           " << endl;
+	os << "\rSetting up simulation...done.                           " << endl;
 	os << "Number of individuals simulating: " << endactive << endl;
 	writeInfo(os.str());
 	maxsimsize = enddata;
@@ -506,7 +506,7 @@ bool Tree::stopSimulation()
 		}
 		else
 		{
-			writeInfo("done!\n");
+			writeInfo("done.\n");
 			return true;
 		}
 	}
@@ -798,7 +798,7 @@ void Tree::applySpecRate(long double sr, double t)
 void Tree::applySpecRateInternal(long double sr, double t)
 {
 	setupCommunityCalculation(sr, t);
-	community.calcSpecies();
+	community.calculateCoalescencetree();
 	community.calcSpeciesAbundance();
 }
 
@@ -878,42 +878,58 @@ void Tree::applyMultipleRates()
 		}
 	}
 	speciation_rates = unique_speciation_rates;
-	os << "Speciation rate" << flush;
+	os << "Speciation rate";
 	if(speciation_rates.size() > 1)
 	{
-		os << "s are: " << flush;
+		os << "s are: ";
 	}
 	else
 	{
-		os << " is: " << flush;
+		os << " is: ";
 	}
 	for(unsigned long i = 0; i < speciation_rates.size(); i++)
 	{
-		os << speciation_rates[i] << flush;
+		os << speciation_rates[i];
 		if(i + 1 == speciation_rates.size())
 		{
 			os << "." << endl;
 		}
 		else
 		{
-			os << ", " << flush;
+			os << ", ";
 		}
 	}
-	writeInfo(os.str());
 	// Now check to make sure repeat speciation rates aren't done twice (this is done to avoid the huge number of errors
 	// SQL throws if you try to add identical data
 	unsigned long spec_upto = sortData();
 	sqlCreate();
+	vector<double> temp_sampling = getTemporalSampling();
+	os << "Time";
+	if(temp_sampling.size() > 1)
+	{
+		os << "s are: ";
+	}
+	else
+	{
+		os << " is: ";
+	}
+	for(unsigned long i = 0; i < temp_sampling.size(); i ++)
+	{
+		os << temp_sampling[i];
+		if(i + 1 == temp_sampling.size())
+		{
+			os << "." << endl;
+		}
+		else
+		{
+			os << ", ";
+		}
+	}
+	writeInfo(os.str());
 	for(const long double &i: speciation_rates)
 	{
-		vector<double> temp_sampling = getTemporalSampling();
 		for(double k : temp_sampling)
 		{
-			writeInfo(to_string(k) + ",");
-		}
-		for(double k : temp_sampling)
-		{
-			writeInfo(string("Calculating generation " + to_string(k) + "\n"));
 			if(i > spec)
 			{
 				applySpecRate(i, k);
@@ -957,7 +973,7 @@ void Tree::sqlOutput()
 	// open connection to the database file
 	remove(sql_output_database.c_str());
 	stringstream os;
-	os << "\r    Writing to " << sql_output_database << " ....     " << flush;
+	os << "\tWriting to " << sql_output_database << "..." << endl;
 	writeInfo(os.str());
 	openSQLiteDatabase(sql_output_database, outdatabase);
 	// create the backup object to write data to the file from memory.
@@ -989,9 +1005,6 @@ void Tree::sqlOutput()
 		}
 	}
 	sqlite3_backup_finish(backupdb);
-	os.str("");
-	os << "\r    Writing to " << sql_output_database << " ....  done!              " << endl;
-	writeInfo(os.str());
 #endif
 }
 
@@ -1083,7 +1096,7 @@ unsigned long Tree::sortData()
 #endif // DEBUG
 		return data->size();
 	}
-	writeInfo("done!\n");
+	writeInfo("done.\n");
 	return spec_up_to;
 }
 
@@ -1125,13 +1138,13 @@ void Tree::sqlCreate()
 	time(&out_finish);
 	stringstream os;
 	os << "Creating SQL database file..." << endl;
-	os << "    Checking for existing folders...." << flush;
+	os << "\tChecking for existing folders...." << endl;
 	writeInfo(os.str());
 	os.str("");
 	// Create the folder if it doesn't exist
 	setupOutputDirectory();
 	os.str("");
-	os << "\r    Generating species list....              " << flush;
+	os << "\tGenerating species list...." << endl;
 	writeInfo(os.str());
 	// for outputting the full data from the simulation in to a SQL file.
 	char *sErrMsg = nullptr;
@@ -1152,7 +1165,6 @@ void Tree::sqlCreate()
 		writeError(ss.str());
 	}
 	sqlCreateSimulationParameters();
-	writeInfo("done!\n");
 }
 
 void Tree::setupOutputDirectory()
@@ -1291,7 +1303,7 @@ void Tree::completePause(shared_ptr<ofstream> out)
 {
 	out->close();
 	stringstream os;
-	os << "done!" << endl;
+	os << "done." << endl;
 	os << "SQL dump started" << endl;
 	writeInfo(os.str());
 	os.str("");
@@ -1567,7 +1579,7 @@ void Tree::simResume()
 	loadActiveSave(is);
 	loadDataSave(is);
 	time(&sim_start);
-	writeInfo("\rLoading data from temp file...done!\n");
+	writeInfo("\rLoading data from temp file...done.\n");
 }
 
 
@@ -1602,7 +1614,7 @@ void Tree::validateLineages()
 			throw FatalException(ss.str());
 		}
 	}
-	writeInfo("done\n");
+	writeInfo("done.\n");
 }
 
 void Tree::debugEndStep()
@@ -1631,7 +1643,7 @@ void Tree::debugEndStep()
 #ifdef sql_ram
 		sqlOutput();
 #endif
-		ss << "done!" << endl;
+		ss << "done." << endl;
 		writeWarning(ss.str());
 		throw fe;
 	}

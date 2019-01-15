@@ -267,7 +267,7 @@ void SpatialTree::checkFolders()
 	}
 	if(bFineMap && bCoarseMap && bFineMapHistorical && bCoarseMapHistorical && bOutputFolder && bSampleMask)
 	{
-		os << "\rChecking folder existance...done!                                                                "
+		os << "\rChecking folder existance...done.                                                                "
 		   << endl;
 		writeInfo(os.str());
 		return;
@@ -1442,7 +1442,7 @@ void SpatialTree::simResume()
 	loadGridSave(is);
 	loadDataSave(is);
 	time(&sim_start);
-	writeInfo("\rLoading data from temp file...done!\n");
+	writeInfo("\rLoading data from temp file...done.\n");
 	sim_parameters->printVars();
 }
 
@@ -1826,7 +1826,7 @@ void SpatialTree::validateLineages()
 			throw FatalException("Failure in lineage validation. Please report this bug.");
 		}
 	}
-	writeInfo("done\n");
+	writeInfo("done.\n");
 }
 
 void SpatialTree::debugAddingLineage(unsigned long numstart, long x, long y)

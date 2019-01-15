@@ -242,7 +242,7 @@ public:
 
 	 * @return the number of species present.
 	 */
-	unsigned long calcSpecies();
+	unsigned long calculateCoalescencetree();
 
 	/**
 	 * @brief Speciates TreeNode and updates the species count.
@@ -420,10 +420,9 @@ public:
 	void createDatabase();
 
 	/**
-	 * @brief Calls calcSpecies and calcSpeciesAbundances to generate the coalescence tree and calculate species
-	 * abundances.
+	 * @brief Calculates the coalescence tree and generates species abundances.
 	 */
-	void generateCoalescenceTree();
+	void generateBiodiversity();
 
 	/**
 	 * @brief Outputs the species abundances into the database

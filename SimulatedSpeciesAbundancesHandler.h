@@ -106,7 +106,7 @@ public:
 //	 * and is not guaranteed to generate the exact number of individuals as required by the metacommunity (but this
 //	 * should be a good approximation for larger community sizes).
 //	 */
-//	void generateAbundances()
+//	void generateBiodiversity()
 //	{
 //		makeProbabilityDistributionCumulative();
 //		species_abundances.clear();

@@ -41,7 +41,7 @@ void AnalyticalSpeciesAbundancesHandler::generateSpeciesAbundances()
 		ss << community_size << ") - please report this bug" << endl;
 		throw FatalException(ss.str());
 	}
-	writeInfo("done!\n");
+	writeInfo("done.\n");
 
 }
 

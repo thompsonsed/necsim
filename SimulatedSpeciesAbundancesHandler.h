@@ -37,66 +37,66 @@ using namespace std;
 class SimulatedSpeciesAbundancesHandler : public virtual SpeciesAbundancesHandler
 {
 protected:
-	// Maps abundance values to a vector containing species ids
-	map<unsigned long, vector<unsigned long>> species_abundances;
-	// Maps abundance values to the maximum number of species expected to be contained.
-	map<unsigned long, unsigned long> species_richness_per_abundance;
-	// Maps cumulative probabilities of choosing each abundance to abundance values
-	shared_ptr<map<unsigned long, unsigned long>> cumulative_abundance_map;
-	// Total species number
-	double total_species_number;
-	unsigned long number_of_individuals;
+    // Maps abundance values to a vector containing species ids
+    map<unsigned long, vector<unsigned long>> species_abundances;
+    // Maps abundance values to the maximum number of species expected to be contained.
+    map<unsigned long, unsigned long> species_richness_per_abundance;
+    // Maps cumulative probabilities of choosing each abundance to abundance values
+    shared_ptr<map<unsigned long, unsigned long>> cumulative_abundance_map;
+    // Total species number
+    double total_species_number;
+    unsigned long number_of_individuals;
 
 public:
-	/**
-	 * @brief Default constructor.
-	 */
-	SimulatedSpeciesAbundancesHandler();
+    /**
+     * @brief Default constructor.
+     */
+    SimulatedSpeciesAbundancesHandler();
 
-	/**
-	 * @brief Default destructor
-	 */
-	~SimulatedSpeciesAbundancesHandler() override = default;
+    /**
+     * @brief Default destructor
+     */
+    ~SimulatedSpeciesAbundancesHandler() override = default;
 
-	unsigned long getRandomSpeciesID() override;
+    unsigned long getRandomSpeciesID() override;
 
-	/**
-	 * @brief Sets the abundance list.
-	 * @param abundance_list_in map of species ids to abundances
-	 */
-	void setAbundanceList(const shared_ptr<map<unsigned long, unsigned long>> &abundance_list_in) override;
+    /**
+     * @brief Sets the abundance list.
+     * @param abundance_list_in map of species ids to abundances
+     */
+    void setAbundanceList(const shared_ptr<map<unsigned long, unsigned long>> &abundance_list_in) override;
 
-	/**
-	 * @brief Sets the abundance list
-	 * @param abundance_list_in vector of species abundances
-	 */
-	void setAbundanceList(shared_ptr<vector<unsigned long>> abundance_list_in) override;
+    /**
+     * @brief Sets the abundance list
+     * @param abundance_list_in vector of species abundances
+     */
+    void setAbundanceList(shared_ptr<vector<unsigned long>> abundance_list_in) override;
 
-	/**
-	 * @brief Generates the species abundance hash tables for efficiently storing the species identities.
-	 * @param abundance_list vector of species abundances
-	 */
-	void generateAbundanceTable(shared_ptr<vector<unsigned long>> abundance_list);
+    /**
+     * @brief Generates the species abundance hash tables for efficiently storing the species identities.
+     * @param abundance_list vector of species abundances
+     */
+    void generateAbundanceTable(shared_ptr<vector<unsigned long>> abundance_list);
 
-	/**
-	 * @brief Generates the cumulative abundances, rescaled from 0-1, for randomly choosing an abundance using binary
-	 * search
-	 * @param abundance_list vector of species abundances
-	 */
-	void generateCumulativeAbundances(shared_ptr<vector<unsigned long>> abundance_list);
+    /**
+     * @brief Generates the cumulative abundances, rescaled from 0-1, for randomly choosing an abundance using binary
+     * search
+     * @param abundance_list vector of species abundances
+     */
+    void generateCumulativeAbundances(shared_ptr<vector<unsigned long>> abundance_list);
 
-	/**
-	 * @brief Gets a random species abundance.
-	 * @return the randomly generated abundance
-	 */
-	unsigned long getRandomAbundanceOfIndividual() override;
+    /**
+     * @brief Gets a random species abundance.
+     * @return the randomly generated abundance
+     */
+    unsigned long getRandomAbundanceOfIndividual() override;
 
-	/**
-	 * @brief Gets the species richness of a particular abundance class.
-	 * @param abundance the abundance class of the species
-	 * @return the number of species with that abundance
-	 */
-	unsigned long getSpeciesRichnessOfAbundance(const unsigned long &abundance) override;
+    /**
+     * @brief Gets the species richness of a particular abundance class.
+     * @param abundance the abundance class of the species
+     * @return the number of species with that abundance
+     */
+    unsigned long getSpeciesRichnessOfAbundance(const unsigned long &abundance) override;
 //
 //	/**
 //	 * @brief Generates an actual species abundance distribution from the probability distribution.

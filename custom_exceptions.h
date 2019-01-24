@@ -25,18 +25,18 @@ using namespace std;
  */
 struct FatalException : public runtime_error
 {
-	FatalException() : runtime_error("Fatal exception thrown at run time, quitting program. "){}
+    FatalException() : runtime_error("Fatal exception thrown at run time, quitting program. "){}
 
-	/**
-	 * @brief Writes the message out to the logger if debug mode is enabled, otherwise just throws a runtime_error.
-	 * @param msg the message to write out and pass to runtime_error
-	 */
-	explicit FatalException(string msg) : runtime_error(msg)
-	{
+    /**
+     * @brief Writes the message out to the logger if debug mode is enabled, otherwise just throws a runtime_error.
+     * @param msg the message to write out and pass to runtime_error
+     */
+    explicit FatalException(string msg) : runtime_error(msg)
+    {
 #ifdef DEBUG
-		writeLog(50, msg);
+        writeLog(50, msg);
 #endif //DEBUG
-	}
+    }
 };
 
 /**
@@ -44,15 +44,14 @@ struct FatalException : public runtime_error
  */
 struct ConfigException : public FatalException
 {
-	ConfigException() : FatalException("Exception thrown at run time in config: "){};
+    ConfigException() : FatalException("Exception thrown at run time in config: "){};
 
-	/**
-	 * @brief Generates a FatalException with the specified error message.
-	 * @param msg the message to pass to FatalException
-	 */
-	explicit ConfigException(string msg) : FatalException(std::move(msg)){}
+    /**
+     * @brief Generates a FatalException with the specified error message.
+     * @param msg the message to pass to FatalException
+     */
+    explicit ConfigException(string msg) : FatalException(std::move(msg)){}
 };
-
 
 /**
  * @struct SpeciesException
@@ -61,17 +60,16 @@ struct ConfigException : public FatalException
 
 struct SpeciesException : public FatalException
 {
-	/**
-	 * @brief Throws a runtime_error with a custom message indicating source.
-	 */
-	SpeciesException() : FatalException("Exception thrown at run time in SpeciationCounter: "){}
+    /**
+     * @brief Throws a runtime_error with a custom message indicating source.
+     */
+    SpeciesException() : FatalException("Exception thrown at run time in SpeciationCounter: "){}
 
-	/**
-	 * @brief Overloaded runtime_error call which provides error message parsing
-	 * @param msg the message to be passed to the runtime_error
-	 */
-	explicit SpeciesException(string msg) : FatalException(msg){}
+    /**
+     * @brief Overloaded runtime_error call which provides error message parsing
+     * @param msg the message to be passed to the runtime_error
+     */
+    explicit SpeciesException(string msg) : FatalException(msg){}
 };
-
 
 #endif // CUSTOM_EXCEPTION_H

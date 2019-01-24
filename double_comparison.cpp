@@ -16,15 +16,15 @@ using namespace std;
 
 bool doubleCompare(double d1, double d2, double epsilon)
 {
-	return (abs(float(d1 - d2)) < epsilon);
+    return (abs(float(d1 - d2)) < epsilon);
 }
 
 bool doubleCompare(long double d1, long double d2, long double epsilon)
 {
-	return abs((d1 - d2)) < epsilon;
+    return abs((d1 - d2)) < epsilon;
 }
 
 bool doubleCompare(long double d1, long double d2, double epsilon)
 {
-	return abs((d1 - d2)) < epsilon;
+    return abs((d1 - d2)) < epsilon;
 }

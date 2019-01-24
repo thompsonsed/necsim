@@ -17,37 +17,37 @@
  */
 struct Cell
 {
-	long x;
-	long y;
-	/**
-	 * @brief Overloading equality operator
-	 * @param c the Cell containing the values to overload
-	 * @return the cell with the new values
-	 */
-	Cell &operator=(Cell const& c)
-	= default;
+    long x;
+    long y;
 
-	/**
-	 * @brief Equality operator for Cell
-	 * @param c the Cell object to compare against
-	 * @return true if the x and y locations are identical
-	 */
-	bool operator==(Cell const&c)
-	{
-		return x == c.x && y == c.y;
-	}
+    /**
+     * @brief Overloading equality operator
+     * @param c the Cell containing the values to overload
+     * @return the cell with the new values
+     */
+    Cell &operator=(Cell const &c)
+    = default;
 
-	/**
-	 * @brief Inequality operator for Cell
-	 * @param c the Cell object to compare against
-	 * @return true if the x and y locations are not identical
-	 */
-	bool operator!=(Cell const&c)
-	{
-		return !(this->operator==(c));
-	}
+    /**
+     * @brief Equality operator for Cell
+     * @param c the Cell object to compare against
+     * @return true if the x and y locations are identical
+     */
+    bool operator==(Cell const &c)
+    {
+        return x == c.x && y == c.y;
+    }
+
+    /**
+     * @brief Inequality operator for Cell
+     * @param c the Cell object to compare against
+     * @return true if the x and y locations are not identical
+     */
+    bool operator!=(Cell const &c)
+    {
+        return !(this->operator==(c));
+    }
 };
-
 
 /**
  * @brief Calculates the distance between two cells

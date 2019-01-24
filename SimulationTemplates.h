@@ -14,6 +14,7 @@
 
 #ifndef SIMULATIONTEMPLATES_H
 #define SIMULATIONTEMPLATES_H
+
 #include <string>
 #include <sstream>
 #include "Logger.h"
@@ -24,18 +25,18 @@
  * @param com_args the vector of command-line arguments
  * @return the string at the [2] position containing the path to the config file
  */
-const string & getConfigFileFromCmdArgs(const vector<string> & com_args)
+const string &getConfigFileFromCmdArgs(const vector<string> &com_args)
 {
-	if(com_args.size() != 3)
-	{
-		stringstream ss;
-		ss << "Incorrect number of command-line arguments supplied. Should be 3, got " << com_args.size() << endl;
-		throw FatalException(ss.str());
-	}
-	else
-	{
-		return com_args[2];
-	}
+    if(com_args.size() != 3)
+    {
+        stringstream ss;
+        ss << "Incorrect number of command-line arguments supplied. Should be 3, got " << com_args.size() << endl;
+        throw FatalException(ss.str());
+    }
+    else
+    {
+        return com_args[2];
+    }
 }
 
 /**
@@ -43,20 +44,21 @@ const string & getConfigFileFromCmdArgs(const vector<string> & com_args)
  * @tparam T the class (either Tree, or a child of Tree) of the simulation
  * @param config_file the config file to read simulation parameters from
  */
-template <class T> void runMain(const string &config_file)
+template<class T>
+void runMain(const string &config_file)
 {
-	// Create our tree object that contains the simulation
-	T tree;
-	tree.importSimulationVariables(config_file);
-	// Setup the sim
-	tree.setup();
-	// Detect speciation rates to apply
-	bool isComplete = tree.runSimulation();
-	if(isComplete)
-	{
-		tree.applyMultipleRates();
-	}
-	writeInfo("*************************************************\n");
+    // Create our tree object that contains the simulation
+    T tree;
+    tree.importSimulationVariables(config_file);
+    // Setup the sim
+    tree.setup();
+    // Detect speciation rates to apply
+    bool isComplete = tree.runSimulation();
+    if(isComplete)
+    {
+        tree.applyMultipleRates();
+    }
+    writeInfo("*************************************************\n");
 }
 
 #endif //SIMULATIONTEMPLATES_H

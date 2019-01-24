@@ -28,64 +28,64 @@ class SpeciesAbundancesHandler
 {
 protected:
 
-	shared_ptr<NRrand> random;
-	unsigned long max_species_id;
-	unsigned long community_size;
-	long double speciation_rate;
+    shared_ptr<NRrand> random;
+    unsigned long max_species_id;
+    unsigned long community_size;
+    long double speciation_rate;
 public:
 
-	/**
-	 * @brief Default constructor
-	 */
-	SpeciesAbundancesHandler();
+    /**
+     * @brief Default constructor
+     */
+    SpeciesAbundancesHandler();
 
-	/**
-	 * @brief Default destructor
-	 */
-	virtual ~SpeciesAbundancesHandler() = default;;
+    /**
+     * @brief Default destructor
+     */
+    virtual ~SpeciesAbundancesHandler() = default;;
 
-	/**
-	 * @brief Creates the SpeciesAbundancesHandler object
-	 * @param random the random number generator
-	 * @param community_size the number of individuals in the community
-	 * @param speciation_rate the speciation rate of the community
-	 */
-	virtual void setup(shared_ptr<NRrand> random, const unsigned long &community_size,
-					   const long double &speciation_rate);
+    /**
+     * @brief Creates the SpeciesAbundancesHandler object
+     * @param random the random number generator
+     * @param community_size the number of individuals in the community
+     * @param speciation_rate the speciation rate of the community
+     */
+    virtual void setup(shared_ptr<NRrand> random, const unsigned long &community_size,
+                       const long double &speciation_rate);
 
-	/**
-	 * @brief Gets a randomly generated species identity.
-	 * @return the species identity
-	 */
-	virtual unsigned long getRandomSpeciesID() = 0;
+    /**
+     * @brief Gets a randomly generated species identity.
+     * @return the species identity
+     */
+    virtual unsigned long getRandomSpeciesID() = 0;
 
-	/**
-	 * @brief Sets the abundance list.
-	 * @param abundance_list_in list of abundances for each species
-	 */
-	virtual void setAbundanceList(const shared_ptr<map<unsigned long, unsigned long>> &abundance_list_in);
+    /**
+     * @brief Sets the abundance list.
+     * @param abundance_list_in list of abundances for each species
+     */
+    virtual void setAbundanceList(const shared_ptr<map<unsigned long, unsigned long>> &abundance_list_in);
 
-	/**
-	 * @brief Sets the abundance list.
-	 * @param abundance_list_in list of abundances for each species
-	 */
-	virtual void setAbundanceList(shared_ptr<vector<unsigned long>> abundance_list_in);
+    /**
+     * @brief Sets the abundance list.
+     * @param abundance_list_in list of abundances for each species
+     */
+    virtual void setAbundanceList(shared_ptr<vector<unsigned long>> abundance_list_in);
 
-	/**
-	 * @brief Gets a random species abundance.
-	 * @return the randomly generated abundance
-	 */
-	virtual unsigned long getRandomAbundanceOfIndividual();
+    /**
+     * @brief Gets a random species abundance.
+     * @return the randomly generated abundance
+     */
+    virtual unsigned long getRandomAbundanceOfIndividual();
 
-	/**
-	 * @brief Gets the species richness of a particular abundance class.
-	 * @param abundance the abundance class of the species
-	 * @return the number of species with that abundance
-	 */
-	virtual unsigned long getSpeciesRichnessOfAbundance(const unsigned long &abundance)
-	{
-		return 0;
-	}
+    /**
+     * @brief Gets the species richness of a particular abundance class.
+     * @param abundance the abundance class of the species
+     * @return the number of species with that abundance
+     */
+    virtual unsigned long getSpeciesRichnessOfAbundance(const unsigned long &abundance)
+    {
+        return 0;
+    }
 
 };
 

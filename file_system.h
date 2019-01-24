@@ -100,12 +100,12 @@ vector<string> getCsvLineAndSplitIntoTokens(istream &str);
 template<class T>
 ostream &operator<<(ostream &os, const vector<T> &v)
 {
-	os << v.size() << ",";
-	for(const auto &item: v)
-	{
-		os << item << ",";
-	}
-	return os;
+    os << v.size() << ",";
+    for(const auto &item: v)
+    {
+        os << item << ",";
+    }
+    return os;
 }
 
 /**
@@ -117,17 +117,17 @@ ostream &operator<<(ostream &os, const vector<T> &v)
 template<class T>
 istream &operator>>(istream &is, vector<T> &v)
 {
-	char delim;
-	int n;
-	is >> n;
-	v.resize(n);
-	is >> delim;
-	for(unsigned long c = 0; c < static_cast<unsigned long>(n); c++)
-	{
-		is >> v[c];
-		is >> delim;
-	}
-	return is;
+    char delim;
+    int n;
+    is >> n;
+    v.resize(n);
+    is >> delim;
+    for(unsigned long c = 0; c < static_cast<unsigned long>(n); c++)
+    {
+        is >> v[c];
+        is >> delim;
+    }
+    return is;
 }
 
 #endif //SPECIATIONCOUNTER_FILESYSTEM_H

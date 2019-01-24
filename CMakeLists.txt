@@ -5,7 +5,7 @@ set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(SOURCE_DIR_NECSIM ${CMAKE_CURRENT_SOURCE_DIR})
-include_directories( ${SOURCE_DIR_NECSIM})
+include_directories(${SOURCE_DIR_NECSIM})
 set(SOURCE_FILES
         ${SOURCE_DIR_NECSIM}/ConfigParser.cpp
         ${SOURCE_DIR_NECSIM}/DispersalCoordinator.cpp
@@ -52,7 +52,7 @@ add_executable(necsimCMD ${SOURCE_FILES})
 add_definitions(-Dwith_gdal -Dverbose)
 if (CMAKE_BUILD_TYPE MATCHES Debug)
     add_definitions(-DDEBUG=1)
-endif()
+endif ()
 target_link_libraries(necsimCMD "${SQL_DIR}")
 target_link_libraries(necsimCMD gdal)
 

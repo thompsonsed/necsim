@@ -14,27 +14,27 @@
 
 void cplNecsimCustomErrorHandler(CPLErr eErrClass, int err_no, const char *msg)
 {
-	stringstream error_msg;
-	if(eErrClass == CE_Fatal)
-	{
-		error_msg << "Critical gdal error: " << err_no << ". " << msg << endl;
-		writeCritical(error_msg.str());
-	}
-	else if(eErrClass == CE_Failure)
-	{
-		error_msg << "Gdal error: " << err_no << ". " << msg << endl;
-		writeError(error_msg.str());
-	}
-	else if(eErrClass == CE_Warning)
-	{
-		error_msg << "Gdal warning: " << err_no << ". " << msg << endl;
-		writeWarning(error_msg.str());
-	}
+    stringstream error_msg;
+    if(eErrClass == CE_Fatal)
+    {
+        error_msg << "Critical gdal error: " << err_no << ". " << msg << endl;
+        writeCritical(error_msg.str());
+    }
+    else if(eErrClass == CE_Failure)
+    {
+        error_msg << "Gdal error: " << err_no << ". " << msg << endl;
+        writeError(error_msg.str());
+    }
+    else if(eErrClass == CE_Warning)
+    {
+        error_msg << "Gdal warning: " << err_no << ". " << msg << endl;
+        writeWarning(error_msg.str());
+    }
 #ifdef DEBUG
-	else
-	{
-		writeLog(10, error_msg.str());
-	}
+    else
+    {
+        writeLog(10, error_msg.str());
+    }
 #endif // DEBUG
 }
 

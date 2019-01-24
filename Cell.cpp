@@ -13,5 +13,5 @@
 
 double distanceBetweenCells(Cell &c1, Cell &c2)
 {
-	return pow(pow(c1.x - c2.x, 2) + pow(c1.y - c2.y, 2), 0.5);
+    return pow(pow(c1.x - c2.x, 2) + pow(c1.y - c2.y, 2), 0.5);
 }

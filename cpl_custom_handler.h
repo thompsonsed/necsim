@@ -9,7 +9,9 @@
 #ifndef SPECIATIONCOUNTER_cplCustomHandlerNecsim_H
 #define SPECIATIONCOUNTER_cplCustomHandlerNecsim_H
 #ifdef with_gdal
+
 #include <cpl_error.h>
+
 /**
  * @brief Contains a custom CPLErrorHandler for reporting errors from GDAL imports.
  * @param eErrClass the error class (CE_None, CE_Debug, CE_Warning, CE_Failure or CE_Fatal)
@@ -19,6 +21,5 @@
 void cplNecsimCustomErrorHandler(CPLErr eErrClass, int err_no, const char *msg);
 
 #endif // with_gdal
-
 
 #endif //SPECIATIONCOUNTER_cplCustomHandlerNecsim_H

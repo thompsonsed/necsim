@@ -21,11 +21,9 @@
 #ifndef SPECIATIONCOUNTER_PROTRACTEDSPATIALTREE_H
 #define SPECIATIONCOUNTER_PROTRACTEDSPATIALTREE_H
 
-
 class ProtractedSpatialTree : public virtual SpatialTree, public virtual ProtractedTree
 {
 
 };
-
 
 #endif //SPECIATIONCOUNTER_PROTRACTEDSPATIALTREE_H

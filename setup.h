@@ -12,11 +12,16 @@
 
 #ifndef SETUP
 #define SETUP
+
 #include <string>
 #include <vector>
+
 #ifndef WIN_INSTALL
+
 #include <unistd.h>
+
 #endif
+
 #include <sstream>
 #include <ctime>
 #include <boost/filesystem.hpp>
@@ -47,8 +52,7 @@ void openLogFile(bool append);
 * This is intended for testing purposes only.
 * @param comargs a vector of command-line arguments for putting the parameters into.
 */
-void runAsDefault(vector<string>&comargs);
-
+void runAsDefault(vector<string> &comargs);
 
 /**
 * @brief Sets up the command-line arguments for larger-scale default parameters.
@@ -56,7 +60,7 @@ void runAsDefault(vector<string>&comargs);
 * This is intended for testing purposes only.
 * @param comargs a vector of command-line arguments for putting the parameters into.
 */
-void runLarge(vector<string>&comargs);
+void runLarge(vector<string> &comargs);
 
 /**
 * @brief Sets up the command-line arguments for default very large scale parameters.
@@ -64,14 +68,12 @@ void runLarge(vector<string>&comargs);
 * This is intended for testing purposes only.
 * @param comargs a vector of command-line arguments for putting the parameters into.
 */
-void runXL(vector<string>&comargs);
+void runXL(vector<string> &comargs);
+
 /**
  * @brief Removes the command line options supplied, leaving just a clean vector with the correct data in. 
 
  */
-void removeComOption(unsigned long& argc, vector<string> & comargs);
-
-
-
+void removeComOption(unsigned long &argc, vector<string> &comargs);
 
 #endif // SETUP

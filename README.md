@@ -44,7 +44,7 @@ The following command line arguments are required. This species_id_list can be a
 The command line options to be specified are:
 
 1. the seed for the simulation.
-2. the simulation task (for file reference).
+2. the simulation job_type (for file reference).
 3. the map config file.
 4. the output directory.
 5. the minimum speciation rate.
@@ -66,7 +66,7 @@ ref=historical_fine	path=/path/to/file	number=n	rate=r	time=g
 
 Alternatively, by specifying the -f flag, (full mode) as the first argument, the program can read in extended command line arguments, which are as followed.
 
-1. the task_iter used for setting the seed.
+1. the number used for setting the seed.
 2. the sample grid x dimension
 3. the sample grid y dimension
 4. the fine map file relative path.
@@ -87,7 +87,7 @@ Alternatively, by specifying the -f flag, (full mode) as the first argument, the
 19. the deme sample size (as a proportion of deme size)
 20. the time to run the simulation (in seconds).
 21. lambda - the relative cost of moving through non-forest
-22. task - for referencing the specific task later on.
+22. job_type - for referencing the specific job_type later on.
 23. the minimum number of species the system is known to contain.
 24. the historical fine map file to use
 25. the historical coarse map file to use

@@ -9,35 +9,36 @@
 
 #include "Logging.h"
 #include "Logger.h"
+
 void writeInfo(string message)
 {
-	logger->writeInfo(message);
+    logger->writeInfo(message);
 }
 
 void writeWarning(string message)
 {
-	logger->writeWarning(message);
+    logger->writeWarning(message);
 }
 
 void writeError(string message)
 {
-	logger->writeError(message);
+    logger->writeError(message);
 }
 
 void writeCritical(string message)
 {
-	logger->writeCritical(message);
+    logger->writeCritical(message);
 }
 
 #ifdef DEBUG
 void writeLog(const int &level, string message)
 {
-	logger->writeLog(level, message);
+    logger->writeLog(level, message);
 }
 
 void writeLog(const int &level, stringstream &message)
 {
-	logger->writeLog(level, message.str());
+    logger->writeLog(level, message.str());
 }
 
 #endif //DEBUG

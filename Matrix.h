@@ -151,11 +151,11 @@ public:
 		// assert(column<num_cols);
 		// check we are within bounds
 #ifdef DEBUG
-		if(column < 0 || column >= num_cols)
+		if(column < 0 || column >= numCols)
 		{
 			string err =
 					"ERROR_MAIN_013b: Tried to call an indices that was out of range of the row. Check row size definition. num_cols: " +
-					to_string((long long) num_cols) + " index: " + to_string((long long) column);
+					to_string((long long) numCols) + " index: " + to_string((long long) column);
 			throw out_of_range(err);
 		}
 #endif

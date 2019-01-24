@@ -1736,7 +1736,9 @@ void SpatialTree::validateLineages()
 {
 	bool fail = false;
 	writeInfo("\nStarting lineage validation...");
+#ifdef historical_mode
 	unsigned long printed = 0;
+#endif // historical_mode
 	// Basic checks
 	if(endactive >= active.size() || enddata >= data->size())
 	{

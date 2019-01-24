@@ -1590,7 +1590,6 @@ void Tree::validateLineages()
 {
 	bool fail = false;
 	writeInfo("\nStarting lineage validation...");
-	unsigned long printed = 0;
 	for(unsigned long i = 1; i < endactive; i++)
 	{
 		stringstream ss;

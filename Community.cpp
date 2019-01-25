@@ -521,7 +521,10 @@ void Community::closeSqlConnection()
 {
     sqlite3_close_v2(database);
     bSqlConnection = false;
+    in_mem = false;
+    database_set = false;
     database = nullptr;
+
 }
 
 void Community::setInternalDatabase()
@@ -1437,19 +1440,19 @@ void Community::setSimParameters(const shared_ptr<SimParameters> sim_parameters)
         grid_x_size = sim_parameters->grid_x_size;
         grid_y_size = sim_parameters->grid_y_size;
         protracted = sim_parameters->is_protracted;
-        min_speciation_gen = sim_parameters->min_speciation_gen;
-        max_speciation_gen = sim_parameters->max_speciation_gen;
+        minimum_protracted_parameters.min_speciation_gen = sim_parameters->min_speciation_gen;
+        minimum_protracted_parameters.max_speciation_gen = sim_parameters->max_speciation_gen;
         samplemask_x_offset = sim_parameters->sample_x_offset;
         samplemask_y_offset = sim_parameters->sample_y_offset;
         samplemask_x_size = sim_parameters->sample_x_size;
         samplemask_y_size = sim_parameters->sample_y_size;
         if(protracted)
         {
-            if(max_speciation_gen == 0.0)
+            if(minimum_protracted_parameters.max_speciation_gen == 0.0)
             {
                 throw SpeciesException("Protracted speciation does not make sense when maximum speciation gen is 0.0.");
             }
-            if(min_speciation_gen > max_speciation_gen)
+            if(minimum_protracted_parameters.min_speciation_gen > minimum_protracted_parameters.max_speciation_gen)
             {
                 throw SpeciesException("Cannot have simulation with minimum speciation generation less than maximum!");
             }
@@ -1500,19 +1503,19 @@ void Community::importSimParameters(string file)
         grid_x_size = static_cast<unsigned long>(sqlite3_column_int(stmt2, 1));
         grid_y_size = static_cast<unsigned long>(sqlite3_column_int(stmt2, 2));
         protracted = bool(sqlite3_column_int(stmt2, 3));
-        min_speciation_gen = sqlite3_column_double(stmt2, 4);
-        max_speciation_gen = sqlite3_column_double(stmt2, 5);
+        minimum_protracted_parameters.min_speciation_gen = sqlite3_column_double(stmt2, 4);
+        minimum_protracted_parameters.max_speciation_gen = sqlite3_column_double(stmt2, 5);
         samplemask_x_offset = static_cast<unsigned long>(sqlite3_column_int(stmt2, 6));
         samplemask_y_offset = static_cast<unsigned long>(sqlite3_column_int(stmt2, 7));
         samplemask_x_size = static_cast<unsigned long>(sqlite3_column_int(stmt2, 8));
         samplemask_y_size = static_cast<unsigned long>(sqlite3_column_int(stmt2, 9));
         if(protracted)
         {
-            if(max_speciation_gen == 0.0)
+            if(minimum_protracted_parameters.max_speciation_gen == 0.0)
             {
                 throw SpeciesException("Protracted speciation does not make sense when maximum speciation gen is 0.0.");
             }
-            if(min_speciation_gen > max_speciation_gen)
+            if(minimum_protracted_parameters.min_speciation_gen > minimum_protracted_parameters.max_speciation_gen)
             {
                 throw SpeciesException("Cannot have simulation with minimum speciation generation less than maximum!");
             }
@@ -1549,33 +1552,53 @@ bool Community::isSetDatabase()
 void Community::setProtractedParameters(const ProtractedSpeciationParameters &protracted_params)
 {
     applied_protracted_parameters = protracted_params;
-    if(min_speciation_gen > 0 && max_speciation_gen > 0 &&
-       (applied_protracted_parameters.min_speciation_gen > min_speciation_gen ||
-        applied_protracted_parameters.max_speciation_gen > max_speciation_gen))
+    if(minimum_protracted_parameters.min_speciation_gen > 0 && minimum_protracted_parameters.max_speciation_gen > 0)
     {
+        // If the min speciation gens are very close, set them to be the same.
+        if(doubleCompare(applied_protracted_parameters.min_speciation_gen,
+                         minimum_protracted_parameters.min_speciation_gen,
+                         minimum_protracted_parameters.min_speciation_gen * 0.0000001))
+        {
+            writeInfo("Setting applied minimum protracted generation to simulated minimum protracted generation.\n");
+            applied_protracted_parameters.min_speciation_gen = minimum_protracted_parameters.min_speciation_gen;
+        }
+        if(doubleCompare(applied_protracted_parameters.max_speciation_gen,
+                         minimum_protracted_parameters.max_speciation_gen,
+                         minimum_protracted_parameters.max_speciation_gen * 0.0000001))
+        {
+            writeInfo("Setting applied maximum protracted generation to simulated maximum protracted generation.\n");
+            applied_protracted_parameters.max_speciation_gen = minimum_protracted_parameters.max_speciation_gen;
+        }
+
+        if(applied_protracted_parameters.min_speciation_gen > minimum_protracted_parameters.min_speciation_gen ||
+           applied_protracted_parameters.max_speciation_gen > minimum_protracted_parameters.max_speciation_gen)
+        {
 #ifdef DEBUG
-        writeLog(50, "Applied speciation current_metacommunity_parameters: " + to_string(applied_protracted_parameters.min_speciation_gen) + ", " +
-                to_string(applied_protracted_parameters.max_speciation_gen));
-        writeLog(50, "Simulated speciation current_metacommunity_parameters: " + to_string(min_speciation_gen) + ", " +
-                     to_string(max_speciation_gen));
+            writeLog(50, "Applied speciation current_metacommunity_parameters: " +
+            to_string(applied_protracted_parameters.minimum_protracted_parameters.min_speciation_gen) + ", " +
+                    to_string(applied_protracted_parameters.minimum_protracted_parameters.max_speciation_gen));
+            writeLog(50, "Simulated speciation current_metacommunity_parameters: " + to_string(minimum_protracted_parameters.min_speciation_gen) +
+             ", " + to_string(minimum_protracted_parameters.max_speciation_gen));
 #endif // DEBUG
-        stringstream ss;
-        ss << "Applied protracted speciation current_metacommunity_parameters: "
-           << applied_protracted_parameters.min_speciation_gen << ", ";
-        ss << applied_protracted_parameters.max_speciation_gen << endl;
-        ss << "Original protracted speciation current_metacommunity_parameters: " << min_speciation_gen << ", "
-           << max_speciation_gen << endl;
-        writeCritical(ss.str());
-        throw SpeciesException(
-                "Cannot use protracted current_metacommunity_parameters with minimum > simulated minimum or "
-                "maximum > simulated maximums.");
+            stringstream ss;
+            ss << "Applied protracted speciation current_metacommunity_parameters: "
+               << applied_protracted_parameters.min_speciation_gen << ", ";
+            ss << applied_protracted_parameters.max_speciation_gen << endl;
+            ss << "Original protracted speciation current_metacommunity_parameters: "
+               << minimum_protracted_parameters.min_speciation_gen << ", "
+               << minimum_protracted_parameters.max_speciation_gen << endl;
+            writeCritical(ss.str());
+            throw SpeciesException(
+                    "Cannot use protracted current_metacommunity_parameters with minimum > simulated minimum or "
+                    "maximum > simulated maximums.");
+        }
     }
 }
 
 void Community::overrideProtractedParameters(const ProtractedSpeciationParameters &protracted_params)
 {
-    min_speciation_gen = protracted_params.min_speciation_gen;
-    max_speciation_gen = protracted_params.max_speciation_gen;
+    minimum_protracted_parameters.min_speciation_gen = protracted_params.min_speciation_gen;
+    minimum_protracted_parameters.max_speciation_gen = protracted_params.max_speciation_gen;
     applied_protracted_parameters = protracted_params;
 
 }
@@ -2213,6 +2236,8 @@ void Community::writeSpeciationRates()
         {
             os << "\t" << i.min_speciation_gen << ", " << i.max_speciation_gen << endl;
         }
+        os << "with minimums of " << minimum_protracted_parameters.min_speciation_gen << " (min) and ";
+        os << minimum_protracted_parameters.max_speciation_gen << " (max)" << endl;
         writeInfo(os.str());
     }
     os.str("");

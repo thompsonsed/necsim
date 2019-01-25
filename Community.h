@@ -146,7 +146,7 @@ protected:
     MetacommunitiesArray past_metacommunities;
     // Protracted speciation current_metacommunity_parameters
     bool protracted;
-    double min_speciation_gen, max_speciation_gen;
+    ProtractedSpeciationParameters minimum_protracted_parameters;
     ProtractedSpeciationParameters applied_protracted_parameters;
     unsigned long max_species_id, max_fragment_id, max_locations_id;
     // Does not need to be stored during simulation pause
@@ -171,7 +171,7 @@ public:
                                                          samplemask_y_size(0), samplemask_x_offset(0),
                                                          samplemask_y_offset(0), past_communities(),
                                                          past_metacommunities(), protracted(false),
-                                                         min_speciation_gen(0.0), max_speciation_gen(0.0),
+                                                         minimum_protracted_parameters(),
                                                          applied_protracted_parameters(), max_species_id(0),
                                                          max_fragment_id(0), max_locations_id(0),
                                                          spec_sim_parameters(make_shared<SpecSimParameters>())

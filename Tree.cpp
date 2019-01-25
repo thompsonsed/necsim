@@ -904,7 +904,7 @@ void Tree::applyMultipleRates()
     }
     // Now check to make sure repeat speciation rates aren't done twice (this is done to avoid the huge number of errors
     // SQL throws if you try to add identical data
-    unsigned long spec_upto = sortData();
+    sortData();
     sqlCreate();
     vector<double> temp_sampling = getTemporalSampling();
     os << "Time";
@@ -945,7 +945,7 @@ void Tree::applyMultipleRates()
         }
     }
     community.writeNewCommunityParameters();
-    outputData(spec_upto);
+    outputData();
 }
 
 bool Tree::getProtracted()
@@ -1011,17 +1011,16 @@ void Tree::sqlOutput()
 #endif
 }
 
-void Tree::outputData()
+void Tree::createAndOutputData()
 {
-    unsigned long species_richness = sortData();
+    sortData();
     sqlCreate();
-    outputData(species_richness);
+    // Run the data sorting functions and output the data into the correct format.
+    outputData();
 }
 
-void Tree::outputData(unsigned long species_richness)
+void Tree::outputData()
 {
-    // Run the data sorting functions and output the data into the correct format.
-
     time(&out_finish);
 #ifdef sql_ram
     sqlOutput();
@@ -1030,7 +1029,7 @@ void Tree::outputData(unsigned long species_richness)
     writeTimes();
 }
 
-unsigned long Tree::sortData()
+void Tree::sortData()
 {
     // Sort and process the species species_id_list so that the useful information can be extracted from it.
     stringstream os;
@@ -1097,10 +1096,8 @@ unsigned long Tree::sortData()
         writeLog(30, me.what());
         writeLog(30, "Returning max possible size (may cause RAM issues).");
 #endif // DEBUG
-        return data->size();
     }
     writeInfo("done.\n");
-    return spec_up_to;
 }
 
 void Tree::writeTimes()

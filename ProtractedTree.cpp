@@ -20,7 +20,7 @@ bool ProtractedTree::calcSpeciation(const long double &random_number,
     {
         return false;
     }
-    if(generation > speciation_generation_max)
+    if(generation >= speciation_generation_max)
     {
         return true;
     }

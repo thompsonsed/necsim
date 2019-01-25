@@ -162,7 +162,7 @@ A brief description of the important classes is given below. Some classes also c
 	- Contains the main setup, run and data output routines. 
 	- Setup imports the data files from csv (if necessary) and creates the in-memory objects for the storing of the coalescence tree and the spatial grid of active lineages. Setup time mostly depends on the size of the csv file being imported.
 	- Run continually loops over sucessive coalesence, move or speciation events until all individuals have speciated or coalesced. This is where the majority of the simulation time will be, and is mostly dependent on the number of individuals, speciation rate and size of the spatial grid.
-	- At the end of the simulation, the sqlCreate() routine will generate the in-memory SQLite database for storing the coalescent tree. It can run multiple times if multiple speciation rates are required. outputData() will then be called to create a small csv file containing important information, and output the SQLite database to file if required.
+	- At the end of the simulation, the sqlCreate() routine will generate the in-memory SQLite database for storing the coalescent tree. It can run multiple times if multiple speciation rates are required. createAndOutputData() will then be called to create a small csv file containing important information, and output the SQLite database to file if required.
 * The `TreeNode` class
 	- Contains a single record of a node on the phylogenetic tree, to be used in reassembling the tree structure at the end of the simulation.
 	- Operations are mostly basic getters and setters, with functionality called from higher-level functions.

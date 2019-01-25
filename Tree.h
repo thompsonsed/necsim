@@ -557,24 +557,19 @@ public:
     void sqlOutput();
 
     /**
-     * @brief Outputs important simulation data to a csv file.
-     * Overloaded version which automatically calls sortData() if no species richness is provided.
+     * @brief Creates the output data objects and outputs important simulation data to a database file.
+     */
+    void createAndOutputData();
+
+    /**
+     * @brief Outputs the simulation data (including the coalescence tree) to an sql database.
      */
     void outputData();
 
     /**
-     * @brief  Outputs important simulation data to a csv file.
-     * This function will likely be remove in future versions as all simulation output is now contained in an SQLite
-     * database.
-     * @param species_richness the species richness of the tree with the minimum speciation rate. Outputted into the csv
-     * file
-     */
-    void outputData(unsigned long species_richness);
-
-    /**
      * @brief Sort and process the species list so that the useful information can be extracted from it.
      */
-    unsigned long sortData();
+    void sortData();
 
     /**
      * @brief Writes the times to the terminal for simulation information.

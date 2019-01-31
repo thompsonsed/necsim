@@ -18,7 +18,15 @@
 
 #include <sqlite3.h>
 #include <string>
+
+#ifdef CXX14_SUPPORT
+#include "memory.h"
+#else
+
 #include <memory>
+
+#endif
+
 #include "TreeNode.h"
 #include "Matrix.h"
 #include "SimParameters.h"
@@ -28,6 +36,7 @@
 #include "file_system.h"
 #include "custom_exceptions.h"
 #include "Step.h"
+#include "SQLiteHandler.h"
 
 /**
  * @brief Main simulation class for performing a non-spatial neutral simulation and generating the phylogenetic tree of
@@ -87,14 +96,14 @@ protected:
     // Path to output directory
     string out_directory;
     // sqlite3 object that stores all the data
-    sqlite3 *database;
+    shared_ptr<SQLiteHandler> database;
     // only set to true if the simulation has finished, otherwise will be false.
     bool sim_complete;
     // set to true when variables are imported
     bool has_imported_vars;
 // If sql database is written first to memory, then need another object to contain the in-memory database.
 #ifdef sql_ram
-    sqlite3 *outdatabase;
+    SQLiteHandler outdatabase;
 #endif
     // Create the step object that will be retained for the whole simulation.
     // Does not need saving on simulation pause.
@@ -118,10 +127,11 @@ public:
              seed(-1), job_type(-1), times_file("null"), reference_times(), uses_temporal_sampling(false),
              start(0), sim_start(0), sim_end(0), now(0), sim_finish(0), out_finish(0), time_taken(0), active(),
              endactive(0), startendactive(0), maxsimsize(0), community(data), steps(0), maxtime(0), generation(0.0),
-             deme(0), deme_sample(0.0), spec(0.0), out_directory(""), database(nullptr), sim_complete(false),
+             deme(0), deme_sample(0.0), spec(0.0), out_directory(""), database(make_shared<SQLiteHandler>()),
+             sim_complete(false),
              has_imported_vars(false),
 #ifdef sql_ram
-             outdatabase(nullptr),
+             outdatabase(),
 #endif //sql_ram
              this_step(), sql_output_database("null"), bFullMode(false), bResume(false), bConfig(true),
              has_paused(false), has_imported_pause(false), bIsProtracted(false), pause_sim_directory("null")
@@ -131,9 +141,9 @@ public:
 
     virtual ~Tree()
     {
-        sqlite3_close_v2(database);
+        database->close();
 #ifdef sql_ram
-        sqlite3_close_v2(outdatabase);
+        outdatabase.close();
 #endif
     }
 
@@ -229,18 +239,18 @@ public:
      */
     vector<double> getTemporalSampling();
 
-     /**
-     * @brief Getter for the simulation seed.
-     * @return Returns the seed
-     */
-     virtual long long getSeed();
+    /**
+    * @brief Getter for the simulation seed.
+    * @return Returns the seed
+    */
+    virtual long long getSeed();
 
-     /**
-     * @brief Gets the job type for the simulation.
-     * This is a reference number for the jobs.
-     * @return Returns the job type
-     */
-     virtual long long getJobType();
+    /**
+    * @brief Gets the job type for the simulation.
+    * This is a reference number for the jobs.
+    * @return Returns the job type
+    */
+    virtual long long getJobType();
 
     /**
      * @brief Sets the simulation seed for the random number generator.

@@ -32,6 +32,7 @@
 #include "DataMask.h"
 #include "parameters.h"
 #include "SpecSimParameters.h"
+#include "SQLiteHandler.h"
 
 using namespace std;
 using std::string;
@@ -124,7 +125,7 @@ class Community
 protected:
     bool in_mem; // boolean for whether the database is in memory or not.
     bool database_set; // boolean for whether the database has been set already.
-    sqlite3 *database; // stores the in-memory database connection.
+    shared_ptr<SQLiteHandler> database; // stores the in-memory database connection.
     bool bSqlConnection; // true if the data connection has been established.
     shared_ptr<vector<TreeNode>> nodes; // in older versions this was called species_id_list. Changed to avoid confusion with the built-in class.
     shared_ptr<vector<unsigned long>> species_abundances;
@@ -157,8 +158,9 @@ public:
      * @brief Contructor for the community linking to Treenode list.
      * @param r Row of TreeNode objects to link to.
      */
-    explicit Community(shared_ptr<vector<TreeNode>> r) : in_mem(false), database_set(false), database(nullptr),
-                                                         bSqlConnection(false), nodes(std::move(r)),
+    explicit Community(shared_ptr<vector<TreeNode>> r) : in_mem(false), database_set(false),
+                                                         database(make_shared<SQLiteHandler>()), bSqlConnection(false),
+                                                         nodes(std::move(r)),
                                                          species_abundances(make_shared<vector<unsigned long>>()),
                                                          iSpecies(0), has_imported_samplemask(false),
                                                          has_imported_data(false), samplemask(), fragments(),
@@ -205,10 +207,19 @@ public:
     void setList(shared_ptr<vector<TreeNode>> l);
 
     /**
+     * @brief Sets up the community from a set of simulation parameters and the sqlite3 database connection.
+     * @param sim_parameters parameters to use for setting up the community
+     * @param database points to the database object to open
+     * @return
+     */
+    ProtractedSpeciationParameters setupInternal(shared_ptr<SimParameters> sim_parameters,
+                                                 shared_ptr<SQLiteHandler> database);
+
+    /**
      * @brief Sets the database object for the sqlite functions.
      * @param dbin the sqlite3 input database.
      */
-    void setDatabase(sqlite3 *dbin);
+    void setDatabase(shared_ptr<SQLiteHandler> dbin);
 
     /**
      * @brief Get the boolean of whether the data has been imported yet.
@@ -271,22 +282,12 @@ public:
     virtual void resetTree();
 
     /**
-     * @brief This function detects the maximum x and y values of the sql database.
-     * This allows for the dimensions before opening the map file.
-     * @deprecated This function is deprecated as of 08/2016 due to simulation parameters being stored in the SQL database.
-     * @bug If species do not exist across the whole range of the samplemask, samplemask size will not be set correctly
-     * and samplemask referencing may be incorrect.
-     * @param db the path to the input database to read from.
-     */
-    void detectDimensions(string db);
-
-    /**
      * @brief Opens the connection to the sql database file
      * Note that this imports the database to memory, so functionality should be changed for extremely large database
      * files.
-     * @param inputfile the sql database output from a necsim simulation.
+     * @param input_file the sql database output from a necsim simulation.
      */
-    void openSqlConnection(string inputfile);
+    void openSqlConnection(string input_file);
 
     /**
      * @brief Safely destroys the SQL connection.

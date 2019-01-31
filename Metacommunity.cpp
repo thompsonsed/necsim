@@ -55,30 +55,19 @@ void Metacommunity::checkSimulationParameters()
 {
     if(!parameters_checked)
     {
-        if(database == nullptr)
+        if(!database->isOpen())
         {
             throw FatalException(
-                    "Cannot read simulation current_metacommunity_parameters as database is null pointer.");
+                    "Cannot read simulation metacommunity parameters as database is null pointer.");
         }
         // Now do the same for times
-        sqlite3_stmt *stmt = nullptr;
         string sql_call = "SELECT seed, job_type from SIMULATION_PARAMETERS";
-        int rc = sqlite3_prepare_v2(database, sql_call.c_str(), static_cast<int>(strlen(sql_call.c_str())), &stmt,
-                                    nullptr);
-        if(rc != SQLITE_DONE && rc != SQLITE_OK)
-        {
-            stringstream ss;
-            ss << "Could not read seed and job_type number from SIMULATION_PARAMETERS: Error code: " << rc;
-            ss << ": " << sqlite3_errmsg(database) << endl;
-            sqlite3_close_v2(database);
-            throw FatalException(ss.str());
-        }
-        sqlite3_step(stmt);
-        seed = static_cast<unsigned long>(sqlite3_column_int(stmt, 0));
+        auto stmt = database->prepare(sql_call);
+        database->step();
+        seed = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0));
         random->setSeed(seed);
-        job_type = static_cast<unsigned long>(sqlite3_column_int(stmt, 1));
-        sqlite3_step(stmt);
-        sqlite3_finalize(stmt);
+        job_type = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 1));
+        database->finalise();
         parameters_checked = true;
     }
 }

@@ -10,13 +10,13 @@
  */
 
 
+#include <utility>
+
 #include "SimulateDispersal.h"
 #include "Logger.h"
 #include "custom_exceptions.h"
 #include "file_system.h"
-#include "Community.h"
 
-#include <utility>
 
 void SimulateDispersal::setSequential(bool bSequential)
 {
@@ -29,7 +29,7 @@ void SimulateDispersal::setSimulationParameters(shared_ptr<SimParameters> sim_pa
     {
         writeInfo("********************************\nSetting simulation current_metacommunity_parameters...\n");
     }
-    simParameters = sim_parameters;
+    simParameters = std::move(sim_parameters);
     if(simParameters == nullptr)
     {
         throw FatalException("Simulation parameters are nullptr. Please report this bug.");
@@ -94,12 +94,7 @@ void SimulateDispersal::setOutputDatabase(string out_database)
         throw FatalException("Output database is not a .db file, check file name.");
     }
     // Open our SQL connection to the database
-    openSQLiteDatabase(out_database, database);
-//	int o2 = sqlite3_open_v2(out_database.c_str(), &database, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE, "unix-dotfile");
-//	if(o2 != SQLITE_OK && o2 != SQLITE_DONE)
-//	{
-//		throw FatalException("Database file cannot be opened or created.");
-//	}
+    database.open(out_database);
     checkMaxParameterReference();
 }
 
@@ -259,7 +254,7 @@ void SimulateDispersal::writeRepeatInfo(unsigned long i)
 
 void SimulateDispersal::writeDatabase(string table_name)
 {
-    if(database)
+    if(database.isOpen())
     {
         if(table_name != "DISTANCES_TRAVELLED" && table_name != "DISPERSAL_DISTANCES")
         {
@@ -272,31 +267,17 @@ void SimulateDispersal::writeDatabase(string table_name)
         writeParameters(table_name);
         // Do the sql output
         // First create the table
-        char *sErrMsg = nullptr;
-        sqlite3_stmt *stmt = nullptr;
         string create_table = "CREATE TABLE IF NOT EXISTS " + table_name + " (id INT PRIMARY KEY not null, ";
         create_table += " distance DOUBLE not null, parameter_reference INT NOT NULL);";
-        int rc = sqlite3_exec(database, create_table.c_str(), nullptr, nullptr, &sErrMsg);
-        int step;
-        if(rc != SQLITE_OK)
-        {
-            string message = "Could not create " + table_name + " table in database: ";
-            throw FatalException(message.append(sErrMsg));
-        }
-        // Now add the objects to the database
+        database.execute(create_table);
         string insert_table = "INSERT INTO " + table_name + " (id, distance, parameter_reference) VALUES (?, ?, ?);";
-        sqlite3_prepare_v2(database, insert_table.c_str(),
-                           static_cast<int>(strlen(insert_table.c_str())), &stmt, nullptr);
-        // Start the transaction
-        rc = sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
-        if(rc != SQLITE_OK)
-        {
-            throw FatalException("Cannot start SQL transaction.");
-        }
+        auto stmt = database.prepare(insert_table);
+        database.beginTransaction();
         unsigned long max_id = checkMaxIdNumber(table_name);
+        database.useStatement(stmt); // this could be cleaned up if checkMaxIDNumber comes before the insert statement.
         for(unsigned long i = 0; i < distances.size(); i++)
         {
-            sqlite3_bind_int(stmt, 1, static_cast<int>(max_id + i));
+            sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(max_id + i));
             auto iter = parameter_references.find(distances[i].first);
 
 #ifdef DEBUG
@@ -310,42 +291,20 @@ void SimulateDispersal::writeDatabase(string table_name)
             {
                 max_parameter_reference = reference;
             }
-            sqlite3_bind_double(stmt, 2, distances[i].second);
-            sqlite3_bind_int(stmt, 3, static_cast<int>(reference));
-            step = sqlite3_step(stmt);
-            time_t start_check, end_check;
-            time(&start_check);
-            time(&end_check);
-            while(step != SQLITE_DONE && (end_check - start_check) < 10)
-            {
-                step = sqlite3_step(stmt);
-                time(&end_check);
-            }
+            sqlite3_bind_double(stmt->stmt, 2, distances[i].second);
+            sqlite3_bind_int(stmt->stmt, 3, static_cast<int>(reference));
+            int step = stmt->step();
             if(step != SQLITE_DONE)
             {
                 stringstream ss;
-                ss << "SQLITE error code: " << step << endl;
-                ss << sqlite3_errmsg(database) << endl;
                 ss << "Could not insert into database." << endl;
+                ss << database.getErrorMsg(step);
                 throw FatalException(ss.str());
             }
-            sqlite3_clear_bindings(stmt);
-            sqlite3_reset(stmt);
+            stmt->clearAndReset();
         }
-        rc = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, &sErrMsg);
-        if(rc != SQLITE_OK)
-        {
-            string message = "Cannot end the SQL transaction: ";
-            throw FatalException(message.append(sErrMsg));
-        }
-        // Need to finalise the statement
-        rc = sqlite3_finalize(stmt);
-        if(rc != SQLITE_OK)
-        {
-            string message = "Cannot finalise the SQL transaction: ";
-            throw FatalException(message.append(sErrMsg));
-        }
-
+        database.endTransaction();
+        database.finalise();
     }
     else
     {
@@ -362,13 +321,7 @@ void SimulateDispersal::writeParameters(string table_name)
     create_table += " sigma DOUBLE not null, tau DOUBLE not null, m_prob DOUBLE not null, cutoff DOUBLE NOT NULL,";
     create_table += "dispersal_method TEXT not null, map_file TEXT not null, seed INT NOT NULL, number_steps ";
     create_table += "INT NOT NULL, number_repeats INT NOT NULL);";
-    char *sErrMsg;
-    int rc = sqlite3_exec(database, create_table.c_str(), nullptr, nullptr, &sErrMsg);
-    if(rc != SQLITE_OK)
-    {
-        string message = "Could not create PARAMETERS table in database: ";
-        throw FatalException(message.append(sErrMsg));
-    }
+    database.execute(create_table);
     for(const auto &item : parameter_references)
     {
         string insert_table =
@@ -380,13 +333,7 @@ void SimulateDispersal::writeParameters(string table_name)
                 ", " + to_string((long double) simParameters->cutoff) + ", '" + simParameters->dispersal_method + "','";
         insert_table += simParameters->fine_map_file + "', " + to_string(seed) + ", " + to_string(item.first) + ", ";
         insert_table += to_string(num_repeats) + ");";
-        rc = sqlite3_exec(database, insert_table.c_str(), nullptr, nullptr, &sErrMsg);
-        if(rc != SQLITE_OK)
-        {
-            string message = "Could not insert into PARAMETERS table in database. \n";
-            message += "Error: ";
-            throw FatalException(message.append(sErrMsg));
-        }
+        database.execute(insert_table);
     }
 }
 
@@ -399,36 +346,29 @@ void SimulateDispersal::clearParameters()
 
 void SimulateDispersal::checkMaxParameterReference()
 {
-    string to_exec = "SELECT CASE WHEN COUNT(1) > 0 THEN MAX(ref) ELSE 0 END AS [Value] FROM PARAMETERS;";
-    sqlite3_stmt *stmt = nullptr;
-    sqlite3_prepare_v2(database, to_exec.c_str(), static_cast<int>(strlen(to_exec.c_str())), &stmt, nullptr);
-    sqlite3_step(stmt);
-    max_parameter_reference = static_cast<unsigned long>(sqlite3_column_int(stmt, 0) + 1);
-    // close the old statement
-    int rc = sqlite3_finalize(stmt);
-    if(rc != SQLITE_OK && rc != SQLITE_DONE)
+    if(database.hasTable("PARAMETERS"))
     {
-        stringstream ss;
-        ss << "Could not check max parameter reference. Error code: " << rc << "\n";
-        throw SpeciesException(ss.str());
+        string to_exec = "SELECT CASE WHEN COUNT(1) > 0 THEN MAX(ref) ELSE 0 END AS [Value] FROM PARAMETERS;";
+        auto stmt = database.prepare(to_exec);
+        database.step();
+        max_parameter_reference = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0) + 1);
+        // close the old statement
+        database.finalise();
     }
+    else
+    {
+        max_parameter_reference = 1;
+    }
+
 }
 
 unsigned long SimulateDispersal::checkMaxIdNumber(string table_name)
 {
     string to_exec = "SELECT CASE WHEN COUNT(1) > 0 THEN MAX(id) ELSE 0 END AS [Value] FROM " + table_name + ";";
-    sqlite3_stmt *stmt = nullptr;
-    sqlite3_prepare_v2(database, to_exec.c_str(), static_cast<int>(strlen(to_exec.c_str())), &stmt, nullptr);
-    int rc = sqlite3_step(stmt);
-    auto max_id = static_cast<unsigned long>(sqlite3_column_int(stmt, 0) + 1);
-    // close the old statement
-    rc = sqlite3_finalize(stmt);
-    if(rc != SQLITE_OK && rc != SQLITE_DONE)
-    {
-        stringstream ss;
-        ss << "Could not check max id number. Error code: " << rc << "\n";
-        throw SpeciesException(ss.str());
-    }
+    auto stmt = database.prepare(to_exec);
+    database.step();
+    auto max_id = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0) + 1);
+    database.finalise();
     return max_id;
 }
 

@@ -53,23 +53,4 @@ struct ConfigException : public FatalException
     explicit ConfigException(string msg) : FatalException(std::move(msg)){}
 };
 
-/**
- * @struct SpeciesException
- * @brief An exception thrown whenever a non-fatal Species exception is thrown.
- */
-
-struct SpeciesException : public FatalException
-{
-    /**
-     * @brief Throws a runtime_error with a custom message indicating source.
-     */
-    SpeciesException() : FatalException("Exception thrown at run time in SpeciationCounter: "){}
-
-    /**
-     * @brief Overloaded runtime_error call which provides error message parsing
-     * @param msg the message to be passed to the runtime_error
-     */
-    explicit SpeciesException(string msg) : FatalException(msg){}
-};
-
 #endif // CUSTOM_EXCEPTION_H

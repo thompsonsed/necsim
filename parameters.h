@@ -267,6 +267,10 @@ struct MetacommunityParameters
     void clear();
 
     MetacommunityParameters &operator=(const MetacommunityParameters &parameters);
+
+    bool operator==(const MetacommunityParameters &parameters);
+
+    bool operator!=(const MetacommunityParameters &parameters);
 };
 
 /**
@@ -412,6 +416,12 @@ struct MetacommunitiesArray
      * @brief Adds an empty metacommunity parameters option.
      */
     void addNull();
+
+    /**
+     * @brief Determines if the array has any Metacommunity options (other than a null option).
+     * @return
+     */
+    bool hasMetacommunityOption();
 };
 
 #endif //NECSIM_PARAMETERS_H

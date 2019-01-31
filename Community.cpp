@@ -11,11 +11,8 @@
 #include <algorithm>
 #include <set>
 #include <unordered_map>
-#include <utility>
 #include <numeric>
 #include "Community.h"
-#include "double_comparison.h"
-#include "file_system.h"
 
 bool checkSpeciation(const long double &random_number, const long double &speciation_rate,
                      const unsigned long &no_generations)
@@ -69,15 +66,36 @@ void Community::setList(shared_ptr<vector<TreeNode>> l)
     nodes = std::move(l);
 }
 
-void Community::setDatabase(sqlite3 *dbin)
+ProtractedSpeciationParameters Community::setupInternal(shared_ptr<SimParameters> sim_parameters,
+                                                        shared_ptr<SQLiteHandler> database)
+{
+    if(!hasImportedData())
+    {
+        setSimParameters(sim_parameters);
+        setDatabase(std::move(database));
+    }
+    resetTree();
+    internalOption();
+    ProtractedSpeciationParameters tmp;
+    if(sim_parameters->is_protracted)
+    {
+        tmp.min_speciation_gen = sim_parameters->min_speciation_gen;
+        tmp.max_speciation_gen = sim_parameters->max_speciation_gen;
+    }
+    overrideProtractedParameters(tmp);
+    setProtracted(sim_parameters->is_protracted);
+    return tmp;
+}
+
+void Community::setDatabase(shared_ptr<SQLiteHandler> dbin)
 {
     if(!database_set)
     {
-        database = dbin;
+        database = std::move(dbin);
     }
     else
     {
-        throw SpeciesException("ERROR_SPEC_002: Attempt to set database - database link has already been set");
+        throw FatalException("ERROR_SPEC_002: Attempt to set database - database link has already been set");
     }
     database_set = true;  // this just specifies that the database has been created in memory.
 }
@@ -97,8 +115,8 @@ void Community::importSamplemask(string sSamplemask)
     // Check that the sim data has been imported.
     if(!has_imported_data)
     {
-        throw SpeciesException(
-                "ERROR_SPEC_003: Attempt to import samplemask object before simulation current_metacommunity_parameters: dimensions not known");
+        throw FatalException(
+                "Attempt to import samplemask object before simulation current_metacommunity_parameters: dimensions not known");
     }
     // Check that the main data has been imported already, otherwise the dimensions of the samplemask will not be correct
     if(!has_imported_samplemask)
@@ -171,8 +189,8 @@ unsigned long Community::calculateCoalescencetree()
             writeLog(50, "i: " + to_string(i));
             this_node->logLineageInformation(50);
             writeLog(50, "size: " + to_string(nodes->size()));
-            throw SpeciesException("ERROR_SQL_017: The parent is outside the size of the the data object. Bug "
-                                           "in expansion of data structures or object set up likely.");
+            throw FatalException("The parent is outside the size of the the data object. "
+                                 "Bug in expansion of data structures or object set up likely.");
         }
 #endif //DEBUG
         this_node->setExistence(this_node->isTip() && samplemask.getMaskVal(this_node->getXpos(), this_node->getYpos(),
@@ -439,103 +457,50 @@ void Community::resetTree()
     }
 }
 
-void Community::detectDimensions(string db)
-{
-    sqlite3 *tmpdb;
-    int rc = sqlite3_open_v2(db.c_str(), &tmpdb, SQLITE_OPEN_READWRITE, "unix-dotfile");
-    string to_exec = "SELECT MAX(xval),MAX(yval) FROM SPECIES_LIST;";
-    sqlite3_stmt *stmt = nullptr;
-    rc = sqlite3_prepare_v2(tmpdb, to_exec.c_str(), static_cast<int>(strlen(to_exec.c_str())), &stmt, nullptr);
-    unsigned long xvalmax, yvalmax;
-    rc = sqlite3_step(stmt);
-    xvalmax = static_cast<unsigned long>(sqlite3_column_int(stmt, 0) + 1);
-    yvalmax = static_cast<unsigned long>(sqlite3_column_int(stmt, 1) + 1);
-    samplemask.sample_mask.setSize(xvalmax, yvalmax);
-    // close the old statement
-    rc = sqlite3_finalize(stmt);
-    if(rc != SQLITE_OK && rc != SQLITE_DONE)
-    {
-        stringstream ss;
-        ss << "Could not detect dimensions: " << rc << " (" << sqlite3_errmsg(tmpdb) << ")" << endl;
-        throw SpeciesException(ss.str());
-    }
-}
-
-void Community::openSqlConnection(string inputfile)
+void Community::openSqlConnection(string input_file)
 {
     // open the database objects
-    sqlite3_backup *backupdb = nullptr;
-    sqlite3 *outdatabase = nullptr;
+    SQLiteHandler out_database;
     // open one db in memory and one from the file.
-    if(!boost::filesystem::exists(inputfile))
+    if(!boost::filesystem::exists(input_file))
     {
         stringstream ss;
-        ss << "Output database does not exist at " << inputfile << ": cannot open sql connection." << endl;
+        ss << "Output database does not exist at " << input_file << ": cannot open sql connection." << endl;
         throw FatalException(ss.str());
     }
     try
     {
-        openSQLiteDatabase(":memory:", database);
-        openSQLiteDatabase(inputfile, outdatabase);
+        database->open(":memory:");
+        out_database.open(input_file);
         in_mem = true;
-        // copy the db from file into memory.
-        backupdb = sqlite3_backup_init(database, "main", outdatabase, "main");
-        int rc = sqlite3_backup_step(backupdb, -1);
-
-        if(rc != SQLITE_DONE && rc != SQLITE_OK)
-        {
-            sqlite3_close_v2(outdatabase);
-            sqlite3_open(inputfile.c_str(), &outdatabase);
-            backupdb = sqlite3_backup_init(database, "main", outdatabase, "main");
-        }
-        rc = sqlite3_backup_finish(backupdb);
-        //			os << "rc: " << rc << endl;
-        if(rc != SQLITE_DONE && rc != SQLITE_OK)
-        {
-            sqlite3_close_v2(database);
-            sqlite3_close_v2(outdatabase);
-            throw SpeciesException("ERROR_SQL_002: FATAL. Source file cannot be opened.");
-        }
-        sqlite3_close_v2(outdatabase);
+        database->backupFrom(out_database);
+        out_database.close();
     }
     catch(FatalException &fe)
     {
         writeWarning("Can't open in-memory database. Writing to file instead (this will be slower).\n");
         in_mem = false;
-        sqlite3_close_v2(database);
-        int rc = sqlite3_open_v2(inputfile.c_str(), &database, SQLITE_OPEN_READWRITE, "unix-dotfile");
-        // Revert to different VFS file opening method if the backup hasn't started properly.
-        // Two different versions will be attempted before an error will be thrown.
-        // A different way of assigning the VFS method and opening the file correctly could be implemented later.
-        // Currently "unix-dotfile" works for HPC runs and "unix" works for PC runs.
-        if(rc != SQLITE_OK)
-        {
-            throw SpeciesException("ERROR_SQL_002: FATAL. Source file cannot be opened. Error: " + string(fe.what()) +
-                                   " and " + to_string(rc));
-        }
+        database->close();
+        database->open(input_file);
     }
     bSqlConnection = true;
 }
 
 void Community::closeSqlConnection()
 {
-    sqlite3_close_v2(database);
+    database->close();
     bSqlConnection = false;
     in_mem = false;
     database_set = false;
-    database = nullptr;
-
 }
 
 void Community::setInternalDatabase()
 {
+    if(!bSqlConnection)
     {
-        if(!bSqlConnection)
-        {
-            openSQLiteDatabase(":memory:", database);
-        }
-        internalOption();
+        database->open(":memory:");
     }
+    internalOption();
 }
 
 void Community::internalOption()
@@ -561,25 +526,21 @@ void Community::importData(string inputfile)
         return;
     }
     writeInfo("Beginning data import...");
-    // The sql statement to store the sql statement message object
-    sqlite3_stmt *stmt = nullptr;
-
     // Now find out the max size of the species_id_list, so we have a count to work from
     string count_command = "SELECT COUNT(*) FROM SPECIES_LIST;";
-    sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
-                       nullptr);
+    auto stmt = database->prepare(count_command);
     unsigned long datasize;
-    // skip first row (should be blank)
-    sqlite3_step(stmt);
-    datasize = static_cast<unsigned long>(sqlite3_column_int(stmt, 0));
-    sqlite3_finalize(stmt);
-
+    database->step();
+    datasize = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0));
+    stringstream ss;
+    ss << "\n\tDetected " << datasize << " events in the coalescence tree." << endl;
+    writeInfo(ss.str());
+    database->finalise();
     // Create db query
     string all_commands = "SELECT * FROM SPECIES_LIST;";
-    sqlite3_prepare_v2(database, all_commands.c_str(), static_cast<int>(strlen(all_commands.c_str())), &stmt, nullptr);
+    stmt = database->prepare(all_commands);
     nodes->resize(datasize);
-    // Check that the file opened correctly.
-    sqlite3_step(stmt);
+    database->step();
     // Copy the data across to the TreeNode data structure.
     // For storing the number of ignored lineages so this can be subtracted off the parent number.
     unsigned long ignored_lineages = 0;
@@ -588,36 +549,35 @@ void Community::importData(string inputfile)
 #endif
     for(unsigned long i = 0; i < datasize; i++)
     {
-        auto species_id = static_cast<unsigned long>(sqlite3_column_int(stmt, 1));
-        //		os << species_id << endl;
-        long xval = sqlite3_column_int(stmt, 2);
-        long yval = sqlite3_column_int(stmt, 3);
-        long xwrap = sqlite3_column_int(stmt, 4);
-        long ywrap = sqlite3_column_int(stmt, 5);
-        auto tip = bool(sqlite3_column_int(stmt, 6));
-        auto speciation = bool(sqlite3_column_int(stmt, 7));
-        auto parent = static_cast<unsigned long>(sqlite3_column_int(stmt, 8));
-        auto iGen = static_cast<unsigned long>(sqlite3_column_int(stmt, 11));
-        auto existence = bool(sqlite3_column_int(stmt, 9));
-        double dSpec = sqlite3_column_double(stmt, 10);
-        long double generationin = sqlite3_column_double(stmt, 12);
+        auto species_id = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 1));
+        long xval = sqlite3_column_int(stmt->stmt, 2);
+        long yval = sqlite3_column_int(stmt->stmt, 3);
+        long xwrap = sqlite3_column_int(stmt->stmt, 4);
+        long ywrap = sqlite3_column_int(stmt->stmt, 5);
+        auto tip = bool(sqlite3_column_int(stmt->stmt, 6));
+        auto speciation = bool(sqlite3_column_int(stmt->stmt, 7));
+        auto parent = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 8));
+        auto generation_rate = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 11));
+        auto existence = bool(sqlite3_column_int(stmt->stmt, 9));
+        double dSpec = sqlite3_column_double(stmt->stmt, 10);
+        long double generationin = sqlite3_column_double(stmt->stmt, 12);
         // the -1 is to ensure that the species_id_list includes all lineages, but fills the output from the beginning
         unsigned long index = i - ignored_lineages;
         (*nodes)[index].setup(tip, xval, yval, xwrap, ywrap, generationin);
         (*nodes)[index].burnSpecies(species_id);
         (*nodes)[index].setSpec(dSpec);
         (*nodes)[index].setExistence(existence);
-        (*nodes)[index].setGenerationRate(iGen);
+        (*nodes)[index].setGenerationRate(generation_rate);
         (*nodes)[index].setParent(parent - ignored_lineages);
         if(index == parent && parent != 0)
         {
             stringstream ss;
-            ss << "ERROR_SQL_001: Import failed as parent is self. Please report this bug." << endl;
+            ss << "Import failed as parent is self. Please report this bug." << endl;
             ss << " i: " << index << " parent: " << parent << endl;
-            throw SpeciesException(ss.str());
+            throw FatalException(ss.str());
         }
         (*nodes)[index].setSpeciation(speciation);
-        sqlite3_step(stmt);
+        database->step();
 #ifdef DEBUG
         if(parent < index && !speciation)
         {
@@ -631,10 +591,9 @@ void Community::importData(string inputfile)
             }
         }
 #endif
-//		}
     }
     // Now we need to blank all objects
-    sqlite3_finalize(stmt);
+    database->finalise();
     // Now read the useful information from the SIMULATION_PARAMETERS table
     writeInfo("\rBeginning data import...done.\n");
 }
@@ -647,15 +606,13 @@ void Community::getMaxSpeciesAbundancesID()
     }
     if(max_species_id == 0)
     {
-        sqlite3_stmt *stmt = nullptr;
         // Now find out the max size of the species_id_list, so we have a count to work from
         string count_command = "SELECT MAX(ID) FROM SPECIES_ABUNDANCES;";
-        sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
-                           nullptr);
-        sqlite3_step(stmt);
-        max_species_id = static_cast<unsigned long>(sqlite3_column_int(stmt, 0)) + 1;
+        auto stmt = database->prepare(count_command);
+        database->step();
+        max_species_id = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0)) + 1;
         // close the old statement
-        sqlite3_finalize(stmt);
+        database->finalise();
     }
 }
 
@@ -685,15 +642,13 @@ void Community::getMaxSpeciesLocationsID()
     }
     if(max_locations_id == 0)
     {
-        sqlite3_stmt *stmt = nullptr;
         // Now find out the max size of the species_id_list, so we have a count to work from
         string count_command = "SELECT MAX(ID) FROM SPECIES_LOCATIONS;";
-        sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
-                           nullptr);
-        sqlite3_step(stmt);
-        max_locations_id = static_cast<unsigned long>(sqlite3_column_int(stmt, 0)) + 1;
+        auto stmt = database->prepare(count_command);
+        database->step();
+        max_locations_id = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0)) + 1;
         // close the old statement
-        sqlite3_finalize(stmt);
+        database->finalise();
     }
 }
 
@@ -705,15 +660,13 @@ void Community::getMaxFragmentAbundancesID()
     }
     if(max_fragment_id == 0)
     {
-        sqlite3_stmt *stmt = nullptr;
         // Now find out the max size of the species_id_list, so we have a count to work from
         string count_command = "SELECT MAX(ID) FROM FRAGMENT_ABUNDANCES;";
-        sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
-                           nullptr);
-        sqlite3_step(stmt);
-        max_fragment_id = static_cast<unsigned long>(sqlite3_column_int(stmt, 0)) + 1;
+        auto stmt = database->prepare(count_command);
+        database->step();
+        max_fragment_id = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0)) + 1;
         // close the old statement
-        sqlite3_finalize(stmt);
+        database->finalise();
     }
 }
 
@@ -727,11 +680,7 @@ void Community::createDatabase()
     string table_command = "CREATE TABLE IF NOT EXISTS SPECIES_ABUNDANCES (ID int PRIMARY KEY NOT NULL, "
                            "species_id INT NOT NULL, no_individuals INT NOT "
                            "NULL, community_reference INT NOT NULL);";
-    int rc = sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
-    if(rc != SQLITE_OK)
-    {
-        throw SpeciesException("ERROR_SQL_002b: Could not create SPECIES_ABUNDANCES table.");
-    }
+    database->execute(table_command);
     getMaxSpeciesAbundancesID();
     outputSpeciesAbundances();
 }
@@ -749,9 +698,9 @@ void Community::generateBiodiversity()
         else
         {
             stringstream ss;
-            ss << "ERROR_SQL_018: Speciation rate of " << current_community_parameters->speciation_rate;
+            ss << "Speciation rate of " << current_community_parameters->speciation_rate;
             ss << " is less than the minimum possible (" << min_spec_rate << ". Skipping." << endl;
-            throw SpeciesException(ss.str());
+            throw FatalException(ss.str());
         }
     }
     unsigned long nspec = calculateCoalescencetree();
@@ -777,57 +726,34 @@ void Community::outputSpeciesAbundances()
             return;
         }
 //#endif // DEBUG
-        sqlite3_stmt *stmt = nullptr;
         string table_command = "INSERT INTO SPECIES_ABUNDANCES (ID, species_id, "
                                "no_individuals, community_reference) VALUES (?,?,?,?);";
-        sqlite3_prepare_v2(database, table_command.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
-                           nullptr);
-
+        auto stmt = database->prepare(table_command);
         // Start the transaction
-        sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+        database->beginTransaction();
         for(unsigned long i = 0; i < species_abundances->size(); i++)
         {
             // lexical cast fixes a precision problem that allows for printing of very small doubles.
-            sqlite3_bind_int(stmt, 1, static_cast<int>(max_species_id++));
-            sqlite3_bind_int(stmt, 2, static_cast<int>(i));
-            sqlite3_bind_int(stmt, 3, static_cast<int>(species_abundances->operator[](i)));
-            sqlite3_bind_int(stmt, 4, static_cast<int>(current_community_parameters->reference));
-            int step = sqlite3_step(stmt);
-            // makes sure the while loop doesn't go forever.
-            time_t start_check, end_check;
-            time(&start_check);
-            time(&end_check);
-            while(step != SQLITE_DONE && (end_check - start_check) < 1)
-            {
-                step = sqlite3_step(stmt);
-                time(&end_check);
-            }
+            sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(max_species_id++));
+            sqlite3_bind_int(stmt->stmt, 2, static_cast<int>(i));
+            sqlite3_bind_int(stmt->stmt, 3, static_cast<int>(species_abundances->operator[](i)));
+            sqlite3_bind_int(stmt->stmt, 4, static_cast<int>(current_community_parameters->reference));
+            int step = stmt->step();
             if(step != SQLITE_DONE)
             {
                 stringstream os;
-                os << "SQLITE error code: " << step << endl;
-                os << "ERROR_SQL_004d: Could not insert into database. Check destination file has not "
+                os << "Could not insert into database. Check destination file has not "
                       "been moved or deleted and that an entry doesn't already exist with the same ID."
                    << endl;
-                os << sqlite3_errmsg(database) << endl;
-                sqlite3_clear_bindings(stmt);
-                sqlite3_reset(stmt);
+                os << database->getErrorMsg(step);
+                stmt->clearAndReset();
                 throw FatalException(os.str());
             }
-            sqlite3_clear_bindings(stmt);
-            sqlite3_reset(stmt);
-
+            stmt->clearAndReset();
         }
         // execute the command and close the connection to the database
-        int rc1 = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, nullptr);
-        // Need to finalise the statement
-        int rc2 = sqlite3_finalize(stmt);
-        if(rc1 != SQLITE_OK || rc2 != SQLITE_OK)
-        {
-            writeError("ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and "
-                       "SQL commands. Ensure SQL statements are properly cleared and that you are not attempting "
-                       "to insert repeat IDs into the database.");
-        }
+        database->endTransaction();
+        database->finalise();
     }
     else
     {
@@ -858,11 +784,6 @@ Community::checkCalculationsPerformed(const long double &speciation_rate, const 
     {
         return true;
     }
-//	if(past_communities.hasOption(speciation_rate, time, !fragments,
-//								past_metacommunities.getReference(metacommunity_speciation_rate, metacommunity_size)))
-//	{
-//		return !fragments || has_pair;
-//	}
     return has_pair;
 }
 
@@ -872,66 +793,44 @@ void Community::createFragmentDatabase(const Fragment &f)
     string table_command = "CREATE TABLE IF NOT EXISTS FRAGMENT_ABUNDANCES (ID int PRIMARY KEY NOT NULL, fragment "
                            "TEXT NOT NULL, area DOUBLE NOT NULL, size INT NOT NULL,  species_id INT NOT NULL, "
                            "no_individuals INT NOT NULL, community_reference int NOT NULL);";
-    sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
+    database->execute(table_command);
     getMaxFragmentAbundancesID();
-    sqlite3_stmt *stmt = nullptr;
     table_command = "INSERT INTO FRAGMENT_ABUNDANCES (ID, fragment, area, size, species_id, "
                     "no_individuals, community_reference) VALUES (?,?,?,?,?,?,?);";
-    sqlite3_prepare_v2(database, table_command.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
-                       nullptr);
-
+    auto stmt = database->prepare(table_command);
     // Start the transaction
-    sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+    database->beginTransaction();
     for(unsigned long i = 0; i < species_abundances->size(); i++)
     {
         auto tmp_row = &species_abundances->operator[](i);
         if(*tmp_row != 0)
         {
             // fixed precision problem - lexical cast allows for printing of very small doubles.
-            sqlite3_bind_int(stmt, 1, static_cast<int>(max_fragment_id++));
-            sqlite3_bind_text(stmt, 2, f.name.c_str(), -1, SQLITE_STATIC);
-            sqlite3_bind_double(stmt, 3, f.area);
-            sqlite3_bind_int(stmt, 4, static_cast<int>(f.num));
-            sqlite3_bind_int(stmt, 5, static_cast<int>(i));
-            sqlite3_bind_int(stmt, 6, static_cast<int>(*tmp_row));
-            sqlite3_bind_int(stmt, 7, static_cast<int>(current_community_parameters->reference));
-            int step = sqlite3_step(stmt);
-            // makes sure the while loop doesn't go forever.
-            time_t start_check, end_check;
-            time(&start_check);
-            time(&end_check);
-            while(step != SQLITE_DONE && (end_check - start_check) < 10)
-            {
-                step = sqlite3_step(stmt);
-                time(&end_check);
-            }
+            sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(max_fragment_id++));
+            sqlite3_bind_text(stmt->stmt, 2, f.name.c_str(), -1, SQLITE_STATIC);
+            sqlite3_bind_double(stmt->stmt, 3, f.area);
+            sqlite3_bind_int(stmt->stmt, 4, static_cast<int>(f.num));
+            sqlite3_bind_int(stmt->stmt, 5, static_cast<int>(i));
+            sqlite3_bind_int(stmt->stmt, 6, static_cast<int>(*tmp_row));
+            sqlite3_bind_int(stmt->stmt, 7, static_cast<int>(current_community_parameters->reference));
+            int step = stmt->step();
             if(step != SQLITE_DONE)
             {
                 stringstream ss;
-                ss << "ERROR_SQL_004e: Could not insert into database. Check destination file has not "
+                ss << "Could not insert into database. Check destination file has not "
                       "been moved or deleted and that an entry doesn't already exist with the same ID."
                    << endl;
-                ss << "SQLITE error code: " << step << endl;
-                ss << sqlite3_errmsg(database) << endl;
-                writeWarning(ss.str());
-                sqlite3_clear_bindings(stmt);
-                sqlite3_reset(stmt);
-                break;
+                ss << database->getErrorMsg(step) << endl;
+                stmt->clearAndReset();
+                throw FatalException(ss.str());
             }
-            sqlite3_clear_bindings(stmt);
-            sqlite3_reset(stmt);
+            stmt->clearAndReset();
         }
     }
     // execute the command and close the connection to the database
-    int rc1 = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, nullptr);
+    database->endTransaction();
     // Need to finalise the statement
-    int rc2 = sqlite3_finalize(stmt);
-    if(rc1 != SQLITE_OK || rc2 != SQLITE_OK)
-    {
-        writeError("ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and SQL "
-                   "commands. Ensure SQL statements are properly cleared and that you are not attempting to insert "
-                   "repeat IDs into the database.");
-    }
+    database->finalise();
 }
 
 void Community::exportDatabase()
@@ -942,61 +841,11 @@ void Community::exportDatabase()
         stringstream os;
         os << "Writing out to " << spec_sim_parameters->filename << "..." << endl;
         // Now write the database to the file object.
-        sqlite3 *outdatabase2;
+        SQLiteHandler out_database;
+        out_database.open(spec_sim_parameters->filename);
         writeInfo(os.str());
-        int rc = sqlite3_open_v2(spec_sim_parameters->filename.c_str(), &outdatabase2, SQLITE_OPEN_READWRITE,
-                                 "unix-dotfile");
-        // check that the connection to file has opened correctly
-        if(rc != SQLITE_OK && rc != SQLITE_DONE)
-        {
-            // attempt other output method
-            sqlite3_close_v2(outdatabase2);
-            rc = sqlite3_open(spec_sim_parameters->filename.c_str(), &outdatabase2);
-            if(rc != SQLITE_OK && rc != SQLITE_DONE)
-            {
-                ss << "Connection to output database cannot be opened at " << spec_sim_parameters->filename;
-                ss << ". Check write access on output folder. Error code " << rc << ": ";
-                ss << sqlite3_errmsg(outdatabase2) << endl;
-                throw FatalException(ss.str());
-            }
-        }
-
         // create the backup object to write data to the file from memory.
-
-        sqlite3_backup *backupdb;
-        backupdb = sqlite3_backup_init(outdatabase2, "main", database, "main");
-        if(!backupdb)
-        {
-            ss << "ERROR_SQL_003: Could not backup to SQL database. Check destination file has not been "
-                  "moved or deleted."
-               << endl;
-            throw FatalException(ss.str());
-        }
-        // Perform the backup
-        rc = sqlite3_backup_step(backupdb, -1);
-        int counter = 0;
-        while(counter < 10 && (rc == SQLITE_BUSY || rc == SQLITE_LOCKED))
-        {
-            counter++;
-            rc = sqlite3_backup_step(backupdb, -1);
-            sleep(1);
-        }
-        if(rc != SQLITE_OK && rc != SQLITE_DONE)
-        {
-            ss << "Database backup cannot be started to " << spec_sim_parameters->filename;
-            ss << ". Check write access on output folder. Error code " << rc << ": ";
-            ss << sqlite3_errmsg(outdatabase2) << endl;
-            throw FatalException(ss.str());
-        }
-        rc = sqlite3_backup_finish(backupdb);
-        if(rc != SQLITE_OK && rc != SQLITE_DONE)
-        {
-            ss << "Database backup cannot be completed to " << spec_sim_parameters->filename;
-            ss << ". Check write access on output folder. Error code " << rc << ": ";
-            ss << sqlite3_errmsg(outdatabase2) << endl;
-            throw FatalException(ss.str());
-        }
-        sqlite3_close_v2(outdatabase2);
+        out_database.backupFrom(*database);
     }
     closeSqlConnection();
 }
@@ -1007,17 +856,14 @@ bool Community::checkSpeciesLocationsReference()
     {
         throw FatalException("Attempted to get from sql database without opening database connection.");
     }
-
-    sqlite3_stmt *stmt = nullptr;
     // Now find out the max size of the species_id_list, so we have a count to work from
     string count_command = "SELECT COUNT(*) FROM SPECIES_LOCATIONS WHERE community_reference == ";
     count_command += to_string(current_community_parameters->reference) + ";";
-    sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
-                       nullptr);
-    sqlite3_step(stmt);
-    int tmp_val = sqlite3_column_int(stmt, 0);
+    auto stmt = database->prepare(count_command);
+    database->step();
+    int tmp_val = sqlite3_column_int(stmt->stmt, 0);
     // close the old statement
-    sqlite3_finalize(stmt);
+    database->finalise();
     return tmp_val > 0;
 }
 
@@ -1027,17 +873,14 @@ bool Community::checkSpeciesAbundancesReference()
     {
         throw FatalException("Attempted to get from sql database without opening database connection.");
     }
-
-    sqlite3_stmt *stmt = nullptr;
     // Now find out the max size of the species_id_list, so we have a count to work from
     string count_command = "SELECT COUNT(*) FROM SPECIES_ABUNDANCES WHERE community_reference = ";
     count_command += to_string(current_community_parameters->reference) + ";";
-    sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
-                       nullptr);
-    sqlite3_step(stmt);
-    int tmp_val = sqlite3_column_int(stmt, 0);
+    auto stmt = database->prepare(count_command);
+    database->step();
+    int tmp_val = sqlite3_column_int(stmt->stmt, 0);
     // close the old statement
-    sqlite3_finalize(stmt);
+    database->finalise();
     return tmp_val > 0;
 }
 
@@ -1047,9 +890,8 @@ void Community::recordSpatial()
 //	os << "Recording spatial data for speciation rate " << current_community_parameters->speciation_rate << "..." << flush;
     string table_command = "CREATE TABLE IF NOT EXISTS SPECIES_LOCATIONS (ID int PRIMARY KEY NOT NULL, species_id INT "
                            "NOT NULL, x INT NOT NULL, y INT NOT NULL, community_reference INT NOT NULL);";
-    sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
+    database->execute(table_command);
     getMaxSpeciesLocationsID();
-    sqlite3_stmt *stmt = nullptr;
     // Checks that the SPECIES_LOCATIONS table doesn't already have a reference in matching the current reference
     if(current_community_parameters->updated)
     {
@@ -1060,13 +902,9 @@ void Community::recordSpatial()
     }
     table_command = "INSERT INTO SPECIES_LOCATIONS (ID,species_id, x, y, community_reference) VALUES (?,?,?,?,?);";
 
-    sqlite3_prepare_v2(database, table_command.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
-                       nullptr);
-    //		os << "test1" << endl;
-    // Start the transaction
-    sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+    auto stmt = database->prepare(table_command);
+    database->beginTransaction();
     // Make sure only the tips which we want to check are recorded
-    //		os << "nodes->size(): " << nodes->size() << endl;
     for(unsigned long i = 1; i < nodes->size(); i++)
     {
         TreeNode *this_node = &(*nodes)[i];
@@ -1084,47 +922,20 @@ void Community::recordSpatial()
                 long ywrap = this_node->getYwrap();
                 long xval = x + (xwrap * grid_x_size) + samplemask_x_offset;
                 long yval = y + (ywrap * grid_y_size) + samplemask_y_offset;
-                sqlite3_bind_int(stmt, 1, static_cast<int>(max_locations_id++));
-                sqlite3_bind_int(stmt, 2, static_cast<int>(this_node->getSpeciesID()));
-                sqlite3_bind_int(stmt, 3, static_cast<int>(xval));
-                sqlite3_bind_int(stmt, 4, static_cast<int>(yval));
-                sqlite3_bind_int(stmt, 5, static_cast<int>(current_community_parameters->reference));
-                int step = sqlite3_step(stmt);
-                // makes sure the while loop doesn't go forever.
-                time_t start_check, end_check;
-                time(&start_check);
-                time(&end_check);
-                while(step != SQLITE_DONE && (end_check - start_check) < 10 && step != SQLITE_OK)
-                {
-                    step = sqlite3_step(stmt);
-                    time(&end_check);
-                }
-                if(step != SQLITE_DONE)
-                {
-                    stringstream ss;
-                    ss << "SQLITE error code: " << step << endl;
-                    ss << "ERROR_SQL_004f: Could not insert into database. Check destination file has not "
-                          "been moved or deleted and that an entry doesn't already exist with the same ID."
-                       << endl;
-                    ss << sqlite3_errmsg(database) << endl;
-                    writeWarning(ss.str());
-                    break;
-                }
-                sqlite3_clear_bindings(stmt);
-                sqlite3_reset(stmt);
+                sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(max_locations_id++));
+                sqlite3_bind_int(stmt->stmt, 2, static_cast<int>(this_node->getSpeciesID()));
+                sqlite3_bind_int(stmt->stmt, 3, static_cast<int>(xval));
+                sqlite3_bind_int(stmt->stmt, 4, static_cast<int>(yval));
+                sqlite3_bind_int(stmt->stmt, 5, static_cast<int>(current_community_parameters->reference));
+                database->step();
+                stmt->clearAndReset();
             }
         }
     }
     // execute the command and close the connection to the database
-    int rc1 = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, nullptr);
+    database->endTransaction();
     // Need to finalise the statement
-    int rc2 = sqlite3_finalize(stmt);
-    if(rc1 != SQLITE_OK || rc2 != SQLITE_OK)
-    {
-        writeError("ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and SQL "
-                   "commands. Ensure SQL statements are properly cleared and that you are not attempting to insert "
-                   "repeat IDs into the database.");
-    }
+    database->finalise();
 }
 
 void Community::calcFragments(string fragment_file)
@@ -1450,11 +1261,11 @@ void Community::setSimParameters(const shared_ptr<SimParameters> sim_parameters)
         {
             if(minimum_protracted_parameters.max_speciation_gen == 0.0)
             {
-                throw SpeciesException("Protracted speciation does not make sense when maximum speciation gen is 0.0.");
+                throw FatalException("Protracted speciation does not make sense when maximum speciation gen is 0.0.");
             }
             if(minimum_protracted_parameters.min_speciation_gen > minimum_protracted_parameters.max_speciation_gen)
             {
-                throw SpeciesException("Cannot have simulation with minimum speciation generation less than maximum!");
+                throw FatalException("Cannot have simulation with minimum speciation generation less than maximum!");
             }
         }
     }
@@ -1479,58 +1290,40 @@ void Community::importSimParameters(string file)
         writeInfo(os.str());
 #endif
     }
-    try
-    {
 #ifdef DEBUG
-        stringstream os;
-        os << "Reading current_metacommunity_parameters..." << flush;
+    stringstream os;
+    os << "Reading current_metacommunity_parameters..." << flush;
 #endif
-        sqlite3_stmt *stmt2;
-        string sql_parameters = "SELECT speciation_rate, grid_x, grid_y, protracted, min_speciation_gen, max_speciation_gen, "
-                                "sample_x_offset, sample_y_offset, sample_x, sample_y  FROM SIMULATION_PARAMETERS;";
-        int rc = sqlite3_prepare_v2(database, sql_parameters.c_str(), static_cast<int>(strlen(sql_parameters.c_str())),
-                                    &stmt2, nullptr);
-        if(rc != SQLITE_DONE && rc != SQLITE_OK)
-        {
-            stringstream ss;
-            ss << "Could not open simulation parameters in " << file << ": Error code: " << rc << ": ";
-            ss << sqlite3_errmsg(database);
-            sqlite3_close_v2(database);
-            throw SpeciesException(ss.str());
-        }
-        sqlite3_step(stmt2);
-        min_spec_rate = sqlite3_column_double(stmt2, 0);
-        grid_x_size = static_cast<unsigned long>(sqlite3_column_int(stmt2, 1));
-        grid_y_size = static_cast<unsigned long>(sqlite3_column_int(stmt2, 2));
-        protracted = bool(sqlite3_column_int(stmt2, 3));
-        minimum_protracted_parameters.min_speciation_gen = sqlite3_column_double(stmt2, 4);
-        minimum_protracted_parameters.max_speciation_gen = sqlite3_column_double(stmt2, 5);
-        samplemask_x_offset = static_cast<unsigned long>(sqlite3_column_int(stmt2, 6));
-        samplemask_y_offset = static_cast<unsigned long>(sqlite3_column_int(stmt2, 7));
-        samplemask_x_size = static_cast<unsigned long>(sqlite3_column_int(stmt2, 8));
-        samplemask_y_size = static_cast<unsigned long>(sqlite3_column_int(stmt2, 9));
-        if(protracted)
-        {
-            if(minimum_protracted_parameters.max_speciation_gen == 0.0)
-            {
-                throw SpeciesException("Protracted speciation does not make sense when maximum speciation gen is 0.0.");
-            }
-            if(minimum_protracted_parameters.min_speciation_gen > minimum_protracted_parameters.max_speciation_gen)
-            {
-                throw SpeciesException("Cannot have simulation with minimum speciation generation less than maximum!");
-            }
-        }
-        sqlite3_step(stmt2);
-        sqlite3_finalize(stmt2);
-#ifdef DEBUG
-        os << "done." << endl;
-        writeInfo(os.str());
-#endif
-    }
-    catch(exception &er)
+    string sql_parameters = "SELECT speciation_rate, grid_x, grid_y, protracted, min_speciation_gen, max_speciation_gen, "
+                            "sample_x_offset, sample_y_offset, sample_x, sample_y  FROM SIMULATION_PARAMETERS;";
+    auto stmt = database->prepare(sql_parameters);
+    database->step();
+    min_spec_rate = sqlite3_column_double(stmt->stmt, 0);
+    grid_x_size = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 1));
+    grid_y_size = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 2));
+    protracted = bool(sqlite3_column_int(stmt->stmt, 3));
+    minimum_protracted_parameters.min_speciation_gen = sqlite3_column_double(stmt->stmt, 4);
+    minimum_protracted_parameters.max_speciation_gen = sqlite3_column_double(stmt->stmt, 5);
+    samplemask_x_offset = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 6));
+    samplemask_y_offset = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 7));
+    samplemask_x_size = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 8));
+    samplemask_y_size = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 9));
+    if(protracted)
     {
-        throw SpeciesException(er.what());
+        if(minimum_protracted_parameters.max_speciation_gen == 0.0)
+        {
+            throw FatalException("Protracted speciation does not make sense when maximum speciation gen is 0.0.");
+        }
+        if(minimum_protracted_parameters.min_speciation_gen > minimum_protracted_parameters.max_speciation_gen)
+        {
+            throw FatalException("Cannot have simulation with minimum speciation generation less than maximum!");
+        }
     }
+    database->finalise();
+#ifdef DEBUG
+    os << "done." << endl;
+    writeInfo(os.str());
+#endif
     has_imported_data = true;
 }
 
@@ -1541,7 +1334,7 @@ void Community::forceSimCompleteParameter()
         openSqlConnection(spec_sim_parameters->filename);
     }
     string update_command = "UPDATE SIMULATION_PARAMETERS SET sim_complete=1 WHERE sim_complete=0;";
-    sqlite3_exec(database, update_command.c_str(), nullptr, nullptr, nullptr);
+    database->execute(update_command);
 }
 
 bool Community::isSetDatabase()
@@ -1575,8 +1368,8 @@ void Community::setProtractedParameters(const ProtractedSpeciationParameters &pr
         {
 #ifdef DEBUG
             writeLog(50, "Applied speciation current_metacommunity_parameters: " +
-            to_string(applied_protracted_parameters.minimum_protracted_parameters.min_speciation_gen) + ", " +
-                    to_string(applied_protracted_parameters.minimum_protracted_parameters.max_speciation_gen));
+            to_string(applied_protracted_parameters.min_speciation_gen) + ", " +
+                    to_string(applied_protracted_parameters.max_speciation_gen));
             writeLog(50, "Simulated speciation current_metacommunity_parameters: " + to_string(minimum_protracted_parameters.min_speciation_gen) +
              ", " + to_string(minimum_protracted_parameters.max_speciation_gen));
 #endif // DEBUG
@@ -1588,7 +1381,7 @@ void Community::setProtractedParameters(const ProtractedSpeciationParameters &pr
                << minimum_protracted_parameters.min_speciation_gen << ", "
                << minimum_protracted_parameters.max_speciation_gen << endl;
             writeCritical(ss.str());
-            throw SpeciesException(
+            throw FatalException(
                     "Cannot use protracted current_metacommunity_parameters with minimum > simulated minimum or "
                     "maximum > simulated maximums.");
         }
@@ -1611,44 +1404,17 @@ void Community::setProtracted(bool protracted_in)
 void Community::getPreviousCalcs()
 {
     writeInfo("Getting previous calculations...");
-    // Read the community current_metacommunity_parameters and store them in the relevant objects
-    sqlite3_stmt *stmt1;
-    string call1 = "select count(type) from sqlite_master where type='table' and name='COMMUNITY_PARAMETERS'";
-    int rc = sqlite3_prepare_v2(database, call1.c_str(), static_cast<int>(strlen(call1.c_str())), &stmt1, nullptr);
-    if(rc != SQLITE_DONE && rc != SQLITE_OK)
-    {
-        stringstream ss;
-        ss << "Could not detect COMMUNITY_PARAMETERS table while finding previous calculations. Error code: " << rc
-           << ": ";
-        ss << sqlite3_errmsg(database) << endl;
-        sqlite3_close_v2(database);
-        throw FatalException(ss.str());
-    }
-    sqlite3_step(stmt1);
-    auto has_community_parameters = static_cast<bool>(sqlite3_column_int(stmt1, 0));
-    sqlite3_step(stmt1);
-    sqlite3_finalize(stmt1);
     // Read the speciation rates from the community_parameters table
-    if(has_community_parameters)
+    if(database->hasTable("COMMUNITY_PARAMETERS"))
     {
-        sqlite3_stmt *stmt2;
         string call2 = "SELECT reference, speciation_rate, time, fragments, metacommunity_reference ";
         if(protracted)
         {
             call2 += ", min_speciation_gen, max_speciation_gen ";
         }
         call2 += " FROM COMMUNITY_PARAMETERS";
-        rc = sqlite3_prepare_v2(database, call2.c_str(), static_cast<int>(strlen(call2.c_str())), &stmt2,
-                                nullptr);
-        if(rc != SQLITE_DONE && rc != SQLITE_OK)
-        {
-            stringstream ss;
-            ss << "Could not select from COMMUNITY_PARAMETERS table. Error code: " << rc << ": ";
-            ss << sqlite3_errmsg(database) << endl;
-            sqlite3_close_v2(database);
-            throw SpeciesException(ss.str());
-        }
-        rc = sqlite3_step(stmt2);
+        auto stmt2 = database->prepare(call2);
+        int rc = stmt2->step();
         if(rc == SQLITE_ROW)
         {
             writeInfo("previous calculations detected.\n");
@@ -1659,7 +1425,7 @@ void Community::getPreviousCalcs()
         }
         while(rc == SQLITE_ROW)
         {
-            auto row_val = sqlite3_column_int(stmt2, 0);
+            auto row_val = sqlite3_column_int(stmt2->stmt, 0);
             if(row_val == 0)
             {
                 writeWarning(
@@ -1670,82 +1436,55 @@ void Community::getPreviousCalcs()
                 ProtractedSpeciationParameters tmp{};
                 if(protracted)
                 {
-                    tmp.min_speciation_gen = sqlite3_column_double(stmt2, 5);
-                    tmp.max_speciation_gen = sqlite3_column_double(stmt2, 6);
+                    tmp.min_speciation_gen = sqlite3_column_double(stmt2->stmt, 5);
+                    tmp.max_speciation_gen = sqlite3_column_double(stmt2->stmt, 6);
                 }
-                past_communities.pushBack(static_cast<unsigned long>(row_val), sqlite3_column_double(stmt2, 1),
-                                          sqlite3_column_double(stmt2, 2), bool(sqlite3_column_int(stmt2, 3)),
-                                          static_cast<unsigned long>(sqlite3_column_int(stmt2, 4)), tmp);
+                past_communities.pushBack(static_cast<unsigned long>(row_val), sqlite3_column_double(stmt2->stmt, 1),
+                                          sqlite3_column_double(stmt2->stmt, 2),
+                                          bool(sqlite3_column_int(stmt2->stmt, 3)),
+                                          static_cast<unsigned long>(sqlite3_column_int(stmt2->stmt, 4)), tmp);
             }
-            rc = sqlite3_step(stmt2);
+            rc = stmt2->step();
         }
         if(rc != SQLITE_OK && rc != SQLITE_DONE)
         {
             stringstream ss;
-            ss << "ERROR_SQL_020b: FATAL. Could not read community current_metacommunity_parameters." << endl;
-            ss << "Code: " << rc << endl << "Errmsg: ";
-            ss << sqlite3_errmsg(database) << endl;
-            sqlite3_clear_bindings(stmt2);
-            sqlite3_reset(stmt2);
-            throw SpeciesException(ss.str());
+            ss << "Could not read community current_metacommunity_parameters." << endl;
+            ss << database->getErrorMsg(rc);
+            stmt2->clearAndReset();
+            throw FatalException(ss.str());
         }
-        sqlite3_finalize(stmt2);
+        database->finalise();
     }
     else
     {
         writeInfo("no previous calculations detected.\n");
     }
-    // And the same for metacommunity current_metacommunity_parameters
-    sqlite3_stmt *stmt3;
-    string call3 = "select count(type) from sqlite_master where type='table' and name='METACOMMUNITY_PARAMETERS'";
-    rc = sqlite3_prepare_v2(database, call3.c_str(), static_cast<int>(strlen(call3.c_str())), &stmt3, nullptr);
-    if(rc != SQLITE_DONE && rc != SQLITE_OK)
+    // Read the speciation rates from the metacommunity table
+    if(database->hasTable("METACOMMUNITY_PARAMETERS"))
     {
-        sqlite3_close_v2(database);
-        throw SpeciesException(
-                "ERROR_SQL_020: FATAL. Could not check for METACOMMUNITY_PARAMETERS table. Error code: " +
-                to_string(rc));
-    }
-    sqlite3_step(stmt3);
-    has_community_parameters = static_cast<bool>(sqlite3_column_int(stmt3, 0));
-    sqlite3_step(stmt3);
-    sqlite3_finalize(stmt3);
-    // Read the speciation rates from the community_parameters table
-    if(has_community_parameters)
-    {
-        sqlite3_stmt *stmt4;
         string call4 = "SELECT reference, speciation_rate, metacommunity_size, option, external_reference FROM ";
         call4 += "METACOMMUNITY_PARAMETERS";
-        rc = sqlite3_prepare_v2(database, call4.c_str(), static_cast<int>(strlen(call4.c_str())), &stmt4,
-                                nullptr);
-        if(rc != SQLITE_DONE && rc != SQLITE_OK)
-        {
-            sqlite3_close_v2(database);
-            throw SpeciesException(
-                    "ERROR_SQL_020: FATAL. Could not detect METACOMMUNITY_PARAMETERS table. Error code: " +
-                    to_string(rc));
-        }
-        rc = sqlite3_step(stmt4);
+        auto stmt4 = database->prepare(call4);
+        int rc = stmt4->step();
         while(rc == SQLITE_ROW)
         {
-            past_metacommunities.pushBack(static_cast<unsigned long>(sqlite3_column_int(stmt4, 0)),
-                                          static_cast<unsigned long>(sqlite3_column_int(stmt4, 2)),
-                                          sqlite3_column_double(stmt4, 1), (char *) (sqlite3_column_text(stmt4, 3)),
-                                          static_cast<const unsigned long &>(sqlite3_column_int(stmt4, 4)));
-            rc = sqlite3_step(stmt4);
+            past_metacommunities.pushBack(static_cast<unsigned long>(sqlite3_column_int(stmt4->stmt, 0)),
+                                          static_cast<unsigned long>(sqlite3_column_int(stmt4->stmt, 2)),
+                                          sqlite3_column_double(stmt4->stmt, 1),
+                                          (char *) (sqlite3_column_text(stmt4->stmt, 3)),
+                                          static_cast<const unsigned long &>(sqlite3_column_int(stmt4->stmt, 4)));
+            rc = stmt4->step();
         }
         if(rc != SQLITE_OK && rc != SQLITE_DONE)
         {
             stringstream ss;
-            ss << "ERROR_SQL_020: FATAL. Could not read metacommunity current_metacommunity_parameters." << endl;
-            ss << "Code: " << rc << endl << "Errmsg: ";
-            ss << sqlite3_errmsg(database) << endl;
-            sqlite3_clear_bindings(stmt4);
-            sqlite3_reset(stmt4);
-            throw SpeciesException(ss.str());
+            ss << "Could not read metacommunity current_metacommunity_parameters." << endl;
+            ss << database->getErrorMsg(rc);
+            stmt4->clearAndReset();
+            throw FatalException(ss.str());
         }
-        sqlite3_step(stmt4);
-        sqlite3_finalize(stmt4);
+        database->finalise();
     }
 }
 
@@ -1785,49 +1524,22 @@ void Community::addCalculationPerformed(const long double &speciation_rate, cons
 vector<unsigned long> Community::getUniqueCommunityRefs()
 {
     vector<unsigned long> unique_community_refs;
-    // Read the community parameters and store them in the relevant objects
-    sqlite3_stmt *stmt1;
-    string call1 = "select count(type) from sqlite_master where type='table' and name='COMMUNITY_PARAMETERS'";
-    int rc = sqlite3_prepare_v2(database, call1.c_str(), static_cast<int>(strlen(call1.c_str())), &stmt1, nullptr);
-    if(rc != SQLITE_DONE && rc != SQLITE_OK)
-    {
-        stringstream ss;
-        ss << "Could not detect COMMUNITY_PARAMETERS table while getting unique community references. Error code: ";
-        ss << rc << ": " << sqlite3_errmsg(database) << endl;
-        sqlite3_close_v2(database);
-        throw FatalException(ss.str());
-    }
-    sqlite3_step(stmt1);
-    auto has_community_parameters = static_cast<bool>(sqlite3_column_int(stmt1, 0));
-    sqlite3_step(stmt1);
-    sqlite3_finalize(stmt1);
     // Read the speciation rates from the community_parameters table
-    if(has_community_parameters)
+    if(database->hasTable("COMMUNITY_PARAMETERS"))
     {
-        sqlite3_stmt *stmt2;
         string call2 = "SELECT DISTINCT(reference) FROM COMMUNITY_PARAMETERS";
-        rc = sqlite3_prepare_v2(database, call2.c_str(), static_cast<int>(strlen(call2.c_str())), &stmt2,
-                                nullptr);
-        if(rc != SQLITE_DONE && rc != SQLITE_OK)
-        {
-            stringstream ss;
-            ss << "Could not get distinct references from COMMUNITY_PARAMETERS table. Error code: " << rc << ": ";
-            ss << sqlite3_errmsg(database) << endl;
-            sqlite3_close_v2(database);
-            throw FatalException(ss.str());
-        }
-        rc = sqlite3_step(stmt2);
+        auto stmt2 = database->prepare(call2);
+        int rc = stmt2->step();
         while(rc != SQLITE_DONE)
         {
-            unique_community_refs.push_back(static_cast<unsigned long>(sqlite3_column_int(stmt2, 0)));
-            rc = sqlite3_step(stmt2);
+            unique_community_refs.push_back(static_cast<unsigned long>(sqlite3_column_int(stmt2->stmt, 0)));
+            rc = stmt2->step();
             if(rc > 10000)
             {
-                throw SpeciesException("Could not read speciation rates.");
+                throw FatalException("Could not read community parameter references.");
             }
         }
-        sqlite3_step(stmt2);
-        sqlite3_finalize(stmt2);
+        database->finalise();
     }
     return unique_community_refs;
 }
@@ -1835,47 +1547,22 @@ vector<unsigned long> Community::getUniqueCommunityRefs()
 vector<unsigned long> Community::getUniqueMetacommunityRefs()
 {
     vector<unsigned long> unique_metacommunity_refs;
-    // Read the community current_metacommunity_parameters and store them in the relevant objects
-    sqlite3_stmt *stmt1;
-    string call1 = "select count(type) from sqlite_master where type='table' and name='METACOMMUNITY_PARAMETERS'";
-    int rc = sqlite3_prepare_v2(database, call1.c_str(), static_cast<int>(strlen(call1.c_str())), &stmt1, nullptr);
-    if(rc != SQLITE_DONE && rc != SQLITE_OK)
-    {
-        sqlite3_close_v2(database);
-        throw SpeciesException(
-                "ERROR_SQL_020: FATAL. Could not check for METACOMMUNITY_PARAMETERS table. Error code: " +
-                to_string(rc));
-    }
-    sqlite3_step(stmt1);
-    auto has_metacommunity_parameters = static_cast<bool>(sqlite3_column_int(stmt1, 0));
-    sqlite3_step(stmt1);
-    sqlite3_finalize(stmt1);
     // Read the speciation rates from the community_parameters table
-    if(has_metacommunity_parameters)
+    if(database->hasTable("METACOMMUNITY_PARAMETERS"))
     {
-        sqlite3_stmt *stmt2;
         string call2 = "SELECT DISTINCT(reference) FROM METACOMMUNITY_PARAMETERS";
-        rc = sqlite3_prepare_v2(database, call2.c_str(), static_cast<int>(strlen(call2.c_str())), &stmt2,
-                                nullptr);
-        if(rc != SQLITE_DONE && rc != SQLITE_OK)
-        {
-            sqlite3_close_v2(database);
-            throw SpeciesException(
-                    "ERROR_SQL_020: FATAL. Could not detect METACOMMUNITY_PARAMETERS table. Error code: " +
-                    to_string(rc));
-        }
-        rc = sqlite3_step(stmt2);
+        auto stmt2 = database->prepare(call2);
+        int rc = stmt2->step();
         while(rc != SQLITE_DONE)
         {
-            unique_metacommunity_refs.push_back(static_cast<unsigned long>(sqlite3_column_int(stmt2, 0)));
-            rc = sqlite3_step(stmt2);
+            unique_metacommunity_refs.push_back(static_cast<unsigned long>(sqlite3_column_int(stmt2->stmt, 0)));
+            rc = stmt2->step();
             if(rc > 10000)
             {
-                throw SpeciesException("ERROR_SQL_020: FATAL. Could not read speciation rates.");
+                throw FatalException("Could not read speciation rates.");
             }
         }
-        sqlite3_step(stmt2);
-        sqlite3_finalize(stmt2);
+        database->finalise();
     }
     return unique_metacommunity_refs;
 }
@@ -1911,65 +1598,43 @@ void Community::writeNewCommunityParameters()
         }
         table_command += ");";
         table_command2 += ") " + table_command3 + ");";
-
-        sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
-        sqlite3_stmt *stmt = nullptr;
-
-        sqlite3_prepare_v2(database, table_command2.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
-                           nullptr);
-        // Then add the required elements
-        sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+        database->execute(table_command);
+        auto stmt = database->prepare(table_command2);
+        database->beginTransaction();
         for(auto &item : communities_to_write.comm_parameters)
         {
             if(item->reference == 0)
             {
                 continue;
             }
-            sqlite3_bind_int(stmt, 1, static_cast<int>(item->reference));
-            sqlite3_bind_double(stmt, 2, static_cast<double>(item->speciation_rate));
-            sqlite3_bind_double(stmt, 3, static_cast<double>(item->time));
-            sqlite3_bind_int(stmt, 4, static_cast<int>(item->fragment));
-            sqlite3_bind_int(stmt, 5, static_cast<int>(item->metacommunity_reference));
+            sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(item->reference));
+            sqlite3_bind_double(stmt->stmt, 2, static_cast<double>(item->speciation_rate));
+            sqlite3_bind_double(stmt->stmt, 3, static_cast<double>(item->time));
+            sqlite3_bind_int(stmt->stmt, 4, static_cast<int>(item->fragment));
+            sqlite3_bind_int(stmt->stmt, 5, static_cast<int>(item->metacommunity_reference));
             if(protracted)
             {
-                sqlite3_bind_double(stmt, 6, item->protracted_parameters.min_speciation_gen);
-                sqlite3_bind_double(stmt, 7, item->protracted_parameters.max_speciation_gen);
+                sqlite3_bind_double(stmt->stmt, 6, item->protracted_parameters.min_speciation_gen);
+                sqlite3_bind_double(stmt->stmt, 7, item->protracted_parameters.max_speciation_gen);
             }
             time_t start_check, end_check;
             time(&start_check);
             time(&end_check);
-            int step = sqlite3_step(stmt);
-            while(step != SQLITE_DONE && (end_check - start_check) < 10 && step != SQLITE_OK)
-            {
-                step = sqlite3_step(stmt);
-                time(&end_check);
-            }
+            int step = stmt->step();
             if(step != SQLITE_DONE)
             {
                 stringstream ss;
-                ss << "SQLITE error code: " << step << endl;
-                ss << sqlite3_errmsg(database) << endl;
-                ss << "ERROR_SQL_004a: Could not insert into database. Check destination file has not "
+                ss << "Could not insert into database. Check destination file has not "
                       "been moved or deleted and that an entry doesn't already exist with the same ID."
                    << endl;
-                sqlite3_clear_bindings(stmt);
-                sqlite3_reset(stmt);
-                writeWarning(ss.str());
-                break;
+                ss << database->getErrorMsg(step);
+                stmt->clearAndReset();
+                throw FatalException(ss.str());
             }
-            sqlite3_clear_bindings(stmt);
-            sqlite3_reset(stmt);
+            stmt->clearAndReset();
         }
-        int rc1 = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, nullptr);
-        // Need to finalise the statement
-        int rc2 = sqlite3_finalize(stmt);
-        if(rc1 != SQLITE_OK || rc2 != SQLITE_OK)
-        {
-            stringstream ss;
-            ss << "ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and SQL "
-                  "commands. Please report this bug." << endl;
-            writeWarning(ss.str());
-        }
+        database->endTransaction();
+        database->finalise();
     }
 }
 
@@ -2002,62 +1667,41 @@ void Community::writeNewMetacommunityParameters()
         string table_command = "CREATE TABLE IF NOT EXISTS METACOMMUNITY_PARAMETERS (reference INT PRIMARY KEY NOT NULL,"
                                " speciation_rate DOUBLE NOT NULL, metacommunity_size DOUBLE NOT NULL, "
                                "option TEXT NOT NULL, external_reference INT NOT NULL);";
-        sqlite3_exec(database, table_command.c_str(), nullptr, nullptr, nullptr);
-        sqlite3_stmt *stmt = nullptr;
+        database->execute(table_command);
         table_command = "INSERT INTO METACOMMUNITY_PARAMETERS (reference, speciation_rate, metacommunity_size, "
                         "option, external_reference) VALUES (?,?,?, ?, ?);";
-        sqlite3_prepare_v2(database, table_command.c_str(), static_cast<int>(strlen(table_command.c_str())), &stmt,
-                           nullptr);
-        // Then add the required elements
-        sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, nullptr);
+        auto stmt = database->prepare(table_command);
+        database->beginTransaction();
         for(auto &item : metacommunities_to_write.metacomm_parameters)
         {
             if(item->reference == 0)
             {
                 continue;
             }
-            sqlite3_bind_int(stmt, 1, static_cast<int>(item->reference));
-            sqlite3_bind_double(stmt, 2, static_cast<double>(item->speciation_rate));
-            sqlite3_bind_int(stmt, 3, static_cast<int>(item->metacommunity_size));
-            sqlite3_bind_text(stmt, 4, item->option.c_str(), static_cast<int>(item->option.length()), SQLITE_TRANSIENT);
-            sqlite3_bind_int(stmt, 5, static_cast<int>(item->external_reference));
-            time_t start_check, end_check;
-            time(&start_check);
-            time(&end_check);
-            int step = sqlite3_step(stmt);
-            while(step != SQLITE_DONE && (end_check - start_check) < 10 && step != SQLITE_OK)
-            {
-                step = sqlite3_step(stmt);
-                time(&end_check);
-            }
+            sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(item->reference));
+            sqlite3_bind_double(stmt->stmt, 2, static_cast<double>(item->speciation_rate));
+            sqlite3_bind_int(stmt->stmt, 3, static_cast<int>(item->metacommunity_size));
+            sqlite3_bind_text(stmt->stmt, 4, item->option.c_str(), static_cast<int>(item->option.length()),
+                              SQLITE_TRANSIENT);
+            sqlite3_bind_int(stmt->stmt, 5, static_cast<int>(item->external_reference));
+            int step = stmt->step();
             if(step != SQLITE_DONE)
             {
 #ifdef DEBUG
                 stringstream ss;
-                ss << "SQLITE error code: " << step << endl;
+                ss << database->getErrorMsg(step);
                 ss << "Metacommunity reference: " << item->reference << endl;
                 ss << "Speciation rate: " << item->speciation_rate << ", metacommunity size: " << item->metacommunity_size << endl;
-                ss << sqlite3_errmsg(database) << endl;
                 writeLog(10, ss);
 #endif // DEBUG
-                throw SpeciesException("ERROR_SQL_004b: Could not insert into database. Check destination file has not "
-                                       "been moved or deleted and that an entry doesn't already exist with the"
-                                       " same ID.");
+                throw FatalException("Could not insert into database. Check destination file has not "
+                                     "been moved or deleted and that an entry doesn't already exist with the"
+                                     " same ID.");
             }
-            sqlite3_clear_bindings(stmt);
-            sqlite3_reset(stmt);
+            stmt->clearAndReset();
         }
-        int rc1 = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, nullptr);
-        // Need to finalise the statement
-        int rc2 = sqlite3_finalize(stmt);
-        if(rc1 != SQLITE_OK || rc2 != SQLITE_OK)
-        {
-            stringstream ss;
-            ss << "ERROR_SQL_013: Could not complete SQL transaction. Check memory database assignment and SQL "
-                  "commands. Please report this bug." << endl;
-            ss << sqlite3_errmsg(database) << endl;
-            writeWarning(ss.str());
-        }
+        database->endTransaction();
+        database->finalise();
     }
 }
 
@@ -2067,18 +1711,11 @@ void Community::createSpeciesList()
     create_species_list =
             "CREATE TABLE SPECIES_LIST (ID int PRIMARY KEY NOT NULL, unique_spec INT NOT NULL, xval INT NOT NULL,";
     create_species_list += "yval INT NOT NULL, xwrap INT NOT NULL, ywrap INT NOT NULL, tip INT NOT NULL, speciated INT NOT "
-                           "NULL, parent INT NOT NULL, existence INT NOT NULL, randnum DOUBLE NOT NULL, gen_alive INT NOT "
-                           "NULL, gen_added DOUBLE NOT NULL);";
+                           "NULL, parent INT NOT NULL, existence INT NOT NULL, randnum REAL NOT NULL, gen_alive INT NOT "
+                           "NULL, gen_added REAL NOT NULL);";
 
     // Create the table within the SQL database
-    char *sErrMsg = nullptr;
-    int rc = sqlite3_exec(database, create_species_list.c_str(), nullptr, nullptr, &sErrMsg);
-    if(rc != SQLITE_OK)
-    {
-        stringstream ss;
-        ss << "Error creating SPECIES_LIST table in database: " << sErrMsg << endl;
-        throw FatalException(ss.str());
-    }
+    database->execute(create_species_list);
 }
 
 void Community::deleteSpeciesList()
@@ -2087,88 +1724,43 @@ void Community::deleteSpeciesList()
     wipe_species_list =
             "DROP TABLE IF EXISTS SPECIES_LIST;";
     // Drop the table from the SQL database
-    char *sErrMsg = nullptr;
-    int rc = sqlite3_exec(database, wipe_species_list.c_str(), nullptr, nullptr, &sErrMsg);
-    if(rc != SQLITE_OK)
-    {
-        stringstream ss;
-        ss << "Error dropping SPECIES_LIST table in database: " << sErrMsg << endl;
-        throw FatalException(ss.str());
-    }
+    database->execute(wipe_species_list);
 }
 
 void Community::writeSpeciesList(const unsigned long &enddata)
 {
-    sqlite3_stmt *stmt = nullptr;
-    char *sErrMsg = nullptr;
     // Now create the prepared statement into which we shall insert the values from the table
     string insert_species_list = "INSERT INTO SPECIES_LIST "
-                                 "(ID,unique_spec,xval,yval,xwrap,ywrap,tip,speciated,parent,existence,randnum,gen_alive,gen_added) "
+                                 "(ID,unique_spec,xval,yval,xwrap,ywrap,tip,speciated,parent,existence,"
+                                 "randnum,gen_alive,gen_added) "
                                  "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    sqlite3_prepare_v2(database, insert_species_list.c_str(), static_cast<int>(strlen(insert_species_list.c_str())),
-                       &stmt, nullptr);
-
+    auto stmt = database->prepare(insert_species_list);
     // Start the transaction
-    int rc = sqlite3_exec(database, "BEGIN TRANSACTION;", nullptr, nullptr, &sErrMsg);
-    if(rc != SQLITE_OK)
-    {
-        writeError("ERROR_SQL_008: Cannot start SQL transaction. Check memory database assignment and SQL commands.");
-    }
+    database->beginTransaction();
     for(unsigned int i = 0; i <= enddata; i++)
     {
-        sqlite3_bind_int(stmt, 1, i);
-        sqlite3_bind_int(stmt, 2, static_cast<int>((*nodes)[i].getSpeciesID()));
-        sqlite3_bind_int(stmt, 3, static_cast<int>((*nodes)[i].getXpos()));
-        sqlite3_bind_int(stmt, 4, static_cast<int>((*nodes)[i].getYpos()));
-        sqlite3_bind_int(stmt, 5, static_cast<int>((*nodes)[i].getXwrap()));
-        sqlite3_bind_int(stmt, 6, static_cast<int>((*nodes)[i].getYwrap()));
-        sqlite3_bind_int(stmt, 7, (*nodes)[i].isTip());
-        sqlite3_bind_int(stmt, 8, (*nodes)[i].hasSpeciated());
-        sqlite3_bind_int(stmt, 9, static_cast<int>((*nodes)[i].getParent()));
-        sqlite3_bind_int(stmt, 10, (*nodes)[i].exists());
-        sqlite3_bind_double(stmt, 11, static_cast<double>((*nodes)[i].getSpecRate()));
-        sqlite3_bind_int(stmt, 12, static_cast<int>((*nodes)[i].getGenRate()));
-        sqlite3_bind_double(stmt, 13, static_cast<double>((*nodes)[i].getGeneration()));
-        sqlite3_step(stmt);
-        sqlite3_clear_bindings(stmt);
-        sqlite3_reset(stmt);
+        sqlite3_bind_int(stmt->stmt, 1, i);
+        sqlite3_bind_int(stmt->stmt, 2, static_cast<int>((*nodes)[i].getSpeciesID()));
+        sqlite3_bind_int(stmt->stmt, 3, static_cast<int>((*nodes)[i].getXpos()));
+        sqlite3_bind_int(stmt->stmt, 4, static_cast<int>((*nodes)[i].getYpos()));
+        sqlite3_bind_int(stmt->stmt, 5, static_cast<int>((*nodes)[i].getXwrap()));
+        sqlite3_bind_int(stmt->stmt, 6, static_cast<int>((*nodes)[i].getYwrap()));
+        sqlite3_bind_int(stmt->stmt, 7, (*nodes)[i].isTip());
+        sqlite3_bind_int(stmt->stmt, 8, (*nodes)[i].hasSpeciated());
+        sqlite3_bind_int(stmt->stmt, 9, static_cast<int>((*nodes)[i].getParent()));
+        sqlite3_bind_int(stmt->stmt, 10, (*nodes)[i].exists());
+        sqlite3_bind_double(stmt->stmt, 11, static_cast<double>((*nodes)[i].getSpecRate()));
+        sqlite3_bind_int(stmt->stmt, 12, static_cast<int>((*nodes)[i].getGenRate()));
+        sqlite3_bind_double(stmt->stmt, 13, static_cast<double>((*nodes)[i].getGeneration()));
+        database->step();
+        stmt->clearAndReset();
+
     }
     stringstream os;
     os << "\tExecuting SQL commands...." << endl;
     writeInfo(os.str());
-    // execute the command and close the connection to the database
-    rc = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, &sErrMsg);
-    if(rc != SQLITE_OK)
-    {
-        stringstream ss;
-        ss << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
-              "commands. Ensure SQL statements are properly cleared."
-           << endl;
-        ss << "Error code: " << rc << endl;
-        // try again
-        int i = 0;
-        while((rc != SQLITE_OK && rc != SQLITE_DONE) && i < 10)
-        {
-            sleep(1);
-            i++;
-            rc = sqlite3_exec(database, "END TRANSACTION;", nullptr, nullptr, &sErrMsg);
-            ss << "Attempt " << i << " failed..." << endl;
-            ss << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
-                  "commands. Ensure SQL statements are properly cleared." << endl;
-        }
-        writeError(ss.str());
-    }
-    // Need to finalise the statement
-    rc = sqlite3_finalize(stmt);
-    if(rc != SQLITE_OK)
-    {
-        stringstream ss;
-        ss << "ERROR_SQL_008: Cannot complete SQL transaction. Check memory database assignment and SQL "
-              "commands. Ensure SQL statements are properly cleared."
-           << endl;
-        ss << "Error code: " << rc << endl;
-    }
-
+    database->endTransaction();
+    database->finalise();
 }
 
 void Community::updateCommunityParameters()
@@ -2185,16 +1777,7 @@ void Community::updateCommunityParameters()
             // Now find out the max size of the species_id_list, so we have a count to work from
             string count_command = "UPDATE COMMUNITY_PARAMETERS SET fragments = 1 WHERE reference = ";
             count_command += to_string(parameter->reference) + ";";
-            int rc = sqlite3_exec(database, count_command.c_str(), nullptr, nullptr, nullptr);
-            // Need to finalise the statement
-            if(rc != SQLITE_OK && rc != SQLITE_DONE)
-            {
-                stringstream ss;
-                ss << "ERROR_SQL_013: Could not update sql database. Check file write access. ";
-                ss << "Otherwise, please report this bug." << endl;
-                ss << sqlite3_errmsg(database) << endl;
-                writeWarning(ss.str());
-            }
+            database->execute(count_command);
         }
     }
 }
@@ -2228,7 +1811,8 @@ void Community::writeSpeciationRates()
         }
     }
     writeInfo(os.str());
-    if(!spec_sim_parameters->protracted_parameters.empty())
+    if(!spec_sim_parameters->protracted_parameters.empty() &&
+       spec_sim_parameters->metacommunity_parameters.hasMetacommunityOption())
     {
         os.str("");
         os << "Protracted speciation parameters (min, max) are: " << endl;
@@ -2243,7 +1827,7 @@ void Community::writeSpeciationRates()
     os.str("");
     if(!spec_sim_parameters->metacommunity_parameters.empty())
     {
-        os << "Metacommunity parameters are: ";
+        os << "Metacommunity parameters are: " << endl;
         for(const auto &item: spec_sim_parameters->metacommunity_parameters)
         {
             if(item->metacommunity_size > 0)
@@ -2386,6 +1970,7 @@ void Community::speciateRemainingLineages(const string &filename)
     importData(filename);
     spec_sim_parameters->filename = filename;
     // Skip the first entry as it's always blank
+    (*nodes)[0] = TreeNode();
     for(unsigned long i = 1; i < nodes->size(); i++)
     {
         TreeNode *this_node = &(*nodes)[i];
@@ -2397,7 +1982,7 @@ void Community::speciateRemainingLineages(const string &filename)
     }
     deleteSpeciesList();
     createSpeciesList();
-    writeSpeciesList(nodes->size());
+    writeSpeciesList(nodes->size() - 1);
     forceSimCompleteParameter();
     exportDatabase();
 
@@ -2409,17 +1994,14 @@ unsigned long Community::getSpeciesRichness(const unsigned long &community_refer
     {
         throw FatalException("Attempted to get from sql database without opening database connection.");
     }
-    sqlite3_stmt *stmt = nullptr;
     // Now find out the max size of the species_id_list, so we have a count to work from
     string count_command = "SELECT COUNT(DISTINCT(species_id)) FROM SPECIES_ABUNDANCES WHERE no_individuals > 0 ";
     count_command += "AND community_reference == ";
     count_command += to_string(community_reference) + ";";
-    sqlite3_prepare_v2(database, count_command.c_str(), static_cast<int>(strlen(count_command.c_str())), &stmt,
-                       nullptr);
-    sqlite3_step(stmt);
-    int tmp_val = sqlite3_column_int(stmt, 0);
-    // close the old statement
-    sqlite3_finalize(stmt);
+    auto stmt = database->prepare(count_command);
+    database->step();
+    int tmp_val = sqlite3_column_int(stmt->stmt, 0);
+    database->finalise();
     return static_cast<unsigned long>(tmp_val);
 }
 
@@ -2430,48 +2012,27 @@ shared_ptr<map<unsigned long, unsigned long>> Community::getSpeciesAbundances(co
         throw FatalException("Attempted to get from sql database without opening database connection.");
     }
     // Check that the table exists
-    sqlite3_stmt *stmt1;
-    string call1 = "select count(type) from sqlite_master where type='table' and name='SPECIES_ABUNDANCES'";
-    int rc = sqlite3_prepare_v2(database, call1.c_str(), static_cast<int>(strlen(call1.c_str())), &stmt1, nullptr);
-    if(rc != SQLITE_DONE && rc != SQLITE_OK)
+    if(!database->hasTable("SPECIES_ABUNDANCES"))
     {
-        sqlite3_close_v2(database);
-        throw SpeciesException("Could not check for SPECIES_ABUNDANCES table. Error code: " +
-                               to_string(rc));
-    }
-    sqlite3_step(stmt1);
-    auto has_species_abundances = static_cast<bool>(sqlite3_column_int(stmt1, 0));
-    sqlite3_step(stmt1);
-    sqlite3_finalize(stmt1);
-    // Get the number of species in the table matching the community reference
-    if(!has_species_abundances)
-    {
-        throw SpeciesException("No SPECIES_ABUNDANCES table has been written yet.");
+        throw FatalException("No SPECIES_ABUNDANCES table has been written yet.");
     }
     string call2 = "select count(distinct(species_id)) from SPECIES_ABUNDANCES where no_individuals>0 and ";
     call2 += "community_reference == " + to_string(community_reference);
-    rc = sqlite3_prepare_v2(database, call2.c_str(), static_cast<int>(strlen(call2.c_str())), &stmt1, nullptr);
-    if(rc != SQLITE_DONE && rc != SQLITE_OK)
-    {
-        sqlite3_close_v2(database);
-        throw SpeciesException("Could not check for SPECIES_ABUNDANCES table. Error code: " +
-                               to_string(rc));
-    }
-    sqlite3_step(stmt1);
-    auto no_species = static_cast<unsigned int>(sqlite3_column_int(stmt1, 0));
+    auto stmt = database->prepare(call2);
+    database->step();
+    auto no_species = static_cast<unsigned int>(sqlite3_column_int(stmt->stmt, 0));
     if(no_species == 0)
     {
         stringstream ss;
         ss << "No species found in SPECIES_ABUNDANCES for reference of " << community_reference << endl;
-        throw SpeciesException(ss.str());
+        throw FatalException(ss.str());
     }
-    sqlite3_step(stmt1);
-    sqlite3_finalize(stmt1);
+    database->finalise();
     // Now fetch the species abundances
     string all_commands = "SELECT species_id, no_individuals FROM SPECIES_ABUNDANCES WHERE community_reference ==";
     all_commands += to_string(community_reference) + ";";
-    sqlite3_prepare_v2(database, all_commands.c_str(), static_cast<int>(strlen(all_commands.c_str())), &stmt1, nullptr);
-    sqlite3_step(stmt1);
+    stmt = database->prepare(all_commands);
+    database->step();
     // Copy the data across to the TreeNode data structure.
     // For storing the number of ignored lineages so this can be subtracted off the parent number.
     shared_ptr<map<unsigned long, unsigned long>> output_species_abundances =
@@ -2479,17 +2040,17 @@ shared_ptr<map<unsigned long, unsigned long>> Community::getSpeciesAbundances(co
     unsigned long i = 0;
     while(i < no_species)
     {
-        auto species_id = static_cast<unsigned long>(sqlite3_column_int(stmt1, 0));
-        auto no_individuals = static_cast<unsigned long>(sqlite3_column_int(stmt1, 1));
+        auto species_id = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0));
+        auto no_individuals = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 1));
         if(no_individuals > 0)
         {
             (*output_species_abundances)[species_id] = no_individuals;
             i++;
         }
-        sqlite3_step(stmt1);
+        database->step();
     }
     // Now we need to blank all objects
-    sqlite3_finalize(stmt1);
+    database->finalise();
     return output_species_abundances;
 }
 
@@ -2500,7 +2061,7 @@ shared_ptr<vector<unsigned long>> Community::getSpeciesAbundances()
 
 bool Community::isDatabaseNullPtr()
 {
-    return database == nullptr;
+    return database->isOpen();
 }
 
 

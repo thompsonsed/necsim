@@ -54,34 +54,62 @@ struct SpecSimParameters
     SpecSimParameters(const string &fragment_config_file) : fragment_config_file(fragment_config_file){}
 
     /**
-     * @brief Sets the application arguments for the inputs. Intended for use with the applyspecmodule for
-     * integration with python.
-     *
+     * @brief Adds a speciation rate to the speciation parameters list.
+     * @param speciation_rate the speciation rate to add
+     */
+    void addSpeciationRate(const double &speciation_rate)
+    {
+        all_speciation_rates.insert(speciation_rate);
+        bMultiRun = all_speciation_rates.size() > 1;
+    }
+
+    /**
+     * @brief Sets the application arguments for the inputs.
+     * @param file_in the database to apply speciation rates to
+     * @param use_spatial_in if true, record full spatial data
+     * @param sample_file the sample file to select lineages from the map
+     * @param use_fragments_in fragment file, or "T"/"F" for automatic detection/no detection
+     */
+    void setup(string file_in, bool use_spatial_in, string sample_file, const string &use_fragments_in)
+    {
+        filename = std::move(file_in);
+        use_spatial = use_spatial_in;
+        samplemask = std::move(sample_file);
+        use_fragments = !(use_fragments_in == "F");
+        fragment_config_file = use_fragments_in;
+    }
+
+    /**
+     * @brief Sets the application arguments for the inputs.
      * @param file_in the database to apply speciation rates to
      * @param use_spatial_in if true, record full spatial data
      * @param sample_file the sample file to select lineages from the map
      * @param times vector of times to apply
      * @param use_fragments_in fragment file, or "T"/"F" for automatic detection/no detection
      * @param speciation_rates the speciation rates to apply
-     * @param min_speciation_gen_in the minimum generation rate for speciation in protracted simulations
-     * @param max_speciation_gen_in the maximum generation rate for speciation in protracted simulations
      */
     void setup(string file_in, bool use_spatial_in, string sample_file, const vector<double> &times,
                const string &use_fragments_in, vector<double> speciation_rates)
     {
         setup(file_in, use_spatial_in, sample_file, times, use_fragments_in);
-        for(auto speciation_rate : speciation_rates)
+        for(const auto &speciation_rate : speciation_rates)
         {
-            all_speciation_rates.insert(speciation_rate);
+            addSpeciationRate(speciation_rate);
         }
     }
 
+    /**
+     * @brief Sets the application arguments for the inputs. Overloaded version without speciation rates.
+     * @param file_in the database to apply speciation rates to
+     * @param use_spatial_in if true, record full spatial data
+     * @param sample_file the sample file to select lineages from the map
+     * @param times vector of times to apply
+     * @param use_fragments_in fragment file, or "T"/"F" for automatic detection/no detection
+     */
     void setup(string file_in, bool use_spatial_in, string sample_file, const vector<double> &times,
                const string &use_fragments_in)
     {
-        filename = std::move(file_in);
-        use_spatial = use_spatial_in;
-        samplemask = std::move(sample_file);
+        setup(file_in, use_spatial_in, sample_file, use_fragments_in);
         if(times.empty() && all_times.empty())
         {
             times_file = "null";
@@ -89,16 +117,14 @@ struct SpecSimParameters
         }
         else
         {
-            times_file = "set";
-            for(const auto item : times)
+            for(const auto &time: times)
             {
-                all_times.insert(item);
+                addTime(time);
             }
         }
-        use_fragments = !(use_fragments_in == "F");
-        fragment_config_file = use_fragments_in;
-        bMultiRun = all_speciation_rates.size() > 1;
     }
+
+
 
     /**
      * @brief Sets the metacommunity parameters for the simulation.
@@ -175,6 +201,10 @@ struct SpecSimParameters
     void addTime(double time)
     {
         all_times.insert(time);
+        if(all_times.size() > 1)
+        {
+            times_file = "set";
+        }
     }
 
     /**

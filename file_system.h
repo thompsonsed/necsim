@@ -18,6 +18,8 @@
 #include <cmath>
 #include <sqlite3.h>
 #include <string>
+#include <cstdio>
+#include <iostream>
 
 #ifndef SPECIATIONCOUNTER_FILESYSTEM_H
 #define SPECIATIONCOUNTER_FILESYSTEM_H
@@ -108,12 +110,13 @@ ostream &operator<<(ostream &os, const vector<T> &v)
     return os;
 }
 
-/**
- * @brief Overloading the << operator for inputting from an input stream.
- * @param is the input stream.
- * @param r the Row object to input to.
- * @return the input stream.
- */
+ /**
+  * @brief Overloaded input stream operator for a vector of objects
+  * @tparam T the objects stored in a vector
+  * @param is the input stream
+  * @param v the vector of objects to read in to
+  * @return the input stream
+  */
 template<class T>
 istream &operator>>(istream &is, vector<T> &v)
 {

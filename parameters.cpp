@@ -167,6 +167,10 @@ MetacommunityParameters::MetacommunityParameters(const unsigned long &reference_
 bool MetacommunityParameters::compare(unsigned long metacommunity_size_in, long double speciation_rate_in,
                                       const string &option_in, const unsigned long &ext_reference_in)
 {
+    if(option_in == "none" && metacommunity_size == 0)
+    {
+        return option == "none" && metacommunity_size == 0;
+    }
     if(option_in == "simulated" || option_in == "analytical")
     {
         return doubleCompare(speciation_rate, speciation_rate_in, speciation_rate * 0.000001) &&
@@ -228,6 +232,16 @@ MetacommunityParameters &MetacommunityParameters::operator=(const MetacommunityP
     option = parameters.option;
     external_reference = parameters.external_reference;
     return *this;
+}
+
+bool MetacommunityParameters::operator==(const MetacommunityParameters &parameters)
+{
+    return compare(parameters);
+}
+
+bool MetacommunityParameters::operator!=(const MetacommunityParameters &parameters)
+{
+    return !compare(parameters);
 }
 
 MetacommunitiesArray::MetacommunitiesArray() : metacomm_parameters()
@@ -391,5 +405,18 @@ void MetacommunitiesArray::addNull()
 {
     MetacommunityParameters null_parameters;
     addNew(null_parameters);
+}
+
+bool MetacommunitiesArray::hasMetacommunityOption()
+{
+    MetacommunityParameters null_parameters;
+    for(const auto & item: metacomm_parameters)
+    {
+        if(*item != null_parameters)
+        {
+            return true;
+        }
+    }
+    return false;
 }
 

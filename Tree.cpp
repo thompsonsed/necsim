@@ -322,9 +322,9 @@ void Tree::addSpeciationRates(vector<long double> spec_rates_in)
         else
         {
             stringstream ss;
-            ss << "ERROR_SQL_018b: Speciation rate of " << item;
-            ss << " is less than the minimum possible (" << spec << ") - skipping." << endl;
-            throw SpeciesException(ss.str());
+            ss << "Speciation rate of " << item << " is less than the minimum possible (" << spec;
+            ss << ") - skipping." << endl;
+            throw FatalException(ss.str());
         }
     }
     // Sort the speciation rates remove duplicates
@@ -824,19 +824,7 @@ shared_ptr<vector<unsigned long>> Tree::getSpeciesAbundances()
 
 ProtractedSpeciationParameters Tree::setupCommunity()
 {
-    if(!community.hasImportedData())
-    {
-        community.setSimParameters(sim_parameters);
-        community.setDatabase(database);
-    }
-    community.resetTree();
-    community.internalOption();
-    ProtractedSpeciationParameters tmp;
-    tmp.min_speciation_gen = getProtractedGenerationMin();
-    tmp.max_speciation_gen = getProtractedGenerationMax();
-    community.overrideProtractedParameters(tmp);
-    community.setProtracted(getProtracted());
-    return tmp;
+    return community.setupInternal(sim_parameters, database);
 }
 
 void Tree::setupCommunityCalculation(long double sr, double t)
@@ -978,36 +966,9 @@ void Tree::sqlOutput()
     stringstream os;
     os << "\tWriting to " << sql_output_database << "..." << endl;
     writeInfo(os.str());
-    openSQLiteDatabase(sql_output_database, outdatabase);
+    outdatabase.open(sql_output_database);
     // create the backup object to write data to the file from memory.
-    sqlite3_backup *backupdb;
-    backupdb = sqlite3_backup_init(outdatabase, "main", database, "main");
-    if(!backupdb)
-    {
-        writeError("ERROR_SQL_011: Could not write to the backup database. Check the file exists");
-    }
-    // Perform the backup
-    int rc = sqlite3_backup_step(backupdb, -1);
-    if(rc != SQLITE_OK && rc != SQLITE_DONE)
-    {
-        int i = 0;
-        while((rc != SQLITE_OK && rc != SQLITE_DONE) && i < 10)
-        {
-            i++;
-            sleep(1);
-            rc = sqlite3_backup_step(backupdb, -1);
-        }
-        if(rc != SQLITE_OK && rc != SQLITE_DONE)
-        {
-            stringstream ss;
-            ss << "ERROR_SQL_010: SQLite database file could not be opened. Check the folder exists and you "
-                  "have write permissions. (REF3) Error code: "
-               << rc << endl;
-            ss << "Attempted call " << i << " times" << endl;
-            writeWarning(ss.str());
-        }
-    }
-    sqlite3_backup_finish(backupdb);
+    outdatabase.backupFrom(*database);
 #endif
 }
 
@@ -1122,13 +1083,13 @@ void Tree::writeTimes()
 
 void Tree::openSQLDatabase()
 {
-    if(database == nullptr)
+    if(!database->isOpen())
     {
 #ifdef sql_ram
-        sqlite3_open(":memory:", &database);
+        database->open(":memory:");
 #endif
 #ifndef sql_ram
-        openSQLiteDatabase(sql_output_database, database);
+        database->open(sql_output_database);
 #endif
     }
 }
@@ -1146,24 +1107,15 @@ void Tree::sqlCreate()
     os.str("");
     os << "\tGenerating species list...." << endl;
     writeInfo(os.str());
-    // for outputting the full data from the simulation in to a SQL file.
-    char *sErrMsg = nullptr;
-    int rc = 0;
-// Open a SQL database in memory. This will be written to disk later.
-// A check here can be done to write to disc directly instead to massively reduce RAM consumption
+    // Open a SQL database in memory. This will be written to disk later.
+    // A check here can be done to write to disc directly instead to massively reduce RAM consumption
     openSQLDatabase();
     setupCommunity();
     // Create the command to be executed by adding to the string.
     community.createSpeciesList();
     community.writeSpeciesList(enddata);
     // Vacuum the file so that the file size is reduced (reduces by around 3%)
-    rc = sqlite3_exec(database, "VACUUM;", nullptr, nullptr, &sErrMsg);
-    if(rc != SQLITE_OK)
-    {
-        stringstream ss;
-        ss << "ERROR_SQL_014: Cannot vacuum the database. Error message: " << sErrMsg << endl;
-        writeError(ss.str());
-    }
+    database->execute("VACUUM;");
     sqlCreateSimulationParameters();
 }
 
@@ -1189,7 +1141,6 @@ void Tree::setupOutputDirectory()
 
 void Tree::sqlCreateSimulationParameters()
 {
-    char *sErrMsg;
 // Now additionally store the simulation current_metacommunity_parameters (extremely useful data)
     string to_execute = "CREATE TABLE SIMULATION_PARAMETERS (seed INT PRIMARY KEY not null, job_type INT NOT NULL,";
     to_execute += "output_dir TEXT NOT NULL, speciation_rate DOUBLE NOT NULL, sigma DOUBLE NOT NULL,tau DOUBLE NOT "
@@ -1208,25 +1159,9 @@ void Tree::sqlCreateSimulationParameters()
     to_execute += "dispersal_method TEXT NOT NULL, m_probability DOUBLE NOT NULL, cutoff DOUBLE NOT NULL, ";
     to_execute += "restrict_self INT NOT NULL, landscape_type TEXT NOT NULL, protracted INT NOT NULL, ";
     to_execute += "min_speciation_gen DOUBLE NOT NULL, max_speciation_gen DOUBLE NOT NULL, dispersal_map TEXT NOT NULL);";
-    int rc = sqlite3_exec(database, to_execute.c_str(), nullptr, nullptr, &sErrMsg);
-    if(rc != SQLITE_OK)
-    {
-        stringstream ss;
-        ss << "ERROR_SQL_008: Cannot start SQL transaction. Check memory database assignment and SQL commands."
-           << endl;
-        ss << "Error code: " << rc << endl;
-        writeError(ss.str());
-    }
+    database->execute(to_execute);
     to_execute = simulationParametersSqlInsertion();
-    rc = sqlite3_exec(database, to_execute.c_str(), nullptr, nullptr, &sErrMsg);
-    if(rc != SQLITE_OK)
-    {
-        stringstream os;
-        os << "ERROR_SQL_008: Cannot start SQL transaction. Check memory database assignment and SQL commands."
-           << endl;
-        os << "Error code: " << rc << endl;
-        writeWarning(os.str());
-    }
+    database->execute(to_execute);
 }
 
 string Tree::simulationParametersSqlInsertion()

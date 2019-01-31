@@ -20,6 +20,7 @@
 #include <string>
 #include <cstdio>
 #include <iostream>
+#include <vector>
 
 #ifndef SPECIATIONCOUNTER_FILESYSTEM_H
 #define SPECIATIONCOUNTER_FILESYSTEM_H

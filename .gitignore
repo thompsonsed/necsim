@@ -2,7 +2,7 @@
 \.DS_Store
 *fast-cpp-csv-parser*
 *.o
-
+*.tmp
 cmake-build-debug/
 
 \.idea/

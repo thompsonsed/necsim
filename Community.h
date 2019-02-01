@@ -127,7 +127,7 @@ protected:
     bool database_set; // boolean for whether the database has been set already.
     shared_ptr<SQLiteHandler> database; // stores the in-memory database connection.
     bool bSqlConnection; // true if the data connection has been established.
-    shared_ptr<vector<TreeNode>> nodes; // in older versions this was called species_id_list. Changed to avoid confusion with the built-in class.
+    shared_ptr<vector<TreeNode>> nodes; // in older versions this was called species_id_list.
     shared_ptr<vector<unsigned long>> species_abundances;
     unsigned long iSpecies;
     bool has_imported_samplemask; // checks whether the samplemask has already been imported.
@@ -136,7 +136,8 @@ protected:
     vector<Fragment> fragments; // a vector of fragments for storing each fragment's coordinates.
     shared_ptr<CommunityParameters> current_community_parameters;
     shared_ptr<MetacommunityParameters> current_metacommunity_parameters;
-    // the minimum speciation rate the original simulation was run with (this is read from the database SIMULATION_PARAMETERS table)
+    // the minimum speciation rate the original simulation was run with
+    // this is read from the database SIMULATION_PARAMETERS table
     long double min_spec_rate;
     // The dimensions of the sample grid size.
     unsigned long grid_x_size, grid_y_size;
@@ -320,6 +321,13 @@ public:
      */
     void setSimParameters(shared_ptr<SimParameters> sim_parameters);
 
+    /**
+     * @brief Sets the speciation parameters from a SpecSimParameters object.
+     * @note Be careful of the difference between this function and setSimParameters (which sets the main simulation
+     * parameters).
+     * @param spec_sim_parameters pointer to the SpecSimParameters object containing community speciation parameters
+     */
+    void setSpecSimParameters(shared_ptr<SpecSimParameters> spec_sim_parameters);
     /**
      * @brief Imports the simulation parameters by reading the SIMULATION_PARAMETERS table in the provided file.
      * This imports the grid_x_size, grid_y_size (which should also be the sample map dimensions) and the minimum
@@ -564,6 +572,7 @@ public:
      */
     void calculateTree();
 
+    // TODO check if needs removing
     void makeSpeciationRatesUnique();
 
     void makeTimesUnique();
@@ -589,9 +598,16 @@ public:
 
     /**
      * @brief Applies the given speciation parameters to the coalescence tree, but does not write the output.
-     * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure.
+     * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
      */
-    virtual void applyNoOutput(shared_ptr<SpecSimParameters> sp);
+    void applyNoOutput(shared_ptr<SpecSimParameters> sp);
+
+    /**
+     * @brief Applies the given speciation parameters to the coalescence tree, but does not write the output.
+     * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
+     * @param tree_data the coalescence tree containing simulation data
+     */
+    virtual void applyNoOutput(shared_ptr<SpecSimParameters> sp, shared_ptr<vector<TreeNode>> tree_data);
 
     /**
      * @brief Creates the coalescence tree for the given speciation parameters.

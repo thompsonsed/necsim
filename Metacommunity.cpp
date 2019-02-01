@@ -133,7 +133,7 @@ void Metacommunity::createMetacommunityNSENeutralModel()
 #endif //DEBUG
 }
 
-void Metacommunity::applyNoOutput(shared_ptr<SpecSimParameters> sp)
+void Metacommunity::applyNoOutput(shared_ptr<SpecSimParameters> sp, shared_ptr<vector<TreeNode>> tree_data)
 {
 #ifdef DEBUG
     writeLog(10, "********************");
@@ -167,7 +167,7 @@ void Metacommunity::applyNoOutput(shared_ptr<SpecSimParameters> sp)
 #ifdef DEBUG
         writeLog(10, "Creating coalescence tree from metacommunity...");
 #endif //DEBUG
-        Community::applyNoOutput(sp);
+        doApplication(sp, tree_data);
     }
 }
 

@@ -69,9 +69,12 @@ void Community::setList(shared_ptr<vector<TreeNode>> l)
 ProtractedSpeciationParameters Community::setupInternal(shared_ptr<SimParameters> sim_parameters,
                                                         shared_ptr<SQLiteHandler> database)
 {
-    if(!hasImportedData())
+    if(!has_imported_data)
     {
         setSimParameters(sim_parameters);
+    }
+    if(!database_set)
+    {
         setDatabase(std::move(database));
     }
     resetTree();
@@ -1272,6 +1275,11 @@ void Community::setSimParameters(const shared_ptr<SimParameters> sim_parameters)
     has_imported_data = true;
 }
 
+void Community::setSpecSimParameters(shared_ptr<SpecSimParameters> spec_sim_parameters)
+{
+    this->spec_sim_parameters = spec_sim_parameters;
+}
+
 void Community::importSimParameters(string file)
 {
     if(has_imported_data)
@@ -1917,7 +1925,13 @@ void Community::apply(shared_ptr<SpecSimParameters> sp)
 
 void Community::applyNoOutput(shared_ptr<SpecSimParameters> sp)
 {
-    doApplication(std::move(sp));
+    shared_ptr<vector<TreeNode>> tree_data = make_shared<vector<TreeNode>>();
+    applyNoOutput(sp, tree_data);
+}
+
+void Community::applyNoOutput(shared_ptr<SpecSimParameters> sp, shared_ptr<vector<TreeNode>> tree_data)
+{
+    doApplication(std::move(sp), std::move(tree_data));
 }
 
 void Community::doApplication(shared_ptr<SpecSimParameters> sp)
@@ -2061,7 +2075,7 @@ shared_ptr<vector<unsigned long>> Community::getSpeciesAbundances()
 
 bool Community::isDatabaseNullPtr()
 {
-    return database->isOpen();
+    return !database->isOpen();
 }
 
 

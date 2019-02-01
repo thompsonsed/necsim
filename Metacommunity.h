@@ -88,7 +88,7 @@ public:
      * for the metacommunity structure, but doesn't write the output
       * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure.
       */
-    void applyNoOutput(shared_ptr<SpecSimParameters> sp) override;
+    void applyNoOutput(shared_ptr<SpecSimParameters> sp, shared_ptr<vector<TreeNode>> tree_data) override;
 
     /**
      * @brief Approximates the SAD from a NSE neutral model, based on Chisholm and Pacala (2010).

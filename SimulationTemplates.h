@@ -17,7 +17,7 @@
 
 #include <string>
 #include <sstream>
-#include "Logger.h"
+#include "Logging.h"
 #include "custom_exceptions.h"
 
 /**

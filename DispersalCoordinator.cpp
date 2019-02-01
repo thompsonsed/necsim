@@ -13,7 +13,7 @@
 #include "DispersalCoordinator.h"
 #include <utility>
 #include "custom_exceptions.h"
-#include "Logger.h"
+#include "Logging.h"
 
 DispersalCoordinator::DispersalCoordinator() : dispersal_prob_map(), raw_dispersal_prob_map(), NR(nullptr),
                                                landscape(make_shared<Landscape>()),

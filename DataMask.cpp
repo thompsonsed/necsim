@@ -9,7 +9,7 @@
 
 #include "DataMask.h"
 #include "Landscape.h"
-#include "Logger.h"
+#include "Logging.h"
 
 DataMask::DataMask() : inputfile(""), isNullSample(true), isGridOffset(false), x_offset(0), y_offset(0), x_dim(0),
                        y_dim(0), mask_x_dim(0), mask_y_dim(0), getProportionfptr(nullptr), sample_mask(),

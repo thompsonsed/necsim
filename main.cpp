@@ -38,7 +38,6 @@
 #endif
 #endif
 
-#include "Logging.h"
 #include "Logger.h"
 #include "SpatialTree.h"
 #include "SimulationTemplates.h"

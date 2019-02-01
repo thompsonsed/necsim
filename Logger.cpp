@@ -8,8 +8,7 @@
  */
 
 #include <sstream>
-#include "Logger.h"
-#include "LogFile.h"
+#include "Logging.h"
 
 using namespace std;
 
@@ -20,7 +19,9 @@ void Logger::writeInfo(string message)
 #ifdef DEBUG
     writeLog(20, message);
 #endif // DEBUG
+#ifdef verbose
     cout << message << flush;
+#endif // verbose
 }
 
 void Logger::writeWarning(string message)
@@ -28,7 +29,9 @@ void Logger::writeWarning(string message)
 #ifdef DEBUG
     writeLog(30, message);
 #endif // DEBUG
+#ifdef verbose
     cerr << message << flush;
+#endif // verbose
 }
 
 void Logger::writeError(string message)
@@ -36,7 +39,9 @@ void Logger::writeError(string message)
 #ifdef DEBUG
     writeLog(40, message);
 #endif // DEBUG
+#ifdef verbose
     cerr << message << flush;
+#endif // verbose
 }
 
 void Logger::writeCritical(string message)
@@ -44,7 +49,9 @@ void Logger::writeCritical(string message)
 #ifdef DEBUG
     writeLog(50, message);
 #endif // DEBUG
+#ifdef verbose
     cerr << message << flush;
+#endif // verbose
 }
 
 #ifdef DEBUG

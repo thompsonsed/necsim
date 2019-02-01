@@ -15,12 +15,11 @@
 #include <string>
 #include <cstring>
 #include <sstream>
-#include "Logger.h"
 #include <gdal_priv.h>
 #include <cpl_conv.h> // for CPLMalloc()
 #include <sstream>
+#include "Logging.h"
 #include "Matrix.h"
-#include "Logger.h"
 #include "custom_exceptions.h"
 #include "cpl_custom_handler.h"
 

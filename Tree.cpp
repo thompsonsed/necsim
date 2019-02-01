@@ -18,7 +18,7 @@
 #endif
 
 #include "Tree.h"
-#include "Logger.h"
+#include "Logging.h"
 #include "LogFile.h"
 
 void Tree::importSimulationVariables(const string &configfile)

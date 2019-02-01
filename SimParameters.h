@@ -16,7 +16,7 @@
 #include <utility>
 #include <vector>
 #include "ConfigParser.h"
-#include "Logger.h"
+#include "Logging.h"
 #include "custom_exceptions.h"
 #include "file_system.h"
 

@@ -24,7 +24,7 @@
 
 #include "file_system.h"
 #include "custom_exceptions.h"
-#include "Logger.h"
+#include "Logging.h"
 
 void openSQLiteDatabase(const string &database_name, sqlite3 *&database)
 {

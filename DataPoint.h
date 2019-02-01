@@ -15,7 +15,7 @@
 #define DATAPOINT_H
 
 #include <iostream>
-#include "Logger.h"
+#include "Logging.h"
 
 using namespace std;
 

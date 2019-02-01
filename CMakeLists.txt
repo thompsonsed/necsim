@@ -29,6 +29,7 @@ set(SOURCE_FILES
         ${SOURCE_DIR_NECSIM}/SpeciesList.cpp
         ${SOURCE_DIR_NECSIM}/TreeNode.cpp
         ${SOURCE_DIR_NECSIM}/SpatialTree.cpp
+        ${SOURCE_DIR_NECSIM}/SQLiteHandler.cpp
         ${SOURCE_DIR_NECSIM}/Tree.cpp
         ${SOURCE_DIR_NECSIM}/cpl_custom_handler.cpp
         ${SOURCE_DIR_NECSIM}/custom_exceptions.h

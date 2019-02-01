@@ -26,7 +26,7 @@
 #include <iostream>
 #include <fstream>
 #include <climits>
-#include "Logger.h"
+#include "Logging.h"
 
 using namespace std;
 /**

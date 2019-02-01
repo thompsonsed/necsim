@@ -80,7 +80,7 @@
 #include "setup.h"
 #include "DispersalCoordinator.h"
 #include "ActivityMap.h"
-#include "Logger.h"
+#include "Logging.h"
 
 using namespace std;
 

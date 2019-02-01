@@ -15,7 +15,7 @@
 #include "ConfigParser.h"
 #include <boost/filesystem/operations.hpp>
 #include "custom_exceptions.h"
-#include "Logger.h"
+#include "Logging.h"
 
 void importArgs(const unsigned int &argc, char *argv[], vector<string> &comargs)
 {

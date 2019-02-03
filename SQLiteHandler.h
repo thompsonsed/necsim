@@ -14,13 +14,15 @@
 
 #include <sqlite3.h>
 #include <utility>
-#include <unistd.h>
 #include <memory>
 
 #ifdef WIN_INSTALL
 #include <windows.h>
 #define sleep Sleep
-#endif
+#else
+#include <unistd.h>
+#endif // WIN_INSTALL
+
 
 #include "file_system.h"
 #include "custom_exceptions.h"

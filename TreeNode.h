@@ -61,12 +61,11 @@ private:
     // Simulation generation timer that the lineage was created at
     long double generation_added;
 public:
-/**
- * @brief The default constructor.
- */
-    TreeNode()
-            : tip(false), parent(0), speciated(false), does_exist(false), species_id(0), xpos(0), ypos(0), xwrap(0),
-              ywrap(0), speciation_probability(0.0), generations_existed(0), generation_added(0.0)
+    /**
+     * @brief The default constructor.
+     */
+    TreeNode() : tip(false), parent(0), speciated(false), does_exist(false), species_id(0), xpos(0), ypos(0), xwrap(0),
+                 ywrap(0), speciation_probability(0.0), generations_existed(0), generation_added(0.0)
     {
 
     }
@@ -299,7 +298,7 @@ public:
      * Logs all lineage variables on separate logging lines.
      * @param level the level to be logged at
      */
-    void logLineageInformation(const int& level);
+    void logLineageInformation(const int &level);
 
 #endif // DEBUG
 };

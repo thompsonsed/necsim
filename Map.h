@@ -25,7 +25,9 @@
 
 using namespace std;
 #ifdef DEBUG
+
 #include "custom_exceptions.h"
+
 #endif // DEBUG
 
 /**
@@ -36,8 +38,8 @@ template<class T>
 class Map : public virtual Matrix<T>
 {
 protected:
-    GDALDataset *po_dataset;
-    GDALRasterBand *po_band;
+    GDALDataset* po_dataset;
+    GDALRasterBand* po_band;
     unsigned long block_x_size, block_y_size;
     double no_data_value;
     string file_name;
@@ -82,7 +84,7 @@ public:
         if(!po_dataset)
         {
             file_name = filename_in;
-            po_dataset = (GDALDataset *) GDALOpen(file_name.c_str(), GA_ReadOnly);
+            po_dataset = (GDALDataset*) GDALOpen(file_name.c_str(), GA_ReadOnly);
         }
         else
         {
@@ -122,10 +124,10 @@ public:
         if(po_dataset)
         {
             GDALClose(po_dataset);
-//			if(po_dataset)
-//			{
-//				throw FatalException("po_dataset not nullptr after closing, please report this bug.");
-//			}
+            //			if(po_dataset)
+            //			{
+            //				throw FatalException("po_dataset not nullptr after closing, please report this bug.");
+            //			}
             po_dataset = nullptr;
             po_band = nullptr;
         }
@@ -217,17 +219,18 @@ public:
         upper_left_y = geoTransform[3];
         x_res = geoTransform[1];
         y_res = -geoTransform[5];
-//		checkTifImportFailure();
+        //		checkTifImportFailure();
 #ifdef DEBUG
         printMetaData();
 #endif // DEBUG
     }
 
 #ifdef DEBUG
+
     void printMetaData()
     {
         stringstream ss;
-        const char *dt_name = GDALGetDataTypeName(gdal_data_type);
+        const char* dt_name = GDALGetDataTypeName(gdal_data_type);
         ss << "Filename: " << file_name << endl;
         writeLog(10, ss.str());
         ss.str("");
@@ -235,13 +238,14 @@ public:
         writeLog(10, ss.str());
         ss.str("");
         ss << "Geo-transform (ulx, uly, x res, y res): " << upper_left_x << ", " << upper_left_y << ", ";
-        ss << x_res << ", " << y_res << ", " <<endl;
+        ss << x_res << ", " << y_res << ", " << endl;
         writeLog(10, ss.str());
         ss.str("");
         ss << "No data value: " << no_data_value << endl;
         writeLog(10, ss.str());
 
     }
+
 #endif //DEBUG
 
     /**
@@ -312,7 +316,7 @@ public:
                 setSize(block_y_size, block_x_size);
             }
             // Check the data types are support
-            const char *dt_name = GDALGetDataTypeName(gdal_data_type);
+            const char* dt_name = GDALGetDataTypeName(gdal_data_type);
             if(gdal_data_type == 0 || gdal_data_type > 7)
             {
                 throw FatalException("Data type of " + string(dt_name) + " is not supported.");
@@ -446,8 +450,8 @@ public:
         writeInfo("\nConverting from double to boolean.\n");
         unsigned int number_printed = 0;
         // create an empty row of type float
-        double *t1;
-        t1 = (double *) CPLMalloc(sizeof(double) * num_cols);
+        double* t1;
+        t1 = (double*) CPLMalloc(sizeof(double) * num_cols);
         // import the data a row at a time, using our template row.
         for(uint32_t j = 0; j < num_rows; j++)
         {
@@ -487,8 +491,8 @@ public:
         writeInfo(ss.str());
         unsigned int number_printed = 0;
         // create an empty row of type float
-        T2 *t1;
-        t1 = (T2 *) CPLMalloc(sizeof(T2) * num_cols);
+        T2* t1;
+        t1 = (T2*) CPLMalloc(sizeof(T2) * num_cols);
         if(CPLGetLastErrorNo() != CE_None)
         {
             stringstream os;
@@ -498,7 +502,7 @@ public:
         // import the data a row at a time, using our template row.
         auto int_block_x_size = static_cast<int>(block_x_size);
 #ifdef DEBUG
-        if(sizeof(T2)*8 != GDALGetDataTypeSize(dt_buff))
+        if(sizeof(T2) * 8 != GDALGetDataTypeSize(dt_buff))
         {
             stringstream ss0;
             ss0 << "Size of template (" << sizeof(T2) << ") does not equal size of gdal buffer (";

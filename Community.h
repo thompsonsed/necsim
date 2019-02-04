@@ -78,15 +78,15 @@ public:
      */
     Samplematrix();
 
-//	/**
-//	 * @brief Returns the value at the x,y position.
-//	 * This is used for testing purposes only.
-//	 * @param xval the x coordinate.
-//	 * @param yval the y coordinate
-//	 * @param xwrap the x wrapping
-//	 * @param ywrap the y wrapping
-//	 * @return the value at x,y.
-//	 */
+    //	/**
+    //	 * @brief Returns the value at the x,y position.
+    //	 * This is used for testing purposes only.
+    //	 * @param xval the x coordinate.
+    //	 * @param yval the y coordinate
+    //	 * @param xwrap the x wrapping
+    //	 * @param ywrap the y wrapping
+    //	 * @return the value at x,y.
+    //	 */
     bool getTestVal(unsigned long xval, unsigned long yval, long xwrap, long ywrap);
 
     /**
@@ -267,7 +267,7 @@ public:
      * @param treenode pointer to the TreeNode object for this lineage
      * @param species_list the set of all species ids.
      */
-    virtual void addSpecies(unsigned long &species_count, TreeNode *treenode, set<unsigned long> &species_list);
+    virtual void addSpecies(unsigned long &species_count, TreeNode* treenode, set<unsigned long> &species_list);
 
     /**
      * @brief Calculates the species abundance of the dataset.
@@ -328,6 +328,7 @@ public:
      * @param spec_sim_parameters pointer to the SpecSimParameters object containing community speciation parameters
      */
     void setSpecSimParameters(shared_ptr<SpecSimParameters> spec_sim_parameters);
+
     /**
      * @brief Imports the simulation parameters by reading the SIMULATION_PARAMETERS table in the provided file.
      * This imports the grid_x_size, grid_y_size (which should also be the sample map dimensions) and the minimum

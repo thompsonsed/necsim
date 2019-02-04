@@ -222,18 +222,18 @@ TreeNode &TreeNode::operator=(const TreeNode &t)
 
 #ifdef DEBUG
 
-void TreeNode::logLineageInformation(const int& level)
+void TreeNode::logLineageInformation(const int &level)
 {
     writeLog(level, "Logging lineage information");
-    writeLog(level, "parent: "+to_string(parent));
-    writeLog(level, "tip: "+to_string(tip));
-    writeLog(level, "speciated: "+to_string(speciated));
-    writeLog(level, "existance: "+to_string(does_exist));
-    writeLog(level, "x, y, (x wrap, y wrap): "+to_string(xpos)+", "+to_string(ypos)+", "+
-            to_string(xwrap)+", "+to_string(ywrap));
-    writeLog(level, "speciation rate: "+to_string(speciation_probability));
-    writeLog(level, "generations (added, existed): "+to_string(generation_added)+", "+
-            to_string(generations_existed));
+    writeLog(level, "parent: " + to_string(parent));
+    writeLog(level, "tip: " + to_string(tip));
+    writeLog(level, "speciated: " + to_string(speciated));
+    writeLog(level, "existance: " + to_string(does_exist));
+    writeLog(level, "x, y, (x wrap, y wrap): " + to_string(xpos) + ", " + to_string(ypos) + ", " +
+                    to_string(xwrap) + ", " + to_string(ywrap));
+    writeLog(level, "speciation rate: " + to_string(speciation_probability));
+    writeLog(level, "generations (added, existed): " + to_string(generation_added) + ", " +
+                    to_string(generations_existed));
 }
 
 #endif // DEBUG

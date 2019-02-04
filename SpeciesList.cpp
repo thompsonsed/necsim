@@ -151,7 +151,7 @@ void SpeciesList::changePercentCover(unsigned long newmaxsize)
     maxsize = newmaxsize;
 }
 
-unsigned long SpeciesList::getRandLineage(shared_ptr<NRrand> rand_no)
+unsigned long SpeciesList::getRandLineage(shared_ptr<RNGController> rand_no)
 {
     double rand_index;
     if(maxsize <= list_size)

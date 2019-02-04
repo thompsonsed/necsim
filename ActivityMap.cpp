@@ -18,7 +18,7 @@ bool ActivityMap::isNull()
     return null_map;
 }
 
-void ActivityMap::import(string file_name, unsigned long size_x, unsigned long size_y, shared_ptr<NRrand> random_in)
+void ActivityMap::import(string file_name, unsigned long size_x, unsigned long size_y, shared_ptr<RNGController> random_in)
 {
     random = std::move(random_in);
     map_file = file_name;

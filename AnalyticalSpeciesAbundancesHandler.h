@@ -17,7 +17,7 @@
 
 #include "SpeciesAbundancesHandler.h"
 #include "neutral_analytical.h"
-#include "NRrand.h"
+#include "RNGController.h"
 
 namespace na = neutral_analytical;
 using namespace std;
@@ -46,7 +46,7 @@ public:
      * @param community_size the number of individuals in the community
      * @param speciation_rate the speciation rate of the community
      */
-    void setup(shared_ptr<NRrand> random, const unsigned long &community_size,
+    void setup(shared_ptr<RNGController> random, const unsigned long &community_size,
                const long double &speciation_rate) override;
 
     /**

@@ -26,7 +26,7 @@
 #include <set>
 #include "Landscape.h"
 #include "DispersalCoordinator.h"
-#include "NRrand.h"
+#include "RNGController.h"
 #include "Cell.h"
 #include "DataMask.h"
 #include "SQLiteHandler.h"
@@ -48,7 +48,7 @@ protected:
     // Stores all key simulation current_metacommunity_parameters for the Landscape object
     shared_ptr<SimParameters> simParameters;
     // The random number generator object
-    shared_ptr<NRrand> random;
+    shared_ptr<RNGController> random;
     // The random number seed
     unsigned long seed;
     // The sqlite3 database object for storing outputs
@@ -71,7 +71,7 @@ protected:
     unsigned long max_parameter_reference;
 public:
     SimulateDispersal() : density_landscape(make_shared<Landscape>()), data_mask(), dispersal_coordinator(),
-                          simParameters(make_shared<SimParameters>()), random(make_shared<NRrand>()), database(),
+                          simParameters(make_shared<SimParameters>()), random(make_shared<RNGController>()), database(),
                           distances(), parameter_references(), cells(), num_steps()
     {
         num_repeats = 0;

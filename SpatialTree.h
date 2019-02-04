@@ -70,7 +70,7 @@
 // other includes for required files
 #include "Tree.h"
 #include "Matrix.h"
-#include "NRrand.h"
+#include "RNGController.h"
 #include "SimParameters.h"
 #include "DataPoint.h"
 #include "TreeNode.h"

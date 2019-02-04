@@ -21,7 +21,7 @@
 #include <cmath>
 #include <memory>
 
-#include "NRrand.h"
+#include "RNGController.h"
 #include "Map.h"
 #include "Step.h"
 #include "Landscape.h"
@@ -50,7 +50,7 @@ protected:
     // This is a pointer so that the random number generator is the same
     // across the program.
 
-    shared_ptr<NRrand> NR;
+    shared_ptr<RNGController> NR;
     // Pointer to the landscape object for getting density values.
     shared_ptr<Landscape> landscape;
     // Pointer to the reproduction map object for obtaining reproduction probabilities
@@ -82,7 +82,7 @@ public:
      * @brief Sets the random number pointer to an NRrand instance.
      * @param NR_ptr the random number object to set to
      */
-    void setRandomNumber(shared_ptr<NRrand> NR_ptr);
+    void setRandomNumber(shared_ptr<RNGController> NR_ptr);
 
     /**
      * @brief Sets the pointer to the Landscape object

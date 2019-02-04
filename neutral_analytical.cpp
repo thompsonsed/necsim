@@ -14,7 +14,7 @@
 #include <sstream>
 #include <stdexcept>
 #include "neutral_analytical.h"
-#include "NRrand.h"
+#include "RNGController.h"
 
 namespace neutral_analytical
 {

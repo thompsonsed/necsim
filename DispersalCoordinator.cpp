@@ -26,7 +26,7 @@ DispersalCoordinator::DispersalCoordinator() : dispersal_prob_map(), raw_dispers
 DispersalCoordinator::~DispersalCoordinator()
 = default;
 
-void DispersalCoordinator::setRandomNumber(shared_ptr<NRrand> NR_ptr)
+void DispersalCoordinator::setRandomNumber(shared_ptr<RNGController> NR_ptr)
 {
     NR = std::move(NR_ptr);
 }

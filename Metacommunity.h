@@ -23,7 +23,7 @@
 #include <memory>
 #include "Community.h"
 #include "Tree.h"
-#include "NRrand.h"
+#include "RNGController.h"
 #include "SpecSimParameters.h"
 #include "SpeciesAbundancesHandler.h"
 
@@ -41,7 +41,7 @@ protected:
     unsigned long job_type;
     bool parameters_checked;
     unique_ptr<SpeciesAbundancesHandler> species_abundances_handler;
-    shared_ptr<NRrand> random;
+    shared_ptr<RNGController> random;
     unique_ptr<Tree> metacommunity_tree;
 public:
 

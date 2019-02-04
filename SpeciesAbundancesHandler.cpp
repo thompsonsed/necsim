@@ -14,10 +14,10 @@
 #include "SpeciesAbundancesHandler.h"
 #include "custom_exceptions.h"
 
-SpeciesAbundancesHandler::SpeciesAbundancesHandler() : random(make_shared<NRrand>()), max_species_id(0),
+SpeciesAbundancesHandler::SpeciesAbundancesHandler() : random(make_shared<RNGController>()), max_species_id(0),
                                                        community_size(0), speciation_rate(0.0){}
 
-void SpeciesAbundancesHandler::setup(shared_ptr<NRrand> random, const unsigned long &community_size,
+void SpeciesAbundancesHandler::setup(shared_ptr<RNGController> random, const unsigned long &community_size,
                                      const long double &speciation_rate)
 {
     SpeciesAbundancesHandler::random = std::move(random);

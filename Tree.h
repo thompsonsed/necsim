@@ -30,7 +30,7 @@
 #include "TreeNode.h"
 #include "Matrix.h"
 #include "SimParameters.h"
-#include "NRrand.h"
+#include "RNGController.h"
 #include "DataPoint.h"
 #include "Community.h"
 #include "file_system.h"
@@ -52,7 +52,7 @@ protected:
     // Stores the command line current_metacommunity_parameters and parses the required information.
     shared_ptr<SimParameters> sim_parameters;
     // random number generator
-    shared_ptr<NRrand> NR;
+    shared_ptr<RNGController> NR;
     // Storing the speciation rates for later reference.
     vector<long double> speciation_rates;
     // flag for having set the simulation seed.
@@ -123,7 +123,7 @@ protected:
     string pause_sim_directory;
 public:
     Tree() : data(make_shared<vector<TreeNode>>()), enddata(0), sim_parameters(make_shared<SimParameters>()),
-             NR(make_shared<NRrand>()), speciation_rates(), seeded(false),
+             NR(make_shared<RNGController>()), speciation_rates(), seeded(false),
              seed(-1), job_type(-1), times_file("null"), reference_times(), uses_temporal_sampling(false),
              start(0), sim_start(0), sim_end(0), now(0), sim_finish(0), out_finish(0), time_taken(0), active(),
              endactive(0), startendactive(0), maxsimsize(0), community(data), steps(0), maxtime(0), generation(0.0),

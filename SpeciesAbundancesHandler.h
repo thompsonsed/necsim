@@ -17,7 +17,7 @@
 #include <vector>
 #include <map>
 #include <memory>
-#include "NRrand.h"
+#include "RNGController.h"
 
 using namespace std;
 
@@ -28,7 +28,7 @@ class SpeciesAbundancesHandler
 {
 protected:
 
-    shared_ptr<NRrand> random;
+    shared_ptr<RNGController> random;
     unsigned long max_species_id;
     unsigned long community_size;
     long double speciation_rate;
@@ -50,7 +50,7 @@ public:
      * @param community_size the number of individuals in the community
      * @param speciation_rate the speciation rate of the community
      */
-    virtual void setup(shared_ptr<NRrand> random, const unsigned long &community_size,
+    virtual void setup(shared_ptr<RNGController> random, const unsigned long &community_size,
                        const long double &speciation_rate);
 
     /**

@@ -171,7 +171,7 @@ A brief description of the important classes is given below. Some classes also c
 	- Contains a single record of the location of a lineage.
 	- An array of datapoints makes up the `active` object in `Tree`.
 	- `endactive` refers to the number of lineages currently being simulated. After each coalescence or speciation event this will decrease.
-* The `NRrand` class
+* The `RNGController` class
 	- Contains the random number generator, as written by James Rosindell (j.rosindell@imperial.ac.uk).
 * The `Landscape` class
 	- Contains the routines for importing and calling values from the map objects.

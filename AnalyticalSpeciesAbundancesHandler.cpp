@@ -20,7 +20,7 @@ AnalyticalSpeciesAbundancesHandler::AnalyticalSpeciesAbundancesHandler() : seen_
 
 }
 
-void AnalyticalSpeciesAbundancesHandler::setup(shared_ptr<NRrand> random, const unsigned long &community_size,
+void AnalyticalSpeciesAbundancesHandler::setup(shared_ptr<RNGController> random, const unsigned long &community_size,
                                                const long double &speciation_rate)
 {
     SpeciesAbundancesHandler::setup(random, community_size, speciation_rate);

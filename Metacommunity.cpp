@@ -27,7 +27,7 @@ namespace na = neutral_analytical;
 
 Metacommunity::Metacommunity() : seed(0), job_type(0), parameters_checked(false),
                                  species_abundances_handler(make_unique<SimulatedSpeciesAbundancesHandler>()),
-                                 random(make_shared<NRrand>()),
+                                 random(make_shared<RNGController>()),
                                  metacommunity_tree(make_unique<Tree>())
 {
 

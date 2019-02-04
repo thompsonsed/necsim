@@ -20,7 +20,7 @@
 #include <fstream>
 #include <memory>
 #include "Map.h"
-#include "NRrand.h"
+#include "RNGController.h"
 
 /**
  * @brief Contains the routines for importing activity maps and getting a cell value from the map.
@@ -41,7 +41,7 @@ protected:
     // The fine map offsets and the sample map dimensions
     unsigned long offset_x, offset_y, x_dim, y_dim;
     // Random number generator
-    shared_ptr<NRrand> random;
+    shared_ptr<RNGController> random;
 
     // Function pointer for our reproduction map checker
     typedef bool (ActivityMap::*rep_ptr)(const unsigned long &x, const unsigned long &y, const long &xwrap,
@@ -50,7 +50,7 @@ protected:
     // once setup will contain the end check function to use for this simulation.
     rep_ptr activity_map_checker_fptr;
 public:
-    ActivityMap() : activity_map(), offset_x(0), offset_y(0), x_dim(0), y_dim(0), random(make_shared<NRrand>()),
+    ActivityMap() : activity_map(), offset_x(0), offset_y(0), x_dim(0), y_dim(0), random(make_shared<RNGController>()),
                     activity_map_checker_fptr(nullptr)
     {
         map_file = "none";
@@ -71,7 +71,7 @@ public:
      * @param size_x the x dimensions of the map file
      * @param size_y the y dimensions of the map file
      */
-    void import(string file_name, unsigned long size_x, unsigned long size_y, shared_ptr<NRrand> random_in);
+    void import(string file_name, unsigned long size_x, unsigned long size_y, shared_ptr<RNGController> random_in);
 
     /**
      * @brief Correctly sets the reproduction function to either rejectionSampleNull or rejectionSample
@@ -198,7 +198,7 @@ public:
         unsigned long col, row;
         is >> col >> row;
         is >> r.offset_x >> r.offset_y >> r.x_dim >> r.y_dim;
-        r.import(r.map_file, col, row, shared_ptr<NRrand>());
+        r.import(r.map_file, col, row, shared_ptr<RNGController>());
         return is;
     }
 

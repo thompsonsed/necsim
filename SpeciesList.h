@@ -29,7 +29,7 @@
 #endif
 
 #include "Matrix.h"
-#include "NRrand.h"
+#include "RNGController.h"
 
 using namespace std;
 
@@ -142,7 +142,7 @@ public:
      * @param rand_no the random number object to pass (for maintaining the same seed throughout simulations).
      * @return the reference of the random lineage. 0 indicates an empty space.
      */
-    unsigned long getRandLineage(shared_ptr<NRrand> rand_no);
+    unsigned long getRandLineage(shared_ptr<RNGController> rand_no);
 
     /**
      * @brief Get the species reference number from a particular entry.

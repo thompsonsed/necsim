@@ -22,7 +22,7 @@
 #include <numeric>
 
 #include "neutral_analytical.h"
-#include "NRrand.h"
+#include "RNGController.h"
 #include "custom_exceptions.h"
 #include "double_comparison.h"
 #include "SpeciesAbundancesHandler.h"

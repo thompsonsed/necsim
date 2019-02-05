@@ -232,7 +232,7 @@ public:
     friend istream &operator>>(istream &is, Xoroshiro256plus &x)
     {
         char delim;
-        for(unsigned long &i : x.shuffle_table)
+        for(auto &i : x.shuffle_table)
         {
             is >> i >> delim;
         }

@@ -42,11 +42,12 @@ static inline uint64_t rotl(const uint64_t &value, int bits)
  */
 static inline double intToDouble(const uint64_t &i)
 {
-    const union
+    union un
     {
         uint64_t i;
         double d;
-    } u = {.i = UINT64_C(0x3FF) << 52 | i >> 12};
+    };
+    const un u = {.i = UINT64_C(0x3FF) << 52 | i >> 12};
     return u.d - 1.0;
 }
 

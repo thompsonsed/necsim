@@ -642,8 +642,8 @@ public:
     friend ostream &operator<<(ostream &os, const RNGController &r)
     {
         os << setprecision(64);
-        os << r.seeded << ",";
-        os << r.tau << "," << r.sigma << "," << r.m_prob << "," << r.cutoff;
+        os << r.seed << "," << r.seeded << ",";
+        os << r.tau << "," << r.sigma << "," << r.m_prob << "," << r.cutoff << ",";
         os << static_cast<const Xoroshiro256plus&>(r);
         return os;
     }
@@ -658,8 +658,8 @@ public:
     friend istream &operator>>(istream &is, RNGController &r)
     {
         char delim;
-        is >> r.seeded >> delim >> r.tau >> delim >> r.sigma >> delim >> r.m_prob >> delim >> r.cutoff;
-        is >> static_cast<Xoroshiro256plus&>(r);
+        is >> r.seed >> delim >> r.seeded >> delim >> r.tau >> delim >> r.sigma >> delim >> r.m_prob >> delim;
+        is >> r.cutoff >> delim >> static_cast<Xoroshiro256plus&>(r);
         return is;
     }
 };

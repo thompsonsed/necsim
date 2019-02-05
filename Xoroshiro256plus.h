@@ -42,13 +42,14 @@ static inline uint64_t rotl(const uint64_t &value, int bits)
  */
 static inline double intToDouble(const uint64_t &i)
 {
-    union un
+    union Conversion
     {
         uint64_t i;
         double d;
     };
-    const un u = {.i = UINT64_C(0x3FF) << 52 | i >> 12};
-    return u.d - 1.0;
+    Conversion conversion{};
+    conversion.i = UINT64_C(0x3FF) << 52 | i >> 12;
+    return conversion.d - 1.0;
 }
 
 /**
@@ -216,7 +217,7 @@ public:
      */
     friend ostream &operator<<(ostream &os, const Xoroshiro256plus &x)
     {
-        for(const auto& item: x.shuffle_table)
+        for(const auto &item: x.shuffle_table)
         {
             os << item << ",";
         }

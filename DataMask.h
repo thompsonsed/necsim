@@ -42,7 +42,7 @@ protected:
     unsigned long mask_x_dim, mask_y_dim;
 
     // Function pointer for obtaining the proportional sampling from the sample mask.
-    typedef double (DataMask::*fptr)(const long &x, const long &y, const long &xwrap, const long &ywrap);
+    typedef double (DataMask::*fptr)(const long &x, const long &y, const long &xwrap, const long &ywrap) const;
 
     fptr getProportionfptr;
 public:
@@ -123,7 +123,7 @@ public:
      * @param ywrap the number of y wraps
      * @return the sample_mask value at x,y (or true if the file was "null")
      */
-    bool getVal(const long &x, const long &y, const long &xwrap, const long &ywrap);
+    bool getVal(const long &x, const long &y, const long &xwrap, const long &ywrap) const;
 
     /**
      * @brief Separate return function for always returning 1.0 as density value.
@@ -133,7 +133,7 @@ public:
      * @param ywrap the number of y wraps around the map
      * @return the sample_mask_exact value at (x, y)
      */
-    double getNullProportion(const long &x, const long &y, const long &xwrap, const long &ywrap);
+    double getNullProportion(const long &x, const long &y, const long &xwrap, const long &ywrap) const;
 
     /**
      * @brief Returns the exact value from the spatial sampling map, for calculating the proportion of individuals
@@ -146,7 +146,7 @@ public:
      * @param ywrap the number of y wraps around the map
      * @return the sample_mask_exact value at (x, y)
      */
-    double getBoolProportion(const long &x, const long &y, const long &xwrap, const long &ywrap);
+    double getBoolProportion(const long &x, const long &y, const long &xwrap, const long &ywrap) const;
 
     /**
      * @brief Returns the exact value from the spatial sampling map, for calculating the proportion of individuals
@@ -159,7 +159,7 @@ public:
      * @param ywrap the number of y wraps around the map
      * @return the sample_mask_exact value at (x, y)
      */
-    double getSampleProportion(const long &x, const long &y, const long &xwrap, const long &ywrap);
+    double getSampleProportion(const long &x, const long &y, const long &xwrap, const long &ywrap) const;
 
     /**
      * @brief Returns the exact value from the spatial sampling map, as returned by the pointer function.
@@ -169,7 +169,7 @@ public:
      * @param ywrap the number of y wraps around the map
      * @return the sample_mask_exact value at (x, y)
      */
-    double getExactValue(const long &x, const long &y, const long &xwrap, const long &ywrap);
+    double getExactValue(const long &x, const long &y, const long &xwrap, const long &ywrap) const;
 
     /**
      * @brief Converts the spatial map into the boolean grid required for continued simulation.

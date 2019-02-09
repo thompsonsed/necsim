@@ -7,10 +7,8 @@
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  * @brief Contains a template for a matrix with all the basic matrix operations overloaded.
  *
- * @details Code supplied by James Rosindell with large usage of
- * <a> href = "http://www.devarticles.com/c/a/Cplusplus/Operator-Overloading-in-C-plus/1"> this website </a>, and
- * modified and updated by Samuel Thompson.
- * There are two distinct classes, Row and Matrix.
+ * @details Provides an efficient, general purpose 2D matrix object with an efficient indexing system designed for
+ * modern CPUs (where memory access times are often much longer than compute times for mathematical operations).
  * Most operations are low-level, but some higher level functions remain, such as importCsv().
  *
  * Contact: thompsonsed@gmail.com
@@ -28,6 +26,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <stdexcept>
+#include <vector>
 
 #ifdef use_csv
 #include<cmath>
@@ -44,178 +43,6 @@ using namespace std;
 const int gdal_data_sizes[] = {0, 8, 16, 16, 32, 32, 32, 64};
 
 /**
- * @brief Contains a template Row class and basic operations.
- * Uses an array to store the row.
- * @tparam T the type of the values in the row
- */
-template<class T>
-class Row
-{
-private:
-    // stores the number of columns in the row
-    unsigned long numCols{};
-    // an array to store the row
-    T *row;
-public:
-
-    /**
-     * @brief Standard constructor.
-     * @param cols optionally provide the number of rows to initiate with.
-     */
-    explicit Row(unsigned long cols = 0) : row(nullptr)
-    {
-        setSize(cols);
-    }
-
-    /**
-     * @brief Standard destructor
-     */
-    ~Row()
-    {
-        if(row)
-        {
-            delete[] row;
-        }
-    }
-
-    /**
-     * @brief Copy constructor.
-     * @param r the Row object to copy from.
-     */
-    Row(const Row &r) : row(0)
-    {
-        setSize(r.numCols);
-        // Change to standard copy
-        copy(&r.row[0], &r.row[numCols], row);
-    }
-
-    /**
-     * @brief Setter for the row size.
-     * @param n the number of rows to initiate with.
-     * SetRowSize() deletes any old data, and allocates space for new data, unless we set the number of columns to 0, in which case it merely deletes the data.
-     * This lets us use this function for construction, destruction, and dynamic modification in one method.
-     */
-    void setSize(unsigned long n)
-    {
-        if(row)
-        {
-            delete[] row;
-        }
-        if(n > 0)
-        {
-            row = new T[n];
-        }
-        else
-        {
-            row = 0;
-        }
-        numCols = n;
-    }
-
-    /**
-     * @brief Changes the size of the array.
-     * @param n the new size to change to.
-     * Note that no checks are performed that the new row size is larger than the old row size.
-     * Thus is this function is used to shrink the row size, a bad_alloc error will likely be thrown.
-     */
-    void resize(unsigned long n)
-    {
-        auto t = new T[n];
-        for(unsigned long i = 0; i < numCols; i++)
-        {
-            t[i] = row[i];
-        }
-        delete[] row;
-        row = move(t);
-        numCols = n;
-    }
-
-    /**
-     * @brief Getter for the size of the array.
-     * @return the number of columns.
-     */
-    unsigned long size()
-    {
-        return numCols;
-    }
-
-    /**
-     * @brief Overloading the [] operator to allow for simple referencing.
-     * @param column the column to get the value from.
-     * @return the value in the specified column.
-     * Note that different versions deal with values outside of (0,numCols) in different ways.
-     * @note updated to throw an out_of_range exception if the column is out of the row range.
-     */
-    T &operator[](unsigned long column)
-    {
-        // assert(column<num_cols);
-        // check we are within bounds
-#ifdef DEBUG
-        if(column < 0 || column >= numCols)
-        {
-            string err =
-                    "ERROR_MAIN_013b: Tried to call an indices that was out of range of the row. Check row size definition. num_cols: " +
-                    to_string((long long) numCols) + " index: " + to_string((long long) column);
-            throw out_of_range(err);
-        }
-#endif
-        column = column % numCols;
-        return row[column];
-    }
-
-    /**
-     * @brief Overloading the = operator to allow for copying data across.
-     * @param r the Row object to copy data from.
-     */
-    Row &operator=(const Row &r)
-    {
-        setSize(r.numCols);
-        for(unsigned long i = 0; i < numCols; i++)
-        {
-            row[i] = r.row[i];
-        }
-        return *this;
-    }
-
-    /**
-     * @brief Overloading the << operator for outputting to the output stream.
-     * @param os the output stream.
-     * @param r the Row object to output from.
-     * @return os the output stream.
-     */
-    friend ostream &operator<<(ostream &os, const Row &r)
-    {
-        os << r.numCols << ",";
-        for(unsigned long c = 0; c < r.numCols; c++)
-        {
-            os << r.row[c] << ",";
-        }
-        return os;
-    }
-
-    /**
-     * @brief Overloading the << operator for inputting from an input stream.
-     * @param is the input stream.
-     * @param r the Row object to input to.
-     * @return the input stream.
-     */
-    friend istream &operator>>(istream &is, Row &r)
-    {
-        char delim;
-        int n;
-        is >> n;
-        r.setSize(n);
-        is >> delim;
-        for(unsigned long c = 0; c < r.numCols; c++)
-        {
-            is >> r.row[c];
-            is >> delim;
-        }
-        return is;
-    }
-};
-
-/**
  * @brief A class containing the Matrix object, set up as an array of Row objects.
  * Includes basic operations, as well as the importCsv() function for more advanced reading from file.
  * @tparam T the type of the values in the matrix
@@ -230,7 +57,7 @@ protected:
     unsigned long num_cols{};
     unsigned long num_rows{};
     // a matrix is an array of rows
-    Row<T> *matrix;
+    vector<T> matrix;
 public:
 
     /**
@@ -238,19 +65,17 @@ public:
      * @param rows optionally provide the number of rows.
      * @param cols optionally provide the number of columns.
      */
-    explicit Matrix(unsigned long rows = 0, unsigned long cols = 0) : matrix(nullptr)
+    explicit Matrix(unsigned long rows = 0, unsigned long cols = 0) : matrix(rows * cols, T())
     {
-        setSize(rows, cols);
     }
 
     /**
      * @brief The copy constructor.
      * @param m a Matrix object to copy from.
      */
-    Matrix(const Matrix &m) : matrix(nullptr)
+    Matrix(const Matrix &m) : matrix()
     {
-        setSize(m.num_rows, m.num_cols);
-        copy(&m.matrix[0][0], &m.matrix[num_rows][num_cols], matrix);
+        this = m;
     }
 
     /**
@@ -258,10 +83,7 @@ public:
     */
     virtual ~Matrix()
     {
-        if(matrix)
-        {
-            delete[] matrix;
-        }
+
     }
 
     /**
@@ -272,22 +94,11 @@ public:
      */
     void setSize(unsigned long rows, unsigned long cols)
     {
-        if(matrix)
+        if(!matrix.empty())
         {
-            delete[]matrix;
+            matrix.clear();
         }
-        if(cols > 0 && rows > 0)
-        {
-            matrix = new Row<T>[rows];
-            for(unsigned long i = 0; i < rows; i++)
-            {
-                matrix[i].setSize(cols);
-            }
-        }
-        else
-        {
-            matrix = nullptr;
-        }
+        matrix.resize(rows * cols);
         num_cols = cols;
         num_rows = rows;
     }
@@ -311,26 +122,54 @@ public:
     }
 
     /**
-     * @brief Overoads the [] operator for Matrix.
-     * Allows referencing of a value i,j using Matrix[i][j].
-     * Includes error checking for if the indices are out of range of the matrix.
-     * Note that this functionality has been altered since the original file generation.
-     * @param index the row number to get the value from.
-     * @return the matrix row object.
+     * @brief Gets the index of a particular row and column in the matrix.
+     * @param row the row number to index
+     * @param col the column number to index
+     * @return the index of row and column within the matrix
      */
-    Row<T> &operator[](unsigned long index)
+    unsigned long index(const unsigned long &row, const unsigned long &col) const
+    {
+        return col + num_cols * row;
+    }
+
+    /**
+     * @brief Gets the value at a particular index.
+     * @param row the row number to get the value at
+     * @param col the column number to get the value at
+     * @return the value at the specified row and column
+     */
+    T &get(const unsigned long &row, const unsigned long &col)
     {
 #ifdef DEBUG
-        if(index < 0 || index >= num_rows)
+        if(row < 0 || row >= num_rows || col < 0 || col >= num_cols)
         {
-            string err =
-                    "ERROR_MAIN_013: Tried to call an indices that was out of range of the matrix. Check matrix size definition. num_rows: " +
-                    to_string((long long) num_rows) + " index: " + to_string((long long) index);
-            throw out_of_range(err);
+            stringstream ss;
+            ss << "Index of " << row << ", " << col << " is out of range of matrix with size " << num_rows;
+            ss << ", " << num_cols << endl;
+            throw out_of_range(ss.str());
         }
 #endif
-        index = index % num_rows;
-        return matrix[index];
+        return matrix[index(row, col)];
+    }
+
+    /**
+     * @brief Gets the value at a particular index.
+     * @param row the row number to get the value at
+     * @param col the column number to get the value at
+     * @return the value at the specified row and column
+     */
+    T getCopy(const unsigned long &row, const unsigned long &col) const
+    {
+#ifdef DEBUG
+        if(row < 0 || row >= num_rows || col < 0 || col >= num_cols)
+        {
+            stringstream ss;
+            ss << "Index of " << row << ", " << col << " is out of range of matrix with size " << num_rows;
+            ss << ", " << num_cols << endl;
+            throw out_of_range(ss.str());
+        }
+#endif
+        return matrix[index(row, col)];
     }
 
     /**
@@ -339,81 +178,52 @@ public:
      */
     Matrix &operator=(const Matrix &m)
     {
-        setSize(m.num_rows, m.num_cols);
-        for(unsigned long r = 0; r < num_rows; r++)
-        {
-            matrix[r] = Row<T>(m.matrix[r]);
-        }
+        this->matrix = m.matrix;
+        this->num_cols = m.num_cols;
+        this->num_rows = m.num_rows;
         return *this;
     }
 
     /**
      * @brief Overloading the + operator.
+     * @note If matrices are of different sizes, the operation is performed on the 0 to minimum values of each
+     *       dimension.
      * @param m the matrix to add to this matrix.
      * @return the matrix object which is the sum of the two matrices.
      */
     Matrix operator+(const Matrix &m) const
     {
         //Since addition creates a new matrix, we don't want to return a reference, but an actual matrix object.
-        unsigned long newnumcols, newnumrows;
-        if(num_cols > m.num_cols)
+        unsigned long new_num_cols = findMinCols(this, m);
+        unsigned long new_num_rows = findMinRows(this, m);
+        Matrix result(new_num_rows, new_num_cols);
+        for(unsigned long r = 0; r < new_num_rows; r++)
         {
-            newnumcols = m.num_cols;
-        }
-        else
-        {
-            newnumcols = num_cols;
-        }
-        if(num_rows > m.num_rows)
-        {
-            newnumrows = m.num_rows;
-        }
-        else
-        {
-            newnumrows = num_rows;
-        }
-
-        Matrix result(newnumrows, newnumcols);
-        for(unsigned long r = 0; r < newnumrows; r++)
-        {
-            for(unsigned long c = 0; c < newnumcols; c++)
+            for(unsigned long c = 0; c < new_num_cols; c++)
             {
-                result[r][c] = matrix[r][c] + m.matrix[r][c];
+                result.get(r, c) = get(r, c) + m.get(r, c);
             }
         }
         return result;
     }
 
     /**
-    * @brief Overloading the - operator.
+     * @brief Overloading the - operator.
+     * @note If matrices are of different sizes, the operation is performed on the 0 to minimum values of each
+     *       dimension.
      * @param m the matrix to subtract from this matrix.
      * @return the matrix object which is the subtraction of the two matrices.
      * */
     Matrix operator-(const Matrix &m) const
     {
-        unsigned long newnumcols, newnumrows;
-        if(num_cols > m.num_cols)
+        unsigned long new_num_cols = findMinCols(this, m);
+        unsigned long new_num_rows = findMinRows(this, m);
+        Matrix result(new_num_rows, new_num_cols);
+        for(unsigned long r = 0; r < new_num_rows; r++)
         {
-            newnumcols = m.num_cols;
-        }
-        else
-        {
-            newnumcols = num_cols;
-        }
-        if(num_rows > m.num_rows)
-        {
-            newnumrows = m.num_rows;
-        }
-        else
-        {
-            newnumrows = num_rows;
-        }
-        Matrix result(newnumrows, newnumcols);
-        for(unsigned long r = 0; r < newnumrows; r++)
-        {
-            for(unsigned long c = 0; c < newnumcols; c++)
+            for(unsigned long c = 0; c < new_num_cols; c++)
             {
-                result[r][c] = matrix[r][c] - m.matrix[r][c];
+                result.get(r, c) = get(r, c) - m.get(r, c);
             }
         }
         return result;
@@ -421,32 +231,19 @@ public:
 
     /**
      * @brief Overloading the += operator so that the new object is written to the current object.
+     * @note If matrices are of different sizes, the operation is performed on the 0 to minimum values of each
+     *       dimension.
      * @param m the Matrix object to add to this matrix.
      */
     Matrix &operator+=(const Matrix &m)
     {
-        unsigned long newnumcols, newnumrows;
-        if(num_cols > m.num_cols)
+        unsigned long new_num_cols = findMinCols(this, m);
+        unsigned long new_num_rows = findMinRows(this, m);
+        for(unsigned long r = 0; r < new_num_rows; r++)
         {
-            newnumcols = m.num_cols;
-        }
-        else
-        {
-            newnumcols = num_cols;
-        }
-        if(num_rows > m.num_rows)
-        {
-            newnumrows = m.num_rows;
-        }
-        else
-        {
-            newnumrows = num_rows;
-        }
-        for(unsigned long r = 0; r < newnumrows; r++)
-        {
-            for(unsigned long c = 0; c < newnumcols; c++)
+            for(unsigned long c = 0; c < new_num_cols; c++)
             {
-                matrix[r][c] += m.matrix[r][c];
+                get(r, c) += m.get(r, c);
             }
         }
         return *this;
@@ -454,32 +251,19 @@ public:
 
     /**
      * @brief Overloading the -= operator so that the new object is written to the current object.
+     * @note If matrices are of different sizes, the operation is performed on the 0 to minimum values of each
+     *       dimension.
      * @param m the Matrix object to subtract from this matrix.
      */
     Matrix &operator-=(const Matrix &m)
     {
-        unsigned long newnumcols, newnumrows;
-        if(num_cols > m.num_cols)
+        unsigned long new_num_cols = findMinCols(this, m);
+        unsigned long new_num_rows = findMinRows(this, m);
+        for(unsigned long r = 0; r < new_num_rows; r++)
         {
-            newnumcols = m.num_cols;
-        }
-        else
-        {
-            newnumcols = num_cols;
-        }
-        if(num_rows > m.num_rows)
-        {
-            newnumrows = m.num_rows;
-        }
-        else
-        {
-            newnumrows = num_rows;
-        }
-        for(unsigned long r = 0; r < newnumrows; r++)
-        {
-            for(unsigned long c = 0; c < newnumcols; c++)
+            for(unsigned long c = 0; c < new_num_cols; c++)
             {
-                matrix[r][c] -= m.matrix[r][c];
+                matrix.get(r, c) -= m.get(r, c);
             }
         }
         return *this;
@@ -487,6 +271,8 @@ public:
 
     /**
      * @brief Overloading the * operator for scaling.
+     * @note If matrices are of different sizes, the operation is performed on the 0 to minimum values of each
+     *       dimension.
      * @param s the constant to scale the matrix by.
      * @return the scaled matrix.
      */
@@ -497,7 +283,7 @@ public:
         {
             for(unsigned long c = 0; c < num_cols; c++)
             {
-                result[r][c] = matrix[r][c] * s;
+                result.get(r, c) = get(r, c) * s;
             }
         }
         return result;
@@ -505,38 +291,127 @@ public:
 
     /**
      * @brief Overloading the * operator for matrix multiplication.
+     * @note If matrices are of different sizes, the operation is performed on the 0 to minimum values of each
+     *       dimension.
      * Multiplies each value in the matrix with its corresponding value in the other matrix.
      * @param m the matrix to multiply with
      * @return the product of each ith,jth value of the matrix.
      */
     Matrix operator*(Matrix &m) const
     {
-        unsigned long newnumcols;
-        if(num_cols > m.num_rows)
-        {
-            newnumcols = m.num_rows;
-        }
-        else
-        {
-            newnumcols = num_cols;
-        }
+        unsigned long new_num_cols = findMinCols(this, m);
+        unsigned long new_num_rows = findMinRows(this, m);
 
         Matrix result(num_rows, m.num_cols);
-        for(unsigned long r = 0; r < num_rows; r++)
+        for(unsigned long r = 0; r < new_num_rows; r++)
         {
-            for(unsigned long c = 0; c < m.num_cols; c++)
+            for(unsigned long c = 0; c < new_num_cols; c++)
             {
-                for(unsigned long i = 0; i < newnumcols; i++)
-                {
-                    result[r][c] += matrix[r][i] * m[i][c];
-                }
+                result.get(r, c) = get(r, c) * m.get(r, c);
             }
         }
         return result;
     }
 
     /**
+     * @brief Overloading the *= operator so that the new object is written to the current object.
+     * @note If matrices are of different sizes, the operation is performed on the 0 to minimum values of each
+     *       dimension.
+     * @param m the Matrix object to add to this matrix.
+     */
+    Matrix &operator*=(const double s)
+    {
+        for(unsigned long r = 0; r < num_rows; r++)
+        {
+            for(unsigned long c = 0; c < num_cols; c++)
+            {
+                get(r, c) *= s;
+            }
+        }
+        return *this;
+    }
+
+    /**
+     * @brief Overloading the *= operator so that the new object is written to the current object.
+     * @note If matrices are of different sizes, the operation is performed on the 0 to minimum values of each
+     *       dimension.
+     * @param m the Matrix object to add to this matrix.
+     */
+    Matrix &operator*=(const Matrix &m)
+    {
+        unsigned long new_num_cols = findMinCols(this, m);
+        unsigned long new_num_rows = findMinRows(this, m);
+        for(unsigned long r = 0; r < new_num_rows; r++)
+        {
+            for(unsigned long c = 0; c < new_num_cols; c++)
+            {
+                get(r, c) *= m.get(r, c);
+            }
+        }
+        return *this;
+    }
+
+    /**
+     * @brief Overloading the / operator for scaling.
+     * @note If matrices are of different sizes, the operation is performed on the 0 to minimum values of each
+     *       dimension.
+     * @param s the constant to scale the matrix by.
+     * @return the scaled matrix.
+     */
+    Matrix operator/(const double s) const
+    {
+        Matrix result(num_rows, num_cols);
+        for(unsigned long r = 0; r < num_rows; r++)
+        {
+            for(unsigned long c = 0; c < num_cols; c++)
+            {
+                result.get(r, c) = get(r, c) / s;
+            }
+        }
+        return result;
+    }
+
+    /**
+     * @brief Overloading the /= operator so that the new object is written to the current object.
+     * @note If matrices are of different sizes, the operation is performed on the 0 to minimum values of each
+     *       dimension.
+     * @param m the Matrix object to add to this matrix.
+     */
+    Matrix &operator/=(const double s)
+    {
+        for(unsigned long r = 0; r < num_rows; r++)
+        {
+            for(unsigned long c = 0; c < num_cols; c++)
+            {
+                get(r, c) /= s;
+            }
+        }
+        return *this;
+    }
+
+    /**
+     * @brief Overloading the /= operator so that the new object is written to the current object.
+     * @note If matrices are of different sizes, the operation is performed on the 0 to minimum values of each
+     *       dimension.
+     * @param m the Matrix object to add to this matrix.
+     */
+    Matrix &operator/=(const Matrix &m)
+    {
+        unsigned long new_num_cols = findMinCols(this, m);
+        unsigned long new_num_rows = findMinRows(this, m);
+        for(unsigned long r = 0; r < new_num_rows; r++)
+        {
+            for(unsigned long c = 0; c < new_num_cols; c++)
+            {
+                get(r, c) /= m.get(r, c);
+            }
+        }
+        return *this;
+    }
+
+    /**
      * @brief Writes the object to the output stream.
+     * @note This is done slightly inefficiently to preserve the output taking the correct form.
      * @param os the output stream to write to
      * @param m the object to write out
      * @return the output stream
@@ -547,7 +422,7 @@ public:
         {
             for(unsigned long c = 0; c < m.num_cols; c++)
             {
-                os << m.matrix[r][c] << ",";
+                os << m.getCopy(r, c) << ",";
             }
             os << "\n";
         }
@@ -567,7 +442,7 @@ public:
         {
             for(unsigned long c = 0; c < m.num_cols; c++)
             {
-                is >> m.matrix[r][c];
+                is >> m.get(r, c);
                 is >> delim;
             }
         }
@@ -601,13 +476,25 @@ public:
     /**
      * @brief Sets the value at the specified indices, including handling type conversion from char to the template
      * class.
-     * @param x the x index.
-     * @param y the y index.
+     * @param row the row index.
+     * @param col the column index.
      * @param value the value to set
      */
-    void setValue(const unsigned long &x, const unsigned long &y, const char *value)
+    void setValue(const unsigned long &row, const unsigned long &col, const char* value)
     {
-        matrix[y][x] = static_cast<T>(*value);
+        matrix[index(row, col)] = static_cast<T>(*value);
+    }
+
+    /**
+     * @brief Sets the value at the specified indices, including handling type conversion from char to the template
+     * class.
+     * @param row the row index.
+     * @param col the column index.
+     * @param value the value to set
+     */
+    void setValue(const unsigned long &row, const unsigned long &col, const T &value)
+    {
+        matrix[index(row, col)] = value;
     }
 
     /**
@@ -673,7 +560,7 @@ public:
                         else
                         {
                             // This function is overloaded to correctly determine the type of the template
-                            setValue(j,i,dToken);
+                            setValue(i,j,dToken);
                             dToken = strtok(NULL,",");
                         }
                     }
@@ -728,7 +615,7 @@ public:
                     char delim;
                     T val;
                     iss >> val >> delim;
-                    matrix[j][i] = val;
+                    this->setValue(j, i, val);
                 }
                 double dComplete = ((double) j / (double) num_rows) * 5;
                 if(number_printed < dComplete)
@@ -755,5 +642,39 @@ public:
 
 #endif // use_csv
 };
+
+/**
+ * @brief Find the minimum columns of the two objects.
+ * @tparam T The type of the Matrix class
+ * @param matrix1 the first matrix
+ * @param matrix2 the second matrix
+ * @return the minimum number of columns between the two matrices
+ */
+template<typename T>
+const unsigned long findMinCols(const Matrix<T> &matrix1, const Matrix<T> &matrix2)
+{
+    if(matrix1.getCols() < matrix2.getCols())
+    {
+        return matrix1.getCols();
+    }
+    return matrix2.getCols();
+}
+
+/**
+ * @brief Find the minimum rows of the two objects.
+ * @tparam T The type of the Matrix class
+ * @param matrix1 the first matrix
+ * @param matrix2 the second matrix
+ * @return the minimum number of rows between the two matrices
+ */
+template<typename T>
+const unsigned long findMinRows(const Matrix<T> &matrix1, const Matrix<T> &matrix2)
+{
+    if(matrix1.getRows() < matrix2.getRows())
+    {
+        return matrix1.getRows();
+    }
+    return matrix2.getRows();
+}
 
 #endif // MATRIX

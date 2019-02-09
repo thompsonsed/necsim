@@ -139,13 +139,14 @@ public:
     void standardiseValues();
 
     /**
-     * @brief Operator [] for getting values directly from the reproduction map.
-     * @param index the index to get the row of
-     * @return the row present at that index
+     * @brief Get the value at the specified index.
+     * @param rows the row index to obtain
+     * @param cols the column index to obtain
+     * @return the value at the specified row and column
      */
-    Row<double> operator[](long index)
+    double get(const unsigned long &rows, const unsigned long &cols)
     {
-        return activity_map[index];
+        return activity_map.get(rows, cols);
     }
 
     /**

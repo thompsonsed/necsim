@@ -300,13 +300,13 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
                 x_wrap = 0;
                 y_wrap = 0;
                 samplegrid.recalculateCoordinates(x, y, x_wrap, y_wrap);
-                if(grid[y][x].getListSize() == 0)
+                if(grid.get(y, x).getListSize() == 0)
                 {
-                    unsigned long stored_next = grid[y][x].getNext();
-                    unsigned long stored_nwrap = grid[y][x].getNwrap();
-                    grid[y][x].initialise(landscape->getVal(x, y, 0, 0, 0));
-                    grid[y][x].setNwrap(stored_nwrap);
-                    grid[y][x].setNext(stored_next);
+                    unsigned long stored_next = grid.get(y, x).getNext();
+                    unsigned long stored_nwrap = grid.get(y, x).getNwrap();
+                    grid.get(y, x).initialise(landscape->getVal(x, y, 0, 0, 0));
+                    grid.get(y, x).setNwrap(stored_nwrap);
+                    grid.get(y, x).setNext(stored_next);
                 }
                 if(x_wrap == 0 && y_wrap == 0)
                 {
@@ -315,7 +315,7 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
                     {
                         for(unsigned long k = 0; k < sample_amount; k++)
                         {
-                            if(k >= grid[y][x].getMaxSize())
+                            if(k >= grid.get(y, x).getMaxSize())
                             {
                                 break;
                             }
@@ -330,7 +330,7 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
                             else
                             {
                                 number_start++;
-                                unsigned long list_position_in = grid[y][x].addSpecies(number_start);
+                                unsigned long list_position_in = grid.get(y, x).addSpecies(number_start);
                                 // Add the species to active
                                 active[number_start].setup(x, y, 0, 0, number_start, list_position_in, 1);
                                 // Add a tip in the TreeNode for calculation of the coalescence tree at the
@@ -425,15 +425,15 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
 unsigned long SpatialTree::getIndividualsSampled(const long &x, const long &y, const long &x_wrap,
                                                  const long &y_wrap, const double &current_gen)
 {
-//	if(sim_parameters->uses_spatial_sampling)
-//	{
+    //	if(sim_parameters->uses_spatial_sampling)
+    //	{
     return static_cast<unsigned long>(max(floor(deme_sample * landscape->getVal(x, y, x_wrap, y_wrap, current_gen)
                                                 * samplegrid.getExactValue(x, y, x_wrap, y_wrap)), 0.0));
-//	}
-//	else
-//	{
-//		return static_cast<unsigned long>(max(floor(deme_sample * landscape->getVal(x, y, x_wrap, y_wrap, 0.0)), 0.0));
-//	}
+    //	}
+    //	else
+    //	{
+    //		return static_cast<unsigned long>(max(floor(deme_sample * landscape->getVal(x, y, x_wrap, y_wrap, 0.0)), 0.0));
+    //	}
 }
 
 void SpatialTree::removeOldPosition(const unsigned long &chosen)
@@ -451,19 +451,19 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
             throw FatalException("ERROR_MOVE_015: Nwrap not set correctly. Nwrap 0, but x and y wrap not 0. ");
         }
 #endif // DEBUG
-// Then the lineage exists in the main species_id_list;
-// debug (can be removed later)
+        // Then the lineage exists in the main species_id_list;
+        // debug (can be removed later)
 #ifdef historical_mode
-        if(grid[oldy][oldx].getMaxsize() < active[chosen].getListpos())
+        if(grid.get(oldy, oldx).getMaxsize() < active[chosen].getListpos())
         {
             stringstream ss;
-            ss << "grid maxsize: " << grid[oldy][oldx].getMaxsize() << endl;
+            ss << "grid maxsize: " << grid.get(oldy, oldx).getMaxsize() << endl;
             writeCritical(ss.str());
             throw FatalException("ERROR_MOVE_001: Listpos outside maxsize. Check move programming function.");
         }
 #endif
         // delete the species from the species_id_list
-        grid[oldy][oldx].deleteSpecies(active[chosen].getListpos());
+        grid.get(oldy, oldx).deleteSpecies(active[chosen].getListpos());
         // clear out the variables.
         active[chosen].setNext(0);
         active[chosen].setNwrap(0);
@@ -473,7 +473,7 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
     {
         if(nwrap == 1)
         {
-            grid[oldy][oldx].setNext(active[chosen].getNext());
+            grid.get(oldy, oldx).setNext(active[chosen].getNext());
             // Now reduce the nwrap of the lineages that have been effected.
             long nextpos = active[chosen].getNext();
             // loop over the rest of the species_id_list, reducing the nwrap
@@ -483,14 +483,14 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
                 nextpos = active[nextpos].getNext();
             }
             // decrease the nwrap
-            grid[oldy][oldx].decreaseNwrap();
+            grid.get(oldy, oldx).decreaseNwrap();
             active[chosen].setNwrap(0);
             active[chosen].setNext(0);
             active[chosen].setListPosition(0);
         }
         else
         {
-            long lastpos = grid[oldy][oldx].getNext();
+            long lastpos = grid.get(oldy, oldx).getNext();
             while(active[lastpos].getNext() !=
                   chosen)  // loop until we reach the next, then set the next correctly.
             {
@@ -526,14 +526,14 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
                 throw FatalException(
                         "ERROR_MOVE_024: Last position before chosen is 0 - this is impossible.");
             }
-            grid[oldy][oldx].decreaseNwrap();
+            grid.get(oldy, oldx).decreaseNwrap();
             active[chosen].setNwrap(0);
             active[chosen].setNext(0);
             active[chosen].setListPosition(0);
         }
 #ifdef DEBUG
         unsigned long iCount = 1;
-        long pos = grid[oldy][oldx].getNext();
+        long pos = grid.get(oldy, oldx).getNext();
         if(pos == 0)
         {
             iCount = 0;
@@ -553,10 +553,10 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
             }
         }
 
-        if(iCount != grid[oldy][oldx].getNwrap())
+        if(iCount != grid.get(oldy, oldx).getNwrap())
         {
             stringstream ss;
-            ss << "Nwrap: " << grid[oldy][oldx].getNwrap() << " Counted lineages: " << iCount << endl;
+            ss << "Nwrap: " << grid.get(oldy, oldx).getNwrap() << " Counted lineages: " << iCount << endl;
             writeLog(50, ss);
             throw FatalException("ERROR_MOVE_014: Nwrap not set correctly after move for grid cell");
         }
@@ -611,11 +611,11 @@ void SpatialTree::calcNewPos(bool &coal,
         // then the procedure is relatively simple.
         // check for coalescence
         // check if the grid needs to be updated.
-        if(grid[oldy][oldx].getMaxSize() != landscape->getVal(oldx, oldy, 0, 0, generation))
+        if(grid.get(oldy, oldx).getMaxSize() != landscape->getVal(oldx, oldy, 0, 0, generation))
         {
-            grid[oldy][oldx].setMaxsize(landscape->getVal(oldx, oldy, 0, 0, generation));
+            grid.get(oldy, oldx).setMaxsize(landscape->getVal(oldx, oldy, 0, 0, generation));
         }
-        coalchosen = grid[oldy][oldx].getRandLineage(NR);
+        coalchosen = grid.get(oldy, oldx).getRandLineage(NR);
 #ifdef DEBUG
         if(coalchosen != 0)
         {
@@ -633,15 +633,15 @@ void SpatialTree::calcNewPos(bool &coal,
 #endif
         if(coalchosen == 0)  // then the lineage can be placed in the empty space.
         {
-            long tmplistindex = grid[oldy][oldx].addSpecies(chosen);
+            long tmplistindex = grid.get(oldy, oldx).addSpecies(chosen);
             // check
-            if(grid[oldy][oldx].getSpecies(tmplistindex) != chosen)
+            if(grid.get(oldy, oldx).getSpecies(tmplistindex) != chosen)
             {
                 throw FatalException("ERROR_MOVE_005: Grid index not set correctly for species. Check "
                                      "move programming function.");
             }
 #ifdef historical_mode
-            if(grid[oldy][oldx].getListsize() > grid[oldy][oldx].getMaxsize())
+            if(grid.get(oldy, oldx).getListsize() > grid.get(oldy, oldx).getMaxsize())
             {
                 throw FatalException(
                     "ERROR_MOVE_001: Listpos outside maxsize. Check move programming function.");
@@ -665,7 +665,7 @@ void SpatialTree::calcNewPos(bool &coal,
         {
             throw FatalException("ERROR_MOVE_022: Nwrap not set correctly in move.");
         }
-        nwrap = grid[oldy][oldx].getNwrap();
+        nwrap = grid.get(oldy, oldx).getNwrap();
         if(nwrap != 0)  // then coalescence is possible and we need to loop over the nexts to check those that are
             // in the same position
         {
@@ -675,7 +675,7 @@ void SpatialTree::calcNewPos(bool &coal,
             // this stops us having to loop twice over the same species_id_list.
             vector<unsigned long> match_list(nwrap);
             unsigned long next_active;
-            next_active = grid[oldy][oldx].getNext();
+            next_active = grid.get(oldy, oldx).getNext();
             // Count if the first "next" matches
             if(active[next_active].getXwrap() == oldxwrap && active[next_active].getYwrap() == oldywrap)
             {
@@ -721,8 +721,8 @@ void SpatialTree::calcNewPos(bool &coal,
                 coalchosen = 0;
                 coal = false;
                 active[next_active].setNext(chosen);
-                grid[oldy][oldx].increaseNwrap();
-                active[chosen].setNwrap(grid[oldy][oldx].getNwrap());
+                grid.get(oldy, oldx).increaseNwrap();
+                active[chosen].setNwrap(grid.get(oldy, oldx).getNwrap());
                 active[chosen].setListPosition(0);
             }
             else  // if there were matches, generate a random number to see if coalescence occured or not
@@ -754,8 +754,8 @@ void SpatialTree::calcNewPos(bool &coal,
                     coalchosen = 0;
                     coal = false;
                     active[next_active].setNext(chosen);
-                    grid[oldy][oldx].increaseNwrap();
-                    active[chosen].setNwrap(grid[oldy][oldx].getNwrap());
+                    grid.get(oldy, oldx).increaseNwrap();
+                    active[chosen].setNwrap(grid.get(oldy, oldx).getNwrap());
                     active[chosen].setListPosition(0);
                 }
                 else  // coalescence has occured
@@ -771,27 +771,26 @@ void SpatialTree::calcNewPos(bool &coal,
                 }
             }
 #ifdef historical_mode
-            if(grid[oldy][oldx].getMaxsize() < active[chosen].getListpos())
+            if(grid.get(oldy, oldx).getMaxsize() < active[chosen].getListpos())
             {
-                throw FatalException(
-                    "ERROR_MOVE_001: Listpos outside maxsize. Check move programming function.");
+                throw FatalException("Listpos outside maxsize. Check move programming function.");
             }
 #endif
         }
         else  // just add the lineage to next.
         {
-            if(grid[oldy][oldx].getNext() != 0)
+            if(grid.get(oldy, oldx).getNext() != 0)
             {
                 throw FatalException("ERROR_MOVE_026: No nwrap recorded, but next is non-zero.");
             }
             coalchosen = 0;
             coal = false;
-            grid[oldy][oldx].setNext(chosen);
+            grid.get(oldy, oldx).setNext(chosen);
             active[chosen].setNwrap(1);
             active[chosen].setNext(0);
-            grid[oldy][oldx].increaseNwrap();
+            grid.get(oldy, oldx).increaseNwrap();
 #ifdef DEBUG
-            if(grid[oldy][oldx].getNwrap() != 1)
+            if(grid.get(oldy, oldx).getNwrap() != 1)
             {
                 throw FatalException("ERROR_MOVE_022b: Nwrap not set correctly in move.");
             }
@@ -845,7 +844,7 @@ void SpatialTree::switchPositions(const unsigned long &chosen)
                 ss << active[endactive].getNwrap() << " ). Identified during switch of positions." << endl;
                 writeError(ss.str());
             }
-            grid[active[endactive].getYpos()][active[endactive].getXpos()].setSpecies(
+            grid.get(active[endactive].getYpos(), active[endactive].getXpos()).setSpecies(
                     active[endactive].getListpos(), chosen);
             active[chosen].setup(active[endactive]);
             active[endactive].setup(tmpdatactive);
@@ -862,24 +861,24 @@ void SpatialTree::switchPositions(const unsigned long &chosen)
                 writeError(ss.str());
             }
             //				os << "wrap"<<endl;
-            long tmpactive = grid[active[endactive].getYpos()][active[endactive].getXpos()].getNext();
+            long tmpactive = grid.get(active[endactive].getYpos(), active[endactive].getXpos()).getNext();
             unsigned long tmpnwrap = active[endactive].getNwrap();
 
             // if the wrapping is just once, we need to set the grid next to the chosen variable.
             if(tmpnwrap == 1)
             {
                 // check
-                if(grid[active[endactive].getYpos()][active[endactive].getXpos()].getNext() != endactive)
+                if(grid.get(active[endactive].getYpos(), active[endactive].getXpos()).getNext() != endactive)
                 {
                     throw FatalException(string(
-                            "ERROR_MOVE_019: FATAL. Nwrap for endactive not set correctly. Nwrap is 1, but "
+                            "FATAL. Nwrap for endactive not set correctly. Nwrap is 1, but "
                             "lineage at 1st position is " +
                             to_string(
-                                    (long long) grid[active[endactive].getYpos()][active[endactive].getXpos()]
-                                            .getNext()) +
+                                    (long long) grid.get(active[endactive].getYpos(),
+                                                         active[endactive].getXpos()).getNext()) +
                             ". Identified during the move."));
                 }
-                grid[active[endactive].getYpos()][active[endactive].getXpos()].setNext(chosen);
+                grid.get(active[endactive].getYpos(), active[endactive].getXpos()).setNext(chosen);
             }
             else  // otherwise, we just set the next to chosen instead of endactive.
             {
@@ -898,9 +897,7 @@ void SpatialTree::switchPositions(const unsigned long &chosen)
                         {
                             stringstream ss;
                             ss << "gridnext: "
-                               << grid[active[endactive].getYpos()][active[endactive]
-                                       .getXpos()]
-                                       .getNext()
+                               << grid.get(active[endactive].getYpos(), active[endactive].getXpos()).getNext()
                                << endl;
                             ss << "endactive: " << endactive << endl;
                             ss << "tmpactive: " << tmpactive << endl;
@@ -921,7 +918,7 @@ void SpatialTree::switchPositions(const unsigned long &chosen)
 
             // check - debugging
             unsigned long testwrap = active[chosen].getNwrap();
-            unsigned long testnext = grid[active[chosen].getYpos()][active[chosen].getXpos()].getNext();
+            unsigned long testnext = grid.get(active[chosen].getYpos(), active[chosen].getXpos()).getNext();
             for(unsigned long i = 1; i < testwrap; i++)
             {
                 testnext = active[testnext].getNext();
@@ -1076,7 +1073,7 @@ void SpatialTree::debugDispersal()
                 string("ERROR_MOVE_007: Dispersal attempted to non-forest. "
                        "Check dispersal function. Forest cover: " +
                        to_string((long long) landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap,
-                                                              this_step.oldywrap, generation))));
+                                                               this_step.oldywrap, generation))));
     }
 }
 
@@ -1277,7 +1274,7 @@ void SpatialTree::loadGridSave(shared_ptr<ifstream> in1)
         {
             for(unsigned long j = 0; j < sim_parameters->grid_x_size; j++)
             {
-                grid[i][j].initialise(landscape->getVal(j, i, 0, 0, generation));
+                grid.get(i, j).initialise(landscape->getVal(j, i, 0, 0, generation));
             }
         }
         // Now fill the grid object with lineages from active. Only need to loop once.
@@ -1285,7 +1282,7 @@ void SpatialTree::loadGridSave(shared_ptr<ifstream> in1)
         {
             if(active[i].getXwrap() == 0 && active[i].getYwrap() == 0)
             {
-                grid[active[i].getYpos()][active[i].getXpos()].setSpeciesEmpty(active[i].getListpos(), i);
+                grid.get(active[i].getYpos(), active[i].getXpos()).setSpeciesEmpty(active[i].getListpos(), i);
             }
             else
             {
@@ -1296,9 +1293,9 @@ void SpatialTree::loadGridSave(shared_ptr<ifstream> in1)
                 }
                 if(active[i].getNwrap() == 1)
                 {
-                    grid[active[i].getYpos()][active[i].getXpos()].setNext(i);
+                    grid.get(active[i].getYpos(), active[i].getXpos()).setNext(i);
                 }
-                grid[active[i].getYpos()][active[i].getXpos()].increaseNwrap();
+                grid.get(active[i].getYpos(), active[i].getXpos()).increaseNwrap();
             }
         }
     }
@@ -1340,11 +1337,11 @@ void SpatialTree::verifyActivityMaps()
         {
             for(unsigned long j = 0; j < sim_parameters->fine_map_x_size; j++)
             {
-                if((*death_map)[i][j] == 0.0 && landscape->getValFine(j, i, 0.0) != 0)
+                if(death_map->get(i, j) == 0.0 && landscape->getValFine(j, i, 0.0) != 0)
                 {
                     stringstream ss;
                     ss << "Location: " << j << ", " << i << endl;
-                    ss << "Death value: " << (*death_map)[i][j] << endl;
+                    ss << "Death value: " << death_map->get(i, j) << endl;
                     ss << "Density: " << landscape->getValFine(j, i, 0.0) << endl;
                     writeInfo(ss.str());
                     throw FatalException("Death map is zero where density is non-zero. "
@@ -1352,12 +1349,12 @@ void SpatialTree::verifyActivityMaps()
                 }
 
 #ifdef DEBUG
-                if(landscape->getValFine(j, i, 0.0) == 0 && (*death_map)[i][j] != 0.0)
+                if(landscape->getValFine(j, i, 0.0) == 0 && death_map->get(i, j) != 0.0)
                 {
                     stringstream ss;
                     ss << "Density is zero where death map is non-zero for " << j << ", " << i << endl;
                     ss << "Density: " << landscape->getValFine(j, i, 0.0) << endl;
-                    ss << "Death map: " << (*death_map)[i][j] << endl;
+                    ss << "Death map: " << death_map->get(i, j) << endl;
                     ss << "This is likely incorrect." << endl;
                     writeCritical(ss.str());
                 }
@@ -1385,23 +1382,23 @@ void SpatialTree::verifyActivityMaps()
         {
             for(unsigned long j = 0; j < sim_parameters->fine_map_x_size; j++)
             {
-                if((*reproduction_map)[i][j] == 0.0 && landscape->getValFine(j, i, 0.0) != 0)
+                if(reproduction_map->get(i, j) == 0.0 && landscape->getValFine(j, i, 0.0) != 0)
                 {
                     stringstream ss;
                     ss << "Location: " << j << ", " << i << endl;
-                    ss << "Reproduction value: " << (*reproduction_map)[i][j] << endl;
+                    ss << "Reproduction value: " << reproduction_map->get(i, j) << endl;
                     ss << "Density: " << landscape->getValFine(j, i, 0.0) << endl;
                     writeInfo(ss.str());
                     throw FatalException("Reproduction map is zero where density is non-zero. "
                                          "This will cause an infinite loop.");
                 }
 #ifdef DEBUG
-                if(landscape->getValFine(j, i, 0.0) == 0 && (*reproduction_map)[i][j] != 0.0)
+                if(landscape->getValFine(j, i, 0.0) == 0 && reproduction_map->get(i, j) != 0.0)
                 {
                     stringstream ss;
                     ss << "Density is zero where reproduction map is non-zero for " << j << ", " << i << endl;
                     ss << "Density: " << landscape->getValFine(j, i, 0.0) << endl;
-                    ss << "Reproduction map: " << (*reproduction_map)[i][j] << endl;
+                    ss << "Reproduction map: " << reproduction_map->get(i, j) << endl;
                     ss << "This is likely incorrect." << endl;
                     writeCritical(ss.str());
                 }
@@ -1423,15 +1420,15 @@ void SpatialTree::verifyActivityMaps()
 
 void SpatialTree::addWrappedLineage(unsigned long numstart, long x, long y)
 {
-    if(grid[y][x].getNwrap() == 0)
+    if(grid.get(y, x).getNwrap() == 0)
     {
-        grid[y][x].setNext(numstart);
-        grid[y][x].setNwrap(1);
+        grid.get(y, x).setNext(numstart);
+        grid.get(y, x).setNwrap(1);
         active[numstart].setNwrap(1);
     }
     else
     {
-        unsigned long tmp_next = grid[y][x].getNext();
+        unsigned long tmp_next = grid.get(y, x).getNext();
         unsigned long tmp_last = tmp_next;
         unsigned long tmp_nwrap = 0;
         while(tmp_next != 0)
@@ -1440,7 +1437,7 @@ void SpatialTree::addWrappedLineage(unsigned long numstart, long x, long y)
             tmp_last = tmp_next;
             tmp_next = active[tmp_next].getNext();
         }
-        grid[y][x].increaseNwrap();
+        grid.get(y, x).increaseNwrap();
         active[tmp_last].setNext(numstart);
         active[numstart].setNwrap(tmp_nwrap + 1);
     }
@@ -1459,25 +1456,25 @@ unsigned long SpatialTree::countCellExpansion(const long &x, const long &y, cons
     {
         // Check that the species species_id_list sizings make sense
         unsigned long ref = 0;
-        if(map_cover != grid[y][x].getMaxSize())
+        if(map_cover != grid.get(y, x).getMaxSize())
         {
-            if(map_cover > grid[y][x].getMaxSize())
+            if(map_cover > grid.get(y, x).getMaxSize())
             {
-                grid[y][x].changePercentCover(map_cover);
+                grid.get(y, x).changePercentCover(map_cover);
             }
             else
             {
-                grid[y][x].setMaxsize(map_cover);
+                grid.get(y, x).setMaxsize(map_cover);
             }
         }
-        if(map_cover > grid[y][x].getListLength())
+        if(map_cover > grid.get(y, x).getListLength())
         {
-            grid[y][x].changePercentCover(map_cover);
+            grid.get(y, x).changePercentCover(map_cover);
         }
         // Add the lineages
-        while(ref < grid[y][x].getListLength() && num_to_add > 0)
+        while(ref < grid.get(y, x).getListLength() && num_to_add > 0)
         {
-            unsigned long tmp_active = grid[y][x].getSpecies(ref);
+            unsigned long tmp_active = grid.get(y, x).getSpecies(ref);
             if(tmp_active != 0)
             {
                 if(checkProportionAdded(proportion_added))
@@ -1491,7 +1488,7 @@ unsigned long SpatialTree::countCellExpansion(const long &x, const long &y, cons
     }
     else
     {
-        unsigned long next = grid[y][x].getNext();
+        unsigned long next = grid.get(y, x).getNext();
         while(next != 0 && num_to_add > 0)
         {
             if(active[next].getXwrap() == xwrap && active[next].getYwrap() == ywrap)
@@ -1521,7 +1518,7 @@ void SpatialTree::expandCell(long x, long y, long x_wrap, long y_wrap, double ge
             // Add the species to active
             if(x_wrap == 0 && y_wrap == 0)
             {
-                listpos = grid[y][x].addSpecies(endactive + active_added.size() + 1);
+                listpos = grid.get(y, x).addSpecies(endactive + active_added.size() + 1);
             }
             tmp_data_point.setup(x, y, x_wrap, y_wrap, enddata + data_added.size() + 1, listpos, 1);
             if(enddata >= data->size())
@@ -1593,7 +1590,7 @@ void SpatialTree::validateLineages()
             else
             {
                 if(i !=
-                   grid[tmp_datapoint.getYpos()][tmp_datapoint.getXpos()].getSpecies(tmp_datapoint.getListpos()))
+                     grid.get(tmp_datapoint.getYpos(), tmp_datapoint.getXpos()).getSpecies(tmp_datapoint.getListpos()))
                 {
                     fail = true;
                 }
@@ -1607,7 +1604,7 @@ void SpatialTree::validateLineages()
             }
             else
             {
-                unsigned long tmp_next = grid[tmp_datapoint.getYpos()][tmp_datapoint.getXpos()].getNext();
+                unsigned long tmp_next = grid.get(tmp_datapoint.getYpos(), tmp_datapoint.getXpos()).getNext();
                 unsigned long count = 0;
                 while(tmp_next != 0)
                 {
@@ -1619,11 +1616,11 @@ void SpatialTree::validateLineages()
                     }
                     tmp_next = active[tmp_next].getNext();
                 }
-                if(count == 0 && count != grid[tmp_datapoint.getYpos()][tmp_datapoint.getXpos()].getNwrap())
+                if(count == 0 && count != grid.get(tmp_datapoint.getYpos(), tmp_datapoint.getXpos()).getNwrap())
                 {
                     fail = true;
                 }
-                if(count != grid[tmp_datapoint.getYpos()][tmp_datapoint.getXpos()].getNwrap())
+                if(count != grid.get(tmp_datapoint.getYpos(), tmp_datapoint.getXpos()).getNwrap())
                 {
                     fail = true;
                 }
@@ -1633,7 +1630,7 @@ void SpatialTree::validateLineages()
         {
             stringstream ss;
             ss << "Active reference: " << i << endl;
-            ss << "Grid wrapping: " << grid[tmp_datapoint.getYpos()][tmp_datapoint.getXpos()].getNwrap() << endl;
+            ss << "Grid wrapping: " << grid.get(tmp_datapoint.getYpos(), tmp_datapoint.getXpos()).getNwrap() << endl;
             ss << "Endactive: " << endactive << endl;
             ss << "Active size: " << active.size() << endl;
             ss << "Enddata: " << enddata << endl;
@@ -1649,7 +1646,7 @@ void SpatialTree::validateLineages()
 
 void SpatialTree::debugAddingLineage(unsigned long numstart, long x, long y)
 {
-    unsigned long tmp_next = grid[y][x].getNext();
+    unsigned long tmp_next = grid.get(y, x).getNext();
     unsigned long tmp_nwrap = 0;
     while(tmp_next != 0)
     {
@@ -1666,15 +1663,15 @@ void SpatialTree::debugAddingLineage(unsigned long numstart, long x, long y)
         }
         tmp_next = active[tmp_next].getNext();
     }
-    if(tmp_nwrap != grid[y][x].getNwrap())
+    if(tmp_nwrap != grid.get(y, x).getNwrap())
     {
         stringstream ss;
-        ss << "Grid nwrap: " << grid[y][x].getNwrap() << endl;
+        ss << "Grid nwrap: " << grid.get(y, x).getNwrap() << endl;
         ss << "Counted wrapping: " << tmp_nwrap << endl;
         ss << "active: " << numstart << endl;
-        tmp_next = grid[y][x].getNext();
+        tmp_next = grid.get(y, x).getNext();
         tmp_nwrap = 0;
-        while(tmp_next != 0 && tmp_nwrap < grid[y][x].getNwrap())
+        while(tmp_next != 0 && tmp_nwrap < grid.get(y, x).getNwrap())
         {
             tmp_nwrap++;
             ss << "tmp_next: " << tmp_next << endl;
@@ -1688,25 +1685,25 @@ void SpatialTree::debugAddingLineage(unsigned long numstart, long x, long y)
 
 void SpatialTree::runChecks(const unsigned long &chosen, const unsigned long &coalchosen)
 {
-// final checks
+    // final checks
 #ifdef historical_mode
-    if(active[chosen].getListpos() > grid[active[chosen].getYpos()][active[chosen].getXpos()].getMaxsize() &&
+    if(active[chosen].getListpos() > grid.get(active, chosen).getYpos()][active[chosen].getXpos()].getMaxsize() &&
        active[chosen].getNwrap() == 0)
     {
         throw FatalException("ERROR_MOVE_001: Listpos outside maxsize.");
     }
 
     if(active[coalchosen].getListpos() >
-           grid[active[coalchosen].getYpos()][active[coalchosen].getXpos()].getMaxsize() &&
+           grid.get(active, coalchosen).getYpos()][active[coalchosen].getXpos()].getMaxsize() &&
        active[coalchosen].getNwrap() == 0 && coalchosen != 0)
     {
-        throw FatalException("ERROR_MOVE_002: Coalchosen list_position outside maxsize.");
+        throw FatalException("Coalchosen list_position outside maxsize. Please report this bug.");
     }
 #endif
     Tree::runChecks(chosen, coalchosen);
     if(active[chosen].getNwrap() != 0)
     {
-        unsigned long tmpactive = grid[active[chosen].getYpos()][active[chosen].getXpos()].getNext();
+        unsigned long tmpactive = grid.get(active[chosen].getYpos(), active[chosen].getXpos()).getNext();
         for(unsigned long i = 1; i < active[chosen].getNwrap(); i++)
         {
             tmpactive = active[tmpactive].getNext();
@@ -1731,11 +1728,11 @@ void SpatialTree::runChecks(const unsigned long &chosen, const unsigned long &co
         unsigned long nwrap = active[endactive].getNwrap();
         if(nwrap == 1)
         {
-            if(grid[active[endactive].getYpos()][active[endactive].getXpos()].getNext() != endactive)
+            if(grid.get(active[endactive].getYpos(), active[endactive].getXpos()).getNext() != endactive)
             {
                 stringstream ss;
                 ss << "Lineage at 1st position: "
-                   << grid[active[endactive].getYpos()][active[endactive].getXpos()].getNext() << endl;
+                   << grid.get(active[endactive].getYpos(), active[endactive].getXpos()).getNext() << endl;
                 ss << "endactive: " << endactive << endl
                    << "nwrap: " << nwrap << endl;
                 ss << "chosen: " << chosen << endl;
@@ -1746,7 +1743,7 @@ void SpatialTree::runChecks(const unsigned long &chosen, const unsigned long &co
         }
         else
         {
-            unsigned long tmpcheck = grid[active[endactive].getYpos()][active[endactive].getXpos()].getNext();
+            unsigned long tmpcheck = grid.get(active[endactive].getYpos(), active[endactive].getXpos()).getNext();
             unsigned long tmpnwrap = 1;
             while(tmpcheck != endactive)
             {

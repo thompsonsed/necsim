@@ -117,7 +117,7 @@ void DataMask::setupNull(const shared_ptr<SimParameters> mapvarin)
     {
         for(unsigned long j = 0; j < sample_mask.getCols(); j++)
         {
-            sample_mask[i][j] = i + y_offset < mask_y_dim && j + x_offset < mask_x_dim;
+            sample_mask.setValue(i, j, i + y_offset < mask_y_dim && j + x_offset < mask_x_dim);
         }
     }
     completeBoolImport();
@@ -162,7 +162,7 @@ void DataMask::importSampleMask(const shared_ptr<SimParameters> mapvarin)
     }
 }
 
-bool DataMask::getVal(const long &x, const long &y, const long &xwrap, const long &ywrap)
+bool DataMask::getVal(const long &x, const long &y, const long &xwrap, const long &ywrap) const
 {
     long xval = x + (xwrap * x_dim) + x_offset;
     long yval = y + (ywrap * y_dim) + y_offset;
@@ -185,15 +185,15 @@ bool DataMask::getVal(const long &x, const long &y, const long &xwrap, const lon
         throw out_of_range(ss.str());
     }
 #endif
-    return sample_mask[yval][xval];
+    return sample_mask.getCopy(yval, xval);
 }
 
-double DataMask::getNullProportion(const long &x, const long &y, const long &xwrap, const long &ywrap)
+double DataMask::getNullProportion(const long &x, const long &y, const long &xwrap, const long &ywrap) const
 {
     return 1.0;
 }
 
-double DataMask::getBoolProportion(const long &x, const long &y, const long &xwrap, const long &ywrap)
+double DataMask::getBoolProportion(const long &x, const long &y, const long &xwrap, const long &ywrap) const
 {
 
     if(getVal(x, y, xwrap, ywrap))
@@ -206,7 +206,7 @@ double DataMask::getBoolProportion(const long &x, const long &y, const long &xwr
     }
 }
 
-double DataMask::getSampleProportion(const long &x, const long &y, const long &xwrap, const long &ywrap)
+double DataMask::getSampleProportion(const long &x, const long &y, const long &xwrap, const long &ywrap) const
 {
 #ifdef DEBUG
     if(isNullSample || sample_mask_exact.getCols() == 0)
@@ -217,10 +217,10 @@ double DataMask::getSampleProportion(const long &x, const long &y, const long &x
 #endif // DEBUG
     long xval = x + (xwrap * x_dim) + x_offset;
     long yval = y + (ywrap * y_dim) + y_offset;
-    return sample_mask_exact[yval][xval];
+    return sample_mask_exact.getCopy(yval, xval);
 }
 
-double DataMask::getExactValue(const long &x, const long &y, const long &xwrap, const long &ywrap)
+double DataMask::getExactValue(const long &x, const long &y, const long &xwrap, const long &ywrap) const
 {
     return (this->*getProportionfptr)(x, y, xwrap, ywrap);
 }
@@ -239,7 +239,7 @@ void DataMask::convertBoolean(shared_ptr<Landscape> map1, const double &deme_sam
             long tmp_ywrap = 0;
             recalculateCoordinates(tmp_x, tmp_y, tmp_xwrap, tmp_ywrap);
             double density = map1->getVal(tmp_x, tmp_y, tmp_xwrap, tmp_ywrap, generation) * deme_sampling;
-            sample_mask[y][x] = density >= 1.0;
+            sample_mask.setValue(y, x, density >= 1.0);
         }
     }
 }

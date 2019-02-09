@@ -54,12 +54,15 @@ public:
     using Matrix<T>::setSize;
     using Matrix<T>::getCols;
     using Matrix<T>::getRows;
+    using Matrix<T>::get;
     using Matrix<T>::operator*;
+    using Matrix<T>::operator/;
     using Matrix<T>::operator+;
     using Matrix<T>::operator-;
     using Matrix<T>::operator-=;
     using Matrix<T>::operator+=;
-    using Matrix<T>::operator[];
+    using Matrix<T>::operator*=;
+    using Matrix<T>::operator/=;
 
     Map() : Matrix<T>(0, 0), po_dataset(nullptr), po_band(nullptr), block_x_size(0), block_y_size(0),
             no_data_value(0.0), file_name(""), gdal_data_type(GDT_Unknown), cpl_error(CE_None), upper_left_x(0.0),
@@ -427,15 +430,15 @@ public:
         for(uint32_t j = 0; j < num_rows; j++)
         {
             printNumberComplete(j, number_printed);
-            cpl_error = po_band->RasterIO(GF_Read, 0, j, static_cast<int>(block_x_size), 1, &matrix[j][0],
+            cpl_error = po_band->RasterIO(GF_Read, 0, j, static_cast<int>(block_x_size), 1, &matrix[j],
                                           static_cast<int>(block_x_size), 1, gdal_data_type, 0, 0);
             checkTifImportFailure();
             // Now convert the no data values to 0
             for(uint32_t i = 0; i < num_cols; i++)
             {
-                if(matrix[j][i] == no_data_value)
+                if(get(j, i) == no_data_value)
                 {
-                    matrix[j][i] = 0;
+                    (j, i) = 0;
                 }
             }
         }
@@ -464,11 +467,11 @@ public:
             {
                 if(t1[i] == no_data_value)
                 {
-                    matrix[j][i] = false;
+                    this->setValue(j, i, false);
                 }
                 else
                 {
-                    matrix[j][i] = t1[i] >= 0.5;
+                    this->setValue(j, i, t1[i] >= 0.5);
                 }
             }
         }
@@ -539,11 +542,11 @@ public:
             {
                 if(t1[i] == no_data_value)
                 {
-                    matrix[j][i] = static_cast<T>(0);
+                    this->setValue(j, i, static_cast<T>(0));
                 }
                 else
                 {
-                    matrix[j][i] = static_cast<T>(t1[i]);
+                    this->setValue(j, i, static_cast<T>(t1[i]));
                 }
             }
         }

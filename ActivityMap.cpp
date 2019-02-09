@@ -35,9 +35,9 @@ void ActivityMap::import(string file_name, unsigned long size_x, unsigned long s
         {
             for(unsigned long x = 0; x < activity_map.getCols(); x++)
             {
-                if(activity_map[y][x] > max_val)
+                if(activity_map.get(y, x) > max_val)
                 {
-                    max_val = activity_map[y][x];
+                    max_val = activity_map.get(y, x);
                 }
             }
         }
@@ -82,7 +82,7 @@ double ActivityMap::getVal(const unsigned long &x, const unsigned long &y, const
 {
     unsigned long x_ref = x + (xwrap * x_dim) + offset_x;
     unsigned long y_ref = y + (ywrap * y_dim) + offset_y;
-    return activity_map[y_ref][x_ref];
+    return activity_map.get(y_ref, x_ref);
 }
 
 bool ActivityMap::actionOccurs(const unsigned long &x, const unsigned long &y, const long &xwrap, const long &ywrap)
@@ -99,9 +99,9 @@ void ActivityMap::standardiseValues()
         {
             for(unsigned long j = 0; j < activity_map.getCols(); j++)
             {
-                if(activity_map[i][j] > max_value)
+                if(activity_map.get(i, j) > max_value)
                 {
-                    max_value = activity_map[i][j];
+                    max_value = activity_map.get(i, j);
                 }
             }
         }
@@ -109,13 +109,7 @@ void ActivityMap::standardiseValues()
         {
             throw FatalException("Activity map does not contain any probability values.");
         }
-        for(unsigned long i = 0; i < activity_map.getRows(); i++)
-        {
-            for(unsigned long j = 0; j < activity_map.getCols(); j++)
-            {
-                activity_map[i][j] /= max_value;
-            }
-        }
+        activity_map /= max_value;
     }
 }
 

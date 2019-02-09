@@ -138,7 +138,7 @@ void DispersalCoordinator::addDensity()
             for(unsigned long k = 0; k < dispersal_prob_map.getRows(); k++)
             {
                 auto density = landscape->getValFine(j, i, *generation);
-                if(dispersal_prob_map[k][index] > 0.0 && density == 0)
+                if(dispersal_prob_map.get(k, index) > 0.0 && density == 0)
                 {
                     Step origin_step;
                     calculateCellCoordinates(origin_step, k);
@@ -151,7 +151,7 @@ void DispersalCoordinator::addDensity()
                        << destination_step.oldxwrap;
                     ss << ", " << destination_step.oldywrap << ")" << endl;
                     ss << "Source row: " << k << " destination row: " << index << endl;
-                    ss << "Dispersal map value: " << dispersal_prob_map[k][index] << endl;
+                    ss << "Dispersal map value: " << dispersal_prob_map.get(k, index) << endl;
                     ss << "Origin density: " << landscape->getVal(origin_step.oldx, origin_step.oldy,
                                                                   origin_step.oldxwrap,
                                                                   origin_step.oldywrap, 0.0) << endl;
@@ -159,7 +159,7 @@ void DispersalCoordinator::addDensity()
                     writeError(ss.str());
                     throw FatalException("Dispersal map is non zero where density is 0.");
                 }
-                dispersal_prob_map[k][index] *= density;
+                dispersal_prob_map.get(k, index) *= density;
             }
         }
     }
@@ -179,7 +179,7 @@ void DispersalCoordinator::addReproduction()
                     for(unsigned long k = 0; k < dispersal_prob_map.getRows(); k++)
                     {
 
-                        dispersal_prob_map[k][index] *= (*reproduction_map)[i][j];
+                        dispersal_prob_map.get(k, index) *= reproduction_map->get(i, j);
                     }
                 }
             }
@@ -203,16 +203,17 @@ void DispersalCoordinator::fixDispersalRow(unsigned long row)
         double total_value = 0.0;
         for(unsigned long i = 0; i < dispersal_prob_map.getCols(); i++)
         {
-            total_value += dispersal_prob_map[row][i];
+            total_value += dispersal_prob_map.get(row, i);
         }
         if(total_value == 0.0)
         {
             return;
         }
-        dispersal_prob_map[row][0] = dispersal_prob_map[row][0] / total_value;
+        dispersal_prob_map.get(row, 0) = dispersal_prob_map.get(row, 0) / total_value;
         for(unsigned long i = 1; i < dispersal_prob_map.getCols(); i++)
         {
-            dispersal_prob_map[row][i] = dispersal_prob_map[row][i - 1] + (dispersal_prob_map[row][i] / total_value);
+            dispersal_prob_map.get(row, i) =
+                    dispersal_prob_map.get(row, i - 1) + (dispersal_prob_map.get(row, i) / total_value);
         }
 #ifdef DEBUG
         if(checkDispersalRow(row))
@@ -225,13 +226,13 @@ void DispersalCoordinator::fixDispersalRow(unsigned long row)
 
 bool DispersalCoordinator::checkDispersalRow(unsigned long row)
 {
-    if(abs(dispersal_prob_map[row][dispersal_prob_map.getCols() - 1] - 1.0) > 0.00000001)
+    if(abs(dispersal_prob_map.get(row, dispersal_prob_map.getCols() - 1) - 1.0) > 0.00000001)
     {
         return true;
     }
     for(unsigned long i = 0; i < dispersal_prob_map.getCols() - 1; i++)
     {
-        if(dispersal_prob_map[row][i] > dispersal_prob_map[row][i + 1])
+        if(dispersal_prob_map.get(row, i) > dispersal_prob_map.get(row, i + 1))
         {
             return true;
         }
@@ -272,11 +273,11 @@ void DispersalCoordinator::verifyDispersalMapSetup()
                 double dispersal_prob;
                 if(x == 0)
                 {
-                    dispersal_prob = dispersal_prob_map[y][0];
+                    dispersal_prob = dispersal_prob_map.get(y, 0);
                 }
                 else
                 {
-                    dispersal_prob = dispersal_prob_map[y][x] - dispersal_prob_map[y][x - 1];
+                    dispersal_prob = dispersal_prob_map.get(y, x) - dispersal_prob_map.get(y, x - 1);
                 }
                 dispersal_total += dispersal_prob;
                 if(dispersal_prob > 0.0)
@@ -380,7 +381,7 @@ void DispersalCoordinator::disperseDispersalMap(Step &this_step)
     while(max_col - min_col > 1)
     {
         auto to_check = static_cast<unsigned long>(floor(double(max_col - min_col) / 2.0) + min_col);
-        if(dispersal_prob_map[row_ref][to_check] < random_no)
+        if(dispersal_prob_map.get(row_ref, to_check) < random_no)
         {
             min_col = to_check;
         }

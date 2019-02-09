@@ -36,7 +36,7 @@ uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned lo
         {
             for(unsigned long j = 0; j < map_x; j++)
             {
-                temp_matrix[i][j] = 1.0;
+                temp_matrix.get(i, j) = 1.0;
             }
         }
     }
@@ -58,10 +58,10 @@ uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned lo
     {
         for(unsigned long j = 0; j < temp_matrix.getCols(); j++)
         {
-            map_in[i][j] = (uint32_t) (max(round(temp_matrix[i][j] * (double) scalar), 0.0));
-            if(map_in[i][j] > max_value)
+            map_in.get(i, j) = (uint32_t) (max(round(temp_matrix.get(i, j) * (double) scalar), 0.0));
+            if(map_in.get(i, j) > max_value)
             {
-                max_value = map_in[i][j];
+                max_value = map_in.get(i, j);
             }
         }
     }
@@ -389,20 +389,21 @@ void Landscape::validateMaps()
                     "ERROR_MAP_009: Landscape validation failed - modern and historical maps are not the same dimensions.");
         }
 #ifdef historical_mode
-        for(unsigned long i = 0; i < fine_map.getCols(); i++)
+        for(unsigned long i = 0; i < fine_map.getRows(); i++)
         {
-            for(unsigned long j = 0; j < fine_map.getRows(); j++)
+            for(unsigned long j = 0; j < fine_map.getCols(); j++)
             {
-                if(fine_map[j][i] > historical_fine_map[j][i])
+
+                if(fine_map.get(i, j) > historical_fine_map.get(i, j))
                 {
 #ifdef DEBUG
                     stringstream ss;
-                    ss << "fine map: " << fine_map[j][i] << " historical map: " << historical_fine_map[j][i];
-                    ss << " x,y: " << i << "," << j << endl;
+                    ss << "fine map: " << fine_map.get(i, j) << " historical map: " << historical_fine_map.get(i, j);
+                    ss << " x,y: " << j << "," << i << endl;
                     writeLog(50, ss);
 #endif //DEBUG
-                    throw FatalException("ERROR_MAP_007: Landscape validation failed - fine map value larger "
-                                              "than historical fine map value.");
+                    throw FatalException("Landscape validation failed - fine map value larger "
+                                         "than historical fine map value.");
                 }
             }
             double dPercentComplete = 100 * ((double)(i + iCounter) / dTotal);
@@ -420,18 +421,20 @@ void Landscape::validateMaps()
     stringstream ss;
     if(has_historical)
     {
-        for(unsigned long i = 0; i < coarse_map.getCols(); i++)
+
+        for(unsigned long i = 0; i < coarse_map.getRows(); i++)
         {
-            for(unsigned long j = 0; j < coarse_map.getRows(); j++)
+            for(unsigned long j = 0; j < coarse_map.getCols(); j++)
             {
-                if(coarse_map[j][i] > historical_coarse_map[j][i])
+                if(coarse_map.get(i, j)> historical_coarse_map.get(i, j))
                 {
-                    ss << "coarse map: " << coarse_map[j][i] << " historical map: " << historical_coarse_map[j][i];
-                    ss << " coarse map x+1: " << coarse_map[j][i + 1]
-                       << " historical map: " << historical_coarse_map[j][i + 1];
+                    ss << "coarse map: " << coarse_map.get(i, j) << " historical map: " <<
+                    historical_coarse_map.get(i, j);
+                    ss << " coarse map x+1: " << coarse_map.get(i, j+1)
+                       << " historical map: " << historical_coarse_map.get(i, j+1);
                     ss << " x,y: " << i << "," << j;
                     writeLog(50, ss);
-                    throw FatalException("ERROR_MAP_008: Landscape validation failed - coarse map value larger "
+                    throw FatalException("Landscape validation failed - coarse map value larger "
                                          "than historical coarse map value.");
                 }
             }
@@ -601,30 +604,30 @@ unsigned long Landscape::getValCoarse(const double &xval, const double &yval, co
     unsigned long retval = 0;
     if(has_historical)
     {
-        if(is_historical || historical_coarse_map[yval][xval] == coarse_map[yval][xval])
+        if(is_historical || historical_coarse_map.get(yval, xval) == coarse_map.get(yval, xval))
         {
-            return historical_coarse_map[yval][xval];
+            return historical_coarse_map.get(yval, xval);
         }
         else
         {
             double currentTime = current_generation - current_map_time;
-            retval = (unsigned long) floor(coarse_map[yval][xval] +
+            retval = (unsigned long) floor(coarse_map.get(yval, xval) +
                                            (habitat_change_rate *
-                                            ((historical_coarse_map[yval][xval] - coarse_map[yval][xval]) /
-                                             (gen_since_historical - current_map_time)) * currentTime));
+                                            ((historical_coarse_map.get(yval, xval) - coarse_map.get(yval, xval) /
+                                             (gen_since_historical - current_map_time)) * currentTime)));
         }
     }
     else
     {
-        return coarse_map[yval][xval];
+        return coarse_map.get(yval, xval);
     }
 #ifdef historical_mode
-    if(retval > historical_coarse_map[yval][xval])
+    if(retval > historical_coarse_map.get(yval, xval))
         {
             string ec =
                 "Returned value greater than historical value. Check file input. (or disable this error before "
                 "compilation.\n";
-            ec += "historical value: " + to_string((long long)historical_coarse_map[yval][xval]) +
+            ec += "historical value: " + to_string((long long)historical_coarse_map.get(yval, xval)) +
                   " returned value: " + to_string((long long)retval);
             throw FatalException(ec);
         }
@@ -639,36 +642,36 @@ unsigned long Landscape::getValFine(const double &xval, const double &yval, cons
     unsigned long retval = 0;
     if(has_historical)
     {
-        if(is_historical || historical_fine_map[yval][xval] == fine_map[yval][xval])
+        if(is_historical || historical_fine_map.get(yval, xval) == fine_map.get(yval, xval))
         {
-            retval = historical_fine_map[yval][xval];
+            retval = historical_fine_map.get(yval, xval);
         }
         else
         {
             double currentTime = current_generation - current_map_time;
 #ifdef historical_mode
-            retval = (unsigned long)floor(fine_map[yval][xval] +
-                                           (habitat_change_rate * ((historical_fine_map[yval][xval] - fine_map[yval][xval]) /
+            retval = (unsigned long)floor(fine_map.get(yval, xval) +
+                                           (habitat_change_rate * ((historical_fine_map.get(yval, xval) -
+                                           fine_map.get(yval, xval)) /
                                                    (gen_since_historical-current_map_time)) * currentTime));
 #else
-            retval = (unsigned long) floor(fine_map[yval][xval] +
+            retval = (unsigned long) floor(fine_map.get(yval, xval) +
                                            (habitat_change_rate *
-                                            ((static_cast<double>(historical_fine_map[yval][xval]) -
-                                              static_cast<double>(fine_map[yval][xval])) /
+                                            ((static_cast<double>(historical_fine_map.get(yval, xval)) -
+                                              static_cast<double>(fine_map.get(yval, xval))) /
                                              (gen_since_historical - current_map_time)) * currentTime));
 #endif
         }
     }
     else
     {
-        return fine_map[yval][xval];
+        return fine_map.get(yval, xval);
     }
-// os <<fine_map[yval][xval] << "-"<< retval << endl;
-// Note that debug mode will throw an exception if the returned value is less than the historical state
+    // Note that debug mode will throw an exception if the returned value is less than the historical state
 #ifdef historical_mode
     if(has_historical)
     {
-        if(retval > historical_fine_map[yval][xval])
+        if(retval > historical_fine_map.get(yval, xval))
         {
             throw FatalException("Returned value greater than historical value. Check file input. (or disable this "
                                       "error before compilation.");
@@ -822,8 +825,8 @@ unsigned long Landscape::runDispersal(const double &dist,
                                       bool &disp_comp,
                                       const double &generation)
 {
-// Checks that the start point is not out of matrix - this might have to be disabled to ensure that when updating the
-// map, it doesn't cause problems.
+    // Checks that the start point is not out of matrix - this might have to be disabled to ensure that when updating the
+    // map, it doesn't cause problems.
 #ifdef historical_mode
     if(!checkMap(startx, starty, startxwrap, startywrap, generation))
     {

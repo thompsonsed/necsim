@@ -134,7 +134,7 @@ void Community::importSamplemask(string sSamplemask)
             {
                 for(unsigned long j = 0; j < samplemask.sample_mask.getRows(); j++)
                 {
-                    if(samplemask.sample_mask[j][i])
+                    if(samplemask.sample_mask.getCopy(j, i))
                     {
                         total++;
                     }
@@ -957,12 +957,13 @@ void Community::calcFragments(string fragment_file)
             {
                 bool in_fragment = false;
                 // Make sure is isn't on the top or left edge
-                if(samplemask.sample_mask[j][i])
+                if(samplemask.sample_mask.getCopy(j, i))
                 {
                     if(i > 0 && j > 0)
                     {
                         // Perform the check
-                        in_fragment = !(samplemask.sample_mask[j][i - 1] || samplemask.sample_mask[j - 1][i]);
+                        in_fragment = !(samplemask.sample_mask.getCopy(j, i - 1) ||
+                                samplemask.sample_mask.getCopy(j - 1, i));
                     }
                         // if it is on an edge, we need to check the fragment
                     else
@@ -971,7 +972,7 @@ void Community::calcFragments(string fragment_file)
                         // there, it is not a fragment.
                         if(i == 0 && j > 0)
                         {
-                            if(!samplemask.sample_mask[j - 1][i])
+                            if(!samplemask.sample_mask.getCopy(j - 1, i))
                             {
                                 in_fragment = true;
                             }
@@ -980,7 +981,7 @@ void Community::calcFragments(string fragment_file)
                             // forest there, it is not a fragment.
                         else if(j == 0 && i > 0)
                         {
-                            if(!samplemask.sample_mask[j][i - 1])
+                            if(!samplemask.sample_mask.getCopy(j, i - 1))
                             {
                                 in_fragment = true;
                             }
@@ -1010,14 +1011,14 @@ void Community::calcFragments(string fragment_file)
                     while(x_continue)
                     {
                         x++;
-                        if(samplemask.sample_mask[j][x])
+                        if(samplemask.sample_mask.getCopy(j, x))
                         {
                             // Check we're not on top edge of the map.
                             if(j > 0)
                             {
                                 // if the cell above is non-fragment then we don't need to
                                 // continue (downwards fragments get priority).
-                                if(samplemask.sample_mask[j - 1][x])
+                                if(samplemask.sample_mask.getCopy(j - 1, x))
                                 {
                                     x_continue = true;
                                 }
@@ -1040,7 +1041,7 @@ void Community::calcFragments(string fragment_file)
                     {
                         y++;
                         // Make sure both extremes of the rectangle are still within patch.
-                        if(samplemask.sample_mask[y][i] && samplemask.sample_mask[y][i - 1])
+                        if(samplemask.sample_mask.getCopy(y, i) && samplemask.sample_mask.getCopy(y, i - 1))
                         {
                             y_continue = true;
                         }

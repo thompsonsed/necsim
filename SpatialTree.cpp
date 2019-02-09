@@ -1349,19 +1349,22 @@ void SpatialTree::verifyActivityMaps()
                 }
 
 #ifdef DEBUG
-                if(landscape->getValFine(j, i, 0.0) == 0 && death_map->get(i, j) != 0.0)
+                if(!has_printed)
                 {
-                    stringstream ss;
-                    ss << "Density is zero where death map is non-zero for " << j << ", " << i << endl;
-                    ss << "Density: " << landscape->getValFine(j, i, 0.0) << endl;
-                    ss << "Death map: " << death_map->get(i, j) << endl;
-                    ss << "This is likely incorrect." << endl;
-                    writeCritical(ss.str());
+                    if(landscape->getValFine(j, i, 0.0) == 0 && death_map->get(i, j) != 0.0)
+                    {
+                        stringstream ss;
+                        ss << "Density is zero where death map is non-zero for " << j << ", " << i << endl;
+                        ss << "Density: " << landscape->getValFine(j, i, 0.0) << endl;
+                        ss << "Death map: " << death_map->get(i, j) << endl;
+                        ss << "This is likely incorrect." << endl;
+                        writeCritical(ss.str());
+                    }
                 }
 #else // NDEBUG
                 if(!has_printed)
                 {
-                    if(landscape->getValFine(j, i, 0.0) == 0 && (*death_map)[i][j] != 0.0)
+                    if(landscape->getValFine(j, i, 0.0) == 0 && death_map->get(i, j) != 0.0)
                     {
                         has_printed = true;
                         writeCritical("Density is zero where death map is non-zero. This is likely incorrect.");
@@ -1405,7 +1408,7 @@ void SpatialTree::verifyActivityMaps()
 #else // NDEBUG
                 if(!has_printed)
                 {
-                    if(landscape->getValFine(j, i, 0.0) == 0 && (*reproduction_map)[i][j] != 0.0)
+                    if(landscape->getValFine(j, i, 0.0) == 0 && reproduction_map->get(i, j) != 0.0)
                     {
                         has_printed = true;
                         writeCritical("Density is zero where reproduction map is non-zero. This is likely incorrect.");

@@ -129,6 +129,19 @@ public:
      */
     unsigned long index(const unsigned long &row, const unsigned long &col) const
     {
+#ifdef DEBUG
+        if(num_cols == 0 || num_rows == 0)
+        {
+            throw out_of_range("Matrix has 0 rows and columns for indexing from.");
+        }
+        if(col + num_cols * row > matrix.size())
+        {
+            stringstream ss;
+            ss << "Index of " << col + num_cols * row << ", (" << row << ", " << col << ")";
+            ss << " is out of range of matrix vector with size " << matrix.size() << endl;
+            throw out_of_range(ss.str());
+        }
+#endif // DEBUG
         return col + num_cols * row;
     }
 

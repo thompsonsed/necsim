@@ -430,7 +430,7 @@ public:
         for(uint32_t j = 0; j < num_rows; j++)
         {
             printNumberComplete(j, number_printed);
-            cpl_error = po_band->RasterIO(GF_Read, 0, j, static_cast<int>(block_x_size), 1, &matrix[j],
+            cpl_error = po_band->RasterIO(GF_Read, 0, j, static_cast<int>(block_x_size), 1, &matrix[j*num_cols],
                                           static_cast<int>(block_x_size), 1, gdal_data_type, 0, 0);
             checkTifImportFailure();
             // Now convert the no data values to 0
@@ -438,7 +438,7 @@ public:
             {
                 if(get(j, i) == no_data_value)
                 {
-                    (j, i) = 0;
+                    get(j, i) = 0;
                 }
             }
         }

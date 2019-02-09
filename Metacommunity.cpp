@@ -120,7 +120,7 @@ void Metacommunity::createMetacommunityNSENeutralModel()
     // Make it cumulative to increase the speed of indexing using binary search.
     species_abundances_handler = make_unique<SimulatedSpeciesAbundancesHandler>();
     species_abundances_handler->setup(random, current_metacommunity_parameters->metacommunity_size,
-                                      current_metacommunity_parameters->speciation_rate);
+                                      current_metacommunity_parameters->speciation_rate, nodes->size());
     auto tmp_species_abundances = metacommunity_tree->getSpeciesAbundances();
     if(tmp_species_abundances->empty())
     {
@@ -173,9 +173,10 @@ void Metacommunity::applyNoOutput(shared_ptr<SpecSimParameters> sp, shared_ptr<v
 
 void Metacommunity::approximateSAD()
 {
+    species_abundances_handler.reset();
     species_abundances_handler = make_unique<AnalyticalSpeciesAbundancesHandler>();
     species_abundances_handler->setup(random, current_metacommunity_parameters->metacommunity_size,
-                                      current_metacommunity_parameters->speciation_rate);
+                                      current_metacommunity_parameters->speciation_rate, nodes->size());
 }
 
 void Metacommunity::readSAD()
@@ -184,9 +185,10 @@ void Metacommunity::readSAD()
     external_metacommunity.openSqlConnection(current_metacommunity_parameters->option);
     shared_ptr<map<unsigned long, unsigned long>> sad = external_metacommunity.getSpeciesAbundances(
             current_metacommunity_parameters->external_reference);
+    species_abundances_handler.reset();
     species_abundances_handler = make_unique<SimulatedSpeciesAbundancesHandler>();
     species_abundances_handler->setup(random, current_metacommunity_parameters->metacommunity_size,
-                                      current_metacommunity_parameters->speciation_rate);
+                                      current_metacommunity_parameters->speciation_rate, nodes->size());
     species_abundances_handler->setAbundanceList(sad);
 }
 

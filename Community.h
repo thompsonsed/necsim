@@ -573,11 +573,6 @@ public:
      */
     void calculateTree();
 
-    // TODO check if needs removing
-    void makeSpeciationRatesUnique();
-
-    void makeTimesUnique();
-
     /**
      * @brief Outputs the data to the SQL database.
      */

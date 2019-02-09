@@ -43,11 +43,13 @@ public:
     /**
      * @brief Creates the SpeciesAbundancesHandler object
      * @param random the random number generator
-     * @param community_size the number of individuals in the community
-     * @param speciation_rate the speciation rate of the community
+     * @param metacommunity_size the number of individuals in the metacommunity
+     * @param speciation_rate the speciation rate of the metacommunity
+     * @param local_community_size: the number of individuals in the local community
      */
-    void setup(shared_ptr<RNGController> random, const unsigned long &community_size,
-               const long double &speciation_rate) override;
+    void setup(shared_ptr<RNGController> random, const unsigned long &metacommunity_size,
+                   const long double &speciation_rate,
+                   const unsigned long &local_community_size) override;
 
     /**
      * @brief Generates the species abundances using the analytical approximation.

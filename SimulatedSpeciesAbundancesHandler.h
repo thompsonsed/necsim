@@ -110,7 +110,7 @@ public:
 //	{
 //		makeProbabilityDistributionCumulative();
 //		species_abundances.clear();
-//		while(number_of_individuals < community_size)
+//		while(number_of_individuals < metacommunity_size)
 //		{
 //			// Randomly add a species
 //			double random_number = random_no->d01();

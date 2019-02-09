@@ -20,25 +20,35 @@ AnalyticalSpeciesAbundancesHandler::AnalyticalSpeciesAbundancesHandler() : seen_
 
 }
 
-void AnalyticalSpeciesAbundancesHandler::setup(shared_ptr<RNGController> random, const unsigned long &community_size,
-                                               const long double &speciation_rate)
+void AnalyticalSpeciesAbundancesHandler::setup(shared_ptr<RNGController> random, const unsigned long &metacommunity_size,
+                                               const long double &speciation_rate,
+                                               const unsigned long &local_community_size)
 {
-    SpeciesAbundancesHandler::setup(random, community_size, speciation_rate);
+    SpeciesAbundancesHandler::setup(random, metacommunity_size, speciation_rate, local_community_size);
     generateSpeciesAbundances();
 }
 
 void AnalyticalSpeciesAbundancesHandler::generateSpeciesAbundances()
 {
     writeInfo("burning in species abundance...");
-    while(seen_no_individuals < community_size)
+    for(unsigned long i = 0; i < local_community_size; i ++)
     {
         addNewSpecies();
+        if(seen_no_individuals >= metacommunity_size)
+        {
+            break;
+        }
     }
-    if(seen_no_individuals != community_size)
+//    while(seen_no_individuals < metacommunity_size)
+//    {
+//        addNewSpecies();
+//    }
+    // Make sure that we've seen at least as many individuals as in the local community.
+    if(seen_no_individuals < local_community_size)
     {
         stringstream ss;
-        ss << "Seen number of individuals (" << seen_no_individuals << ") does not match community size (";
-        ss << community_size << ") - please report this bug" << endl;
+        ss << "Seen number of individuals (" << seen_no_individuals << ") is not more than local community size (";
+        ss << local_community_size << ") - please report this bug" << endl;
         throw FatalException(ss.str());
     }
     writeInfo("done.\n");
@@ -48,7 +58,14 @@ void AnalyticalSpeciesAbundancesHandler::generateSpeciesAbundances()
 unsigned long AnalyticalSpeciesAbundancesHandler::getRandomSpeciesID()
 {
     // Either choose from previously seen individuals, or pick out a new individual of a new species.
-    auto individual_id = random->i0(community_size - 1);
+    auto individual_id = random->i0(metacommunity_size - 1);
+    // Pick out a new individual
+    if(individual_id >= seen_no_individuals)
+    {
+        addNewSpecies();
+        return ind_to_species.rbegin()->second;
+    }
+
 #ifdef DEBUG
     if(individual_id > seen_no_individuals)
     {
@@ -74,13 +91,13 @@ unsigned long AnalyticalSpeciesAbundancesHandler::pickPreviousIndividual(const u
 void AnalyticalSpeciesAbundancesHandler::addNewSpecies()
 {
     max_species_id++;
-
     unsigned long new_abundance = 0;
     do
     {
-        new_abundance = getRandomAbundanceOfSpecies();
+    new_abundance = min(getRandomAbundanceOfSpecies(), metacommunity_size - seen_no_individuals);
     }
-    while(new_abundance > community_size - seen_no_individuals);
+    // It is possible this is unnecessary and causes a minor slowdown, but I've found it's impact negligible.
+    while(new_abundance > metacommunity_size - seen_no_individuals);
     unsigned long cumulative_abundance;
     if(seen_no_individuals == 0)
     {
@@ -113,7 +130,7 @@ unsigned long AnalyticalSpeciesAbundancesHandler::getRandomAbundanceOfSpecies()
     // First generate a random abundance class
     return static_cast<unsigned long>(max(static_cast<double>(
                                                   min(random->randomLogarithmic(1.0 - speciation_rate),
-                                                      community_size)), 1.0));
+                                                      metacommunity_size)), 1.0));
 }
 
 

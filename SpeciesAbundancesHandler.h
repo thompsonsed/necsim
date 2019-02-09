@@ -30,7 +30,8 @@ protected:
 
     shared_ptr<RNGController> random;
     unsigned long max_species_id;
-    unsigned long community_size;
+    unsigned long metacommunity_size;
+    unsigned long local_community_size;
     long double speciation_rate;
 public:
 
@@ -47,11 +48,13 @@ public:
     /**
      * @brief Creates the SpeciesAbundancesHandler object
      * @param random the random number generator
-     * @param community_size the number of individuals in the community
-     * @param speciation_rate the speciation rate of the community
+     * @param metacommunity_size the number of individuals in the metacommunity
+     * @param speciation_rate the speciation rate of the metacommunity
+     * @param local_community_size: the number of individuals in the local community
      */
-    virtual void setup(shared_ptr<RNGController> random, const unsigned long &community_size,
-                       const long double &speciation_rate);
+    virtual void setup(shared_ptr<RNGController> random, const unsigned long &metacommunity_size,
+                           const long double &speciation_rate,
+                           const unsigned long &local_community_size);
 
     /**
      * @brief Gets a randomly generated species identity.

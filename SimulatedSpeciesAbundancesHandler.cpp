@@ -53,11 +53,11 @@ void SimulatedSpeciesAbundancesHandler::setAbundanceList(
 {
     shared_ptr<vector<unsigned long>> abundance_list = make_shared<vector<unsigned long>>();
     abundance_list->reserve(abundance_list_in->size());
-    community_size = 0;
+    metacommunity_size = 0;
     for(const auto &item: *abundance_list_in)
     {
         abundance_list->push_back(item.second);
-        community_size += item.second;
+        metacommunity_size += item.second;
     }
     generateAbundanceTable(abundance_list);
     generateCumulativeAbundances(abundance_list);
@@ -129,14 +129,14 @@ void SimulatedSpeciesAbundancesHandler::generateCumulativeAbundances(shared_ptr<
         cumulative_abundance_map->erase(cumulative_abundance_map->begin());
     }
 #ifdef DEBUG
-    if(cumulative_abundance_map->rbegin()->first != community_size)
+    if(cumulative_abundance_map->rbegin()->first != metacommunity_size)
     {
         stringstream ss;
         ss << "Last cumulative abundance value (" << cumulative_abundance_map->rbegin()->first;
-        ss << ") is not equal to community size (" << community_size << "). Please report this bug." << endl;
+        ss << ") is not equal to community size (" << metacommunity_size << "). Please report this bug." << endl;
         throw FatalException(ss.str());
     }
-    if(community_size == 1 && cumulative_abundance_map->size() != 1)
+    if(metacommunity_size == 1 && cumulative_abundance_map->size() != 1)
     {
         stringstream ss;
         ss << "Community size is 1, but cumulative abundance map has " << cumulative_abundance_map->size();
@@ -162,7 +162,7 @@ unsigned long SimulatedSpeciesAbundancesHandler::getRandomAbundanceOfIndividual(
     {
         throw FatalException("Cumulative abundance map is empty. Please report this bug.");
     }
-    if(community_size == 1)
+    if(metacommunity_size == 1)
     {
         stringstream ss;
         ss << "Community size is 1 with cumulative abundance map: " << endl;
@@ -174,7 +174,7 @@ unsigned long SimulatedSpeciesAbundancesHandler::getRandomAbundanceOfIndividual(
         throw FatalException(ss.str());
     }
 #endif // DEBUG
-    return cumulative_abundance_map->upper_bound(random->i0(community_size - 1))->second;
+    return cumulative_abundance_map->upper_bound(random->i0(metacommunity_size - 1))->second;
 }
 
 unsigned long SimulatedSpeciesAbundancesHandler::getSpeciesRichnessOfAbundance(const unsigned long &abundance)

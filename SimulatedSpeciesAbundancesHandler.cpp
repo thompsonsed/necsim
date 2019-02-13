@@ -21,6 +21,7 @@ SimulatedSpeciesAbundancesHandler::SimulatedSpeciesAbundancesHandler()
 unsigned long SimulatedSpeciesAbundancesHandler::getRandomSpeciesID()
 {
     unsigned long random_abundance = getRandomAbundanceOfIndividual();
+    // TOD move this to debug
     if(species_abundances.count(random_abundance) == 0)
     {
         stringstream ss;

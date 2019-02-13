@@ -20,9 +20,10 @@ AnalyticalSpeciesAbundancesHandler::AnalyticalSpeciesAbundancesHandler() : seen_
 
 }
 
-void AnalyticalSpeciesAbundancesHandler::setup(shared_ptr<RNGController> random, const unsigned long &metacommunity_size,
-                                               const long double &speciation_rate,
-                                               const unsigned long &local_community_size)
+void
+AnalyticalSpeciesAbundancesHandler::setup(shared_ptr<RNGController> random, const unsigned long &metacommunity_size,
+                                          const long double &speciation_rate,
+                                          const unsigned long &local_community_size)
 {
     SpeciesAbundancesHandler::setup(random, metacommunity_size, speciation_rate, local_community_size);
     generateSpeciesAbundances();
@@ -30,19 +31,24 @@ void AnalyticalSpeciesAbundancesHandler::setup(shared_ptr<RNGController> random,
 
 void AnalyticalSpeciesAbundancesHandler::generateSpeciesAbundances()
 {
-    writeInfo("burning in species abundance...");
-    for(unsigned long i = 0; i < local_community_size; i ++)
+    writeInfo("burning in species abundance..."); // TODO replace or remove
+    auto expected_richness = static_cast<unsigned long>(neutral_analytical::nseSpeciesRichness(metacommunity_size, speciation_rate));
+    for(unsigned long i = 0; i < expected_richness; i ++)
     {
         addNewSpecies();
-        if(seen_no_individuals >= metacommunity_size)
-        {
-            break;
-        }
     }
-//    while(seen_no_individuals < metacommunity_size)
+//    for(unsigned long i = 0; i < local_community_size; i++)
 //    {
 //        addNewSpecies();
+//        if(seen_no_individuals >= metacommunity_size)
+//        {
+//            break;
+//        }
 //    }
+    //    while(seen_no_individuals < metacommunity_size)
+    //    {
+    //        addNewSpecies();
+    //    }
     // Make sure that we've seen at least as many individuals as in the local community.
     if(seen_no_individuals < local_community_size)
     {
@@ -57,14 +63,22 @@ void AnalyticalSpeciesAbundancesHandler::generateSpeciesAbundances()
 
 unsigned long AnalyticalSpeciesAbundancesHandler::getRandomSpeciesID()
 {
-    // Either choose from previously seen individuals, or pick out a new individual of a new species.
-    auto individual_id = random->i0(metacommunity_size - 1);
+    // Select a random individual from the seen number of individuals
+    auto individual_id = random->i0(metacommunity_size- 1);
+
     // Pick out a new individual
-    if(individual_id >= seen_no_individuals)
+    if(individual_id >= seen_no_individuals) // TODO clean up or remove
     {
         addNewSpecies();
+        stringstream ss; // TODO remove
+        ss << "Added new species for id of " << individual_id << " with species id of " << ind_to_species.rbegin()->second;
+        ss << " and abundance of " << ind_to_species.rbegin()->first <<endl;
+        writeInfo(ss.str());
         return ind_to_species.rbegin()->second;
     }
+    stringstream ss; // TODO remove
+    ss << "Individual id was " << individual_id << " with species id " << pickPreviousIndividual(individual_id) << endl;
+    writeInfo(ss.str());
 
 #ifdef DEBUG
     if(individual_id > seen_no_individuals)
@@ -94,10 +108,8 @@ void AnalyticalSpeciesAbundancesHandler::addNewSpecies()
     unsigned long new_abundance = 0;
     do
     {
-    new_abundance = min(getRandomAbundanceOfSpecies(), metacommunity_size - seen_no_individuals);
-    }
-    // It is possible this is unnecessary and causes a minor slowdown, but I've found it's impact negligible.
-    while(new_abundance > metacommunity_size - seen_no_individuals);
+        new_abundance = getRandomAbundanceOfSpecies();
+    }while(new_abundance > metacommunity_size - seen_no_individuals);
     unsigned long cumulative_abundance;
     if(seen_no_individuals == 0)
     {
@@ -131,6 +143,23 @@ unsigned long AnalyticalSpeciesAbundancesHandler::getRandomAbundanceOfSpecies()
     return static_cast<unsigned long>(max(static_cast<double>(
                                                   min(random->randomLogarithmic(1.0 - speciation_rate),
                                                       metacommunity_size)), 1.0));
+}
+
+unsigned long AnalyticalSpeciesAbundancesHandler::getRandomAbundanceOfIndividual()
+{
+    long double p = 1 - speciation_rate;
+    unsigned long unseen_individuals = metacommunity_size - seen_no_individuals;
+    long double val = round(log(((random->d01() * (pow(p, unseen_individuals) - 1)) + 1)) / log(p));
+    unsigned long res = max(min(static_cast<unsigned long>(val), unseen_individuals),
+                            (unsigned long) 1);
+//    stringstream ss;
+//    ss << "speciation rate is " << speciation_rate << endl;
+//    ss << "metacommunity size is " << metacommunity_size << endl;
+//    ss << "seen individuals: " << seen_no_individuals << endl;
+////    ss << "unseen individuals: " << unseen_individuals << endl;
+//    ss << "Results was " << res << " for val " << val << endl; // TODO remove
+//    writeInfo(ss.str());
+    return res;
 }
 
 

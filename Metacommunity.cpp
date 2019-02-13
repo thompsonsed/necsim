@@ -76,6 +76,11 @@ void Metacommunity::addSpecies(unsigned long &species_count, TreeNode *tree_node
 {
 
     auto species_id = species_abundances_handler->getRandomSpeciesID();
+    if(species_id == 0)
+    {
+        throw FatalException("Obtained species id was 0 in metacommunity application - please report this bug.");
+    }
+
     if(species_list.empty() || species_list.find(species_id) == species_list.end())
     {
         species_list.insert(species_id);

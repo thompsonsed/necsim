@@ -178,13 +178,3 @@ unsigned long SimulatedSpeciesAbundancesHandler::getRandomAbundanceOfIndividual(
     return cumulative_abundance_map->upper_bound(random->i0(metacommunity_size - 1))->second;
 }
 
-unsigned long SimulatedSpeciesAbundancesHandler::getSpeciesRichnessOfAbundance(const unsigned long &abundance)
-{
-    if(species_richness_per_abundance.count(abundance) == 0)
-    {
-        stringstream ss;
-        ss << "Cannot find species of abundance " << abundance << " - please report this bug." << endl;
-        throw FatalException(ss.str());
-    }
-    return species_richness_per_abundance[abundance];
-}

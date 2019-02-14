@@ -53,8 +53,8 @@ public:
      * @param local_community_size: the number of individuals in the local community
      */
     virtual void setup(shared_ptr<RNGController> random, const unsigned long &metacommunity_size,
-                           const long double &speciation_rate,
-                           const unsigned long &local_community_size);
+                       const long double &speciation_rate,
+                       const unsigned long &local_community_size);
 
     /**
      * @brief Gets a randomly generated species identity.
@@ -73,23 +73,6 @@ public:
      * @param abundance_list_in list of abundances for each species
      */
     virtual void setAbundanceList(shared_ptr<vector<unsigned long>> abundance_list_in);
-
-    /**
-     * @brief Gets a random species abundance.
-     * @return the randomly generated abundance
-     */
-//    virtual unsigned long getRandomAbundanceOfIndividual();
-
-    /**
-     * @brief Gets the species richness of a particular abundance class.
-     * @param abundance the abundance class of the species
-     * @return the number of species with that abundance
-     */
-    virtual unsigned long getSpeciesRichnessOfAbundance(const unsigned long &abundance)
-    {
-        return 0;
-    }
-
 };
 
 #endif //SPECIES_ABUNDANCES_H

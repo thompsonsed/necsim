@@ -81,16 +81,6 @@ public:
      * @return the randomly generated abundance of a species
      */
     unsigned long getRandomAbundanceOfSpecies();
-
-    /**
-     * @brief Generates a random abundance of an individual from the SAD, using an analytical approach.
-     *
-     * Uses the logarithmic distribution, rescaled to be per individual instead of per species. The resulting
-     * distribution (after normalisation) is then made cumulative and inverted so that a random number can be generated.
-     * @return the abundance of the species of a randomly chosen individual
-     */
-//    unsigned long getRandomAbundanceOfIndividual();
-
 };
 
 #endif //ANALYICAL_SPECIES_ABUNDANCES_H

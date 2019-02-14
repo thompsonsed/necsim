@@ -126,6 +126,8 @@ public:
 
     }
 
+    virtual ~Xoroshiro256plus() = default;
+
     /**
      * @brief Explicit constructor which sets the rng seed.
      * @param seed the random seed

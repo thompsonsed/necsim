@@ -89,7 +89,7 @@ public:
      * distribution (after normalisation) is then made cumulative and inverted so that a random number can be generated.
      * @return the abundance of the species of a randomly chosen individual
      */
-    unsigned long getRandomAbundanceOfIndividual();
+//    unsigned long getRandomAbundanceOfIndividual();
 
 };
 

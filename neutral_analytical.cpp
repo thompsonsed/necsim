@@ -21,15 +21,15 @@ namespace neutral_analytical
     long double nseMetacommunitySpeciesWithAbundance(const unsigned long &n, const unsigned long &community_size,
                                                      const long double &speciation_rate)
     {
-        long double fundamental_biodiversity_number = getFundamentalBiodiversityNumber(community_size, speciation_rate);
+        long double fundamental_biodiversity_number = calcFundamentalBiodiversityNumber(community_size, speciation_rate);
         long double term1 = fundamental_biodiversity_number / n;
         long double term2 = lgamma(community_size + 1) + lgamma(community_size + fundamental_biodiversity_number - n);
         long double term3 = lgamma(community_size + 1 - n) + lgamma(community_size + fundamental_biodiversity_number);
         return term1 * exp(term2 - term3);
     }
 
-    long double getFundamentalBiodiversityNumber(const unsigned long &community_size,
-                                                 const long double &speciation_rate)
+    long double calcFundamentalBiodiversityNumber(const unsigned long &community_size,
+                                                  const long double &speciation_rate)
     {
         if(speciation_rate == 1.0)
         {
@@ -39,10 +39,16 @@ namespace neutral_analytical
         return community_size * speciation_rate / (1.0 - speciation_rate);
     }
 
+    long double calcSpeciationRate(const long double &fundamental_biodiversity_number,
+                                   const unsigned long &metacommunity_size)
+    {
+        return 1.0/(1.0 + ((metacommunity_size - 1)/fundamental_biodiversity_number));
+    }
+
     long double nseSpeciesRichnessDeprecated(const unsigned long &community_size, const long double &speciation_rate)
     {
         long double total_species = 0.0;
-        long double fundamental_biodiversity_number = getFundamentalBiodiversityNumber(community_size, speciation_rate);
+        long double fundamental_biodiversity_number = calcFundamentalBiodiversityNumber(community_size, speciation_rate);
         for(unsigned long i = 0; i < community_size - 1; i++)
         {
 

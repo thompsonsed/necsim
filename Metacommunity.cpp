@@ -155,6 +155,7 @@ void Metacommunity::applyNoOutput(shared_ptr<SpecSimParameters> sp, shared_ptr<v
     {
         setCommunityParameters(item);
         printMetacommunityParameters();
+        setupApplication(sp, tree_data);
         if(current_metacommunity_parameters->option == "simulated")
         {
             createMetacommunityNSENeutralModel();
@@ -172,7 +173,7 @@ void Metacommunity::applyNoOutput(shared_ptr<SpecSimParameters> sp, shared_ptr<v
 #ifdef DEBUG
         writeLog(10, "Creating coalescence tree from metacommunity...");
 #endif //DEBUG
-        doApplication(sp, tree_data);
+        calculateTree();
     }
 }
 

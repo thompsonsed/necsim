@@ -606,6 +606,40 @@ public:
     virtual void applyNoOutput(shared_ptr<SpecSimParameters> sp, shared_ptr<vector<TreeNode>> tree_data);
 
     /**
+     * @brief Sets up the community application by reading parameters and data.
+     * @param sp the speciation parameters to use for generating the community
+     * @param data the list of all nodes on the coalescence tree
+     */
+    void setupApplication(shared_ptr<SpecSimParameters> sp, shared_ptr<vector<TreeNode>> data)
+    {
+        spec_sim_parameters = sp;
+        writeSpeciationRates();
+        // Set up the objects
+        setList(std::move(data));
+        importSimParameters(sp->filename);
+        importSamplemask(sp->samplemask);
+        importData(sp->filename);
+        getPreviousCalcs();
+        if(sp->use_fragments)
+        {
+            calcFragments(sp->fragment_config_file);
+            stringstream os;
+            os << "Total fragments: " << fragments.size() << endl;
+            writeInfo(os.str());
+        }
+        if(spec_sim_parameters->metacommunity_parameters.empty())
+        {
+            spec_sim_parameters->metacommunity_parameters.addNull();
+            current_metacommunity_parameters = spec_sim_parameters->metacommunity_parameters.metacomm_parameters[0];
+        }
+        if(spec_sim_parameters->protracted_parameters.empty())
+        {
+            ProtractedSpeciationParameters tmp;
+            spec_sim_parameters->protracted_parameters.emplace_back(tmp);
+        }
+    }
+
+    /**
      * @brief Creates the coalescence tree for the given speciation parameters.
      * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
      */

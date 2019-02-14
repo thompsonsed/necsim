@@ -1943,32 +1943,7 @@ void Community::doApplication(shared_ptr<SpecSimParameters> sp)
 
 void Community::doApplication(shared_ptr<SpecSimParameters> sp, shared_ptr<vector<TreeNode>> data)
 {
-    spec_sim_parameters = sp;
-    writeSpeciationRates();
-    // Set up the objects
-    setList(std::move(data));
-    importSimParameters(sp->filename);
-    importSamplemask(sp->samplemask);
-    importData(sp->filename);
-    getPreviousCalcs();
-    if(sp->use_fragments)
-    {
-        calcFragments(sp->fragment_config_file);
-        stringstream os;
-        os << "Total fragments: " << fragments.size() << endl;
-        writeInfo(os.str());
-    }
-    if(spec_sim_parameters->metacommunity_parameters.empty())
-    {
-        spec_sim_parameters->metacommunity_parameters.addNull();
-        current_metacommunity_parameters = spec_sim_parameters->metacommunity_parameters.metacomm_parameters[0];
-    }
-    if(spec_sim_parameters->protracted_parameters.empty())
-    {
-        ProtractedSpeciationParameters tmp;
-        spec_sim_parameters->protracted_parameters.emplace_back(tmp);
-    }
-
+    setupApplication(sp, data);
     calculateTree();
 }
 

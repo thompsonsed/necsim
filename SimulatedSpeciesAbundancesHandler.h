@@ -89,7 +89,7 @@ public:
      * @brief Gets a random species abundance.
      * @return the randomly generated abundance
      */
-    unsigned long getRandomAbundanceOfIndividual() override;
+    unsigned long getRandomAbundanceOfIndividual();
 
     /**
      * @brief Gets the species richness of a particular abundance class.

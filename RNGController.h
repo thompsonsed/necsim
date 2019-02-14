@@ -151,7 +151,7 @@ constexpr static double wtab[128] = {
 /**
  * @brief Contains the functions for random number generation, based on the Xoroshiro256+ algorithm.
  */
-class RNGController : public Xoroshiro256plus
+class RNGController : public virtual Xoroshiro256plus
 {
 
 private:
@@ -184,6 +184,8 @@ public:
     {
 
     }
+
+
 
     /**
      * @brief Sets the seed to the given input.

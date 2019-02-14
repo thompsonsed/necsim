@@ -38,7 +38,7 @@ void SpeciesAbundancesHandler::setAbundanceList(shared_ptr<vector<unsigned long>
 
 }
 
-unsigned long SpeciesAbundancesHandler::getRandomAbundanceOfIndividual()
-{
-    return 0;
-}
+//unsigned long SpeciesAbundancesHandler::getRandomAbundanceOfIndividual()
+//{
+//    return 0;
+//}

@@ -41,8 +41,17 @@ namespace neutral_analytical
      * @param speciation_rate the speciation rate
      * @return the fundamental biodiversity number
      */
-    long double getFundamentalBiodiversityNumber(const unsigned long &community_size,
-                                                 const long double &speciation_rate);
+    long double calcFundamentalBiodiversityNumber(const unsigned long &community_size,
+                                                  const long double &speciation_rate);
+
+    /**
+     * @brief Calculates the speciation rate from the fundamental biodiversity number and the metacommunity size.
+     * @param fundamental_biodiversity_number the fundamental biodiversity number (theta)
+     * @param metacommunity_size the number of individuals in the metacommunity
+     * @return the speciation rate to maintain the given fundamental biodiversity number
+     */
+    long double calcSpeciationRate(const long double &fundamental_biodiversity_number,
+                                   const unsigned long &metacommunity_size);
 
     /**
      * @brief Gets the expected species richness for a non-spatially explicit neutral model.

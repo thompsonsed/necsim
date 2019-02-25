@@ -21,6 +21,7 @@
 #ifndef NECSIM_XOROSHIRO256PLUS_H
 #define NECSIM_XOROSHIRO256PLUS_H
 
+#include <iostream>
 #include <cstdint>
 #include <array>
 
@@ -217,7 +218,7 @@ public:
      * @param x the random number generator to save
      * @return
      */
-    friend ostream &operator<<(ostream &os, const Xoroshiro256plus &x)
+    friend std::ostream &operator<<(std::ostream &os, const Xoroshiro256plus &x)
     {
         for(const auto &item: x.shuffle_table)
         {
@@ -233,7 +234,7 @@ public:
      * @param r the NRrand object to input to.
      * @return the input stream.
      */
-    friend istream &operator>>(istream &is, Xoroshiro256plus &x)
+    friend std::istream &operator>>(std::istream &is, Xoroshiro256plus &x)
     {
         char delim;
         for(auto &i : x.shuffle_table)

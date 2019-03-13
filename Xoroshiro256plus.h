@@ -3,7 +3,7 @@
 
 /**
  * @author Sam Thompson, based on a functionally equivalent example from David Blackman and Sebastiano Vigna
- * @file RngXorishi256.h
+ * @file Xoroshiro256plus.h
  * @brief Contains a generic random number generator based on the Xoroshi256+ method.
  *
  * Modified from code by David Blackman and Sebastiano Vigna (vigna@acm.org)

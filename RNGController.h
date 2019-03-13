@@ -2,11 +2,9 @@
 //See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 
 /**
- * @author Sam Thompson, based on a functionally equivalent example from David Blackman and Sebastiano Vigna
- * @file NRrand.h
+ * @author Sam Thompson
+ * @file RNGController.h
  * @brief Contains a generic random number generator.
- *
- * Modified from code by David Blackman and Sebastiano Vigna (vigna@acm.org)
  *
  * To the extent possible under law, the author has dedicated all copyright and related and neighboring rights to this
  * software to the public domain worldwide. This software is distributed without any warranty.

@@ -18,13 +18,13 @@
 
 namespace neutral_analytical
 {
-    long double nseMetacommunitySpeciesWithAbundance(const unsigned long &n, const unsigned long &community_size,
-                                                     const long double &speciation_rate)
+    long double siMetacommunitySpeciesWithAbundance(const unsigned long &n, const unsigned long &metacommunity_size,
+                                                    const long double &speciation_rate)
     {
-        long double fundamental_biodiversity_number = calcFundamentalBiodiversityNumber(community_size, speciation_rate);
+        long double fundamental_biodiversity_number = calcFundamentalBiodiversityNumber(metacommunity_size, speciation_rate);
         long double term1 = fundamental_biodiversity_number / n;
-        long double term2 = lgamma(community_size + 1) + lgamma(community_size + fundamental_biodiversity_number - n);
-        long double term3 = lgamma(community_size + 1 - n) + lgamma(community_size + fundamental_biodiversity_number);
+        long double term2 = lgamma(metacommunity_size + 1) + lgamma(metacommunity_size + fundamental_biodiversity_number - n);
+        long double term3 = lgamma(metacommunity_size + 1 - n) + lgamma(metacommunity_size + fundamental_biodiversity_number);
         return term1 * exp(term2 - term3);
     }
 
@@ -45,7 +45,7 @@ namespace neutral_analytical
         return 1.0/(1.0 + ((metacommunity_size - 1)/fundamental_biodiversity_number));
     }
 
-    long double nseSpeciesRichnessDeprecated(const unsigned long &community_size, const long double &speciation_rate)
+    long double siSpeciesRichnessDeprecated(const unsigned long &community_size, const long double &speciation_rate)
     {
         long double total_species = 0.0;
         long double fundamental_biodiversity_number = calcFundamentalBiodiversityNumber(community_size, speciation_rate);
@@ -57,18 +57,18 @@ namespace neutral_analytical
         return total_species;
     }
 
-    long double nseSpeciesRichness(const unsigned long &community_size, const long double &speciation_rate)
+    long double siSpeciesRichness(const unsigned long &community_size, const long double &speciation_rate)
     {
         return community_size * speciation_rate * log(1.0 / speciation_rate) / (1 - speciation_rate);
     }
 
-    std::map<unsigned long, long double> nseSpeciesAbundanceCumulativeDistribution(const unsigned long &community_size,
-                                                                                   const long double &speciation_rate)
+    std::map<unsigned long, long double> siSpeciesAbundanceCumulativeDistribution(const unsigned long &community_size,
+                                                                                  const long double &speciation_rate)
     {
         std::map<unsigned long, long double> sad;
         for(unsigned long i = 1; i < community_size; i++)
         {
-            sad[i] = nseMetacommunitySpeciesWithAbundance(i, community_size, speciation_rate);
+            sad[i] = siMetacommunitySpeciesWithAbundance(i, community_size, speciation_rate);
         }
         return sad;
     }

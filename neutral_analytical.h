@@ -6,7 +6,10 @@
  * @file neutral_analytical.cpp
  *
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
- * @brief Contains a set of functions associated with providing analytical solutions for neutral models in ecology.
+ * @brief Contains a set of functions associated with providing analytical solutions for neutral models in ecology,
+ * primarily for spatially implicit neutral models.
+ *
+ * Formulas are mostly taken from Vallade and Houchmandzadeh (2003) and Hubbell (2001).
  *
  * Contact: samuel.thompson14@imperial.ac.uk or thompsonsed@gmail.com
  */
@@ -21,18 +24,18 @@
 namespace neutral_analytical
 {
     /**
-     * @brief Calculate the expected number of species with abundance n within a non-spatially explicit
+     * @brief Calculate the expected number of species with abundance n within a spatially implicit
      * neutral model.
      *
      * Implementation of the SAD approximation from Vallade and Houchmandzadeh (2003).
      *
      * @param n the number of individuals expected within the species
-     * @param community_size the total number of individuals in the community
+     * @param metacommunity_size the total number of individuals in the community
      * @param speciation_rate the speciation rate
      * @return the number of species with abundance n
      */
-    long double nseMetacommunitySpeciesWithAbundance(const unsigned long &n, const unsigned long &community_size,
-                                                     const long double &speciation_rate);
+    long double siMetacommunitySpeciesWithAbundance(const unsigned long &n, const unsigned long &metacommunity_size,
+                                                    const long double &speciation_rate);
 
     /**
      * @brief Gets the fundamental biodiversity number for the system.
@@ -54,7 +57,7 @@ namespace neutral_analytical
                                    const unsigned long &metacommunity_size);
 
     /**
-     * @brief Gets the expected species richness for a non-spatially explicit neutral model.
+     * @brief Gets the expected species richness for a spatially implicit explicit neutral model.
      *
      * Using the sampling formula from Vallade and ﻿Houchmandzadeh (2003).
      *
@@ -63,10 +66,10 @@ namespace neutral_analytical
      * @deprecated this version uses an old inefficient method
      * @return the number of species expected to exist
      */
-    long double nseSpeciesRichnessDeprecated(const unsigned long &community_size, const long double &speciation_rate);
+    long double siSpeciesRichnessDeprecated(const unsigned long &community_size, const long double &speciation_rate);
 
     /**
-     * @brief Gets the expected species richness for a non-spatially explicit neutral model.
+     * @brief Gets the expected species richness for a spatially implicit neutral model.
      *
      * Using an analytical approximation identified here by Sam Thompson (but likely an old published result).
      *
@@ -75,11 +78,11 @@ namespace neutral_analytical
      * @deprecated this version uses an old inefficient method
      * @return the number of species expected to exist
      */
-    long double nseSpeciesRichness(const unsigned long &community_size, const long double &speciation_rate);
+    long double siSpeciesRichness(const unsigned long &community_size, const long double &speciation_rate);
 
     /**
      * @brief Get the species abundances probability distribution  for a set of community parameters within a
-     * non-spatial neutral model of ecology.
+     * spatially implicit neutral model of ecology.
      *
      * The abundances will be cumulative probabilities.
      *
@@ -87,8 +90,8 @@ namespace neutral_analytical
      * @param speciation_rate the speciation rate
      * @return
      */
-    std::map<unsigned long, long double> nseSpeciesAbundanceCumulativeDistribution(const unsigned long &community_size,
-                                                                                   const long double &speciation_rate);
+    std::map<unsigned long, long double> siSpeciesAbundanceCumulativeDistribution(const unsigned long &community_size,
+                                                                                  const long double &speciation_rate);
 
 }
 #endif //NECSIM_NEUTRAL_ANALYTICAL_H

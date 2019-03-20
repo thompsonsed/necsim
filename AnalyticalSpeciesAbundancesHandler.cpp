@@ -32,8 +32,8 @@ void AnalyticalSpeciesAbundancesHandler::setup(shared_ptr<RNGController> random,
 void AnalyticalSpeciesAbundancesHandler::generateSpeciesAbundances()
 {
     writeInfo("Burning in species abundances...\n");
-    auto expected_richness = static_cast<unsigned long>(neutral_analytical::nseSpeciesRichness(metacommunity_size,
-                                                                                               speciation_rate));
+    auto expected_richness = static_cast<unsigned long>(neutral_analytical::siSpeciesRichness(metacommunity_size,
+                                                                                              speciation_rate));
     // We use an approximation if the metacommunity richness is much larger than the local community size.
     if(expected_richness > 100 * local_community_size)
     {
@@ -45,8 +45,8 @@ void AnalyticalSpeciesAbundancesHandler::generateSpeciesAbundances()
         // Reformat the metacommunity speciation rate to generate an equivalent metacommunity.
         metacommunity_size = 100 * local_community_size;
         speciation_rate = neutral_analytical::calcSpeciationRate(original_fbn, metacommunity_size);
-        expected_richness = static_cast<unsigned long>(neutral_analytical::nseSpeciesRichness(metacommunity_size,
-                                                                                              speciation_rate));
+        expected_richness = static_cast<unsigned long>(neutral_analytical::siSpeciesRichness(metacommunity_size,
+                                                                                             speciation_rate));
         stringstream ss;
         ss << "\tRescaling large metacommunity size using fundamental biodiversity number..." << endl;
         ss << "\tNew metacommunity size: " << metacommunity_size << endl;

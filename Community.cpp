@@ -553,6 +553,7 @@ void Community::importData(string inputfile)
     for(unsigned long i = 0; i < datasize; i++)
     {
         auto species_id = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 1));
+        // These values come in as values on the grid (not the sample mask) AFAIK
         long xval = sqlite3_column_int(stmt->stmt, 2);
         long yval = sqlite3_column_int(stmt->stmt, 3);
         long xwrap = sqlite3_column_int(stmt->stmt, 4);
@@ -574,10 +575,10 @@ void Community::importData(string inputfile)
         (*nodes)[index].setParent(parent - ignored_lineages);
         if(index == parent && parent != 0)
         {
-            stringstream ss;
-            ss << "Import failed as parent is self. Please report this bug." << endl;
-            ss << " i: " << index << " parent: " << parent << endl;
-            throw FatalException(ss.str());
+            stringstream stringstream1;
+            stringstream1 << "Import failed as parent is self. Please report this bug." << endl;
+            stringstream1 << " i: " << index << " parent: " << parent << endl;
+            throw FatalException(stringstream1.str());
         }
         (*nodes)[index].setSpeciation(speciation);
         database->step();
@@ -586,11 +587,11 @@ void Community::importData(string inputfile)
         {
             if(!has_printed_error)
             {
-                stringstream ss;
-                ss << "parent: " << parent << " index: " << index << endl;
-                ss << "Parent before index error. Check program." << endl;
+                stringstream stringstream1;
+                stringstream1 << "parent: " << parent << " index: " << index << endl;
+                stringstream1 << "Parent before index error. Check program." << endl;
                 has_printed_error = true;
-                writeWarning(ss.str());
+                writeWarning(stringstream1.str());
             }
         }
 #endif
@@ -1214,7 +1215,11 @@ void Community::applyFragments()
     for(unsigned int i = 0; i < fragments.size(); i++)
     {
         stringstream os;
-        os << "\r\tApplying fragments... " << (i + 1) << "/" << fragments.size() << "      " << flush;
+        os << "\tApplying fragments... " << (i + 1) << "/" << fragments.size() << endl;
+        os << "\t\t " << fragments[i].name << " at ";
+        os << "(x west, x east): (" << fragments[i].x_west   << ", " << fragments[i].x_east;
+        os << "), (y north, y south): (" << fragments[i].y_north << ", " << fragments[i].y_south << ")." << endl;
+
         writeInfo(os.str());
         // Set the new samplemask to the fragment
         samplemask.setFragment(fragments[i]);

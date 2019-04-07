@@ -15,7 +15,7 @@
 
 uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned long map_x,
                              unsigned long map_y,
-                             unsigned long scalar)
+                             double scalar)
 {
 #ifndef SIZE_LIMIT
     if(map_x > 1000000 || map_y > 1000000)
@@ -58,7 +58,7 @@ uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned lo
     {
         for(unsigned long j = 0; j < temp_matrix.getCols(); j++)
         {
-            map_in.get(i, j) = (uint32_t) (max(round(temp_matrix.get(i, j) * (double) scalar), 0.0));
+            map_in.get(i, j) = (uint32_t) (max(round((double)temp_matrix.get(i, j) * scalar), 0.0));
             if(map_in.get(i, j) > max_value)
             {
                 max_value = map_in.get(i, j);
@@ -545,12 +545,12 @@ unsigned long Landscape::getValInfinite(
         const double &x, const double &y, const long &xwrap, const long &ywrap, const double &current_generation)
 {
     double xval, yval;
-    xval = x + (x_dim * xwrap);  //
+    xval = x + (x_dim * xwrap);
     yval = y + (y_dim * ywrap);
     //		// return 0 if the requested coordinate is completely outside the map
     if(xval < coarse_x_min || xval >= coarse_x_max || yval < coarse_y_min || yval >= coarse_y_max)
     {
-        return deme;
+        return (unsigned long) max(deme, 1.0);
     }
     return getValFinite(x, y, xwrap, ywrap, current_generation);
 }
@@ -847,142 +847,145 @@ unsigned long Landscape::runDispersal(const double &dist,
     }
     else  // we need to see which deforested patches we pass over
     {
-        long boost;
-        boost = 1;
-        double cur_dist, tot_dist, l;
-        cur_dist = 0;
-        tot_dist = 0;
-        // Four different calculations for the different quadrants.
-        if(angle > 7 * M_PI_4 || angle <= M_PI_4)
-        {
-            // Continue while the dist travelled is less than the dist energy
-            while(cur_dist < dist)
-            {
-                // Check if the starting position of the loop is in the fine map or not.
-                if(isOnFine(newx, newy, 0, 0))
-                {
-                    // Keep the standard movement rate
-                    boost = 1;
-                }
-                else
-                {
-                    // Accellerate the travel speed if the point is outside the fine grid.
-                    // Note this means that lineages travelling from outside the fine grid to within the
-                    // fine grid may
-                    // see 1 grid's worth of approximation, rather than exact values.
-                    // This is an acceptable approximation!
-                    boost = deme;
-                }
-
-                // Add the value to the new x and y values.
-                newx = newx + boost;
-                newy = newy + boost * tan(angle);
-                // Check if the new point is within forest.
-                if(checkMap(newx, newy, 0, 0, generation))
-                {
-                    l = 1;
-                }
-                else
-                {
-                    l = dispersal_relative_cost;
-                }
-                // Move forward different dists based on the difficulty of moving through forest.
-                cur_dist = cur_dist + l * boost * (1 / cos(angle));
-                tot_dist = tot_dist + boost * (1 / cos(angle));
-            }
-        }
-        else if(angle > 3 * M_PI_4 && angle <= 5 * M_PI_4)
-        {
-            while(cur_dist < dist)
-            {
-                if(isOnFine(newx, newy, 0, 0))
-                {
-                    boost = 1;
-                }
-                else
-                {
-                    boost = deme;
-                }
-                // Add the change to the new x and y values.
-                newx = newx - boost;
-                newy = newy + boost * tan(M_PI - angle);
-                if(checkMap(newx, newy, 0, 0, generation))
-                {
-                    l = 1;
-                }
-                else
-                {
-                    l = dispersal_relative_cost;
-                }
-                cur_dist = cur_dist + boost * l * (1 / cos(M_PI - angle));
-                tot_dist = tot_dist + boost * (1 / cos(M_PI - angle));
-            }
-        }
-        else if(angle > M_PI_4 && angle <= 3 * M_PI_4)
-        {
-            while(cur_dist < dist)
-            {
-                if(isOnFine(newx, newy, 0, 0))
-                {
-                    boost = 1;
-                }
-                else
-                {
-                    boost = deme;
-                }
-                // Add the change to the new x and y values.
-                newx = newx + boost * tan(angle - M_PI_2);
-                newy = newy + boost;
-                if(checkMap(newx, newy, 0, 0, generation))
-                {
-                    l = 1;
-                }
-                else
-                {
-                    l = dispersal_relative_cost;
-                }
-                cur_dist = cur_dist + l * boost / cos(angle - M_PI_2);
-                tot_dist = tot_dist + boost / cos(angle - M_PI_2);
-            }
-        }
-        else if(angle > 5 * M_PI_4 && angle <= 7 * M_PI_4)
-        {
-            //				os << "...ang4..." <<  flush;
-            while(cur_dist < dist)
-            {
-                if(isOnFine(newx, newy, 0, 0))
-                {
-                    boost = 1;
-                }
-                else
-                {
-                    boost = deme;
-                }
-                newx = newx + boost * tan(3 * M_PI_2 - angle);
-                newy = newy - boost;
-                if(checkMap(newx, newy, 0, 0, generation))
-                {
-                    l = 1;
-                }
-                else
-                {
-                    l = dispersal_relative_cost;
-                }
-                cur_dist = cur_dist + l * boost / cos(3 * M_PI_2 - angle);
-                tot_dist = tot_dist + boost / cos(3 * M_PI_2 - angle);
-            }
-        }
-        // Move the point back to get the exact placement
-        if(checkMap(newx, newy, 0, 0, generation))
-        {
-            tot_dist = tot_dist - min(cur_dist - dist, (double(boost) - 0.001));
-        }
-        else
-        {
-            disp_comp = true;
-        }
-        newx = startx + 0.5 + tot_dist * cos(angle);
-        newy = starty + 0.5 + tot_dist * sin(angle);
+        //
+        throw FatalException("Using dispersal relative cost is deprecated.");
+        // TODO remove this
+//        long boost;
+//        boost = 1;
+//        double cur_dist, tot_dist, l;
+//        cur_dist = 0;
+//        tot_dist = 0;
+//        // Four different calculations for the different quadrants.
+//        if(angle > 7 * M_PI_4 || angle <= M_PI_4)
+//        {
+//            // Continue while the dist travelled is less than the dist energy
+//            while(cur_dist < dist)
+//            {
+//                // Check if the starting position of the loop is in the fine map or not.
+//                if(isOnFine(newx, newy, 0, 0))
+//                {
+//                    // Keep the standard movement rate
+//                    boost = 1;
+//                }
+//                else
+//                {
+//                    // Accellerate the travel speed if the point is outside the fine grid.
+//                    // Note this means that lineages travelling from outside the fine grid to within the
+//                    // fine grid may
+//                    // see 1 grid's worth of approximation, rather than exact values.
+//                    // This is an acceptable approximation!
+//                    boost = deme;
+//                }
+//
+//                // Add the value to the new x and y values.
+//                newx = newx + boost;
+//                newy = newy + boost * tan(angle);
+//                // Check if the new point is within forest.
+//                if(checkMap(newx, newy, 0, 0, generation))
+//                {
+//                    l = 1;
+//                }
+//                else
+//                {
+//                    l = dispersal_relative_cost;
+//                }
+//                // Move forward different dists based on the difficulty of moving through forest.
+//                cur_dist = cur_dist + l * boost * (1 / cos(angle));
+//                tot_dist = tot_dist + boost * (1 / cos(angle));
+//            }
+//        }
+//        else if(angle > 3 * M_PI_4 && angle <= 5 * M_PI_4)
+//        {
+//            while(cur_dist < dist)
+//            {
+//                if(isOnFine(newx, newy, 0, 0))
+//                {
+//                    boost = 1;
+//                }
+//                else
+//                {
+//                    boost = deme;
+//                }
+//                // Add the change to the new x and y values.
+//                newx = newx - boost;
+//                newy = newy + boost * tan(M_PI - angle);
+//                if(checkMap(newx, newy, 0, 0, generation))
+//                {
+//                    l = 1;
+//                }
+//                else
+//                {
+//                    l = dispersal_relative_cost;
+//                }
+//                cur_dist = cur_dist + boost * l * (1 / cos(M_PI - angle));
+//                tot_dist = tot_dist + boost * (1 / cos(M_PI - angle));
+//            }
+//        }
+//        else if(angle > M_PI_4 && angle <= 3 * M_PI_4)
+//        {
+//            while(cur_dist < dist)
+//            {
+//                if(isOnFine(newx, newy, 0, 0))
+//                {
+//                    boost = 1;
+//                }
+//                else
+//                {
+//                    boost = deme;
+//                }
+//                // Add the change to the new x and y values.
+//                newx = newx + boost * tan(angle - M_PI_2);
+//                newy = newy + boost;
+//                if(checkMap(newx, newy, 0, 0, generation))
+//                {
+//                    l = 1;
+//                }
+//                else
+//                {
+//                    l = dispersal_relative_cost;
+//                }
+//                cur_dist = cur_dist + l * boost / cos(angle - M_PI_2);
+//                tot_dist = tot_dist + boost / cos(angle - M_PI_2);
+//            }
+//        }
+//        else if(angle > 5 * M_PI_4 && angle <= 7 * M_PI_4)
+//        {
+//            //				os << "...ang4..." <<  flush;
+//            while(cur_dist < dist)
+//            {
+//                if(isOnFine(newx, newy, 0, 0))
+//                {
+//                    boost = 1;
+//                }
+//                else
+//                {
+//                    boost = deme;
+//                }
+//                newx = newx + boost * tan(3 * M_PI_2 - angle);
+//                newy = newy - boost;
+//                if(checkMap(newx, newy, 0, 0, generation))
+//                {
+//                    l = 1;
+//                }
+//                else
+//                {
+//                    l = dispersal_relative_cost;
+//                }
+//                cur_dist = cur_dist + l * boost / cos(3 * M_PI_2 - angle);
+//                tot_dist = tot_dist + boost / cos(3 * M_PI_2 - angle);
+//            }
+//        }
+//        // Move the point back to get the exact placement
+//        if(checkMap(newx, newy, 0, 0, generation))
+//        {
+//            tot_dist = tot_dist - min(cur_dist - dist, (double(boost) - 0.001));
+//        }
+//        else
+//        {
+//            disp_comp = true;
+//        }
+//        newx = startx + 0.5 + tot_dist * cos(angle);
+//        newy = starty + 0.5 + tot_dist * sin(angle);
     }
     unsigned long ret = getVal(newx, newy, 0, 0, generation);
     if(ret > 0)

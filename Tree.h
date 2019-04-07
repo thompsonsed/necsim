@@ -88,7 +88,7 @@ protected:
     // number of generations passed,
     double generation;
     // The number of individuals per cell
-    long deme;
+    double deme;
     // The proportion of individuals to sample
     double deme_sample;
     // the speciation rate
@@ -127,7 +127,7 @@ public:
              seed(-1), job_type(-1), times_file("null"), reference_times(), uses_temporal_sampling(false),
              start(0), sim_start(0), sim_end(0), now(0), sim_finish(0), out_finish(0), time_taken(0), active(),
              endactive(0), startendactive(0), maxsimsize(0), community(data), steps(0), maxtime(0), generation(0.0),
-             deme(0), deme_sample(0.0), spec(0.0), out_directory(""), database(make_shared<SQLiteHandler>()),
+             deme(0.0), deme_sample(0.0), spec(0.0), out_directory(""), database(make_shared<SQLiteHandler>()),
              sim_complete(false),
              has_imported_vars(false),
 #ifdef sql_ram

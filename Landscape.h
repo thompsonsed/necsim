@@ -40,7 +40,7 @@ using namespace std;
  * @return the maximum value from the imported matrix
  */
 uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned long map_x,
-                             unsigned long map_y, unsigned long scalar);
+                             unsigned long map_y, double scalar);
 
 /**
  * @brief Gets the x coordinate of the archimedes spiral
@@ -105,7 +105,7 @@ protected:
     long x_dim{};
     // the height of the grid where the species start.
     long y_dim{};
-    unsigned long deme{};
+    double deme{};
     // for checking that the dimensions have been set before attempting to import the maps.
     bool check_set_dim;
     // for setting the movement cost through forest.

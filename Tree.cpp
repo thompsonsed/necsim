@@ -1144,7 +1144,7 @@ void Tree::sqlCreateSimulationParameters()
 // Now additionally store the simulation current_metacommunity_parameters (extremely useful data)
     string to_execute = "CREATE TABLE SIMULATION_PARAMETERS (seed INT PRIMARY KEY not null, job_type INT NOT NULL,";
     to_execute += "output_dir TEXT NOT NULL, speciation_rate DOUBLE NOT NULL, sigma DOUBLE NOT NULL,tau DOUBLE NOT "
-                  "NULL, deme INT NOT NULL, ";
+                  "NULL, deme DOUBLE NOT NULL, ";
     to_execute += "sample_size DOUBLE NOT NULL, max_time INT NOT NULL, dispersal_relative_cost DOUBLE NOT NULL, "
                   "min_num_species ";
     to_execute += "INT NOT NULL, habitat_change_rate DOUBLE NOT NULL, gen_since_historical DOUBLE NOT NULL, ";
@@ -1171,7 +1171,7 @@ string Tree::simulationParametersSqlInsertion()
                  to_string((long long) job_type);
     to_execute += ",'" + out_directory + "'," + boost::lexical_cast<std::string>((long double) spec) + "," +
                   to_string(0.0) + ",";
-    to_execute += to_string(0.0) + "," + to_string((long long) deme) + ",";
+    to_execute += to_string(0.0) + "," + to_string((long double) deme) + ",";
     to_execute += to_string((long double) deme_sample) + "," + to_string((long long) maxtime) + ",";
     to_execute += to_string(0.0) + "," + to_string(0.0) + ",";
     to_execute += to_string((long double) sim_parameters->habitat_change_rate) + ",";

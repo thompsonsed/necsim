@@ -315,7 +315,7 @@ unsigned long SpatialTree::fillObjects(const unsigned long &initial_count)
                     {
                         for(unsigned long k = 0; k < sample_amount; k++)
                         {
-                            if(k >= grid.get(y, x).getMaxSize())
+                            if(k >= grid.get(y, x).getMaxSize() && deme_sample <= 1.0)
                             {
                                 break;
                             }
@@ -1166,7 +1166,7 @@ string SpatialTree::simulationParametersSqlInsertion()
     to_execute += ",'" + out_directory + "'," + boost::lexical_cast<std::string>((long double) spec) + "," +
                   to_string((long double) sim_parameters->sigma) + ",";
     to_execute +=
-            to_string((long double) sim_parameters->tau) + "," + to_string((long long) sim_parameters->deme) + ",";
+            to_string((long double) sim_parameters->tau) + "," + to_string((long double) sim_parameters->deme) + ",";
     to_execute += to_string((long double) sim_parameters->deme_sample) + "," + to_string((long long) maxtime) + ",";
     to_execute += to_string((long double) sim_parameters->dispersal_relative_cost) + "," +
                   to_string((long long) desired_specnum) + ",";

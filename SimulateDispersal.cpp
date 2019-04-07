@@ -38,6 +38,8 @@ void SimulateDispersal::setSimulationParameters(shared_ptr<SimParameters> sim_pa
     {
         simParameters->printSpatialVars();
     }
+    simParameters->deme = 1.0;
+    simParameters->deme_sample = 1.0;
 }
 
 void SimulateDispersal::importMaps()
@@ -160,6 +162,10 @@ void SimulateDispersal::storeCellList()
 
 const Cell &SimulateDispersal::getRandomCell()
 {
+    if(cells.size() == 0)
+    {
+        throw FatalException("No cells in landscape to simulate.");
+    }
     auto index = static_cast<unsigned long>(floor(random->d01() * cells.size()));
     return cells[index];
 }

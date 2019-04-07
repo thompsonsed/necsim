@@ -49,7 +49,7 @@ struct SimParameters
     // the relative cost of moving through non-forest
     double dispersal_relative_cost{};
     // the size of each square of habitat in numbers of individuals
-    unsigned long deme{};
+    double deme{};
     // the sample proportion,
     double deme_sample{};
     // the speciation rate.
@@ -199,7 +199,7 @@ struct SimParameters
         job_type = stol(configs.getSectionOptions("main", "job_type", "0"));
         tau = stod(configs.getSectionOptions("main", "tau", "0.0"));
         sigma = stod(configs.getSectionOptions("main", "sigma", "0.0"));
-        deme = stoul(configs.getSectionOptions("main", "deme"));
+        deme = stod(configs.getSectionOptions("main", "deme"));
         deme_sample = stod(configs.getSectionOptions("main", "sample_size"));
         max_time = stoul(configs.getSectionOptions("main", "max_time"));
         dispersal_relative_cost = stod(configs.getSectionOptions("main", "dispersal_relative_cost", "0"));
@@ -398,7 +398,7 @@ struct SimParameters
                           const unsigned long &fine_map_y_offset_in, const unsigned long &coarse_map_x_size_in,
                           const unsigned long &coarse_map_y_size_in, const unsigned long &coarse_map_x_offset_in,
                           const unsigned long &coarse_map_y_offset_in, const unsigned long &coarse_map_scale_in,
-                          const unsigned long &deme_in, const double &deme_sample_in, bool uses_spatial_sampling_in)
+                          const double &deme_in, const double &deme_sample_in, bool uses_spatial_sampling_in)
     {
         fine_map_file = fine_map_file_in;
         coarse_map_file = coarse_map_file_in;

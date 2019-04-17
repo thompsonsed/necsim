@@ -339,8 +339,10 @@ public:
      */
     double fattailCDF(const double &distance)
     {
-        return (1.0 / (2.0 * M_PI * sigma * sigma)) *
-               pow(1 + (distance * distance / (tau * sigma * sigma)), -(tau + 2.0) / 2.0);
+        // TODO remove this
+//        return (1.0 / (2.0 * M_PI * sigma * sigma)) *
+//               pow(1 + (distance * distance / (tau * sigma * sigma)), -(tau + 2.0) / 2.0);
+        return(1-pow((1+((distance*distance)/(tau*sigma*sigma))), (-tau/2)));
     }
 
     /**
@@ -351,7 +353,7 @@ public:
     double fattailMinDistance(const double &min_distance)
     {
         double prob = fattailCDF(min_distance);
-        double random_number = prob + d01() * (1 - prob);
+        double random_number = 1-(prob + d01() * (1 - prob));
         return (sigma * pow((tau * (pow(random_number, -2.0 / tau)) - 1.0), 0.5));
     }
 

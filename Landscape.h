@@ -490,7 +490,7 @@ public:
      * @param generation the current generation time.
      * @return a boolean of whether the map is habitat or non-habitat.
      */
-    bool checkMap(const double &x, const double &y, const long &xwrap, const long &ywrap, const double generation);
+    bool checkMap(const double &x, const double &y, const long &xwrap, const long &ywrap, const double &generation);
 
     /**
      * @brief  Checks whether the point comes from the fine grid.
@@ -562,6 +562,51 @@ public:
      */
     double distanceToNearestHabitat(const long &start_x, const long &start_y, const long &start_x_wrap,
                                     const long &start_y_wrap, const double &generation);
+
+    /**
+     * @brief Gets the nearest habitat cells from a particular point, spiraling outwards.
+     * @param start_x the start x coordinate
+     * @param start_y the start y coordinate
+     * @param start_x_wrap the starting x wrapping
+     * @param start_y_wrap the starting y wrapping
+     * @param end_x the end x coordinate value to modify
+     * @param end_y the end y coordinate value to modify
+     * @param generation the generation timer
+     */
+    void findNearestHabitatCell(const long &start_x, const long &start_y, const long &start_x_wrap,
+                                const long &start_y_wrap, double &end_x, double &end_y, const double &generation)
+    {
+        double theta = 0;
+        double radius = 1.0;
+        if(!getVal(end_x, end_y, start_x_wrap, start_y_wrap, generation))
+        {
+            while(true)
+            {
+                theta += 0.5 * M_PI / (2.0 * max(radius, 1.0));
+                radius = theta / (2 * M_PI);
+                end_x = archimedesSpiralX(start_x, start_y, radius, theta);
+                end_y = archimedesSpiralY(start_x, start_y, radius, theta);
+
+                // Double check that the distance is not greater than the map size
+                // This acts as a fail-safe in case someone presents a historical map with no habitat cells on
+                if(!isOnMap(end_x, end_y, start_x_wrap, start_y_wrap))
+                {
+                    if(radius > fine_map.getCols() && radius > fine_map.getRows() &&
+                       radius > coarse_map.getCols() * scale && radius > coarse_map.getRows() * scale)
+                        throw FatalException(
+                                "Could not find a habitat cell for parent. Check that your map files always have a "
+                                "place for lineages to disperse from.");
+                }
+                else
+                {
+                    if(checkMap(end_x, end_y, start_x_wrap, start_y_wrap, generation))
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+    }
 
     /**
      * @brief Operator for outputting the Map object variables to an output stream.

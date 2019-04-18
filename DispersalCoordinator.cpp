@@ -48,7 +48,7 @@ void DispersalCoordinator::setMaps(shared_ptr<Landscape> landscape_ptr)
     setMaps(landscape_ptr, make_shared<ActivityMap>());
 }
 
-void DispersalCoordinator::setGenerationPtr(double *generation_ptr)
+void DispersalCoordinator::setGenerationPtr(double* generation_ptr)
 {
     generation = generation_ptr;
 }
@@ -442,8 +442,27 @@ void DispersalCoordinator::disperseDensityMap(Step &this_step)
     {
         auto min_distance = landscape->distanceToNearestHabitat(this_step.oldx, this_step.oldy, this_step.oldxwrap,
                                                                 this_step.oldywrap, *generation);
+        // TODO remove or move to DEBUG
+        if(!landscape->isOnMap(this_step.oldx, this_step.oldy + min_distance, this_step.oldxwrap,
+                               this_step.oldywrap) &&
+           !landscape->isOnMap(this_step.oldx + min_distance, this_step.oldy, this_step.oldxwrap,
+                               this_step.oldywrap) &&
+           !landscape->isOnMap(this_step.oldx - min_distance, this_step.oldy, this_step.oldxwrap,
+                               this_step.oldywrap) &&
+           !landscape->isOnMap(this_step.oldx, this_step.oldy - min_distance, this_step.oldxwrap,
+                               this_step.oldywrap))
+        {
+            stringstream ss;
+            ss << "Minimum distance calculated of " << min_distance << " for cell at x, y (" << this_step.oldx;
+            ss << ", " << this_step.oldy << ") and wrap (" << this_step.oldxwrap << ", " << this_step.oldywrap << ")";
+            ss << " is outside of bounds of map at generation " << generation << endl;
+            ss << "Please report this bug." << endl;
+            throw FatalException(ss.str());
+        }
+        unsigned long counter = 0;
         while(fail)
         {
+            counter++;
             dist = NR->dispersalMinDistance(min_distance);
 #ifdef DEBUG
             if(dist < min_distance)
@@ -460,6 +479,22 @@ void DispersalCoordinator::disperseDensityMap(Step &this_step)
                 fail = !checkEndPoint(density, this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap,
                                       startx, starty, startxwrap, startywrap);
             }
+            // This is a hack for those scenarios where habitat disappears and there is no easy replacement - then
+            // the parent just comes from a nearest habitat cell that exists.
+            if(counter > 10000000)
+            {
+#ifdef DEBUG
+                stringstream ss;
+                ss << "No possible parent found for cell at x, y (" << this_step.oldx;
+                ss << ", " << this_step.oldy << ") and wrap (" << this_step.oldxwrap << ", " << this_step.oldywrap
+                   << ")";
+                ss << " at generation " << generation << " and with minimum distance of " << min_distance;
+                ss << ". Moving to nearest habitat cell." << endl;
+#endif // DEBUG
+                disperseNearestHabitat(this_step);
+                fail = false;
+            }
+
         }
     }
     else
@@ -494,6 +529,38 @@ void DispersalCoordinator::disperseDensityMap(Step &this_step)
         throw FatalException("ERROR_MOVE_007: Dispersal attempted to non-habitat. Check dispersal function.");
     }
 #endif
+}
+
+void DispersalCoordinator::disperseNearestHabitat(Step &this_step)
+{
+    double end_x = this_step.oldx + 0.5;
+    double end_y = this_step.oldy + 0.5;
+    long end_x_wrap = 0;
+    long end_y_wrap = 0;
+    landscape->findNearestHabitatCell(this_step.oldx, this_step.oldy, this_step.oldxwrap,
+                                      this_step.oldywrap, end_x, end_y, *generation);
+    landscape->fixGridCoordinates(end_x, end_y, end_x_wrap, end_y_wrap);
+    end_x_wrap += this_step.oldxwrap;
+    end_y_wrap += this_step.oldywrap;
+    if(!landscape->checkMap(end_x, end_y, end_x_wrap, end_y_wrap, *generation))
+    {
+        stringstream ss;
+        ss << "Attempted nearest habitat cell is not habitat! Please report this bug." << endl;
+        ss << "Nearby habitat cell at " << end_x << ", " << end_y << " (" << end_x_wrap << ", " << end_y_wrap;
+        ss << ") does not contain habitat. Initial cell was ";
+        ss << this_step.oldx << ", " << this_step.oldy << " (" << this_step.oldxwrap << ", " << this_step.oldywrap;
+        ss << ". Density of new cell was " << landscape->checkMap(end_x, end_y, end_x_wrap, end_y_wrap, *generation);
+        double tmpx, tmpy;
+        landscape->findNearestHabitatCell(this_step.oldx, this_step.oldy, this_step.oldxwrap,
+                                          this_step.oldywrap, tmpx, tmpy, *generation);
+        ss << "Coords of nearest habitat :" << tmpx << ", " << tmpy << endl;
+        ss << endl;
+        throw FatalException(ss.str());
+    }
+    this_step.oldx = static_cast<long>(end_x);
+    this_step.oldy = static_cast<long>(end_y);
+    this_step.oldxwrap = end_x_wrap;
+    this_step.oldywrap = end_y_wrap;
 }
 
 void DispersalCoordinator::setEndPointFptr(const bool &restrict_self)

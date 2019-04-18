@@ -183,8 +183,6 @@ public:
 
     }
 
-
-
     /**
      * @brief Sets the seed to the given input.
      * Is only seeded if the seed hasn't already been provided.
@@ -340,9 +338,9 @@ public:
     double fattailCDF(const double &distance)
     {
         // TODO remove this
-//        return (1.0 / (2.0 * M_PI * sigma * sigma)) *
-//               pow(1 + (distance * distance / (tau * sigma * sigma)), -(tau + 2.0) / 2.0);
-        return(1-pow((1+((distance*distance)/(tau*sigma*sigma))), (-tau/2)));
+        //        return (1.0 / (2.0 * M_PI * sigma * sigma)) *
+        //               pow(1 + (distance * distance / (tau * sigma * sigma)), -(tau + 2.0) / 2.0);
+        return (1 - pow((1 + ((distance * distance) / (tau * sigma * sigma))), (-tau / 2)));
     }
 
     /**
@@ -353,8 +351,15 @@ public:
     double fattailMinDistance(const double &min_distance)
     {
         double prob = fattailCDF(min_distance);
-        double random_number = 1-(prob + d01() * (1 - prob));
-        return (sigma * pow((tau * (pow(random_number, -2.0 / tau)) - 1.0), 0.5));
+        double random_number = 1 - (prob + d01() * (1 - prob));
+        double result = sigma * pow((tau * (pow(random_number, -2.0 / tau)) - 1.0), 0.5);
+        // This is an approximation for scenarios when the probability of dispersing very long distances
+        // is less than machine precision
+        if(result < min_distance)
+        {
+            result = fattail() + min_distance;
+        }
+        return result;
     }
 
     // this new version corrects the 1.0 to 2.0 and doesn't require the values to be passed every time.
@@ -646,7 +651,7 @@ public:
         os << setprecision(64);
         os << r.seed << "," << r.seeded << ",";
         os << r.tau << "," << r.sigma << "," << r.m_prob << "," << r.cutoff << ",";
-        os << static_cast<const Xoroshiro256plus&>(r);
+        os << static_cast<const Xoroshiro256plus &>(r);
         return os;
     }
 
@@ -661,7 +666,7 @@ public:
     {
         char delim;
         is >> r.seed >> delim >> r.seeded >> delim >> r.tau >> delim >> r.sigma >> delim >> r.m_prob >> delim;
-        is >> r.cutoff >> delim >> static_cast<Xoroshiro256plus&>(r);
+        is >> r.cutoff >> delim >> static_cast<Xoroshiro256plus &>(r);
         return is;
     }
 };

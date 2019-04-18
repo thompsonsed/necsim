@@ -233,6 +233,12 @@ public:
     void disperseDensityMap(Step &this_step);
 
     /**
+     * @brief Disperses to the nearest habitat cell from a given location.
+     * @param this_step teh step object to store end points in
+     */
+    void disperseNearestHabitat(Step &this_step);
+
+    /**
      * @brief Sets the end point function pointer correctly, based on whether it is restricted or not.
      * @param restrict_self if true, denies possibility that dispersal comes from the same cell as the parent
      */

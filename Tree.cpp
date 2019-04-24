@@ -1115,7 +1115,17 @@ void Tree::sqlCreate()
     community.createSpeciesList();
     community.writeSpeciesList(enddata);
     // Vacuum the file so that the file size is reduced (reduces by around 3%)
-    database->execute("VACUUM;");
+    try
+    {
+        database->execute("VACUUM;");
+    }
+    catch(FatalException &fe)
+    {
+        stringstream ss;
+        ss << "Error thrown whilst vacuuming the database: " << fe.what() << endl;
+        ss << "Continuing..." << endl;
+        writeCritical(ss.str());
+    }
     sqlCreateSimulationParameters();
 }
 

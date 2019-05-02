@@ -75,7 +75,6 @@ namespace neutral_analytical
      *
      * @param community_size the number of individuals in the community
      * @param speciation_rate the speciation rate
-     * @deprecated this version uses an old inefficient method
      * @return the number of species expected to exist
      */
     long double siSpeciesRichness(const unsigned long &community_size, const long double &speciation_rate);

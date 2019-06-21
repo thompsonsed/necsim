@@ -107,7 +107,7 @@ bool doesExist(string testfile)
     if(boost::filesystem::exists(testfile))
     {
         stringstream os;
-        os << "\rChecking folder existance..." << testfile << " exists!               " << endl;
+        os << "\rChecking folder existance..." << testfile << " exists.               " << endl;
         writeInfo(os.str());
         return true;
     }

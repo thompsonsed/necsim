@@ -14,28 +14,39 @@
 
 void cplNecsimCustomErrorHandler(CPLErr eErrClass, int err_no, const char *msg)
 {
+//#if defined(PY_MAJOR_VERSION) && PY_MAJOR_VERSION < 3
+//    cerr << "Logging object has not been set before CPL error thrown: " << err_no << ". " << msg << endl;
+//#else
     stringstream error_msg;
-    if(eErrClass == CE_Fatal)
+    if(!loggerIsSetup())
     {
-        error_msg << "Critical gdal error: " << err_no << ". " << msg << endl;
-        writeCritical(error_msg.str());
+        cerr << "Logging object has not been set before CPL error thrown: " << err_no << ". " << msg << endl;
     }
-    else if(eErrClass == CE_Failure)
-    {
-        error_msg << "Gdal error: " << err_no << ". " << msg << endl;
-        writeError(error_msg.str());
-    }
-    else if(eErrClass == CE_Warning)
-    {
-        error_msg << "Gdal warning: " << err_no << ". " << msg << endl;
-        writeWarning(error_msg.str());
-    }
-#ifdef DEBUG
     else
     {
-        writeLog(10, error_msg.str());
-    }
+        if(eErrClass == CE_Fatal)
+        {
+            error_msg << "Critical gdal error: " << err_no << ". " << msg << endl;
+            writeCritical(error_msg.str());
+        }
+        else if(eErrClass == CE_Failure)
+        {
+            error_msg << "Gdal error: " << err_no << ". " << msg << endl;
+            writeError(error_msg.str());
+        }
+        else if(eErrClass == CE_Warning)
+        {
+            error_msg << "Gdal warning: " << err_no << ". " << msg << endl;
+            writeWarning(error_msg.str());
+        }
+#ifdef DEBUG
+        else
+        {
+            writeLog(10, error_msg.str());
+        }
 #endif // DEBUG
+    }
+//#endif // defined(PY_MAJOR_VERSION) && PY_MAJOR_VERSION < 3
 }
 
 #endif //with_gdal

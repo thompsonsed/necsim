@@ -50,6 +50,7 @@ protected:
     using Matrix<T>::matrix;
     using Matrix<T>::num_cols;
     using Matrix<T>::num_rows;
+    bool cpl_error_set;
 public:
     using Matrix<T>::setSize;
     using Matrix<T>::getCols;
@@ -66,16 +67,35 @@ public:
 
     Map() : Matrix<T>(0, 0), po_dataset(nullptr), po_band(nullptr), block_x_size(0), block_y_size(0),
             no_data_value(0.0), file_name(""), gdal_data_type(GDT_Unknown), cpl_error(CE_None), upper_left_x(0.0),
-            upper_left_y(0.0), x_res(0.0), y_res(0.0)
+            upper_left_y(0.0), x_res(0.0), y_res(0.0), cpl_error_set(false)
     {
+        setCPLErrorHandler();
         GDALAllRegister();
-        CPLSetErrorHandler(cplNecsimCustomErrorHandler);
+        removeCPLErrorHandler();
     }
 
     ~Map() override
     {
         close();
-        CPLSetErrorHandler(null);
+        removeCPLErrorHandler();
+    }
+
+    void setCPLErrorHandler()
+    {
+        if(!cpl_error_set)
+        {
+            cpl_error_set = true;
+            CPLPushErrorHandler(cplNecsimCustomErrorHandler);
+        }
+    }
+
+    void removeCPLErrorHandler()
+    {
+        if(cpl_error_set)
+        {
+            cpl_error_set = false;
+            CPLPopErrorHandler();
+        }
     }
 
     /**
@@ -87,7 +107,9 @@ public:
         if(!po_dataset)
         {
             file_name = filename_in;
+            setCPLErrorHandler();
             po_dataset = (GDALDataset*) GDALOpen(file_name.c_str(), GA_ReadOnly);
+            removeCPLErrorHandler();
         }
         else
         {
@@ -126,11 +148,9 @@ public:
     {
         if(po_dataset)
         {
+            setCPLErrorHandler();
             GDALClose(po_dataset);
-            //			if(po_dataset)
-            //			{
-            //				throw FatalException("po_dataset not nullptr after closing, please report this bug.");
-            //			}
+            removeCPLErrorHandler();
             po_dataset = nullptr;
             po_band = nullptr;
         }
@@ -141,6 +161,7 @@ public:
      */
     void getRasterBand()
     {
+        setCPLErrorHandler();
         if(po_dataset->GetRasterCount() < 1)
         {
             stringstream ss;
@@ -148,6 +169,7 @@ public:
             throw FatalException(ss.str());
         }
         po_band = po_dataset->GetRasterBand(1);
+        removeCPLErrorHandler();
         if(po_band == nullptr)
         {
             stringstream ss;
@@ -161,8 +183,10 @@ public:
      */
     void getBlockSizes()
     {
+        setCPLErrorHandler();
         block_x_size = static_cast<unsigned long>(po_dataset->GetRasterXSize());
         block_y_size = static_cast<unsigned long>(po_dataset->GetRasterYSize());
+        removeCPLErrorHandler();
     }
 
     /**
@@ -180,6 +204,7 @@ public:
             throw FatalException("po_band is nullptr. This is likely a problem with gdal. Please report this bug.");
         }
 #endif // DEBUG
+        setCPLErrorHandler();
         try
         {
             int pbSuccess;
@@ -222,6 +247,7 @@ public:
         upper_left_y = geoTransform[3];
         x_res = geoTransform[1];
         y_res = -geoTransform[5];
+        removeCPLErrorHandler();
         //		checkTifImportFailure();
 #ifdef DEBUG
         printMetaData();
@@ -232,6 +258,7 @@ public:
 
     void printMetaData()
     {
+        setCPLErrorHandler();
         stringstream ss;
         const char* dt_name = GDALGetDataTypeName(gdal_data_type);
         ss << "Filename: " << file_name << endl;
@@ -246,6 +273,7 @@ public:
         ss.str("");
         ss << "No data value: " << no_data_value << endl;
         writeLog(10, ss.str());
+        removeCPLErrorHandler();
 
     }
 
@@ -293,6 +321,7 @@ public:
 
         if(filename.find(".tif") != string::npos)
         {
+            setCPLErrorHandler();
             stringstream ss;
             ss << "Importing " << filename << " " << endl;
             writeInfo(ss.str());
@@ -322,6 +351,7 @@ public:
             const char* dt_name = GDALGetDataTypeName(gdal_data_type);
             if(gdal_data_type == 0 || gdal_data_type > 7)
             {
+                removeCPLErrorHandler();
                 throw FatalException("Data type of " + string(dt_name) + " is not supported.");
             }
 #ifdef DEBUG
@@ -337,6 +367,7 @@ public:
             // Use the overloaded method for importing between types
             internalImport();
             writeInfo("done.\n");
+            removeCPLErrorHandler();
             return true;
         }
         return false;
@@ -426,6 +457,7 @@ public:
      */
     void defaultImport()
     {
+        setCPLErrorHandler();
         unsigned int number_printed = 0;
         for(uint32_t j = 0; j < num_rows; j++)
         {
@@ -442,6 +474,7 @@ public:
                 }
             }
         }
+        removeCPLErrorHandler();
     }
 
     /**
@@ -450,6 +483,7 @@ public:
      */
     void importFromDoubleAndMakeBool()
     {
+        setCPLErrorHandler();
         writeInfo("\nConverting from double to boolean.\n");
         unsigned int number_printed = 0;
         // create an empty row of type float
@@ -476,6 +510,7 @@ public:
             }
         }
         CPLFree(t1);
+        removeCPLErrorHandler();
     }
 
     /**
@@ -488,6 +523,7 @@ public:
     template<typename T2>
     void importUsingBuffer(GDALDataType dt_buff)
     {
+        setCPLErrorHandler();
         stringstream ss;
         ss << "\nUsing buffer of type " << GDALGetDataTypeName(dt_buff) << " into array of dimensions ";
         ss << num_cols << " by " << num_rows << " with block size " << block_x_size << ", " << block_y_size << endl;
@@ -529,6 +565,7 @@ public:
         }
         if(po_band == nullptr)
         {
+            CPLFree(t1);
             throw FatalException("po_band is nullptr during import using buffer - please report this bug.");
         }
 #endif // DEBUG
@@ -551,6 +588,7 @@ public:
             }
         }
         CPLFree(t1);
+        removeCPLErrorHandler();
     }
 
     /**
@@ -581,7 +619,7 @@ public:
      */
     void checkTifImportFailure()
     {
-        if(cpl_error >= CE_Warning)
+        if(cpl_error >= CE_Warning && !cpl_error_set)
         {
             stringstream ss;
             ss << "\nCPL error thrown during import of " << file_name << endl;

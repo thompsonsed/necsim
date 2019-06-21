@@ -10,6 +10,11 @@
 #include "Logging.h"
 #include "Logger.h"
 
+bool loggerIsSetup()
+{
+    return true;
+}
+
 void writeInfo(string message)
 {
     logger->writeInfo(message);

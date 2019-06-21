@@ -19,6 +19,11 @@
 extern Logger *logger;
 
 /**
+ * @brief Checks if the global logger object has been set up.
+ */
+bool loggerIsSetup();
+
+/**
 	 * @brief Writes to cout, or to info in logging module if being compiled with python
 	 * @param message the message to write out
 	 */

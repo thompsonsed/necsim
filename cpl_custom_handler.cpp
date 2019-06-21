@@ -14,9 +14,6 @@
 
 void cplNecsimCustomErrorHandler(CPLErr eErrClass, int err_no, const char *msg)
 {
-//#if defined(PY_MAJOR_VERSION) && PY_MAJOR_VERSION < 3
-//    cerr << "Logging object has not been set before CPL error thrown: " << err_no << ". " << msg << endl;
-//#else
     stringstream error_msg;
     if(!loggerIsSetup())
     {
@@ -46,7 +43,6 @@ void cplNecsimCustomErrorHandler(CPLErr eErrClass, int err_no, const char *msg)
         }
 #endif // DEBUG
     }
-//#endif // defined(PY_MAJOR_VERSION) && PY_MAJOR_VERSION < 3
 }
 
 #endif //with_gdal

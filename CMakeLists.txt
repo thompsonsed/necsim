@@ -36,7 +36,8 @@ set(SOURCE_FILES
         ${SOURCE_DIR_NECSIM}/double_comparison.cpp
         ${SOURCE_DIR_NECSIM}/neutral_analytical.cpp
         ${SOURCE_DIR_NECSIM}/parameters.cpp
-        ${SOURCE_DIR_NECSIM}/NRrand.h
+        ${SOURCE_DIR_NECSIM}/Xoroshiro256plus.h
+        ${SOURCE_DIR_NECSIM}/RNGController.h
         ${SOURCE_DIR_NECSIM}/Matrix.h
         ${SOURCE_DIR_NECSIM}/Map.h
         ${SOURCE_DIR_NECSIM}/SimulationTemplates.h

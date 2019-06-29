@@ -17,7 +17,9 @@ void cplNecsimCustomErrorHandler(CPLErr eErrClass, int err_no, const char *msg)
     stringstream error_msg;
     if(!loggerIsSetup())
     {
+#ifndef with_rcoalescence
         cerr << "Logging object has not been set before CPL error thrown: " << err_no << ". " << msg << endl;
+#endif // with_rcoalescence
     }
     else
     {

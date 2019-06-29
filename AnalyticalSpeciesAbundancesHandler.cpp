@@ -32,8 +32,9 @@ void AnalyticalSpeciesAbundancesHandler::setup(shared_ptr<RNGController> random,
 void AnalyticalSpeciesAbundancesHandler::generateSpeciesAbundances()
 {
     writeInfo("Burning in species abundances...\n");
-    auto expected_richness = static_cast<unsigned long>(neutral_analytical::siSpeciesRichness(metacommunity_size,
-                                                                                              speciation_rate));
+    auto expected_richness = std::max(
+            static_cast<unsigned long>(neutral_analytical::siSpeciesRichness(metacommunity_size,
+                                                                             speciation_rate)), (unsigned long) 1);
     // We use an approximation if the metacommunity richness is much larger than the local community size.
     if(expected_richness > 100 * local_community_size)
     {
@@ -78,6 +79,10 @@ void AnalyticalSpeciesAbundancesHandler::generateSpeciesAbundances()
         stringstream ss;
         ss << "Seen number of individuals (" << seen_no_individuals << ") is not more than local community size (";
         ss << local_community_size << ") - please report this bug" << endl;
+        ss << "Metacommunity: " << endl;
+        ss << "\tsize: " << metacommunity_size << endl;
+        ss << "\tspeciation rate: " << speciation_rate << endl;
+        ss << "Local community size: " << local_community_size << endl;
         throw FatalException(ss.str());
     }
 

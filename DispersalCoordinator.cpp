@@ -455,7 +455,7 @@ void DispersalCoordinator::disperseDensityMap(Step &this_step)
             stringstream ss;
             ss << "Minimum distance calculated of " << min_distance << " for cell at x, y (" << this_step.oldx;
             ss << ", " << this_step.oldy << ") and wrap (" << this_step.oldxwrap << ", " << this_step.oldywrap << ")";
-            ss << " is outside of bounds of map at generation " << generation << endl;
+            ss << " is outside of bounds of map at generation " << *generation << endl;
             ss << "Please report this bug." << endl;
             throw FatalException(ss.str());
         }

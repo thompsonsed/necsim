@@ -442,7 +442,7 @@ void DispersalCoordinator::disperseDensityMap(Step &this_step)
     {
         auto min_distance = landscape->distanceToNearestHabitat(this_step.oldx, this_step.oldy, this_step.oldxwrap,
                                                                 this_step.oldywrap, *generation);
-        // TODO remove or move to DEBUG
+#ifdef DEBUG
         if(!landscape->isOnMap(this_step.oldx, this_step.oldy + min_distance, this_step.oldxwrap,
                                this_step.oldywrap) &&
            !landscape->isOnMap(this_step.oldx + min_distance, this_step.oldy, this_step.oldxwrap,
@@ -459,6 +459,7 @@ void DispersalCoordinator::disperseDensityMap(Step &this_step)
             ss << "Please report this bug." << endl;
             throw FatalException(ss.str());
         }
+#endif // DEBUG
         unsigned long counter = 0;
         while(fail)
         {

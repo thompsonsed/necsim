@@ -89,7 +89,7 @@ public:
      * @param landscape_ptr pointer to a Landscape object
      * @param repr_map_ptr pointer to the reproduction probability map
      */
-    void setMaps(shared_ptr<Landscape> landscape_ptr, shared_ptr<ActivityMap> repr_map_ptr);
+    void setMaps(const shared_ptr<Landscape>& landscape_ptr, shared_ptr<ActivityMap> repr_map_ptr);
 
     /**
      * @brief Sets the pointer to the Landscape object
@@ -224,7 +224,14 @@ public:
      * @param this_step the step object containing the x, y location, and x,y wrapping
      * @return the cell reference from the dispersal_prob_map which corresponds to the required cell
      */
-    unsigned long calculateCellReference(Step &this_step);
+    unsigned long calculateCellReference(Step &this_step) const;
+
+    /**
+     * @brief Calculates the cell index in the dispersal map from the given cell
+     * @param cell the cell to calculate the index for
+     * @return the cell index
+     */
+    unsigned long calculateCellIndex(const Cell &cell) const;
 
     /**
      * @brief Calls the dispersal kernel from the supplied dispersal distribution.
@@ -332,6 +339,13 @@ public:
      * @param this_step the Step object for reading starting position and storing output distances and angles
      */
     void disperse(Step &this_step);
+
+    /**
+     * @brief Gets the probability of dispersing from the given cell to itself.
+     * @param cell the cell to check the probability of self-dispersal from
+     * @return the probability of self-dispersal
+     */
+    double getSelfDispersalProbability(const Cell & cell) const;
 
 };
 

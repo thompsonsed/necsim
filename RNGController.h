@@ -595,6 +595,9 @@ public:
 
     /**
      * @brief Get a dispersal distance with some minimum
+     *
+     * This function will never return doubles larger than LONG_MAX to avoid integer overflows.
+     *
      * @param min_distance the minimum distance to disperse
      * @return the random dispersal distance greater than or equal to the minimum
      */
@@ -634,6 +637,16 @@ public:
             return 2;
         }
 
+    }
+
+    long double randomExponential(long double lambda)
+    {
+        return exponentialDistribution(lambda, d01());
+    }
+
+    static long double exponentialDistribution(long double lambda, long double r)
+    {
+        return -log(r)/lambda;
     }
 
     /**

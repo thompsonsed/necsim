@@ -12,6 +12,7 @@
 #define STEP_H
 
 #include "Cell.h"
+#include "MapLocation.h"
 
 /**
  * @class Step
@@ -20,10 +21,9 @@
  * This object should only contain transient variables that are used within a single simulation step and therefore
  * should not be important for pausing/resuming simulations.
  */
-struct Step
+struct Step : virtual public MapLocation
 {
     unsigned long chosen, coalchosen;
-    long oldx, oldy, oldxwrap, oldywrap;
     bool coal, bContinueSim;
     unsigned int time_reference;
 #ifdef verbose
@@ -38,10 +38,6 @@ struct Step
     {
         chosen = 0;
         coalchosen = 0;
-        oldx = 0;
-        oldy = 0;
-        oldxwrap = 0;
-        oldywrap = 0;
         coal = false;
         bContinueSim = true;
         time_reference = 0;
@@ -52,10 +48,10 @@ struct Step
 
     Step(const Cell &cell)
     {
-        oldx = cell.x;
-        oldy = cell.y;
-        oldxwrap = 0;
-        oldywrap = 0;
+        x = cell.x;
+        y = cell.y;
+        xwrap = 0;
+        ywrap = 0;
         coal = false;
         bContinueSim = true;
     }
@@ -68,10 +64,10 @@ struct Step
     {
         chosen = 0;
         coalchosen = 0;
-        oldx = 0;
-        oldy = 0;
-        oldxwrap = 0;
-        oldywrap = 0;
+        x = 0;
+        y = 0;
+        xwrap = 0;
+        ywrap = 0;
         coal = false;
     }
 

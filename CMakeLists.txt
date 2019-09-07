@@ -41,7 +41,9 @@ set(SOURCE_FILES
         ${SOURCE_DIR_NECSIM}/Matrix.h
         ${SOURCE_DIR_NECSIM}/Map.h
         ${SOURCE_DIR_NECSIM}/SimulationTemplates.h
-        ${SOURCE_DIR_NECSIM}/SimParameters.h)
+        ${SOURCE_DIR_NECSIM}/SimParameters.h
+        ${SOURCE_DIR_NECSIM}/GillespieCalculator.cpp
+        )
 
 find_package(Boost 1.5.7 COMPONENTS system filesystem REQUIRED)
 find_library(gdal 2.1.0 REQUIRED)

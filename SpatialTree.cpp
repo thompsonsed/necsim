@@ -436,6 +436,25 @@ unsigned long SpatialTree::getIndividualsSampled(const long &x, const long &y, c
     //	}
 }
 
+unsigned long SpatialTree::getNumberIndividualsAtLocation(const MapLocation &location)
+{
+    if(location.isOnGrid())
+    {
+        return grid.get(location.y, location.x).getListSize();
+    }
+    unsigned long next = grid.get(location.y, location.x).getNext();
+    unsigned long total = 0;
+    while(next != 0)
+    {
+        if(static_cast<MapLocation>(active[next]) == location)
+        {
+            total ++;
+        }
+        next = active[next].getNext();
+    }
+    return total;
+}
+
 void SpatialTree::removeOldPosition(const unsigned long &chosen)
 {
     long nwrap = active[chosen].getNwrap();
@@ -454,10 +473,10 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
         // Then the lineage exists in the main species_id_list;
         // debug (can be removed later)
 #ifdef historical_mode
-        if(grid.get(oldy, oldx).getMaxsize() < active[chosen].getListpos())
+        if(grid.get(y, x).getMaxsize() < active[chosen].getListpos())
         {
             stringstream ss;
-            ss << "grid maxsize: " << grid.get(oldy, oldx).getMaxsize() << endl;
+            ss << "grid maxsize: " << grid.get(y, x).getMaxsize() << endl;
             writeCritical(ss.str());
             throw FatalException("ERROR_MOVE_001: Listpos outside maxsize. Check move programming function.");
         }
@@ -533,7 +552,7 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
         }
 #ifdef DEBUG
         unsigned long iCount = 1;
-        long pos = grid.get(oldy, oldx).getNext();
+        long pos = grid.get(y, x).getNext();
         if(pos == 0)
         {
             iCount = 0;
@@ -553,10 +572,10 @@ void SpatialTree::removeOldPosition(const unsigned long &chosen)
             }
         }
 
-        if(iCount != grid.get(oldy, oldx).getNwrap())
+        if(iCount != grid.get(y, x).getNwrap())
         {
             stringstream ss;
-            ss << "Nwrap: " << grid.get(oldy, oldx).getNwrap() << " Counted lineages: " << iCount << endl;
+            ss << "Nwrap: " << grid.get(y, x).getNwrap() << " Counted lineages: " << iCount << endl;
             writeLog(50, ss);
             throw FatalException("ERROR_MOVE_014: Nwrap not set correctly after move for grid cell");
         }
@@ -590,229 +609,217 @@ long double SpatialTree::calcMinMax(const unsigned long &current)
     return toret;
 }
 
-void SpatialTree::calcNewPos(bool &coal,
-                             const unsigned long &chosen,
-                             unsigned long &coalchosen,
-                             const long &oldx,
-                             const long &oldy,
-                             const long &oldxwrap,
-                             const long &oldywrap)
+void SpatialTree::calcNewPos()
 {
+    
     // Calculate the new position of the move, whilst also calculating the probability of coalescence.
-    unsigned long nwrap = active[chosen].getNwrap();
-    if(oldxwrap == 0 && oldywrap == 0)
+    unsigned long nwrap = active[this_step.chosen].getNwrap();
+    if(this_step.isOnGrid())
     {
         // Debug check (to remove later)
         if(nwrap != 0)
         {
-            throw FatalException(
-                    "ERROR_MOVE_006: NON FATAL. Nwrap not set correctly. Check move programming function.");
+            throw FatalException("Nwrap not set correctly. Check move programming function.");
         }
         // then the procedure is relatively simple.
         // check for coalescence
         // check if the grid needs to be updated.
-        if(grid.get(oldy, oldx).getMaxSize() != landscape->getVal(oldx, oldy, 0, 0, generation))
+        if(grid.get(this_step.y, this_step.x).getMaxSize() != landscape->getVal(this_step.x, this_step.y, 0, 0, generation))
         {
-            grid.get(oldy, oldx).setMaxsize(landscape->getVal(oldx, oldy, 0, 0, generation));
+            grid.get(this_step.y, this_step.x).setMaxsize(landscape->getVal(this_step.x, this_step.y, 0, 0, generation));
         }
-        coalchosen = grid.get(oldy, oldx).getRandLineage(NR);
+        this_step.coalchosen = grid.get(this_step.y, this_step.x).getRandLineage(NR);
 #ifdef DEBUG
-        if(coalchosen != 0)
+        if(this_step..coalthis_step.chosen != 0)
         {
-            if(active[coalchosen].getXpos() != (unsigned long) oldx ||
-               active[coalchosen].getYpos() != (unsigned long) oldy ||
-               active[coalchosen].getXwrap() != oldxwrap || active[coalchosen].getYwrap() != oldywrap)
+            if(active[this_step.coalchosen].getXpos() != (unsigned long) x ||
+               active[this_step.coalchosen].getYpos() != (unsigned long) y ||
+               active[this_step.coalchosen].getXwrap() != xwrap || active[this_step.coalchosen].getYwrap() != ywrap)
             {
-                writeLog(50, "Logging chosen:");
-                active[chosen].logActive(50);
-                writeLog(50, "Logging coalchosen: ");
-                active[coalchosen].logActive(50);
+                writeLog(50, "Logging this_step.chosen:");
+                active[this_step.chosen].logActive(50);
+                writeLog(50, "Logging this_step.coalchosen: ");
+                active[this_step.coalchosen].logActive(50);
                 throw FatalException("ERROR_MOVE_006: NON FATAL. Nwrap not set correctly. Please report this bug.");
             }
         }
 #endif
-        if(coalchosen == 0)  // then the lineage can be placed in the empty space.
+        if(this_step.coalchosen == 0)  // then the lineage can be placed in the empty space.
         {
-            long tmplistindex = grid.get(oldy, oldx).addSpecies(chosen);
+            long tmplistindex = grid.get(this_step.y, this_step.x).addSpecies(this_step.chosen);
             // check
-            if(grid.get(oldy, oldx).getSpecies(tmplistindex) != chosen)
+            if(grid.get(this_step.y, this_step.x).getSpecies(tmplistindex) != this_step.chosen)
             {
-                throw FatalException("ERROR_MOVE_005: Grid index not set correctly for species. Check "
-                                     "move programming function.");
+                throw FatalException("Grid index not set correctly for species. Check move programming function.");
             }
 #ifdef historical_mode
-            if(grid.get(oldy, oldx).getListsize() > grid.get(oldy, oldx).getMaxsize())
+            if(grid.get(y, x).getListsize() > grid.get(y, x).getMaxsize())
             {
                 throw FatalException(
                     "ERROR_MOVE_001: Listpos outside maxsize. Check move programming function.");
             }
 #endif
-            active[chosen].setNwrap(0);
-            active[chosen].setListPosition(tmplistindex);
-            coal = false;
+            active[this_step.chosen].setNwrap(0);
+            active[this_step.chosen].setListPosition(tmplistindex);
+            this_step.coal = false;
         }
         else  // then coalescence has occured
         {
-            active[chosen].setNwrap(0);
-            active[chosen].setListPosition(0);
+            active[this_step.chosen].setNwrap(0);
+            active[this_step.chosen].setListPosition(0);
             // DO THE COALESCENCE STUFF
-            coal = true;
+            this_step.coal = true;
         }
     }
     else  // need to check all the possible places the lineage could be.
     {
         if(nwrap != 0)
         {
-            throw FatalException("ERROR_MOVE_022: Nwrap not set correctly in move.");
+            throw FatalException("Nwrap not set correctly in move.");
         }
-        nwrap = grid.get(oldy, oldx).getNwrap();
+        nwrap = grid.get(this_step.y, this_step.x).getNwrap();
         if(nwrap != 0)  // then coalescence is possible and we need to loop over the nexts to check those that are
             // in the same position
         {
-            // Count the possible matches of the position.
-            unsigned long matches = 0;
-            // Create an array containing the species_id_list of active references for those that match as
-            // this stops us having to loop twice over the same species_id_list.
-            vector<unsigned long> match_list(nwrap);
-            unsigned long next_active;
-            next_active = grid.get(oldy, oldx).getNext();
-            // Count if the first "next" matches
-            if(active[next_active].getXwrap() == oldxwrap && active[next_active].getYwrap() == oldywrap)
-            {
-#ifdef DEBUG
-                if(active[next_active].getNwrap() != 1)
-                {
-                    throw FatalException("ERROR_MOVE_022a: Nwrap not set correctly in move.");
-                }
-#endif
-                match_list[matches] = next_active;  // add the match to the species_id_list of matches.
-                matches++;
-            }
-            // Now loop over the remaining nexts counting matches
-            //#ifdef DEBUG
-            unsigned long ncount = 1;
-            //#endif
-            while(active[next_active].getNext() != 0)
-            {
-                next_active = active[next_active].getNext();
-                if(active[next_active].getXwrap() == oldxwrap && active[next_active].getYwrap() == oldywrap)
-                {
-                    match_list[matches] = next_active;
-                    matches++;
-                }
-                // check
-                //#ifdef DEBUG
-                ncount++;
-#ifdef DEBUG
-                if(active[next_active].getNwrap() != ncount)
-                {
-                    throw FatalException("ERROR_MOVE_022d: Nwrap not set correctly in move.");
-                }
-#endif
-            }
-            if(nwrap != ncount)
-            {
-                throw FatalException("ERROR_MOVE_022c: Nwrap not set correctly in move.");
-            }
-            // Matches now contains the number of lineages at the exact x,y, xwrap and ywrap position.
-            // Check if there were no matches at all
-            if(matches == 0)
-            {
-                coalchosen = 0;
-                coal = false;
-                active[next_active].setNext(chosen);
-                grid.get(oldy, oldx).increaseNwrap();
-                active[chosen].setNwrap(grid.get(oldy, oldx).getNwrap());
-                active[chosen].setListPosition(0);
-            }
-            else  // if there were matches, generate a random number to see if coalescence occured or not
-            {
-                unsigned long randwrap =
-                        floor(NR->d01() * (landscape->getVal(oldx, oldy, oldxwrap, oldywrap, generation)) + 1);
-                // Get the random reference from the match species_id_list.
-                // If the movement is to an empty space, then we can update the chain to include the new
-                // lineage.
-#ifdef historical_mode
-                if(randwrap > landscape->getVal(oldx, oldy, oldxwrap, oldywrap, generation))
-                {
-                    throw FatalException(
-                        "ERROR_MOVE_004: Randpos outside maxsize. Check move programming function");
-                }
-                if(matches > landscape->getVal(oldx, oldy, oldxwrap, oldywrap, generation))
-                {
-                    stringstream ss;
-                    ss << "ERROR_MOVE_004: matches outside maxsize. Please report this bug." << endl;
-                    ss << "matches: " << matches << endl
-                         << "landscape value: "
-                         << landscape->getVal(oldx, oldy, oldxwrap, oldywrap, generation) << endl;
-                    throw FatalException(ss.str());
-                }
-#endif
-                if(randwrap > matches)  // coalescence has not occured
-                {
-                    // os << "This shouldn't happen" << endl;
-                    coalchosen = 0;
-                    coal = false;
-                    active[next_active].setNext(chosen);
-                    grid.get(oldy, oldx).increaseNwrap();
-                    active[chosen].setNwrap(grid.get(oldy, oldx).getNwrap());
-                    active[chosen].setListPosition(0);
-                }
-                else  // coalescence has occured
-                {
-                    coal = true;
-                    coalchosen = match_list[randwrap - 1];
-                    active[chosen].setEndpoint(oldx, oldy, oldxwrap, oldywrap);
-                    if(coalchosen == 0)
-                    {
-                        throw FatalException(
-                                "ERROR_MOVE_025: Coalescence attempted with lineage of 0.");
-                    }
-                }
-            }
-#ifdef historical_mode
-            if(grid.get(oldy, oldx).getMaxsize() < active[chosen].getListpos())
-            {
-                throw FatalException("Listpos outside maxsize. Check move programming function.");
-            }
-#endif
+            calcWrappedCoalescence(nwrap);
         }
         else  // just add the lineage to next.
         {
-            if(grid.get(oldy, oldx).getNext() != 0)
+            addWrappedLineage();
+            if(grid.get(this_step.y, this_step.x).getNext() != 0)
             {
-                throw FatalException("ERROR_MOVE_026: No nwrap recorded, but next is non-zero.");
+                throw FatalException("No nwrap recorded, but next is non-zero.");
             }
-            coalchosen = 0;
-            coal = false;
-            grid.get(oldy, oldx).setNext(chosen);
-            active[chosen].setNwrap(1);
-            active[chosen].setNext(0);
-            grid.get(oldy, oldx).increaseNwrap();
+            this_step.coalchosen = 0;
+            this_step.coal = false;
+            grid.get(this_step.y, this_step.x).setNext(this_step.chosen);
+            active[this_step.chosen].setNwrap(1);
+            active[this_step.chosen].setNext(0);
+            grid.get(this_step.y, this_step.x).increaseNwrap();
 #ifdef DEBUG
-            if(grid.get(oldy, oldx).getNwrap() != 1)
+            if(grid.get(this_step.y, this_step.x).getNwrap() != 1)
             {
-                throw FatalException("ERROR_MOVE_022b: Nwrap not set correctly in move.");
+                throw FatalException("Nwrap not set correctly in move.");
             }
 #endif
         }
-        if(coalchosen != 0)
+        if(this_step.coalchosen != 0)
         {
-            if(active[coalchosen].getXpos() != (unsigned long) oldx ||
-               active[coalchosen].getYpos() != (unsigned long) oldy ||
-               active[coalchosen].getXwrap() != oldxwrap || active[coalchosen].getYwrap() != oldywrap)
+            if(active[this_step.coalchosen].getXpos() != (unsigned long) this_step.x ||
+               active[this_step.coalchosen].getYpos() != (unsigned long) this_step.y ||
+               active[this_step.coalchosen].getXwrap() != this_step.xwrap || active[this_step.coalchosen].getYwrap() != this_step.ywrap)
             {
 #ifdef DEBUG
-                writeLog(50, "Logging chosen:");
-                active[chosen].logActive(50);
-                writeLog(50, "Logging coalchosen: ");
-                active[coalchosen].logActive(50);
+                writeLog(50, "Logging this_step.chosen:");
+                active[this_step.chosen].logActive(50);
+                writeLog(50, "Logging this_step.coalchosen: ");
+                active[this_step.coalchosen].logActive(50);
 #endif // DEBUG
-                throw FatalException("ERROR_MOVE_006b: NON FATAL. Nwrap not set correctly. Check move "
+                throw FatalException("Nwrap not set correctly. Check move "
                                      "programming function.");
             }
         }
     }
+}
+
+void SpatialTree::calcWrappedCoalescence(const unsigned long &nwrap)
+{
+
+    // Count the possible matches of the position.
+    unsigned long matches = 0;
+    // Create an array containing the species_id_list of active references for those that match as
+    // this stops us having to loop twice over the same species_id_list.
+    vector<unsigned long> match_list(nwrap);
+    unsigned long next_active;
+    next_active = grid.get(this_step.y, this_step.x).getNext();
+    // Count if the first "next" matches
+    if(active[next_active].getXwrap() == this_step.xwrap && active[next_active].getYwrap() == this_step.ywrap)
+    {
+#ifdef DEBUG
+        if(active[next_active].getNwrap() != 1)
+            {
+                throw FatalException("ERROR_MOVE_022a: Nwrap not set correctly in move.");
+            }
+#endif
+        match_list[matches] =
+                next_active;  // add the match to the species_id_list of matches.
+        matches++;
+    }
+    // Now loop over the remaining nexts counting matches
+    //#ifdef DEBUG
+    unsigned long ncount = 1;
+    //#endif
+    while(active[next_active].getNext() != 0)
+    {
+        next_active = active[next_active].getNext();
+        if(active[next_active].getXwrap() == this_step.xwrap && active[next_active].getYwrap() == this_step.ywrap)
+        {
+            match_list[matches] = next_active;
+            matches++;
+        }
+        // check
+        //#ifdef DEBUG
+        ncount++;
+#ifdef DEBUG
+        if(active[next_active].getNwrap() != ncount)
+            {
+                throw FatalException("ERROR_MOVE_022d: Nwrap not set correctly in move.");
+            }
+#endif
+    }
+    if(nwrap != ncount)
+    {
+        throw FatalException("Nwrap not set correctly in move.");
+    }
+    // Matches now contains the number of lineages at the exact x,y, xwrap and ywrap position.
+    // Check if there were no matches at all
+    if(matches == 0)
+    {
+        this_step.coalchosen = 0;
+        this_step.coal = false;
+        active[next_active].setNext(this_step.chosen);
+        grid.get(this_step.y, this_step.x).increaseNwrap();
+        active[this_step.chosen].setNwrap(grid.get(this_step.y, this_step.x).getNwrap()
+
+        );
+        active[this_step.chosen].setListPosition(0);
+    }
+    else  // if there were matches, generate a random number to see if coalescence occured or not
+    {
+        unsigned long randwrap =
+                floor(NR->d01() * (landscape->getVal(this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, generation)) + 1);
+        // Get the random reference from the match species_id_list.
+        // If the movement is to an empty space, then we can update the chain to include the new
+        // lineage.
+        if(randwrap > matches)  // coalescence has not occured
+        {
+            // os << "This shouldn't happen" << endl;
+            this_step.coalchosen = 0;
+            this_step.coal = false;
+            active[next_active].setNext(this_step.chosen);
+            grid.get(this_step.y, this_step.x).increaseNwrap();
+
+            active[this_step.chosen].setNwrap(grid.get(this_step.y, this_step.x).getNwrap());
+            active[this_step.chosen].setListPosition(0);
+        }
+        else  // coalescence has occured
+        {
+            this_step.coal = true;
+            this_step.coalchosen = match_list[randwrap - 1];
+            active[this_step.chosen].setEndpoint(this_step);
+            if(this_step.coalchosen == 0)
+            {
+                throw FatalException(
+                        "Coalescence attempted with lineage of 0.");
+            }
+        }
+    }
+#ifdef historical_mode
+    if(grid.get(this_step.y, this_step.x).getMaxsize() < active[this_step.chosen].getListpos())
+        {
+            throw FatalException("Listpos outside maxsize. Check move programming function.");
+        }
+#endif
 }
 
 void SpatialTree::switchPositions(const unsigned long &chosen)
@@ -871,7 +878,7 @@ void SpatialTree::switchPositions(const unsigned long &chosen)
                 if(grid.get(active[endactive].getYpos(), active[endactive].getXpos()).getNext() != endactive)
                 {
                     throw FatalException(string(
-                            "FATAL. Nwrap for endactive not set correctly. Nwrap is 1, but "
+                            "Nwrap for endactive not set correctly. Nwrap is 1, but "
                             "lineage at 1st position is " +
                             to_string(
                                     (long long) grid.get(active[endactive].getYpos(),
@@ -939,11 +946,8 @@ void SpatialTree::calcNextStep()
     calcMove();
     // Calculate the new position, perform the move if coalescence doesn't occur or
     // return the variables for the coalescence event if coalescence does occur.
-    active[this_step.chosen].setEndpoint(this_step.oldx, this_step.oldy,
-                                         this_step.oldxwrap,
-                                         this_step.oldywrap);
-    calcNewPos(this_step.coal, this_step.chosen, this_step.coalchosen, this_step.oldx,
-               this_step.oldy, this_step.oldxwrap, this_step.oldywrap);
+    active[this_step.chosen].setEndpoint(this_step);
+    calcNewPos();
 }
 
 unsigned long SpatialTree::estSpecnum()
@@ -1038,13 +1042,13 @@ unsigned long SpatialTree::estSpecnum()
 #ifdef historical_mode
 void SpatialTree::historicalStepChecks()
 {
-    if(landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap, generation) == 0)
+    if(landscape->getVal(this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, generation) == 0)
     {
         throw FatalException(
             string("ERROR_MOVE_008: Dispersal attempted from non-forest. Check dispersal function. Forest "
                    "cover: " +
-                   to_string((long long)landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap,
-                                                         this_step.oldywrap, generation))));
+                   to_string((long long)landscape->getVal(this_step.x, this_step.y, this_step.xwrap,
+                                                         this_step.ywrap, generation))));
     }
 }
 #endif
@@ -1067,13 +1071,13 @@ void SpatialTree::incrementGeneration()
 
 void SpatialTree::debugDispersal()
 {
-    if(landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap, this_step.oldywrap, generation) == 0)
+    if(landscape->getVal(this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, generation) == 0)
     {
         throw FatalException(
                 string("ERROR_MOVE_007: Dispersal attempted to non-forest. "
                        "Check dispersal function. Forest cover: " +
-                       to_string((long long) landscape->getVal(this_step.oldx, this_step.oldy, this_step.oldxwrap,
-                                                               this_step.oldywrap, generation))));
+                       to_string((long long) landscape->getVal(this_step.x, this_step.y, this_step.xwrap,
+                                                               this_step.ywrap, generation))));
     }
 }
 
@@ -1088,9 +1092,9 @@ void SpatialTree::updateStepCoalescenceVariables()
         this_step.chosen = NR->i0(endactive - 1) + 1;  // cannot be 0
     }
     // record old position of lineage
-    this_step.oldx = active[this_step.chosen].getXpos();
+    this_step.x = active[this_step.chosen].getXpos();
     this_step.oldy = active[this_step.chosen].getYpos();
-    this_step.oldxwrap = active[this_step.chosen].getXwrap();
+    this_step.xwrap = active[this_step.chosen].getXwrap();
     this_step.oldywrap = active[this_step.chosen].getYwrap();
 #ifdef historical_mode
     historicalStepChecks();
@@ -1423,6 +1427,7 @@ void SpatialTree::verifyActivityMaps()
 
 void SpatialTree::addWrappedLineage(unsigned long numstart, long x, long y)
 {
+
     if(grid.get(y, x).getNwrap() == 0)
     {
         grid.get(y, x).setNext(numstart);

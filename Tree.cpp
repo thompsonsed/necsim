@@ -92,8 +92,8 @@ void Tree::checkSims(string output_dir, long seed_in, long job_type)
     os << "Checking for unfinished simulations..." << flush;
     ifstream out;
     string file_to_open;
-//	char file_to_open[100];
-//	sprintf (file_to_open, "%s/Pause/Data_%i.csv",outdirect,int(job_type));
+    //	char file_to_open[100];
+    //	sprintf (file_to_open, "%s/Pause/Data_%i.csv",outdirect,int(job_type));
     file_to_open = output_dir + string("/Pause/Dump_main_") + to_string((unsigned long long) job_type) + "_" +
                    to_string((unsigned long long) seed_in) + string(".csv");
     out.open(file_to_open);
@@ -189,6 +189,11 @@ void Tree::setSeed(long long seed_in)
         seed = seed_in;
         seeded = true;
     }
+}
+
+double Tree::getGeneration() const
+{
+    return generation;
 }
 
 unsigned long Tree::getInitialCount()
@@ -405,6 +410,61 @@ unsigned long Tree::fillObjects(const unsigned long &initial_count)
     return number_start;
 }
 
+void Tree::runSingleLoop()
+{
+    chooseRandomLineage();
+    writeStepToConsole();
+    // See estSpecnum for removed code.
+    // Check that we still want to continue the simulation.
+    if(this_step.bContinueSim)
+    {
+        // increase the counter of the number of moves (or generations) the lineage has undergone.
+        (*data)[active[this_step.chosen].getReference()].increaseGen();
+        // Check if speciation happens
+        if(calcSpeciation((*data)[active[this_step.chosen].getReference()].getSpecRate(), 0.99999 * spec,
+                          (*data)[active[this_step.chosen].getReference()].getGenRate()))
+        {
+            speciation(this_step.chosen);
+        }
+        else
+        {
+            // remove the species data from the species species_id_list to be placed somewhere new.
+            removeOldPosition(this_step.chosen);
+            calcNextStep();
+#ifdef DEBUG
+            debugCoalescence();
+#endif
+            if(this_step.coal)
+            {
+                coalescenceEvent(this_step.chosen, this_step.coalchosen);
+            }
+        }
+    }
+
+#ifdef DEBUG
+    debugEndStep();
+#endif
+    if(uses_temporal_sampling && endactive == 1)
+    {
+        // Check whether we need to continue simulating at a later time.
+        if(reference_times[this_step.time_reference] > generation)
+        {
+            // Then we need to expand the map
+            // This is a hack, I know it's a hack and is wrong, and I aint gonna change it :)
+            (*data)[active[endactive].getReference()].setSpec(0.0);
+            // First speciate the remaining lineage
+            speciation(endactive);
+            generation = reference_times[this_step.time_reference] + 0.000000000001;
+            checkTimeUpdate();
+            if(endactive < 2)
+            {
+                this_step.bContinueSim = false;
+            }
+        }
+        // TODO fix this to account for potential speciation of the remaining lineage!
+    }
+}
+
 bool Tree::runSimulation()
 {
 
@@ -417,65 +477,33 @@ bool Tree::runSimulation()
     {
         return stopSimulation();
     }
+    return runSimulationNoGillespie();
+}
+
+bool Tree::runSimulationNoGillespie()
+{
     // Create the move object
     do
     {
-        chooseRandomLineage();
-        writeStepToConsole();
-        // See estSpecnum for removed code.
-        // Check that we still want to continue the simulation.
-        if(this_step.bContinueSim)
-        {
-            // increase the counter of the number of moves (or generations) the lineage has undergone.
-            (*data)[active[this_step.chosen].getReference()].increaseGen();
-            // Check if speciation happens
-            if(calcSpeciation((*data)[active[this_step.chosen].getReference()].getSpecRate(), 0.99999 * spec,
-                              (*data)[active[this_step.chosen].getReference()].getGenRate()))
-            {
-                speciation(this_step.chosen);
-            }
-            else
-            {
-                // remove the species data from the species species_id_list to be placed somewhere new.
-                removeOldPosition(this_step.chosen);
-                calcNextStep();
-#ifdef DEBUG
-                debugCoalescence();
-#endif
-                if(this_step.coal)
-                {
-                    coalescenceEvent(this_step.chosen, this_step.coalchosen);
-                }
-            }
-        }
-
-#ifdef DEBUG
-        debugEndStep();
-#endif
-        if(uses_temporal_sampling && endactive == 1)
-        {
-            // Check whether we need to continue simulating at a later time.
-            if(reference_times[this_step.time_reference] > generation)
-            {
-                // Then we need to expand the map
-                // This is a hack, I know it's a hack and is wrong, and I aint gonna change it :)
-                (*data)[active[endactive].getReference()].setSpec(0.0);
-                // First speciate the remaining lineage
-                speciation(endactive);
-                generation = reference_times[this_step.time_reference] + 0.000000000001;
-                checkTimeUpdate();
-                if(endactive < 2)
-                {
-                    break;
-                }
-            }
-            // TODO fix this to account for potential speciation of the remaining lineage!
-        }
+        runSingleLoop();
     }
     while((endactive > 1) && (steps < 100 || difftime(sim_end, start) < maxtime) && this_step.bContinueSim);
-// If the simulations finish correctly, output the completed data->
-// Otherwise, pause the simulation and save objects to file.
+    // If the simulations finish correctly, output the completed data->
+    // Otherwise, pause the simulation and save objects to file.
     return stopSimulation();
+}
+
+bool Tree::runSimulationGillespie()
+{
+    do
+    {
+        runSingleLoop();
+    }
+    while((endactive < gillespie_threshold) && (endactive > 1) && (steps < 100)
+          || difftime(sim_end, start) < maxtime && this_step.bContinueSim);
+    // Switch to gillespie
+    GillespieCalculator gillespieCalculator();
+
 }
 
 bool Tree::stopSimulation()
@@ -1151,7 +1179,7 @@ void Tree::setupOutputDirectory()
 
 void Tree::sqlCreateSimulationParameters()
 {
-// Now additionally store the simulation current_metacommunity_parameters (extremely useful data)
+    // Now additionally store the simulation current_metacommunity_parameters (extremely useful data)
     string to_execute = "CREATE TABLE SIMULATION_PARAMETERS (seed INT PRIMARY KEY not null, job_type INT NOT NULL,";
     to_execute += "output_dir TEXT NOT NULL, speciation_rate DOUBLE NOT NULL, sigma DOUBLE NOT NULL,tau DOUBLE NOT "
                   "NULL, deme DOUBLE NOT NULL, ";
@@ -1611,10 +1639,10 @@ void Tree::debugCoalescence()
         ss << "ERROR_MOVE_006: NON FATAL. Nwrap not set correctly. Check move programming function." << endl;
         throw FatalException(ss.str());
     }
-    if(active[this_step.coalchosen].getXpos() != (unsigned long) this_step.oldx ||
-       active[this_step.coalchosen].getYpos() != (unsigned long) this_step.oldy ||
-       active[this_step.coalchosen].getXwrap() != this_step.oldxwrap ||
-       active[this_step.coalchosen].getYwrap() != this_step.oldywrap)
+    if(active[this_step.coalchosen].getXpos() != (unsigned long) this_step.x ||
+       active[this_step.coalchosen].getYpos() != (unsigned long) this_step.y ||
+       active[this_step.coalchosen].getXwrap() != this_step.xwrap ||
+       active[this_step.coalchosen].getYwrap() != this_step.ywrap)
     {
         writeLog(50, "Logging chosen: " + to_string(this_step.chosen));
         (*data)[active[this_step.chosen].getReference()].logLineageInformation(50);

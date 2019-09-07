@@ -36,7 +36,7 @@ using namespace std;
 class SpeciesList
 {
 private:
-    unsigned long list_size, maxsize; // List size and maximum size of the cell (based on percentage cover).
+    unsigned long list_size, max_size; // List size and maximum size of the cell (based on percentage cover).
     unsigned long next_active; // For calculating the wrapping, using the next and last system.
     vector<unsigned long> species_id_list; // list of the active reference number, with zeros for empty cells.
     unsigned long nwrap; // The number of wrapping (next and last possibilities) that there are.
@@ -57,7 +57,7 @@ public:
      */
     void initialise(unsigned long maxsizein);
 
-    // special case if just the maxsize wants to be change, but want to maintain the species_id_list variables.
+    // special case if just the max_size wants to be change, but want to maintain the species_id_list variables.
     /**
      * @brief Sets the maxsize without altering the actual size of list.
      * @param maxsizein The new maximum size to set.
@@ -142,7 +142,7 @@ public:
      * @param rand_no the random number object to pass (for maintaining the same seed throughout simulations).
      * @return the reference of the random lineage. 0 indicates an empty space.
      */
-    unsigned long getRandLineage(shared_ptr<RNGController> rand_no);
+    unsigned long getRandLineage(const shared_ptr<RNGController>& rand_no);
 
     /**
      * @brief Get the species reference number from a particular entry.
@@ -186,6 +186,11 @@ public:
      */
     void wipeList();
 
+    /**
+     * @brief Gets the probability of coalescence within this object in a single time step
+     * @return the probability of coalescence
+     */
+    double getCoalescenceProbability() const;
     /**
      * @brief Outputs the SpeciesList object to an output stream.
      * Allows for piping to the terminal or writing the object to a file.

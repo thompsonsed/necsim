@@ -719,12 +719,12 @@ unsigned long Landscape::getValFinite(
 
 }
 
-unsigned long Landscape::convertSampleXToFineX(const unsigned long &x, const long &xwrap)
+unsigned long Landscape::convertSampleXToFineX(const unsigned long &x, const long &xwrap) const
 {
     return x + fine_x_offset + (xwrap * x_dim);
 }
 
-unsigned long Landscape::convertSampleYToFineY(const unsigned long &y, const long &ywrap)
+unsigned long Landscape::convertSampleYToFineY(const unsigned long &y, const long &ywrap) const
 {
     return y + fine_y_offset + (ywrap * y_dim);
 }

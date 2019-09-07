@@ -174,8 +174,8 @@ void SimulateDispersal::getEndPoint(Cell &this_cell)
 {
     Step tmp_step(this_cell);
     dispersal_coordinator.disperse(tmp_step);
-    this_cell.x = tmp_step.oldx + tmp_step.oldxwrap * simParameters->sample_x_size;
-    this_cell.y = tmp_step.oldy + tmp_step.oldywrap * simParameters->sample_y_size;
+    this_cell.x = tmp_step.x + tmp_step.xwrap * simParameters->sample_x_size;
+    this_cell.y = tmp_step.y + tmp_step.ywrap * simParameters->sample_y_size;
 //	return (this->*getValFptr)(dist, angle, this_cell, end_cell);
 }
 

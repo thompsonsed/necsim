@@ -10,21 +10,21 @@
 #include <iostream>
 #include "SpeciesList.h"
 
-SpeciesList::SpeciesList() : list_size(0), maxsize(0), next_active(0), species_id_list(), nwrap(0)
+SpeciesList::SpeciesList() : list_size(0), max_size(0), next_active(0), species_id_list(), nwrap(0)
 {
 
 }
 
 void SpeciesList::initialise(unsigned long maxsizein)
 {
-    maxsize = maxsizein;
+    max_size = maxsizein;
     nwrap = 0;
     list_size = 0;
 }
 
 void SpeciesList::setMaxsize(unsigned long maxsizein)
 {
-    maxsize = maxsizein;
+    max_size = maxsizein;
 }
 
 void SpeciesList::setSpecies(unsigned long index, unsigned long new_val)
@@ -70,11 +70,11 @@ void SpeciesList::setNwrap(unsigned long nr)
 unsigned long SpeciesList::addSpecies(const unsigned long &new_spec)
 {
 #ifdef DEBUG
-    if(list_size + 1 > maxsize)
+    if(list_size + 1 > max_size)
     {
         stringstream ss;
         ss << "species_id_list size: " << list_size << endl;
-        ss << "max size: " << maxsize << endl;
+        ss << "max size: " << max_size << endl;
         writeLog(10, ss.str());
         throw out_of_range("Could not add species - species_id_list size greater than max size.");
     }
@@ -148,13 +148,13 @@ void SpeciesList::increaseNwrap()
 
 void SpeciesList::changePercentCover(unsigned long newmaxsize)
 {
-    maxsize = newmaxsize;
+    max_size = newmaxsize;
 }
 
-unsigned long SpeciesList::getRandLineage(shared_ptr<RNGController> rand_no)
+unsigned long SpeciesList::getRandLineage(const shared_ptr<RNGController>& rand_no)
 {
     double rand_index;
-    if(maxsize <= list_size)
+    if(max_size <= list_size)
     {
         // Then the species_id_list size is larger than the actual size. This means we must return a lineage.
         try
@@ -171,14 +171,14 @@ unsigned long SpeciesList::getRandLineage(shared_ptr<RNGController> rand_no)
         }
         catch(out_of_range &oor)
         {
-            throw runtime_error("Listpos outside maxsize.");
+            throw runtime_error("Listpos outside max_size.");
         }
     }
     else
     {
         rand_index = rand_no->d01();
 //		os << "rand_index: " << rand_index << endl;
-        rand_index *= maxsize;
+        rand_index *= max_size;
         if(rand_index >= species_id_list.size())
         {
             return 0;
@@ -187,7 +187,7 @@ unsigned long SpeciesList::getRandLineage(shared_ptr<RNGController> rand_no)
         auto i = static_cast<unsigned long>(floor(rand_index));
 
 #ifdef DEBUG
-        if(rand_index>maxsize)
+        if(rand_index>max_size)
             {
                 stringstream ss;
                 ss << "Random index is greater than the max size. Fatal error, please report this bug." << endl;
@@ -220,7 +220,7 @@ unsigned long SpeciesList::getListSize()
 
 unsigned long SpeciesList::getMaxSize()
 {
-    return maxsize;
+    return max_size;
 }
 
 unsigned long SpeciesList::getListLength()
@@ -233,6 +233,11 @@ void SpeciesList::wipeList()
     next_active = 0;
     nwrap = 0;
     list_size = 0;
+}
+
+double SpeciesList::getCoalescenceProbability() const
+{
+    return min(double(list_size)/double(max_size), 1.0);
 }
 
 ostream &operator<<(ostream &os, const SpeciesList &r)

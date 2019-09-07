@@ -16,8 +16,8 @@
 void DataPoint::setup(unsigned long x, unsigned long y, long xwrap_in, long ywrap_in, unsigned long reference_in,
                       unsigned long list_position_in, double min_max_in)
 {
-    xpos = x;
-    ypos = y;
+    this->x = x;
+    this->y = y;
     xwrap = xwrap_in;
     ywrap = ywrap_in;
     next_lineage = 0;
@@ -32,10 +32,10 @@ void DataPoint::setup(unsigned long reference_in, unsigned long list_position_in
     setup(0, 0, 0, 0, reference_in, list_position_in, min_max_in);
 }
 
-void DataPoint::setup(DataPoint datin)
+void DataPoint::setup(const DataPoint& datin)
 {
-    xpos = datin.getXpos();
-    ypos = datin.getYpos();
+    x = datin.getXpos();
+    y = datin.getYpos();
     xwrap = datin.getXwrap();
     ywrap = datin.getYwrap();
     next_lineage = datin.getNext();
@@ -71,47 +71,47 @@ void DataPoint::setMinmax(double d)
     min_max = d;
 }
 
-unsigned long DataPoint::getXpos()
+unsigned long DataPoint::getXpos() const
 {
-    return xpos;
+    return x;
 }
 
-unsigned long DataPoint::getYpos()
+unsigned long DataPoint::getYpos() const
 {
-    return ypos;
+    return y;
 }
 
-long DataPoint::getXwrap()
+long DataPoint::getXwrap() const
 {
     return xwrap;
 }
 
-long DataPoint::getYwrap()
+long DataPoint::getYwrap() const
 {
     return ywrap;
 }
 
-unsigned long DataPoint::getReference()
+unsigned long DataPoint::getReference() const
 {
     return reference;
 }
 
-unsigned long DataPoint::getNext()
+unsigned long DataPoint::getNext() const
 {
     return next_lineage;
 }
 
-unsigned long DataPoint::getListpos()
+unsigned long DataPoint::getListpos() const
 {
     return list_position;
 }
 
-unsigned long DataPoint::getNwrap()
+unsigned long DataPoint::getNwrap() const
 {
     return nwrap;
 }
 
-double DataPoint::getMinmax()
+double DataPoint::getMinmax() const
 {
     return min_max;
 }
@@ -128,17 +128,18 @@ void DataPoint::decreaseNwrap()
     }
 }
 
-void DataPoint::setEndpoint(long x, long y, long xwrapin, long ywrapin)
+template<class T>
+void DataPoint::setEndpoint(const T &location)
 {
-    xpos = x;
-    ypos = y;
-    xwrap = xwrapin;
-    ywrap = ywrapin;
+    x = location.x;
+    y = location.y;
+    xwrap = location.xwrap;
+    ywrap = location.ywrap;
 }
 
 ostream &operator<<(ostream &os, const DataPoint &d)
 {
-    os << d.xpos << "," << d.ypos << "," << d.xwrap << "," << d.ywrap << "," << d.next_lineage << "," << d.reference
+    os << d.x << "," << d.y << "," << d.xwrap << "," << d.ywrap << "," << d.next_lineage << "," << d.reference
        << "," << d.list_position << "," << d.nwrap << ",";
     os << d.min_max << "\n";
     return os;
@@ -149,7 +150,7 @@ istream &operator>>(istream &is, DataPoint &d)
     //os << m.num_rows<<" , "<<m.num_cols<<" , "<<endl;
     char delim;
     //os << "datapoint" << endl;
-    is >> d.xpos >> delim >> d.ypos >> delim >> d.xwrap >> delim >> d.ywrap >> delim >> d.next_lineage >> delim
+    is >> d.x >> delim >> d.y >> delim >> d.xwrap >> delim >> d.ywrap >> delim >> d.next_lineage >> delim
        >> d.reference >> delim >> d.list_position >> delim >> d.nwrap >> delim;
     is >> d.min_max;
     return is;
@@ -158,7 +159,7 @@ istream &operator>>(istream &is, DataPoint &d)
 #ifdef DEBUG
 void DataPoint::logActive(const int &level)
 {
-    writeLog(50, "x, y, (x wrap, y wrap): " + to_string(xpos) + ", " + to_string(ypos) + ", (" +
+    writeLog(50, "x, y, (x wrap, y wrap): " + to_string(x) + ", " + to_string(y) + ", (" +
                  to_string(xwrap) + ", " + to_string(ywrap) + ")");
     writeLog(50, "Lineage next: " + to_string(next_lineage));
     writeLog(50, "Reference: " + to_string(reference));

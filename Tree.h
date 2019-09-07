@@ -121,6 +121,9 @@ protected:
     bool bIsProtracted;
     // variable for storing the paused sim location if files have been moved during paused/resumed simulations!
     string pause_sim_directory;
+    // Gillespie variables
+    // The number of individuals left at the point we should switch to using the gillespie algorithm.
+    unsigned long gillespie_threshold;
 public:
     Tree() : data(make_shared<vector<TreeNode>>()), enddata(0), sim_parameters(make_shared<SimParameters>()),
              NR(make_shared<RNGController>()), speciation_rates(), seeded(false),
@@ -252,6 +255,7 @@ public:
     */
     virtual long long getJobType();
 
+
     /**
      * @brief Sets the simulation seed for the random number generator.
      *
@@ -262,6 +266,12 @@ public:
      * @param seed_in the desired seed to set for the simulation
      */
     void setSeed(long long seed_in);
+
+    /**
+     * @brief Gets the generation timer for the simulation
+     * @return the number of generations that have passed
+     */
+    double getGeneration() const;
 
     /**
      * @brief Gets the initial number of individuals
@@ -331,6 +341,12 @@ public:
      */
     virtual unsigned long fillObjects(const unsigned long &initial_count);
 
+
+    /**
+     * @brief Runs a single loop of the simulation.
+     */
+    void runSingleLoop();
+
     /**
      * @brief Run the entire simulation given the start conditions already defined by setup()
      *
@@ -338,7 +354,15 @@ public:
      * simulation.
      * At the end of the simulation, returns true if the simulation is complete, false otherwise.
      */
-    virtual bool runSimulation();
+    bool runSimulation();
+
+    bool runSimulationNoGillespie();
+
+    /**
+     * @brief Runs the entire simulation using the gillespie algorithm.
+     * @return
+     */
+    bool runSimulationGillespie();
 
     /**
      * @brief Writes to the console that the simulation is beginning

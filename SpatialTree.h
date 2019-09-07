@@ -150,7 +150,7 @@ public:
     // Imports the maps using the variables stored in the class. This function must be run after the set_mapvars() in
     // order to function correctly.
     /**
-     * @brief Imports the maps into the forestmap object.
+     * @brief Imports the maps into the landscape.
      *
      * The simulation variables should have already been imported by setParameters(), otherwise a Fatal_Exception will be
      * thrown.
@@ -207,6 +207,7 @@ public:
     unsigned long getIndividualsSampled(const long &x, const long &y,
                                         const long &x_wrap, const long &y_wrap, const double &current_gen);
 
+    unsigned long getNumberIndividualsAtLocation(const MapLocation &location);
     /**
      * @brief Removes the old position within active by checking any wrapping and removing connections.
      *
@@ -239,23 +240,14 @@ public:
      *
      * This involves correct handling of checking wrapped lineages (outside the original grid). The probability of
      * coalescence is also calculated.
-     *
-     * @param coal boolean for whether coalescence occured or not
-     * @param chosen the chosen lineage
-     * @param coalchosen the lineaged that is coalescing (if required)
-     * @param  oldx the old x position
-     * @param oldy the old y position
-     * @param oldxwrap the old x wrapping
-     * @param oldywrap the old y wrapping
-     *
      */
-    void calcNewPos(bool &coal,
-                    const unsigned long &chosen,
-                    unsigned long &coalchosen,
-                    const long &oldx,
-                    const long &oldy,
-                    const long &oldxwrap,
-                    const long &oldywrap);
+    void calcNewPos();
+
+    /**
+     * @brief Calculates the coalescence event when the target cell is wrapped.
+     * @param nwrap the number of wrapped lineages
+     */
+    void calcWrappedCoalescence(const unsigned long &nwrap);
 
     /**
      * @brief Switches the chosen position with the endactive position.

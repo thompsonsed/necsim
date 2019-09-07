@@ -454,7 +454,7 @@ public:
      * @param xwrap the x wrapping of the sample mask.
      * @return the x location on the fine map
      */
-    unsigned long convertSampleXToFineX(const unsigned long &x, const long &xwrap);
+    unsigned long convertSampleXToFineX(const unsigned long &x, const long &xwrap) const;
 
     /**
      * @brief Gets the y position on the fine map, given a y and y wrapping.
@@ -465,7 +465,7 @@ public:
      * @param ywrap the y wrapping of the sample mask.
      * @return the y location on the fine map
      */
-    unsigned long convertSampleYToFineY(const unsigned long &y, const long &ywrap);
+    unsigned long convertSampleYToFineY(const unsigned long &y, const long &ywrap) const;
 
     /**
      * @brief Converts the fine map coordinates to the sample grid coordinates.

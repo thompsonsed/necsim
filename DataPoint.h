@@ -16,6 +16,7 @@
 
 #include <iostream>
 #include "Logging.h"
+#include "Step.h"
 
 using namespace std;
 
@@ -23,18 +24,10 @@ using namespace std;
  * @brief A data object used in coalescence simulations for calculating the output.
  * Data from this object is outputted to an SQLite database after simulations are complete.
  */
-class DataPoint
+class DataPoint : virtual public MapLocation
 {
 
 private:
-    // x position
-    unsigned long xpos;
-    // y position
-    unsigned long ypos;
-    // number of wraps of x around the torus
-    long xwrap;
-    // number of wraps of y around the torus
-    long ywrap;
     // the next individual in the loop of those that have the same xypos
     unsigned long next_lineage;
     // points to the position in output of this lineage
@@ -50,7 +43,7 @@ public:
     /**
      * @brief Standard constructor
      */
-    DataPoint() : xpos(0), ypos(0), xwrap(0), ywrap(0), next_lineage(0), reference(0), list_position(0), nwrap(0),
+    DataPoint() : next_lineage(0), reference(0), list_position(0), nwrap(0),
                   min_max(0)
     {
 
@@ -87,7 +80,7 @@ public:
      * @brief Copy constructor from another Datapoint object.
      * @param datin a Datapoint object to copy the data from.
      */
-    void setup(DataPoint datin);
+    void setup(const DataPoint &datin);
 
     /**
      * @brief Sets the mpos (the position within the Row of TreeNode objects.).
@@ -125,56 +118,56 @@ public:
      * @brief Get the x position.
      * @return the xpos.
      */
-    unsigned long getXpos();
+    unsigned long getXpos() const;
 
     /**
      * @brief Get the y position.
      * @return the ypos.
      */
-    unsigned long getYpos();
+    unsigned long getYpos() const;
 
     /**
      * @brief Get the x wrapping.
      * @return the xwrap.
      */
-    long getXwrap();
+    long getXwrap() const;
 
     /**
      * @brief Get the y wrapping.
      * @return the ywrap.
      */
-    long getYwrap();
+    long getYwrap() const;
 
     /**
      * @brief Get the reference position variable.
      * @return the mpos.
      */
-    unsigned long getReference();
+    unsigned long getReference() const;
 
     /**
      * @brief Gets the next element linked to this DataPoint
      * @return the reference of the next individual in the linked list
      */
-    unsigned long getNext();
+    unsigned long getNext() const;
 
     /**
      * @brief Gets the list position with the SpeciesList object at the relevant x,y position.
      * @return the listpos.
      */
-    unsigned long getListpos();
+    unsigned long getListpos() const;
 
     /**
      * @brief Get the position in the linked list from the SpeciesList object.
      * If this is 0, indicates the lineage lies on the original grid, and xwrap and ywrap should be 0.
      * @return the nwrap.
      */
-    unsigned long getNwrap();
+    unsigned long getNwrap() const;
 
     /**
      * @brief Get the maximum minimum speciation rate required for speciation to have occured on this branch.
      * @return the minmax.
      */
-    double getMinmax();
+    double getMinmax() const;
 
     /**
      * @brief Decreases the nwrap by 1 (to a minimum of 0).
@@ -183,12 +176,10 @@ public:
 
     /**
      * @brief Sets the position in space.
-     * @param x the x position.
-     * @param y the y position.
-     * @param xwrapin the number of wraps in the x direction.
-     * @param ywrapin the number of wraps in the y direction.
+     * @param location the location of the new end point
      */
-    void setEndpoint(long x, long y, long xwrapin, long ywrapin);
+    template<class T>
+    void setEndpoint(const T &location);
 
     /**
      * @brief An operator for piping the variables of the Datapoint object to the output stream.

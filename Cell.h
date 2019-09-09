@@ -20,6 +20,10 @@ struct Cell
     long x;
     long y;
 
+    Cell(long x, long y): x(x), y(y)
+    {
+
+    }
     /**
      * @brief Overloading equality operator
      * @param c the Cell containing the values to overload

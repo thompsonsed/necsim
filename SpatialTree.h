@@ -208,6 +208,7 @@ public:
                                         const long &x_wrap, const long &y_wrap, const double &current_gen);
 
     unsigned long getNumberIndividualsAtLocation(const MapLocation &location);
+
     /**
      * @brief Removes the old position within active by checking any wrapping and removing connections.
      *
@@ -288,6 +289,11 @@ public:
      * @brief Updates the coalescence variables in the step object.
      */
     void updateStepCoalescenceVariables() override;
+
+    /**
+     * @brief Zeroes out the coalescence information and stores the origin location.
+     */
+    void recordLineagePosition();
 
     /**
      * @brief Expands the map, generating the new lineages where necessary.

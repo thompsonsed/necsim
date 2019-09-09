@@ -12,8 +12,9 @@ struct MapLocation
     long xwrap;
     long ywrap;
 
-    MapLocation():x(0), y(0), xwrap(0), ywrap(0)
-    {}
+    MapLocation() : x(0), y(0), xwrap(0), ywrap(0){}
+
+    MapLocation(long x, long y, long xwrap, long ywrap) : x(x), y(y), xwrap(xwrap), ywrap(ywrap){}
 
     /**
      * @brief Checks if the location is directly on the grid without wrapping (i.e. xwrap and ywrap are 0).

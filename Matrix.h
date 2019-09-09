@@ -122,6 +122,14 @@ public:
     }
 
     /**
+     * @brief Fills the matrix with the given value
+     * @param val the value to fill
+     */
+    void fill(T val)
+    {
+        std::fill(matrix.begin(), matrix.end(), val);
+    }
+    /**
      * @brief Gets the index of a particular row and column in the matrix.
      * @param row the row number to index
      * @param col the column number to index

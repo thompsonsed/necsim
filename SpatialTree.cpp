@@ -1085,20 +1085,25 @@ void SpatialTree::debugDispersal()
 
 void SpatialTree::updateStepCoalescenceVariables()
 {
-    Tree::updateStepCoalescenceVariables();
     while(!death_map->actionOccurs(active[this_step.chosen].getXpos(), active[this_step.chosen].getYpos(),
                                    active[this_step.chosen].getXwrap(), active[this_step.chosen].getYwrap()))
     {
         this_step.chosen = NR->i0(endactive - 1) + 1;  // cannot be 0
     }
+    recordLineagePosition();
+#ifdef historical_mode
+    historicalStepChecks();
+#endif
+}
+
+void SpatialTree::recordLineagePosition()
+{
+    Tree::updateStepCoalescenceVariables();
     // record old position of lineage
     this_step.x = active[this_step.chosen].getXpos();
     this_step.oldy = active[this_step.chosen].getYpos();
     this_step.xwrap = active[this_step.chosen].getXwrap();
     this_step.oldywrap = active[this_step.chosen].getYwrap();
-#ifdef historical_mode
-    historicalStepChecks();
-#endif
 }
 
 void SpatialTree::addLineages(double generation_in)

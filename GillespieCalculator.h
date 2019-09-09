@@ -5,88 +5,171 @@
 #ifndef NECSIM_GILLESPIECALCULATOR_H
 #define NECSIM_GILLESPIECALCULATOR_H
 
+#include <map>
+#include <algorithm>
+
+#include "heap.hpp"
+
 #include "ActivityMap.h"
 #include "Cell.h"
 #include "DispersalCoordinator.h"
 #include "RNGController.h"
 #include "DataPoint.h"
 #include "SpatialTree.h"
-#include <map>
 
 /**
  * @brief Container for the different event types that can occur during the Gillespie Algorithm.
  */
-enum EventType {undefined, cell_event, map_update, sample_time};
+enum class EventType
+{
+    undefined, cell_event, map_update, sample_time
+};
 
-class GillespieProbabilities
+enum class CellEventType
+{
+    dispersal_event, coalescence_event, speciation_event
+};
+
+class GillespieProbability
 {
 protected:
-    long double dispersal_probability;
-    long double coalescence_probability;
-    long double speciation_probability;
+    double dispersal_outside_cell_probability;
+    double coalescence_probability;
+    double speciation_probability;
     double cell_turnover_probability;
-    long double random_number;
-    MapLocation location;
-    double time_to_event;
+    double random_number;
     EventType event_type;
-
+    MapLocation location;
+    unsigned long *pos;
 
 public:
 
-    GillespieProbabilities(MapLocation c) : dispersal_probability(0.0), coalescence_probability(0.0),
-                                            speciation_probability(0.0),
-                                            random_number(0.0), location(c), time_to_event(0.0), event_type(undefined)
+    GillespieProbability(MapLocation c, unsigned long *pos) : dispersal_outside_cell_probability(0.0),
+                                                              coalescence_probability(0.0),
+                                                              speciation_probability(0.0),
+                                                              random_number(0.0), location(c), time_to_event(0.0),
+                                                              event_type(undefined), pos(pos)
     {
-
 
     }
 
-    void setDispersalProbability(const long double &d)
+    void setDispersalOutsideCellProbability(const double &d)
     {
-        this->dispersal_probability = d;
+        this->dispersal_outside_cell_probability = d;
     }
 
-    void setCoalescenceProbability(const long double &c)
+    void setCoalescenceProbability(const double &c)
     {
         this->coalescence_probability = c;
     }
 
-    void setSpeciationProbability(const long double &s)
+    void setSpeciationProbability(const double &s)
     {
         this->speciation_probability = speciation_probability;
     }
 
-    void setRandomNumber(const long double &r)
+    void setRandomNumber(const double &r)
     {
         random_number = r;
     }
 
-    double getTotalProbability() const
+    double getInCellProbability() const
     {
-        return cell_turnover_probability * (dispersal_probability + coalescence_probability + speciation_probability);
+        return speciation_probability + (1 - speciation_probability) *
+                                        ((1 - dispersal_outside_cell_probability) * coalescence_probability +
+                                         dispersal_outside_cell_probability);
     }
 
-    void setEvent(double t, EventType event)
+    EventType &getEventType() const
     {
-        time_to_event = t;
+        return event_type;
+    }
+
+    CellEventType &generateRandomEvent(shared_ptr<RNGCoordinator> rng) const
+    {
+        double p = rng.d01() * getInCellProbability();
+        if(p < speciation_probability)
+        {
+            return speciation_event;
+        }
+        else
+        {
+            if(p < speciation_probability + (1 - speciation_probability) * dispersal_probability)
+            {
+                return dispersal_event;
+            }
+            else
+            {
+                return coalescence_event;
+            }
+        }
+    }
+
+    MapLocation &getMapLocation() const
+    {
+        return location;
+    }
+
+    /**
+     * @brief Gets the parameter for the exponential function
+     *
+     * The rate is per birth-death event on the whole landscape.
+     *
+     * @param mean_death_rate
+     * @param n
+     * @param total_n
+     * @return lambda
+     */
+    double getLambda(const double &mean_death_rate, const unsigned long &n, const unsigned long &total_n) const
+    {
+        return getInCellProbability() * mean_death_rate * double(n) / double(total_n);
+    }
+
+    void setEvent(EventType event)
+    {
         event_type = event;
     }
 
-    void calclTimeToNextEvent()
+    double calcTimeToNextEvent(const double &mean_death_rate, const unsigned long &n, const unsigned long &total_n)
     {
-        setEvent(RNGController::exponentialDistribution(getTotalProbability(), random_number), cell_event);
+        return RNGController::exponentialDistribution(getLambda(mean_death_rate, n, total_n), random_number);
     }
 
-    double getTimeToNextEvent()
-    {
-        return time_to_event;
-    }
-
-    bool operator < (const GillespieProbabilities & gp) const
+    /*bool operator<(const GillespieProbability &gp) const
     {
         return (time_to_event < gp.time_to_event);
-    }
+    }*/
 };
+
+class GillespieHeapNode
+{
+public:
+    Cell cell;
+    double timeOfEvent;
+    // Pointer to index in heap
+    unsigned long *pos;
+
+    GillespieHeapNode(Cell cell, double timeOfEvent, unsigned long *pos)
+            : cell(cell), timeOfEvent(timeOfEvent), pos(pos){}
+
+    GillespieHeapNode() : GillespieHeapNode(Cell(), 0.0, nullptr){}
+};
+
+bool operator<(const GillespieHeapNode &n1, const GillespieHeapNode &n2)
+{
+    return n1.timeOfEvent > n2.timeOfEvent;
+}
+
+namespace std
+{
+    template<>
+    void swap<GillespieHeapNode>(GillespieHeapNode &lhs, GillespieHeapNode &rhs)
+    {
+        std::swap(lhs.cell, rhs.cell);
+        std::swap(lhs.timeOfEvent, rhs.timeOfEvent);
+        std::swap(*lhs.pos, *rhs.pos);
+    }
+}
 
 class GillespieCalculator : public SpatialTree
 {
@@ -107,14 +190,19 @@ protected:
 
     // The active lineages in the simulation
     shared_ptr<vector<DataPoint>> active;
-    // Store the list of all locations which contain individuals and the respective probabilities.
-    set<MapLocation> locations;
-    vector<GillespieProbabilities> probabilities;
 
+    Matrix<GillespieProbability> probabilities;
+    vector<GillespieHeapNode> heap;
+    // Index to heap position, or UNUSED if cell is not used.
+    Matrix<unsigned long> cellToHeapPositions;
+
+    unsigned long global_individuals;
+    double mean_death_rate;
+
+    static const unsigned long UNUSED = static_cast<long>(-1);
 
 public:
-    GillespieCalculator() : locations(), probabilities()
-    { }
+    GillespieCalculator() : locations(), probabilities(){}
 
     /**
      * @brief
@@ -128,7 +216,170 @@ public:
         }
         while(endactive > 1);
 
+    }
 
+    void runGillespieLoop()
+    {
+        GillespieProbability &origin = probabilities[heap.front().gillespieProbabilityIndex];
+
+        // Decide what event and execute
+        EventType next_event = origin.getEventType();
+        switch(next_event)
+        {
+            case cell_event:
+                gillespieCellEvent(origin);
+                break;
+
+            case map_event:
+                gillespieUpdateMap();
+
+//                if(landscape->updateMap(generation))
+//                {
+//                    dispersal_coordinator.updateDispersalMap();
+//                }
+                break;
+
+            case sample_event:
+                gillespieSampleIndividuals();
+                break;
+
+            case undefined:
+                throw FatalException("Undefined event in Gillespie algorithm. Please report this bug.");
+        }
+
+    }
+
+    void gillespieCellEvent(GillespieProbability &origin)
+    {
+        CellEventType cell_event = origin.generateRandomEvent(NR);
+        switch(cell_event)
+        {
+            case coalescence_event:
+                // implement coalescence
+                gillespieCoalescenceEvent(origin);
+                break;
+
+            case dispersal_event:
+                // choose dispersal
+                gillespieDispersalEvent();
+                break;
+
+            case speciation_event:
+                break;
+        }
+
+    }
+
+    void gillespieUpdateMap()
+    {
+
+    }
+
+    void gillespieSampleIndividuals()
+    {
+
+    }
+
+    void gillespieCoalescenceEvent(GillespieProbability &origin)
+    {
+
+    }
+
+    void gillespieDispersalEvent(GillespieProbability &origin)
+    {
+        // Select a lineage in the target cell.
+        unsigned long chosen = selectLineage(origin);
+        // Sets the old location for the lineage and zeros out the coalescence stuff
+        recordLineagePosition();
+        // Remove the chosen lineage from the cell
+        removeOldPosition(chosen);
+        // Performs the move and calculates any coalescence events
+        calcNextStep();
+        checkOriginCellInhabited();
+        // Get the destination cell and update the probabilities.
+        unsigned long x = active[chosen].getXpos();
+        unsigned long y = active[chosen].getYpos();
+        Cell destination_cell(x, y);
+        unsigned long n = getNumberIndividualsAtLocation(origin.getMapLocation());
+        if(n > 0)
+        {
+            origin.setCoalescenceProbability(calculateCoalescenceProbability(origin.getMapLocation()));
+            origin.setRandomNumber(NR.d01());
+            heap.front().timeOfEvent = origin.calcTimeToNextEvent(mean_death_rate, n, global_individuals);
+            updateInhabitedCellOnHeap(destination_cell);
+        }
+        else
+        {
+            std::pop_heap(heap.begin(), heap.end());
+            heap.pop_back();
+            cellToHeapPositions.get(y, x) = GillespieCalculator::UNUSED;
+        }
+
+        GillespieProbability &destination = probabilities.get(y, x);
+        if(cellToHeapPositions.get(y, x) == GillespieCalculator::UNUSED)
+        {
+            addNewEvent(x, y);
+        }
+        else if(!this_step.coal)
+        {
+            // Needs to update destination
+            destination.setCoalescenceProbability(calculateCoalescenceProbability(destination.getMapLocation()));
+            // TODO check if the new random number definitely doesn't need to be generated
+            heap[cellToHeapPositions.get(y, x)].timeOfEvent =
+                    destination.calcTimeToNextEvent(mean_death_rate,
+                                                    getNumberIndividualsAtLocation(
+                                                            destination.getMapLocation()),
+                                                    global_individuals);
+            updateInhabitedCellOnHeap(destination_cell);
+        }
+
+    }
+
+    void updateHeapOrigin(GillespieProbability &origin)
+    {
+        // If cell is still inhabited
+        {
+            Cell pos = convertMapLocationToXY(origin.getMapLocation());
+
+            // Update probability and times of origin
+            updateInhabitedCellOnHeap(pos);
+
+        }
+        // Else
+        {
+            std::pop_heap(heap.begin(), heap.end());
+            heap.pop_back();
+        }
+    }
+
+    void updateHeapDestination(GillespieProbability &destination)
+    {
+        // If dispersal to other cell
+
+        Cell pos = convertMapLocationToXY(destination.getMapLocation());
+
+        // If cell is already inhabited
+        {
+            // Update probability and times of destination
+            updateInhabitedCellOnHeap(pos);
+        }
+        // Else
+        {
+            heap.emplace_back(GillespieHeapNode(pos,
+                                                destination.calcTimeToNextEvent(mean_death_rate,
+                                                                                getNumberIndividualsAtLocation(
+                                                                                        destination.getMapLocation()),
+                                                                                global_individuals) +
+                                                generation),
+                              &cellToHeapPositions.get(pos.y, pos.x));
+            std::push_heap(heap.begin(), heap.end());
+        }
+    }
+
+    void updateInhabitedCellOnHeap(const Cell &pos)
+    {
+        std::update_heap(heap.begin(), heap.end(),
+                         heap.begin() + cellToHeapPositions.get(pos.y, pos.x));
     }
 
     /**
@@ -137,6 +388,7 @@ public:
     void setupGillespie()
     {
         findLocations();
+        updateAllProbabilities();
         createEventList();
         // TODO add making dispersal map cumulative without the self-dispersal events
     }
@@ -150,11 +402,9 @@ public:
     {
         Cell cell{};
         cell.x = landscape->convertSampleXToFineX(location.x, location.xwrap);
-        cell.y = landscape->convertSampleYToFineY(location.y, location.ywrap));
+        cell.y = landscape->convertSampleYToFineY(location.y, location.ywrap);
         return cell;
     }
-
-
 
     /**
      * @brief Finds the locations that lineages are at and adds them to the list of locations.
@@ -163,15 +413,36 @@ public:
      */
     void findLocations()
     {
-        for(const auto &item: *active)
+        for(unsigned long y = 0; y < sim_parameters->fine_map_y_size; y++)
         {
-            MapLocation location = static_cast<MapLocation>(item);
-            if(!locations.count(location))
+            for(unsigned long x = 0; x < sim_parameters->fine_map_x_size; x++)
             {
+                long x_pos = x;
+                long y_pos = y;
+                long x_wrap = 0;
+                long y_wrap = 0;
+                landscape->convertFineToSample(x_pos, x_wrap, y_pos, y_wrap);
+                MapLocation location(x_pos, y_pos, x_wrap, y_wrap);
                 addLocation(location);
             }
         }
 
+    }
+
+    void updateAllProbabilities()
+    {
+        // calculate global death rate mean
+        calculateGlobalDeathRate();
+        // calculate total number of individuals
+        calculateGlobalIndividuals();
+    }
+
+    Cell convertMapLocationToXY(const MapLocation &location)
+    {
+        unsigned long x = landscape->convertSampleXToFineX(location.x, location.xwrap);
+        unsigned long y = landscape->convertSampleXToFineX(location.y, location.ywrap);
+
+        return Cell(x, y);
     }
 
     /**
@@ -179,13 +450,36 @@ public:
      */
     void createEventList()
     {
-        for(auto &item: probabilities)
+        cellToHeapPositions.setSize(sim_parameters->fine_map_y_size, sim_parameters->fine_map_x_size);
+        cellToHeapPositions.fill(GillespieCalculator::UNUSED);
+
+        for(unsigned long y = 0; y < sim_parameters->fine_map_y_size; y++)
         {
-            item.calclTimeToNextEvent();
+            for(unsigned long x = 0; x < sim_parameters->fine_map_x_size; x++)
+            {
+                addNewEvent(x, y);
+            }
         }
-        // TODO add in events for updating the map files, extra sampling processes, or changes to the protracted
-        //  speciation process (maybe we just don't support protracted speciation for now?)
-        sort(probabilities.begin(), probabilities.end());
+
+        std::make_heap(heap.begin(), heap.end());
+    }
+
+    void addNewEvent(unsigned long x, unsigned long y)
+    {
+        local_individuals = getNumberIndividualsAtLocation(
+                probabilities.get(y, x).getMapLocation());
+        if(local_individuals > 0)
+        {
+            cellToHeapPositions.get(y, x) = heap.size();
+            heap.emplace_back(
+                    GillespieHeapNode(Cell(x, y),
+                                      probabilities.get(y, x).calcTimeToNextEvent(
+                                              mean_death_rate,
+                                              local_individuals,
+                                              global_individuals) +
+                                      generation),
+                    &cellToHeapPositions.get(y, x));
+        }
     }
 
     /**
@@ -198,14 +492,15 @@ public:
     {
         Cell cell = getCellOfMapLocation(location);
 
-        probabilities.emplace_back(GillespieProbabilities(location));
-        GillespieProbabilities gp = *probabilities.rbegin();
-        gp.setDispersalProbability(1.0-dispersal_coordinator->getSelfDispersalProbability(cell));
+        GillespieProbability gp = GillespieProbability(location);
+        // check if any lineages exist there
+
+        gp.setDispersalProbability(1.0 - dispersal_coordinator->getSelfDispersalProbability(cell));
         gp.setCoalescenceProbability(calculateCoalescenceProbability(location));
         gp.setSpeciationProbability(spec);
         gp.setRandomNumber(NR->d01());
-        locations.insert(location);
 
+        probabilities.get(cell.x, cell.y) = gp;
     }
 
     double calculateCoalescenceProbability(const MapLocation &location)
@@ -216,7 +511,6 @@ public:
         return min(double(current_number) / double(max_number_individuals), 1.0);
 
     }
-
 
 };
 

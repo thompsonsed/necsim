@@ -151,8 +151,6 @@ namespace necsim
         string NextMap;
         // If this is false, there is no coarse map defined, so ignore the boundaries.
         bool has_coarse;
-        // the number of updates to have occured.
-        unsigned int nUpdate{};
 
         // Typedef for single application of the infinite landscape verses bounded landscape.
         typedef unsigned long (Landscape::*fptr)(const double &x, const double &y, const long &xwrap, const long &ywrap,
@@ -191,6 +189,30 @@ namespace necsim
          * @return true if using historical maps
          */
         bool hasHistorical();
+
+        /**
+         * @brief Gets the fine map object
+         * @return reference to the fine map
+         */
+        Map<uint32_t> &getFineMap();
+
+        /**
+         * @brief Gets the coarse map object
+         * @return reference to the coarse map
+         */
+        Map<uint32_t> &getCoarseMap();
+
+        /**
+         * @brief Gets the fine map object
+         * @return reference to the fine map
+         */
+        const Map<uint32_t> &getFineMap() const;
+
+        /**
+         * @brief Gets the coarse map object
+         * @return reference to the coarse map
+         */
+        const Map<uint32_t> &getCoarseMap() const;
 
         /**
          * @brief Sets the dimensions of the grid, the area where the species are initially sampled from.
@@ -286,6 +308,12 @@ namespace necsim
         bool updateMap(double generation);
 
         /**
+         * @brief Checks if the map will require another update.
+         * @return true if another update will be performed
+         */
+        bool requiresUpdate();
+
+        /**
          * @brief Updates the historical map configuration.
          */
         void doUpdate();
@@ -357,7 +385,7 @@ namespace necsim
          *
          *
          */
-        void setLandscape(string is_infinite);
+        void setLandscape(const string& is_infinite);
 
         /**
          * @brief Gets the value at a particular coordinate from the correct map.
@@ -619,7 +647,7 @@ namespace necsim
                << r.dispersal_relative_cost << "\n";
             os << r.update_time << "\n" << r.habitat_change_rate << "\n" << r.gen_since_historical << "\n"
                << r.current_map_time << "\n" << r.is_historical << "\n";
-            os << r.NextMap << "\n" << r.nUpdate << "\n" << r.landscape_type << "\n" << r.fine_max << "\n"
+            os << r.NextMap << "\n" << r.landscape_type << "\n" << r.fine_max << "\n"
                << r.coarse_max << "\n";
             os << r.historical_fine_max << "\n" << r.historical_coarse_max << "\n" << r.habitat_max << "\n"
                << r.has_coarse << "\n" << r.has_historical << "\n";
@@ -644,7 +672,6 @@ namespace necsim
             is >> r.update_time >> r.habitat_change_rate >> r.gen_since_historical >> r.current_map_time
                >> r.is_historical;
             getline(is, r.NextMap);
-            is >> r.nUpdate;
             is >> r.landscape_type;
             is >> r.fine_max >> r.coarse_max;
             is >> r.historical_fine_max >> r.historical_coarse_max;

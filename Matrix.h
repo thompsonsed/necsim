@@ -196,6 +196,75 @@ namespace necsim
         }
 
         /**
+         * @brief Returns iterators for range-based for loops.
+         * @return iterator to the start of the vector
+         */
+        typename  vector<T>::iterator begin()
+        {
+            return matrix.begin();
+        }
+
+        /**
+         * @brief Returns end iterators for range-based for loops.
+         * @return iterator to the end of the vector
+         */
+        typename vector<T>::iterator end()
+        {
+            return matrix.end();
+        }
+
+        /**
+         * @brief Returns iterators for range-based for loops.
+         * @return iterator to the start of the vector
+         */
+        typename  vector<T>::const_iterator begin() const
+        {
+            return matrix.begin();
+        }
+
+        /**
+         * @brief Returns end iterators for range-based for loops.
+         * @return iterator to the end of the vector
+         */
+        typename vector<T>::const_iterator end() const
+        {
+            return matrix.end();
+        }
+
+
+        /**
+         * @brief Gets the arithmetic mean of the Matrix
+         * @return the mean value in the matrix
+         */
+        double getMean() const
+        {
+            if(matrix.empty())
+            {
+                return 0.0;
+            }
+            T total = sum();
+            return double(total)/matrix.size();
+
+        }
+
+        T sum() const
+        {
+            if(matrix.empty())
+            {
+                return T();
+            }
+            else
+            {
+                T total = 0;
+                for(const auto &item : matrix)
+                {
+                    total += item;
+                }
+                return total;
+            }
+        }
+
+        /**
          * @brief Overloading the = operator.
          * @param m the matrix to copy from.
          */

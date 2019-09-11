@@ -37,6 +37,8 @@
 #include "custom_exceptions.h"
 #include "Step.h"
 #include "SQLiteHandler.h"
+
+using namespace random_numbers;
 namespace necsim
 {
     /**
@@ -346,21 +348,21 @@ namespace necsim
         void runSingleLoop();
 
         /**
-         * @brief Run the entire simulation given the start conditions already defined by setup()
+         * @brief Run the entire simulation given the start conditions already defined by setup().
          *
          * Setup is assumed to have been run already. This function is the main function containing the main loop of the
          * simulation.
          * At the end of the simulation, returns true if the simulation is complete, false otherwise.
+         * @return true if the simulation has completed
          */
         bool runSimulation();
 
+        /**
+         * @brief Runs the simulation using the standard coalescence algorithm.
+         * @return true if the simulation has completed
+         */
         bool runSimulationNoGillespie();
 
-        /**
-         * @brief Runs the entire simulation using the gillespie algorithm.
-         * @return
-         */
-        bool runSimulationGillespie();
 
         /**
          * @brief Writes to the console that the simulation is beginning

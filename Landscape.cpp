@@ -1,3 +1,5 @@
+#include <utility>
+
 // This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details
 /**
@@ -12,6 +14,7 @@
 #include <cmath>
 #include "Landscape.h"
 #include "file_system.h"
+
 namespace necsim
 {
     uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned long map_x, unsigned long map_y,
@@ -97,13 +100,12 @@ namespace necsim
                 throw FatalException("SimParameters pointer is nullptr. Please report this bug.");
             }
 #endif // DEBUG
-            mapvars = mapvarsin;
-            mapvars->setHistorical(0);
+            mapvars = std::move(mapvarsin);
+            mapvars->setInitialHistoricalParameters();
             deme = mapvars->deme;
             x_dim = mapvars->grid_x_size;
             y_dim = mapvars->grid_y_size;
             scale = mapvars->coarse_map_scale;
-            nUpdate = 0;
             check_set_dim = true;
             update_time = 0;
             updateMap(0);
@@ -196,7 +198,10 @@ namespace necsim
             has_historical = file_input != "none";
             if(has_historical)
             {
-                historical_coarse_max = importToMapAndRound(file_input, historical_coarse_map, map_x_size, map_y_size,
+                historical_coarse_max = importToMapAndRound(file_input,
+                                                            historical_coarse_map,
+                                                            map_x_size,
+                                                            map_y_size,
                                                             deme);
             }
         }
@@ -213,7 +218,7 @@ namespace necsim
     {
         if(mapvars->times_file != "null")
         {
-            mapvars->setHistorical(0);
+            mapvars->setInitialHistoricalParameters();
         }
         if(fine_map.getCols() == 0 || fine_map.getRows() == 0)
         {
@@ -471,7 +476,7 @@ namespace necsim
             if(mapvars->gen_since_historical < generation)
             {
                 // Only update the map if the maps have actually changed
-                if(mapvars->setHistorical(nUpdate + 1))
+                if(mapvars->setHistorical(generation))
                 {
                     stringstream ss;
                     ss << "\nUpdating historical maps at " << generation << "...\n";
@@ -488,9 +493,13 @@ namespace necsim
         return false;
     }
 
+    bool Landscape::requiresUpdate()
+    {
+        return !mapvars->is_historical && has_historical && mapvars->requiresUpdate();
+    }
+
     void Landscape::doUpdate()
     {
-        nUpdate++;
         // historical_fine_map = mapvars->historical_fine_map_file;
         // historical_coarse_map = mapvars->historical_coarse_map_file;
         current_map_time = gen_since_historical;
@@ -511,11 +520,10 @@ namespace necsim
 
     void Landscape::resetHistorical()
     {
-        nUpdate = 0;
         doUpdate();
     }
 
-    void Landscape::setLandscape(string landscape_type)
+    void Landscape::setLandscape(const string& landscape_type)
     {
         infinite_boundaries = true;
         if(landscape_type == "infinite")
@@ -667,10 +675,10 @@ namespace necsim
                                                        (gen_since_historical-current_map_time)) * currentTime));
 #else
                 retval = (unsigned long) floor(fine_map.get(yval, xval) + (habitat_change_rate
-                                                                           * ((static_cast<double>(historical_fine_map.get(
-                                                                                   yval, xval))
-                                                                               - static_cast<double>(fine_map.get(yval,
-                                                                                                                  xval)))
+                                                                           * ((static_cast<double>(historical_fine_map
+                                                                                   .get(yval, xval))
+                                                                               - static_cast<double>(fine_map
+                                                                                       .get(yval, xval)))
                                                                               / (gen_since_historical
                                                                                  - current_map_time)) * currentTime));
 #endif
@@ -770,9 +778,9 @@ namespace necsim
                 xwrap = 0;
                 ywrap = 0;
                 samplemask.recalculateCoordinates(x, y, xwrap, ywrap);
-                toret += (unsigned long) (max(
-                        floor(dSample * (getVal(x, y, xwrap, ywrap, 0)) * samplemask.getExactValue(x, y, xwrap, ywrap)),
-                        0.0));
+                toret += (unsigned long) (max(floor(
+                        dSample * (getVal(x, y, xwrap, ywrap, 0)) * samplemask.getExactValue(x, y, xwrap, ywrap)),
+                                              0.0));
             }
         }
         return toret;
@@ -982,13 +990,17 @@ namespace necsim
             return false;
         }
         // Find the nearest cell
-        double minimum_distance = calculateDistance((double) start_x_reform, (double) start_y_reform,
-                                                    (double) locations[0].first, (double) locations[0].second);
+        double minimum_distance = calculateDistance((double) start_x_reform,
+                                                    (double) start_y_reform,
+                                                    (double) locations[0].first,
+                                                    (double) locations[0].second);
         end_x = (double) locations[0].first;
         end_y = (double) locations[0].second;
         for(const auto &item : locations)
         {
-            double distance = calculateDistance((double) start_x_reform, (double) start_y_reform, (double) item.first,
+            double distance = calculateDistance((double) start_x_reform,
+                                                (double) start_y_reform,
+                                                (double) item.first,
                                                 (double) item.second);
             if(distance < minimum_distance)
             {
@@ -1026,6 +1038,26 @@ namespace necsim
     bool Landscape::hasHistorical()
     {
         return has_historical;
+    }
+
+    Map<uint32_t> &Landscape::getFineMap()
+    {
+        return fine_map;
+    }
+
+    Map<uint32_t> &Landscape::getCoarseMap()
+    {
+        return coarse_map;
+    }
+
+    const Map<uint32_t> &Landscape::getFineMap() const
+    {
+        return fine_map;
+    }
+
+    const Map<uint32_t> &Landscape::getCoarseMap() const
+    {
+        return coarse_map;
     }
 
     void Landscape::recalculateHabitatMax()

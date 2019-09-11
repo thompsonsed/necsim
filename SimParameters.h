@@ -1,3 +1,7 @@
+#include <utility>
+
+#include <utility>
+
 // This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details.
 /**
@@ -15,15 +19,50 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <queue>
+
 #include "ConfigParser.h"
 #include "Logging.h"
 #include "custom_exceptions.h"
 #include "file_system.h"
+#include "double_comparison.h"
 
 using namespace std;
 
 namespace necsim
 {
+
+    struct HistoricalMapParameters
+    {
+        string fine_map_file;
+        string coarse_map_file;
+        double habitat_change_rate;
+        double generation;
+
+        HistoricalMapParameters()
+        {
+            HistoricalMapParameters("", "", 0.0, 0.0);
+        }
+
+        HistoricalMapParameters(string f, string c, const double &h, const double &g) : fine_map_file(std::move(f)),
+                                                                                        coarse_map_file(std::move(c)),
+                                                                                        habitat_change_rate(h),
+                                                                                        generation(g)
+        {
+
+        }
+
+        bool operator<(const HistoricalMapParameters &mp) const
+        {
+            return generation < mp.generation;
+        }
+
+        bool operator>(const HistoricalMapParameters &mp) const
+        {
+            return !(generation < mp.generation);
+        }
+    };
+
     /**
      * @struct SimParameters
      * @brief Stores and imports the variables required by the Map object.
@@ -101,10 +140,13 @@ namespace necsim
         // a map of relative reproduction probabilities.
         string reproduction_file;
 
+        std::queue<HistoricalMapParameters> all_historical_map_parameters;
+        bool has_parsed_historical;
+
         /**
          * @brief Default constructor
          */
-        SimParameters() : times(), configs()
+        SimParameters() : times(), configs(), all_historical_map_parameters(), has_parsed_historical(false)
         {
             fine_map_file = "none";
             coarse_map_file = "none";
@@ -159,8 +201,9 @@ namespace necsim
             sample_y_size = stoul(configs.getSectionOptions("sample_grid", "y", "0"));
             sample_x_offset = stoul(configs.getSectionOptions("sample_grid", "x_off", "0"));
             sample_y_offset = stoul(configs.getSectionOptions("sample_grid", "y_off", "0"));
-            uses_spatial_sampling = static_cast<bool>(stoi(
-                    configs.getSectionOptions("sample_grid", "uses_spatial_sampling", "0")));
+            uses_spatial_sampling = static_cast<bool>(stoi(configs.getSectionOptions("sample_grid",
+                                                                                     "uses_spatial_sampling",
+                                                                                     "0")));
             if(configs.hasSection("grid_map"))
             {
                 grid_x_size = stoul(configs.getSectionOptions("grid_map", "x"));
@@ -225,7 +268,8 @@ namespace necsim
                     times_file = "null";
                 }
             }
-            setHistorical(0);
+            parseHistorical();
+            setInitialHistoricalParameters();
         }
 
         /**
@@ -423,67 +467,140 @@ namespace necsim
         }
 
         /**
-         * @brief Alters the historical parameters to the configuration matching the input number. If no configuration
-         * option exists for this number, is_historical will be set to true.
-         * @param n the historical map number to check.
+         * @brief Updates the historical map parameters to the next item in the deque.
          * @return bool true if we need to re-import the maps (i.e. the historical maps have changed between updates)
          */
-        bool setHistorical(unsigned int n)
+        bool setHistorical(const double &generation)
         {
-            is_historical = true;
-            bool finemapcheck = false;
-            bool coarsemapcheck = false;
-            // Loop over each element in the config file (each line) and check if it is historical fine or historical coarse.
-            for(unsigned long i = 0; i < configs.getSectionOptionsSize(); i++)
+            parseHistorical();
+            bool needs_update = false;
+            while(!all_historical_map_parameters.empty() && generation > all_historical_map_parameters.front().generation)
             {
-                if(configs[i].section.find("historical_fine") == 0)
+                HistoricalMapParameters nextHistoricalMapParameters = all_historical_map_parameters.front();
+                if(nextHistoricalMapParameters.fine_map_file != historical_fine_map_file)
                 {
-                    // Then loop over each element to find the number, and check if it is equal to our input number.
-                    if(stol(configs[i].getOption("number")) == n)
-                    {
-                        is_historical = false;
-                        string tmpmapfile;
-                        tmpmapfile = configs[i].getOption("path");
-                        if(historical_fine_map_file != tmpmapfile)
-                        {
-                            finemapcheck = true;
-                            historical_fine_map_file = tmpmapfile;
-                        }
-                        habitat_change_rate = stod(configs[i].getOption("rate"));
-                        gen_since_historical = stod(configs[i].getOption("time"));
-                    }
+                    needs_update = true;
+                    historical_fine_map_file = nextHistoricalMapParameters.fine_map_file;
                 }
-                else if(configs[i].section.find("historical_coarse") == 0)
+                if(nextHistoricalMapParameters.coarse_map_file != historical_coarse_map_file)
                 {
-                    if(stol(configs[i].getOption("number")) == n)
+                    needs_update = true;
+                    historical_coarse_map_file = nextHistoricalMapParameters.coarse_map_file;
+                }
+                if(needs_update)
+                {
+                    gen_since_historical = nextHistoricalMapParameters.generation;;
+                    habitat_change_rate = nextHistoricalMapParameters.habitat_change_rate;
+                }
+                all_historical_map_parameters.pop();
+            }
+            if(all_historical_map_parameters.empty())
+            {
+                is_historical = true;
+            }
+            return needs_update;
+        }
+
+        /**
+         * @brief Checks if there will be another update to be performed on the map.
+         * @return true if another map update exists
+         */
+        bool requiresUpdate()
+        {
+            return ! all_historical_map_parameters.empty() && !is_historical;
+        }
+
+        /**
+         * @brief Parses the historical map data and creates the queue of historical maps.
+         */
+        void parseHistorical()
+        {
+            if(!has_parsed_historical)
+            {
+                map<unsigned long, HistoricalMapParameters> tmp_map_parameters;
+                for(unsigned long i = 0; i < configs.getSectionOptionsSize(); i++)
+                {
+                    if(configs[i].section.find("historical_fine") == 0)
                     {
-                        string tmpmapfile;
-                        tmpmapfile = configs[i].getOption("path");
-                        is_historical = false;
-                        if(tmpmapfile != historical_coarse_map_file)
+                        // Then loop over each element to find the number, and check if it is equal to our input number.
+                        unsigned long number = stol(configs[i].getOption("number"));
+                        if(tmp_map_parameters.count(number) == 0)
                         {
-                            coarsemapcheck = true;
-                            historical_coarse_map_file = tmpmapfile;
-                            // check matches
-                            if(habitat_change_rate != stod(configs[i].getOption("rate"))
-                               || gen_since_historical != stod(configs[i].getOption("time")))
+                            tmp_map_parameters[number] = HistoricalMapParameters();
+                            HistoricalMapParameters &mapParameters = tmp_map_parameters[number];
+                            mapParameters.fine_map_file = configs[i].getOption("path");
+                            mapParameters.habitat_change_rate = stod(configs[i].getOption("rate"));
+                            mapParameters.generation = stod(configs[i].getOption("time"));
+                        }
+                        else
+                        {
+                            auto r = stod(configs[i].getOption("rate"));
+                            auto g = stod(configs[i].getOption("time"));
+                            HistoricalMapParameters &mapParameters = tmp_map_parameters[number];
+                            if(doubleCompare(mapParameters.habitat_change_rate, r, r * 0.1)
+                               || doubleCompare(mapParameters.generation, g, g * 0.1))
                             {
-                                writeWarning(
-                                        "Forest transform values do not match between fine and coarse maps. Using fine values.");
+                                stringstream ss;
+                                ss << "Rates and times between fine and coarse map for historical map number " << number
+                                   << endl;
+                                throw FatalException(ss.str());
                             }
+                            mapParameters.fine_map_file = configs[i].getOption("path");
+                        }
+                    }
+                    else if(configs[i].section.find("historical_coarse") == 0)
+                    {
+
+                        unsigned long number = stol(configs[i].getOption("number"));
+                        if(tmp_map_parameters.count(number) == 0)
+                        {
+                            tmp_map_parameters[number] = HistoricalMapParameters();
+                            HistoricalMapParameters &mapParameters = tmp_map_parameters[number];
+                            mapParameters.coarse_map_file = configs[i].getOption("path");
+                            mapParameters.habitat_change_rate = stod(configs[i].getOption("rate"));
+                            mapParameters.generation = stod(configs[i].getOption("time"));
+                        }
+                        else
+                        {
+                            auto r = stod(configs[i].getOption("rate"));
+                            auto g = stod(configs[i].getOption("time"));
+                            HistoricalMapParameters &mapParameters = tmp_map_parameters[number];
+                            if(doubleCompare(mapParameters.habitat_change_rate, r, r * 0.1)
+                               || doubleCompare(mapParameters.generation, g, g * 0.1))
+                            {
+                                stringstream ss;
+                                ss << "Rates and times between fine and coarse map for historical map number " << number
+                                   << endl;
+                                throw FatalException(ss.str());
+                            }
+                            mapParameters.coarse_map_file = configs[i].getOption("path");
                         }
                     }
                 }
+                vector<HistoricalMapParameters> tmp_sorted_historical_map_parameters;
+                tmp_sorted_historical_map_parameters.reserve(tmp_map_parameters.size());
+                // Make sure the queue is a sorted vector
+                for(const auto &item:tmp_map_parameters)
+                {
+                    tmp_sorted_historical_map_parameters.push_back(item.second);
+                }
+                sort(tmp_sorted_historical_map_parameters.begin(), tmp_sorted_historical_map_parameters.end());
+                for(const auto &item: tmp_map_parameters)
+                {
+                    all_historical_map_parameters.push(item.second);
+                }
+                has_parsed_historical = true;
             }
-            // if one of the maps has changed, we need to update, so return true.
-            if(finemapcheck != coarsemapcheck)
+        }
+
+        void setInitialHistoricalParameters()
+        {
+            if(!all_historical_map_parameters.empty())
             {
-                return true;
-            }
-            else
-            {
-                // finemapcheck should therefore be the same as coarsemapcheck
-                return finemapcheck;
+                historical_fine_map_file = all_historical_map_parameters.front().fine_map_file;
+                historical_coarse_map_file = all_historical_map_parameters.front().coarse_map_file;
+                habitat_change_rate = all_historical_map_parameters.front().habitat_change_rate;
+                gen_since_historical = all_historical_map_parameters.front().generation;
             }
         }
 

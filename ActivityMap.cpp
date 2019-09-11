@@ -10,8 +10,12 @@
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 
-#include "ActivityMap.h"
 #include <utility>
+#include <numeric>
+
+#include "ActivityMap.h"
+
+
 
 namespace necsim
 {
@@ -115,6 +119,53 @@ namespace necsim
             }
             activity_map /= max_value;
         }
+    }
+
+    double ActivityMap::get(const unsigned long &rows, const unsigned long &cols)
+    {
+        return activity_map.get(rows, cols);
+    }
+
+    double ActivityMap::getMean() const
+    {
+        return std::accumulate(activity_map.begin(), activity_map.end(), 0.0);
+    }
+
+    ActivityMap &ActivityMap::operator=(const ActivityMap &rm)
+    {
+        this->activity_map = rm.activity_map;
+        this->map_file = rm.map_file;
+        this->max_val = rm.max_val;
+        this->null_map = rm.null_map;
+        this->offset_x = rm.offset_x;
+        this->offset_y = rm.offset_y;
+        this->x_dim = rm.x_dim;
+        this->y_dim = rm.y_dim;
+        this->activity_map_checker_fptr = rm.activity_map_checker_fptr;
+        return *this;
+    }
+
+    ostream &operator<<(ostream &os, ActivityMap &r)
+    {
+        os << r.map_file << "\n";
+        os << r.activity_map.getCols() << "\n";
+        os << r.activity_map.getRows() << "\n";
+        os << r.offset_x << "\n";
+        os << r.offset_y << "\n";
+        os << r.x_dim << "\n";
+        os << r.y_dim << "\n";
+        return os;
+    }
+
+    istream &operator>>(istream &is, ActivityMap &r)
+    {
+        is.ignore();
+        getline(is, r.map_file);
+        unsigned long col, row;
+        is >> col >> row;
+        is >> r.offset_x >> r.offset_y >> r.x_dim >> r.y_dim;
+        r.import(r.map_file, col, row, shared_ptr<RNGController>());
+        return is;
     }
 
 

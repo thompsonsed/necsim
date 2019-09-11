@@ -57,6 +57,8 @@ namespace necsim
         using Matrix<T>::getCols;
         using Matrix<T>::getRows;
         using Matrix<T>::get;
+        using Matrix<T>::begin;
+        using Matrix<T>::end;
         using Matrix<T>::operator*;
         using Matrix<T>::operator/;
         using Matrix<T>::operator+;

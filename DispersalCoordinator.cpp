@@ -148,14 +148,14 @@ namespace necsim
                         stringstream ss;
                         Step destination_step;
                         calculateCellCoordinates(destination_step, j + (i * xdim));
-                        ss << "Dispersal from " << origin_step.oldx << ", " << origin_step.oldy << " (";
-                        ss << origin_step.oldxwrap << ", " << origin_step.oldywrap << ") to ";
-                        ss << destination_step.oldx << ", " << destination_step.oldy << " (" << destination_step.xwrap;
-                        ss << ", " << destination_step.oldywrap << ")" << endl;
+                        ss << "Dispersal from " << origin_step.x << ", " << origin_step.y << " (";
+                        ss << origin_step.xwrap << ", " << origin_step.ywrap << ") to ";
+                        ss << destination_step.x << ", " << destination_step.y << " (" << destination_step.xwrap;
+                        ss << ", " << destination_step.ywrap << ")" << endl;
                         ss << "Source row: " << k << " destination row: " << index << endl;
                         ss << "Dispersal map value: " << dispersal_prob_map.get(k, index) << endl;
                         ss << "Origin density: "
-                           << landscape->getVal(origin_step.oldx, origin_step.oldy, origin_step.xwrap,
+                           << landscape->getVal(origin_step.x, origin_step.y, origin_step.xwrap,
                                                 origin_step.ywrap, 0.0) << endl;
                         ss << "Destination density: " << landscape->getValFine(j, i, *generation) << endl;
                         writeError(ss.str());
@@ -260,7 +260,7 @@ namespace necsim
                 assertReferenceMatches(y);
 #endif // DEBUG
                 bool origin_value =
-                        landscape->getVal(origin_step.oldx, origin_step.oldy, origin_step.xwrap, origin_step.ywrap, 0.0)
+                        landscape->getVal(origin_step.x, origin_step.y, origin_step.xwrap, origin_step.ywrap, 0.0)
                         > 0;
                 double dispersal_total = 0.0;
                 for(unsigned long x = 0; x < dispersal_prob_map.getCols(); x++)
@@ -271,7 +271,7 @@ namespace necsim
                     assertReferenceMatches(x);
 #endif // DEBUG
                     bool destination_value =
-                            landscape->getVal(destination_step.oldx, destination_step.oldy, destination_step.xwrap,
+                            landscape->getVal(destination_step.x, destination_step.y, destination_step.xwrap,
                                               destination_step.ywrap, 0.0) > 0;
                     double dispersal_prob;
                     if(x == 0)
@@ -288,18 +288,18 @@ namespace necsim
                         if(!destination_value && origin_value)
                         {
                             stringstream ss;
-                            ss << "Dispersal from " << origin_step.oldx << ", " << origin_step.oldy << " (";
-                            ss << origin_step.oldxwrap << ", " << origin_step.oldywrap << ") to ";
-                            ss << destination_step.oldx << ", " << destination_step.oldy << " ("
+                            ss << "Dispersal from " << origin_step.x << ", " << origin_step.y << " (";
+                            ss << origin_step.xwrap << ", " << origin_step.ywrap << ") to ";
+                            ss << destination_step.x << ", " << destination_step.y << " ("
                                << destination_step.xwrap;
-                            ss << ", " << destination_step.oldywrap << ")" << endl;
+                            ss << ", " << destination_step.ywrap << ")" << endl;
                             ss << "Source row: " << y << " destination row: " << x << endl;
                             ss << "Dispersal map value: " << dispersal_prob << endl;
                             ss << "Origin density: "
-                               << landscape->getVal(origin_step.oldx, origin_step.oldy, origin_step.xwrap,
+                               << landscape->getVal(origin_step.x, origin_step.y, origin_step.xwrap,
                                                     origin_step.ywrap, 0.0) << endl;
                             ss << "Destination density: "
-                               << landscape->getVal(destination_step.oldx, destination_step.oldy,
+                               << landscape->getVal(destination_step.x, destination_step.y,
                                                     destination_step.xwrap, destination_step.ywrap, 0.0) << endl;
                             writeError(ss.str());
                             throw FatalException("Dispersal map is non zero where density is 0.");
@@ -314,8 +314,8 @@ namespace necsim
                 if(dispersal_total == 0.0 && origin_value)
                 {
                     stringstream ss;
-                    ss << "No dispersal probabilities from cell at " << origin_step.oldx << ", " << origin_step.oldy;
-                    ss << " (" << origin_step.oldxwrap << ", " << origin_step.oldywrap;
+                    ss << "No dispersal probabilities from cell at " << origin_step.x << ", " << origin_step.y;
+                    ss << " (" << origin_step.xwrap << ", " << origin_step.ywrap;
                     ss << ") to any other cell, despite non-zero density." << endl;
                     throw FatalException(ss.str());
                 }
@@ -330,6 +330,7 @@ namespace necsim
             dispersal_prob_map = raw_dispersal_prob_map;
             addDensity();
             addReproduction();
+            fixDispersal();
         }
     }
 
@@ -409,11 +410,11 @@ namespace necsim
     void DispersalCoordinator::calculateCellCoordinates(Step &this_step, const unsigned long &col_ref)
     {
         this_step.x = long(floor(fmod(double(col_ref), xdim)));
-        this_step.oldy = long(floor(double(col_ref) / xdim));
+        this_step.y = long(floor(double(col_ref) / xdim));
         this_step.xwrap = 0;
-        this_step.oldywrap = 0;
+        this_step.ywrap = 0;
         // Convert back to sample map
-        landscape->convertFineToSample(this_step.x, this_step.xwrap, this_step.oldy, this_step.ywrap);
+        landscape->convertFineToSample(this_step.x, this_step.xwrap, this_step.y, this_step.ywrap);
 
     }
 
@@ -421,7 +422,7 @@ namespace necsim
     {
         Cell cell;
         cell.x = landscape->convertSampleXToFineX(this_step.x, this_step.xwrap);
-        cell.y = landscape->convertSampleYToFineY(this_step.oldy, this_step.ywrap);
+        cell.y = landscape->convertSampleYToFineY(this_step.y, this_step.ywrap);
         return calculateCellIndex(cell);
     }
 
@@ -437,9 +438,9 @@ namespace necsim
         // Store the starting positions
         long startx, starty, startxwrap, startywrap;
         startx = this_step.x;
-        starty = this_step.oldy;
+        starty = this_step.y;
         startxwrap = this_step.xwrap;
-        startywrap = this_step.oldywrap;
+        startywrap = this_step.ywrap;
         // keep looping until we reach a viable place to move from.
         // Store the density in the end location.
         unsigned long density;
@@ -447,9 +448,9 @@ namespace necsim
         // First check to see if the source cell is non-habitat.
         // If this is the case, then find the nearest neighbouring habitat pixel and only pick dispersal distances
         // greater than or equal to that distance.
-        if(!landscape->getVal(this_step.x, this_step.oldy, this_step.xwrap, this_step.ywrap, *generation))
+        if(!landscape->getVal(this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, *generation))
         {
-            auto min_distance = landscape->distanceToNearestHabitat(this_step.x, this_step.oldy, this_step.xwrap,
+            auto min_distance = landscape->distanceToNearestHabitat(this_step.x, this_step.y, this_step.xwrap,
                                                                     this_step.ywrap, *generation);
 #ifdef DEBUG
             if(!landscape->isOnMap(this_step.x, this_step.y + min_distance, this_step.xwrap,
@@ -481,11 +482,11 @@ namespace necsim
                 }
 #endif // DEBUG
                 angle = NR->direction();
-                density = landscape->runDispersal(dist, angle, this_step.x, this_step.oldy, this_step.xwrap,
+                density = landscape->runDispersal(dist, angle, this_step.x, this_step.y, this_step.xwrap,
                                                   this_step.ywrap, fail, *generation);
                 if(!fail)
                 {
-                    fail = !checkEndPoint(density, this_step.x, this_step.oldy, this_step.xwrap, this_step.ywrap,
+                    fail = !checkEndPoint(density, this_step.x, this_step.y, this_step.xwrap, this_step.ywrap,
                                           startx, starty, startxwrap, startywrap);
                 }
                 // This is a hack for those scenarios where habitat disappears and there is no easy replacement - then
@@ -512,13 +513,13 @@ namespace necsim
             {
                 angle = NR->direction();
                 dist = NR->dispersal();
-                density = landscape->runDispersal(dist, angle, this_step.x, this_step.oldy, this_step.xwrap,
+                density = landscape->runDispersal(dist, angle, this_step.x, this_step.y, this_step.xwrap,
                                                   this_step.ywrap, fail, *generation);
                 // Discard the dispersal event a percentage of the time, based on the maximum value of the habitat map.
                 // This is to correctly mimic less-dense cells having a lower likelihood of being the parent to the cell.
                 if(!fail)
                 {
-                    fail = !checkEndPoint(density, this_step.x, this_step.oldy, this_step.xwrap, this_step.ywrap,
+                    fail = !checkEndPoint(density, this_step.x, this_step.y, this_step.xwrap, this_step.ywrap,
                                           startx, starty, startxwrap, startywrap);
                 }
             }
@@ -542,34 +543,34 @@ namespace necsim
     void DispersalCoordinator::disperseNearestHabitat(Step &this_step)
     {
         double end_x = this_step.x + 0.5;
-        double end_y = this_step.oldy + 0.5;
+        double end_y = this_step.y + 0.5;
         long end_x_wrap = 0;
         long end_y_wrap = 0;
-        landscape->findNearestHabitatCell(this_step.x, this_step.oldy, this_step.xwrap, this_step.ywrap, end_x, end_y,
+        landscape->findNearestHabitatCell(this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, end_x, end_y,
                                           *generation);
         landscape->fixGridCoordinates(end_x, end_y, end_x_wrap, end_y_wrap);
         end_x_wrap += this_step.xwrap;
-        end_y_wrap += this_step.oldywrap;
+        end_y_wrap += this_step.ywrap;
         if(!landscape->checkMap(end_x, end_y, end_x_wrap, end_y_wrap, *generation))
         {
             stringstream ss;
             ss << "Attempted nearest habitat cell is not habitat! Please report this bug." << endl;
             ss << "Nearby habitat cell at " << end_x << ", " << end_y << " (" << end_x_wrap << ", " << end_y_wrap;
             ss << ") does not contain habitat. Initial cell was ";
-            ss << this_step.x << ", " << this_step.oldy << " (" << this_step.xwrap << ", " << this_step.ywrap;
+            ss << this_step.x << ", " << this_step.y << " (" << this_step.xwrap << ", " << this_step.ywrap;
             ss << ". Density of new cell was "
                << landscape->checkMap(end_x, end_y, end_x_wrap, end_y_wrap, *generation);
             double tmpx, tmpy;
-            landscape->findNearestHabitatCell(this_step.x, this_step.oldy, this_step.xwrap, this_step.ywrap, tmpx, tmpy,
+            landscape->findNearestHabitatCell(this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, tmpx, tmpy,
                                               *generation);
             ss << "Coords of nearest habitat :" << tmpx << ", " << tmpy << endl;
             ss << endl;
             throw FatalException(ss.str());
         }
         this_step.x = static_cast<long>(end_x);
-        this_step.oldy = static_cast<long>(end_y);
+        this_step.y = static_cast<long>(end_y);
         this_step.xwrap = end_x_wrap;
-        this_step.oldywrap = end_y_wrap;
+        this_step.ywrap = end_y_wrap;
     }
 
     void DispersalCoordinator::setEndPointFptr(const bool &restrict_self)
@@ -598,54 +599,54 @@ namespace necsim
         }
     }
 
-    bool DispersalCoordinator::checkEndPoint(const unsigned long &density, long &oldx, long &oldy, long &oldxwrap,
-                                             long &oldywrap, const long &startx, const long &starty,
+    bool DispersalCoordinator::checkEndPoint(const unsigned long &density, long &x, long &y, long &xwrap,
+                                             long &ywrap, const long &startx, const long &starty,
                                              const long &startxwrap, const long &startywrap)
     {
-        return (this->*checkEndPointFptr)(density, oldx, oldy, oldxwrap, oldywrap, startx, starty, startxwrap,
+        return (this->*checkEndPointFptr)(density, x, y, xwrap, ywrap, startx, starty, startxwrap,
                                           startywrap);
     }
 
-    bool DispersalCoordinator::checkEndPointDensity(const unsigned long &density, long &oldx, long &oldy,
-                                                    long &oldxwrap, long &oldywrap, const long &startx,
+    bool DispersalCoordinator::checkEndPointDensity(const unsigned long &density, long &x, long &y,
+                                                    long &xwrap, long &ywrap, const long &startx,
                                                     const long &starty, const long &startxwrap, const long &startywrap)
     {
         if((double(density) / double(landscape->getHabitatMax())) < NR->d01())
         {
-            oldx = startx;
-            oldy = starty;
-            oldxwrap = startxwrap;
-            oldywrap = startywrap;
+            x = startx;
+            y = starty;
+            xwrap = startxwrap;
+            ywrap = startywrap;
             return false;
         }
         return true;
     }
 
-    bool DispersalCoordinator::checkEndPointRestricted(const unsigned long &density, long &oldx, long &oldy,
-                                                       long &oldxwrap, long &oldywrap, const long &startx,
+    bool DispersalCoordinator::checkEndPointRestricted(const unsigned long &density, long &x, long &y,
+                                                       long &xwrap, long &ywrap, const long &startx,
                                                        const long &starty, const long &startxwrap,
                                                        const long &startywrap)
     {
-        if(startx == oldx && starty == oldy && startxwrap == oldxwrap && startywrap == oldywrap)
+        if(startx == x && starty == y && startxwrap == xwrap && startywrap == ywrap)
         {
             return false;
         }
-        return checkEndPointDensity(density, oldx, oldy, oldxwrap, oldywrap, startx, starty, startxwrap, startywrap);
+        return checkEndPointDensity(density, x, y, xwrap, ywrap, startx, starty, startxwrap, startywrap);
     }
 
-    bool DispersalCoordinator::checkEndPointDensityReproduction(const unsigned long &density, long &oldx, long &oldy,
-                                                                long &oldxwrap, long &oldywrap, const long &startx,
+    bool DispersalCoordinator::checkEndPointDensityReproduction(const unsigned long &density, long &x, long &y,
+                                                                long &xwrap, long &ywrap, const long &startx,
                                                                 const long &starty, const long &startxwrap,
                                                                 const long &startywrap)
     {
-        if(checkEndPointDensity(density, oldx, oldy, oldxwrap, oldywrap, startx, starty, startxwrap, startywrap))
+        if(checkEndPointDensity(density, x, y, xwrap, ywrap, startx, starty, startxwrap, startywrap))
         {
-            if(!reproduction_map->actionOccurs(oldx, oldy, oldxwrap, oldywrap))
+            if(!reproduction_map->actionOccurs(x, y, xwrap, ywrap))
             {
-                oldx = startx;
-                oldy = starty;
-                oldxwrap = startxwrap;
-                oldywrap = startywrap;
+                x = startx;
+                y = starty;
+                xwrap = startxwrap;
+                ywrap = startywrap;
                 return false;
             }
             return true;
@@ -654,20 +655,20 @@ namespace necsim
 
     }
 
-    bool DispersalCoordinator::checkEndPointDensityRestrictedReproduction(const unsigned long &density, long &oldx,
-                                                                          long &oldy, long &oldxwrap, long &oldywrap,
+    bool DispersalCoordinator::checkEndPointDensityRestrictedReproduction(const unsigned long &density, long &x,
+                                                                          long &y, long &xwrap, long &ywrap,
                                                                           const long &startx, const long &starty,
                                                                           const long &startxwrap,
                                                                           const long &startywrap)
     {
-        if(checkEndPointRestricted(density, oldx, oldy, oldxwrap, oldywrap, startx, starty, startxwrap, startywrap))
+        if(checkEndPointRestricted(density, x, y, xwrap, ywrap, startx, starty, startxwrap, startywrap))
         {
-            if(!reproduction_map->actionOccurs(oldx, oldy, oldxwrap, oldywrap))
+            if(!reproduction_map->actionOccurs(x, y, xwrap, ywrap))
             {
-                oldx = startx;
-                oldy = starty;
-                oldxwrap = startxwrap;
-                oldywrap = startywrap;
+                x = startx;
+                y = starty;
+                xwrap = startxwrap;
+                ywrap = startywrap;
                 return false;
             }
             return true;

@@ -22,6 +22,7 @@
 #include "Map.h"
 #include "RNGController.h"
 
+using namespace random_numbers;
 namespace necsim
 {
     /**
@@ -146,29 +147,20 @@ namespace necsim
          * @param cols the column index to obtain
          * @return the value at the specified row and column
          */
-        double get(const unsigned long &rows, const unsigned long &cols)
-        {
-            return activity_map.get(rows, cols);
-        }
+        double get(const unsigned long &rows, const unsigned long &cols);
+
+        /**
+         * @brief Gets the arithmetic mean of the Map object.
+         * @return the mean value
+         */
+        double getMean() const;
 
         /**
          * @brief Equality operator
          * @param rm the ActivityMap object to copy from
          * @return the self ActivityMap object
          */
-        ActivityMap &operator=(const ActivityMap &rm)
-        {
-            this->activity_map = rm.activity_map;
-            this->map_file = rm.map_file;
-            this->max_val = rm.max_val;
-            this->null_map = rm.null_map;
-            this->offset_x = rm.offset_x;
-            this->offset_y = rm.offset_y;
-            this->x_dim = rm.x_dim;
-            this->y_dim = rm.y_dim;
-            this->activity_map_checker_fptr = rm.activity_map_checker_fptr;
-            return *this;
-        }
+        ActivityMap &operator=(const ActivityMap &rm);
 
         /**
          * @brief Operator for outputting to an ostream.
@@ -176,17 +168,7 @@ namespace necsim
          * @param r the ActivityMap to read from
          * @return the os object
          */
-        friend ostream &operator<<(ostream &os, ActivityMap &r)
-        {
-            os << r.map_file << "\n";
-            os << r.activity_map.getCols() << "\n";
-            os << r.activity_map.getRows() << "\n";
-            os << r.offset_x << "\n";
-            os << r.offset_y << "\n";
-            os << r.x_dim << "\n";
-            os << r.y_dim << "\n";
-            return os;
-        }
+        friend ostream &operator<<(ostream &os, ActivityMap &r);
 
         /**
          * @brief Operator for inputting from an istream.
@@ -194,16 +176,7 @@ namespace necsim
          * @param r the ActivityMap to input to
          * @return the is object
          */
-        friend istream &operator>>(istream &is, ActivityMap &r)
-        {
-            is.ignore();
-            getline(is, r.map_file);
-            unsigned long col, row;
-            is >> col >> row;
-            is >> r.offset_x >> r.offset_y >> r.x_dim >> r.y_dim;
-            r.import(r.map_file, col, row, shared_ptr<RNGController>());
-            return is;
-        }
+        friend istream &operator>>(istream &is, ActivityMap &r);
 
     };
 

@@ -31,11 +31,11 @@ namespace necsim
     private:
         // the next individual in the loop of those that have the same xypos
         unsigned long next_lineage;
-        // points to the position in output of this lineage
+        // points to the position in the coalescence tree
         unsigned long reference;
         // points to the position in the SpeciesList file.
         unsigned long list_position;
-        // the reference number within the linked species_id_list of wrapped lineages
+        // the reference number within the linked lineage_indices of wrapped lineages
         unsigned long nwrap;
         // the max-min number
         double min_max;

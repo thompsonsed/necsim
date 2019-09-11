@@ -470,7 +470,7 @@ namespace necsim
                 throw FatalException("ERROR_MOVE_015: Nwrap not set correctly. Nwrap 0, but x and y wrap not 0. ");
             }
 #endif // DEBUG
-            // Then the lineage exists in the main species_id_list;
+            // Then the lineage exists in the main lineage_indices;
             // debug (can be removed later)
 #ifdef historical_mode
             if(grid.get(y, x).getMaxsize() < active[chosen].getListpos())
@@ -481,7 +481,7 @@ namespace necsim
                 throw FatalException("ERROR_MOVE_001: Listpos outside maxsize. Check move programming function.");
             }
 #endif
-            // delete the species from the species_id_list
+            // delete the species from the lineage_indices
             grid.get(oldy, oldx).deleteSpecies(active[chosen].getListpos());
             // clear out the variables.
             active[chosen].setNext(0);
@@ -495,7 +495,7 @@ namespace necsim
                 grid.get(oldy, oldx).setNext(active[chosen].getNext());
                 // Now reduce the nwrap of the lineages that have been effected.
                 long nextpos = active[chosen].getNext();
-                // loop over the rest of the species_id_list, reducing the nwrap
+                // loop over the rest of the lineage_indices, reducing the nwrap
                 while(nextpos != 0)
                 {
                     active[nextpos].decreaseNwrap();
@@ -649,7 +649,7 @@ namespace necsim
             {
                 long tmplistindex = grid.get(this_step.y, this_step.x).addSpecies(this_step.chosen);
                 // check
-                if(grid.get(this_step.y, this_step.x).getSpecies(tmplistindex) != this_step.chosen)
+                if(grid.get(this_step.y, this_step.x).getLineageIndex(tmplistindex) != this_step.chosen)
                 {
                     throw FatalException("Grid index not set correctly for species. Check move programming function.");
                 }
@@ -686,7 +686,7 @@ namespace necsim
             }
             else  // just add the lineage to next.
             {
-                addWrappedLineage();
+                addWrappedLineage(this_step.chosen, this_step.x, this_step.y);
                 if(grid.get(this_step.y, this_step.x).getNext() != 0)
                 {
                     throw FatalException("No nwrap recorded, but next is non-zero.");
@@ -729,8 +729,8 @@ namespace necsim
 
         // Count the possible matches of the position.
         unsigned long matches = 0;
-        // Create an array containing the species_id_list of active references for those that match as
-        // this stops us having to loop twice over the same species_id_list.
+        // Create an array containing the lineage_indices of active references for those that match as
+        // this stops us having to loop twice over the same lineage_indices.
         vector<unsigned long> match_list(nwrap);
         unsigned long next_active;
         next_active = grid.get(this_step.y, this_step.x).getNext();
@@ -743,7 +743,7 @@ namespace necsim
                     throw FatalException("ERROR_MOVE_022a: Nwrap not set correctly in move.");
                 }
 #endif
-            match_list[matches] = next_active;  // add the match to the species_id_list of matches.
+            match_list[matches] = next_active;  // add the match to the lineage_indices of matches.
             matches++;
         }
         // Now loop over the remaining nexts counting matches
@@ -789,7 +789,7 @@ namespace necsim
         {
             unsigned long randwrap = floor(NR->d01() * (landscape->getVal(this_step.x, this_step.y, this_step.xwrap,
                                                                           this_step.ywrap, generation)) + 1);
-            // Get the random reference from the match species_id_list.
+            // Get the random reference from the match lineage_indices.
             // If the movement is to an empty space, then we can update the chain to include the new
             // lineage.
             if(randwrap > matches)  // coalescence has not occured
@@ -1099,9 +1099,9 @@ namespace necsim
         Tree::updateStepCoalescenceVariables();
         // record old position of lineage
         this_step.x = active[this_step.chosen].getXpos();
-        this_step.oldy = active[this_step.chosen].getYpos();
+        this_step.y = active[this_step.chosen].getYpos();
         this_step.xwrap = active[this_step.chosen].getXwrap();
-        this_step.oldywrap = active[this_step.chosen].getYwrap();
+        this_step.ywrap = active[this_step.chosen].getYwrap();
     }
 
     void SpatialTree::addLineages(double generation_in)
@@ -1466,7 +1466,7 @@ namespace necsim
         double proportion_added = double(num_to_add) / double(map_cover);
         if(xwrap == 0 && ywrap == 0)
         {
-            // Check that the species species_id_list sizings make sense
+            // Check that the species lineage_indices sizings make sense
             unsigned long ref = 0;
             if(map_cover != grid.get(y, x).getMaxSize())
             {
@@ -1486,7 +1486,7 @@ namespace necsim
             // Add the lineages
             while(ref < grid.get(y, x).getListLength() && num_to_add > 0)
             {
-                unsigned long tmp_active = grid.get(y, x).getSpecies(ref);
+                unsigned long tmp_active = grid.get(y, x).getLineageIndex(ref);
                 if(tmp_active != 0)
                 {
                     if(checkProportionAdded(proportion_added))

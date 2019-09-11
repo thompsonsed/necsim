@@ -11,7 +11,7 @@
 #include "SpeciesList.h"
 namespace necsim
 {
-    SpeciesList::SpeciesList() : list_size(0), max_size(0), next_active(0), species_id_list(), nwrap(0)
+    SpeciesList::SpeciesList() : list_size(0), max_size(0), next_active(0), lineage_indices(), nwrap(0)
     {
 
     }
@@ -31,30 +31,30 @@ namespace necsim
     void SpeciesList::setSpecies(unsigned long index, unsigned long new_val)
     {
 #ifdef DEBUG
-        if(index >= species_id_list.size())
+        if(index >= lineage_indices.size())
         {
             throw out_of_range("List index to change value is out of range of vector size. Please report this bug.");
         }
 #endif //DEBUG
-        if(species_id_list[index] == 0)
+        if(lineage_indices[index] == 0)
         {
-            throw runtime_error("List position to be replaced is zero. Check species_id_list assignment.");
+            throw runtime_error("List position to be replaced is zero. Check lineage_indices assignment.");
         }
-        species_id_list[index] = new_val;
+        lineage_indices[index] = new_val;
     }
 
     void SpeciesList::setSpeciesEmpty(unsigned long index, unsigned long new_val)
     {
-        if(index >= species_id_list.size())
+        if(index >= lineage_indices.size())
         {
-            species_id_list.resize(index + 1, 0);
-            species_id_list[index] = 0;
+            lineage_indices.resize(index + 1, 0);
+            lineage_indices[index] = 0;
         }
-        if(species_id_list[index] != 0)
+        if(lineage_indices[index] != 0)
         {
-            throw runtime_error("List position to be replaced is not zero. Check species_id_list assignment.");
+            throw runtime_error("List position to be replaced is not zero. Check lineage_indices assignment.");
         }
-        species_id_list[index] = new_val;
+        lineage_indices[index] = new_val;
         list_size++;
     }
 
@@ -74,32 +74,32 @@ namespace necsim
         if(list_size + 1 > max_size)
         {
             stringstream ss;
-            ss << "species_id_list size: " << list_size << endl;
+            ss << "lineage_indices size: " << list_size << endl;
             ss << "max size: " << max_size << endl;
             writeLog(10, ss.str());
-            throw out_of_range("Could not add species - species_id_list size greater than max size.");
+            throw out_of_range("Could not add species - lineage_indices size greater than max size.");
         }
 #endif
         // Check if there are empty spaces
-        if(species_id_list.size() > list_size)
+        if(lineage_indices.size() > list_size)
         {
-            // First loop from the species_id_list size value
-            for(unsigned long i = list_size; i < species_id_list.size(); i++)
+            // First loop from the lineage_indices size value
+            for(unsigned long i = list_size; i < lineage_indices.size(); i++)
             {
-                if(species_id_list[i] == 0)
+                if(lineage_indices[i] == 0)
                 {
                     list_size++;
-                    species_id_list[i] = new_spec;
+                    lineage_indices[i] = new_spec;
                     return i;
                 }
             }
             // Now loop over the rest of the lineages
             for(unsigned long i = 0; i < list_size; i++)
             {
-                if(species_id_list[i] == 0)
+                if(lineage_indices[i] == 0)
                 {
                     list_size++;
-                    species_id_list[i] = new_spec;
+                    lineage_indices[i] = new_spec;
                     return i;
                 }
             }
@@ -107,9 +107,9 @@ namespace necsim
         else
         {
             // Just need to append to the vector
-            species_id_list.push_back(new_spec);
+            lineage_indices.push_back(new_spec);
             list_size++;
-            return species_id_list.size() - 1;
+            return lineage_indices.size() - 1;
         }
 
         throw out_of_range("Could not add species - no empty space");
@@ -117,7 +117,7 @@ namespace necsim
 
     void SpeciesList::deleteSpecies(unsigned long index)
     {
-        species_id_list[index] = 0;
+        lineage_indices[index] = 0;
         list_size--;
     }
 
@@ -157,18 +157,18 @@ namespace necsim
         double rand_index;
         if(max_size <= list_size)
         {
-            // Then the species_id_list size is larger than the actual size. This means we must return a lineage.
+            // Then the lineage_indices size is larger than the actual size. This means we must return a lineage.
             try
             {
                 do
                 {
                     rand_index = rand_no->d01();
-                    rand_index *= species_id_list.size();
-                    //os << "ref: " << rand_index << ", " << species_id_list[round(rand_index)] << endl;
+                    rand_index *= lineage_indices.size();
+                    //os << "ref: " << rand_index << ", " << lineage_indices[round(rand_index)] << endl;
                 }
-                while(species_id_list[floor(rand_index)] == 0);
+                while(lineage_indices[floor(rand_index)] == 0);
                 //os << "RETURNING!" << endl;
-                return (species_id_list[floor(rand_index)]);
+                return (lineage_indices[floor(rand_index)]);
             }
             catch(out_of_range &oor)
             {
@@ -180,7 +180,7 @@ namespace necsim
             rand_index = rand_no->d01();
             //		os << "rand_index: " << rand_index << endl;
             rand_index *= max_size;
-            if(rand_index >= species_id_list.size())
+            if(rand_index >= lineage_indices.size())
             {
                 return 0;
             }
@@ -195,38 +195,38 @@ namespace necsim
                     throw runtime_error(ss.str());
                 }
 #endif // DEBUG
-            return species_id_list[i];
+            return lineage_indices[i];
         }
     }
 
-    unsigned long SpeciesList::getSpecies(unsigned long index)
+    unsigned long SpeciesList::getLineageIndex(unsigned long index) const
     {
-        return species_id_list[index];
+        return lineage_indices[index];
     }
 
-    unsigned long SpeciesList::getNext()
+    unsigned long SpeciesList::getNext() const
     {
         return next_active;
     }
 
-    unsigned long SpeciesList::getNwrap()
+    unsigned long SpeciesList::getNwrap() const
     {
         return nwrap;
     }
 
-    unsigned long SpeciesList::getListSize()
+    unsigned long SpeciesList::getListSize() const
     {
         return list_size;
     }
 
-    unsigned long SpeciesList::getMaxSize()
+    unsigned long SpeciesList::getMaxSize() const
     {
         return max_size;
     }
 
-    unsigned long SpeciesList::getListLength()
+    unsigned long SpeciesList::getListLength() const
     {
-        return species_id_list.size();
+        return lineage_indices.size();
     }
 
     void SpeciesList::wipeList()
@@ -243,7 +243,7 @@ namespace necsim
 
     ostream &operator<<(ostream &os, const SpeciesList &r)
     {
-        os << r.species_id_list.size();
+        os << r.lineage_indices.size();
         return os;
     }
 
@@ -251,7 +251,7 @@ namespace necsim
     {
         unsigned int size;
         is >> size;
-        r.species_id_list.resize(size, 0);
+        r.lineage_indices.resize(size, 0);
         return is;
     }
 }

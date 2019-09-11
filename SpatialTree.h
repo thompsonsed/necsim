@@ -101,7 +101,7 @@ namespace necsim
         shared_ptr<ActivityMap> death_map;
         // Reproduction probability values across the landscape
         shared_ptr<ActivityMap> reproduction_map;
-        // A species_id_list of new variables which will contain the relevant information for maps and grids.
+        // A lineage_indices of new variables which will contain the relevant information for maps and grids.
         //  strings containing the file names to be imported.
         string fine_map_input, coarse_map_input;
         string historical_fine_map_input, historical_coarse_map_input;

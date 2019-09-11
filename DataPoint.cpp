@@ -137,6 +137,7 @@ namespace necsim
         ywrap = location.ywrap;
     }
 
+
     ostream &operator<<(ostream &os, const DataPoint &d)
     {
         os << d.x << "," << d.y << "," << d.xwrap << "," << d.ywrap << "," << d.next_lineage << "," << d.reference

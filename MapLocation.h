@@ -4,7 +4,7 @@
 
 #ifndef NECSIM_MAPLOCATION_H
 #define NECSIM_MAPLOCATION_H
-
+#include <iostream>
 namespace necsim
 {
     struct MapLocation
@@ -31,14 +31,30 @@ namespace necsim
          * @param m the MapLocation object to compare against
          * @return true if the x, y, xwrap and ywrap are identical
          */
-        bool operator==(MapLocation const &m);
+        bool operator==(MapLocation const &m) const;
 
         /**
          * @brief Inequality operator for MapLocation
          * @param m the MapLocation object to compare against
          * @return true if locations are not identical
          */
-        bool operator!=(MapLocation const &m);
+        bool operator!=(MapLocation const &m) const;
+
+        /**
+         * @brief Output operator for MapLocation
+         * @param os the output stream to write to
+         * @param m the object to write out
+         * @return the output stream
+         */
+        friend std::ostream &operator<<(std::ostream &os, const MapLocation&m);
+
+        /**
+         * @brief Input operator for MapLocation
+         * @param is the input stream to read from
+         * @param m the object to read to
+         * @return the input stream
+         */
+        friend std::istream &operator>>(std::istream &is, MapLocation &m);
     };
 }
 #endif //NECSIM_MAPLOCATION_H

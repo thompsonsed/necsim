@@ -128,7 +128,7 @@ namespace necsim
         bool database_set; // boolean for whether the database has been set already.
         shared_ptr<SQLiteHandler> database; // stores the in-memory database connection.
         bool bSqlConnection; // true if the data connection has been established.
-        shared_ptr<vector<TreeNode>> nodes; // in older versions this was called species_id_list.
+        shared_ptr<vector<TreeNode>> nodes; // in older versions this was called lineage_indices.
         shared_ptr<vector<unsigned long>> species_abundances;
         unsigned long iSpecies;
         bool has_imported_samplemask; // checks whether the samplemask has already been imported.

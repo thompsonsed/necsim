@@ -20,6 +20,7 @@
 #include "RNGController.h"
 
 using namespace std;
+using namespace random_numbers;
 namespace necsim
 {
     /**

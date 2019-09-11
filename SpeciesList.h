@@ -23,6 +23,7 @@
 #include "RNGController.h"
 
 using namespace std;
+using namespace random_numbers;
 namespace necsim
 {
     /**
@@ -39,7 +40,7 @@ namespace necsim
     private:
         unsigned long list_size, max_size; // List size and maximum size of the cell (based on percentage cover).
         unsigned long next_active; // For calculating the wrapping, using the next and last system.
-        vector<unsigned long> species_id_list; // list of the active reference number, with zeros for empty cells.
+        vector<unsigned long> lineage_indices; // list of the active reference number, with zeros for empty cells.
         unsigned long nwrap; // The number of wrapping (next and last possibilities) that there are.
     public:
         /**
@@ -58,7 +59,7 @@ namespace necsim
          */
         void initialise(unsigned long maxsizein);
 
-        // special case if just the max_size wants to be change, but want to maintain the species_id_list variables.
+        // special case if just the max_size wants to be change, but want to maintain the lineage_indices variables.
         /**
          * @brief Sets the maxsize without altering the actual size of list.
          * @param maxsizein The new maximum size to set.
@@ -150,37 +151,37 @@ namespace necsim
          * @param index the location of the species to reference.
          * @return the species reference at the specified location.
          */
-        unsigned long getSpecies(unsigned long index);
+        unsigned long getLineageIndex(unsigned long index) const;
 
         /**
          * @brief Get the next_active variable.
          * @return the next linked species reference.
          */
-        unsigned long getNext();
+        unsigned long getNext() const;
 
         /**
          * @brief Getter for the nwrap.
          * @return the number of wrapped lineages currently at this grid cell.
          */
-        unsigned long getNwrap();
+        unsigned long getNwrap() const;
 
         /**
          * @brief Getter for the list size.
          * @return the number of lineages currently directly within the SpeciesList.
          */
-        unsigned long getListSize();
+        unsigned long getListSize() const;
 
         /**
          * @brief Getter for the maximum size of the SpeciesList object.
          * @return the maximum number of lineages that can exist currently.
          */
-        unsigned long getMaxSize();
+        unsigned long getMaxSize() const;
 
         /**
          * @brief Gets the length of the list object
          * @return the length of the list object
          */
-        unsigned long getListLength();
+        unsigned long getListLength() const;
 
         /**
          * @brief Empties the list of any data and fills the list with zeros.

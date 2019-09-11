@@ -429,7 +429,7 @@ namespace necsim
             }
             else
             {
-                // remove the species data from the species species_id_list to be placed somewhere new.
+                // remove the species data from the species lineage_indices to be placed somewhere new.
                 removeOldPosition(this_step.chosen);
                 calcNextStep();
 #ifdef DEBUG
@@ -494,18 +494,6 @@ namespace necsim
         return stopSimulation();
     }
 
-    bool Tree::runSimulationGillespie()
-    {
-        do
-        {
-            runSingleLoop();
-        }
-        while((endactive < gillespie_threshold) && (endactive > 1) && (steps < 100)
-              || difftime(sim_end, start) < maxtime && this_step.bContinueSim);
-        // Switch to gillespie
-        GillespieCalculator gillespieCalculator();
-
-    }
 
     bool Tree::stopSimulation()
     {
@@ -1019,7 +1007,7 @@ namespace necsim
 
     void Tree::sortData()
     {
-        // Sort and process the species species_id_list so that the useful information can be extracted from it.
+        // Sort and process the species lineage_indices so that the useful information can be extracted from it.
         stringstream os;
         os << "Finalising data..." << flush;
         writeInfo(os.str());

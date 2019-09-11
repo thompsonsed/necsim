@@ -530,7 +530,7 @@ namespace necsim
             return;
         }
         writeInfo("Beginning data import...");
-        // Now find out the max size of the species_id_list, so we have a count to work from
+        // Now find out the max size of the lineage_indices, so we have a count to work from
         string count_command = "SELECT COUNT(*) FROM SPECIES_LIST;";
         auto stmt = database->prepare(count_command);
         unsigned long datasize;
@@ -566,7 +566,7 @@ namespace necsim
             auto existence = bool(sqlite3_column_int(stmt->stmt, 9));
             double dSpec = sqlite3_column_double(stmt->stmt, 10);
             long double generationin = sqlite3_column_double(stmt->stmt, 12);
-            // the -1 is to ensure that the species_id_list includes all lineages, but fills the output from the beginning
+            // the -1 is to ensure that the lineage_indices includes all lineages, but fills the output from the beginning
             unsigned long index = i - ignored_lineages;
             (*nodes)[index].setup(tip, xval, yval, xwrap, ywrap, generationin);
             (*nodes)[index].burnSpecies(species_id);
@@ -611,7 +611,7 @@ namespace necsim
         }
         if(max_species_id == 0)
         {
-            // Now find out the max size of the species_id_list, so we have a count to work from
+            // Now find out the max size of the lineage_indices, so we have a count to work from
             string count_command = "SELECT MAX(ID) FROM SPECIES_ABUNDANCES;";
             auto stmt = database->prepare(count_command);
             database->step();
@@ -647,7 +647,7 @@ namespace necsim
         }
         if(max_locations_id == 0)
         {
-            // Now find out the max size of the species_id_list, so we have a count to work from
+            // Now find out the max size of the lineage_indices, so we have a count to work from
             string count_command = "SELECT MAX(ID) FROM SPECIES_LOCATIONS;";
             auto stmt = database->prepare(count_command);
             database->step();
@@ -665,7 +665,7 @@ namespace necsim
         }
         if(max_fragment_id == 0)
         {
-            // Now find out the max size of the species_id_list, so we have a count to work from
+            // Now find out the max size of the lineage_indices, so we have a count to work from
             string count_command = "SELECT MAX(ID) FROM FRAGMENT_ABUNDANCES;";
             auto stmt = database->prepare(count_command);
             database->step();
@@ -863,7 +863,7 @@ namespace necsim
         {
             throw FatalException("Attempted to get from sql database without opening database connection.");
         }
-        // Now find out the max size of the species_id_list, so we have a count to work from
+        // Now find out the max size of the lineage_indices, so we have a count to work from
         string count_command = "SELECT COUNT(*) FROM SPECIES_LOCATIONS WHERE community_reference == ";
         count_command += to_string(current_community_parameters->reference) + ";";
         auto stmt = database->prepare(count_command);
@@ -880,7 +880,7 @@ namespace necsim
         {
             throw FatalException("Attempted to get from sql database without opening database connection.");
         }
-        // Now find out the max size of the species_id_list, so we have a count to work from
+        // Now find out the max size of the lineage_indices, so we have a count to work from
         string count_command = "SELECT COUNT(*) FROM SPECIES_ABUNDANCES WHERE community_reference = ";
         count_command += to_string(current_community_parameters->reference) + ";";
         auto stmt = database->prepare(count_command);
@@ -1794,7 +1794,7 @@ namespace necsim
                     throw FatalException("Attempted to update sql database without opening database connection.");
                 }
 
-                // Now find out the max size of the species_id_list, so we have a count to work from
+                // Now find out the max size of the lineage_indices, so we have a count to work from
                 string count_command = "UPDATE COMMUNITY_PARAMETERS SET fragments = 1 WHERE reference = ";
                 count_command += to_string(parameter->reference) + ";";
                 database->execute(count_command);
@@ -1995,7 +1995,7 @@ namespace necsim
         {
             throw FatalException("Attempted to get from sql database without opening database connection.");
         }
-        // Now find out the max size of the species_id_list, so we have a count to work from
+        // Now find out the max size of the lineage_indices, so we have a count to work from
         string count_command = "SELECT COUNT(DISTINCT(species_id)) FROM SPECIES_ABUNDANCES WHERE no_individuals > 0 ";
         count_command += "AND community_reference == ";
         count_command += to_string(community_reference) + ";";

@@ -159,7 +159,7 @@ namespace necsim
 
     void removeComOption(unsigned long &argc, vector<string> &comargs)
     {
-        // stupidly long species_id_list of possible arguments, but can't think of a better way to check this.
+        // stupidly long lineage_indices of possible arguments, but can't think of a better way to check this.
         if(comargs[1] == "-d" || comargs[1] == "-D" || comargs[1] == "-dl" || comargs[1] == "-dL"
            || comargs[1] == " -Dl" || comargs[1] == "-DL" || comargs[1] == "-dx" || comargs[1] == "-dX"
            || comargs[1] == "-DX" || comargs[1] == " -Dx" || comargs[1] == "-c" || comargs[1] == "-C"

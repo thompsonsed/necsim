@@ -3,3 +3,8 @@
 //
 
 #include "GillespieCalculator.h"
+
+namespace necsim
+{
+
+}

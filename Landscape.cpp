@@ -160,7 +160,7 @@ namespace necsim
         }
         has_historical = file_input != "none";
         historical_fine_max = 0;
-        if(has_historical && !is_historical)
+        if(has_historical)
         {
             historical_fine_max = importToMapAndRound(file_input, historical_fine_map, map_x_size, map_y_size, deme);
         }
@@ -196,7 +196,7 @@ namespace necsim
         if(has_coarse)
         {
             has_historical = file_input != "none";
-            if(has_historical && !is_historical)
+            if(has_historical)
             {
                 historical_coarse_max = importToMapAndRound(file_input,
                                                             historical_coarse_map,
@@ -476,7 +476,7 @@ namespace necsim
             if(mapvars->gen_since_historical < generation)
             {
                 // Only update the map if the maps have actually changed
-                if(mapvars->setHistorical(generation))
+                if(mapvars->checkNeedsUpdate(generation))
                 {
                     stringstream ss;
                     ss << "\nUpdating historical maps at " << generation << "...\n";
@@ -485,7 +485,15 @@ namespace necsim
                     fine_map = historical_fine_map;
                     coarse_max = historical_coarse_max;
                     coarse_map = historical_coarse_map;
-                    doUpdate();
+                    if(mapvars->setHistorical(generation))
+                    {
+                        doUpdate();
+                    }
+                    else
+                    {
+                        recalculateHabitatMax();
+                    }
+
                     return true;
                 }
             }
@@ -495,7 +503,7 @@ namespace necsim
 
     bool Landscape::requiresUpdate()
     {
-        return !mapvars->is_historical && has_historical && mapvars->requiresUpdate();
+        return !mapvars->is_historical && has_historical;
     }
 
     void Landscape::doUpdate()
@@ -511,10 +519,7 @@ namespace necsim
         habitat_change_rate = mapvars->habitat_change_rate;
         calcHistoricalFineMap();
         calcHistoricalCoarseMap();
-        if(has_historical)
-        {
-            is_historical = !mapvars->requiresUpdate();
-        }
+
         recalculateHabitatMax();
     }
 

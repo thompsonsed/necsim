@@ -650,14 +650,6 @@ namespace necsim
 #endif // DEBUG
         if(chosen != endactive)
         {
-            // This routine assumes that the previous chosen position has already been deleted.
-            //        DataPoint tmpdatactive;
-            //        tmpdatactive.setup(active[chosen]);
-            //        // now need to remove the chosen lineage from memory, by replacing it with the lineage that lies in the last
-            //        // place.
-            //        active[chosen].setup(active[endactive]);
-            //        active[endactive].setup(tmpdatactive);
-            // TODO check that this code works as intended.
             std::swap(active[chosen], active[endactive]);
         }
         endactive--;

@@ -476,76 +476,23 @@ namespace necsim
             bool needs_update = false;
             if(generation > gen_since_historical)
             {
-                needs_update = true;
                 if(all_historical_map_parameters.empty())
                 {
                     historical_fine_map_file = "none";
                     historical_coarse_map_file = "none";
-                    gen_since_historical = generation;
-                    habitat_change_rate = 0;
                     is_historical = true;
                 }
                 if(!all_historical_map_parameters.empty())
                 {
+                    needs_update = true;
                     HistoricalMapParameters nextHistoricalMapParameters = all_historical_map_parameters.front();
                     historical_fine_map_file = nextHistoricalMapParameters.fine_map_file;
                     historical_coarse_map_file = nextHistoricalMapParameters.coarse_map_file;
-                    stringstream ss; // TODO remove
-                    ss << "Setting historical map to " << historical_fine_map_file << " and " << nextHistoricalMapParameters.generation
-                       << " at " << generation << endl;
-                    ss << "Original gen_since_historical: " << gen_since_historical << endl;
-                    writeInfo(ss.str());
                     gen_since_historical = nextHistoricalMapParameters.generation;
                     habitat_change_rate = nextHistoricalMapParameters.habitat_change_rate;
                     all_historical_map_parameters.pop();
                 }
             }
-            //            while(!all_historical_map_parameters.empty())
-            //            {
-            //                HistoricalMapParameters nextHistoricalMapParameters = all_historical_map_parameters.front();
-            //                if(generation > nextHistoricalMapParameters.generation)
-            //                {
-            //                    // TODO remove
-            //                    stringstream ss;
-            //                    if(nextHistoricalMapParameters.fine_map_file != historical_fine_map_file)
-            //                    {
-            //                        ss << "Updating fine map" << endl;
-            //                        needs_update = true;
-            //                        historical_fine_map_file = nextHistoricalMapParameters.fine_map_file;
-            //                    }
-            //                    if(nextHistoricalMapParameters.coarse_map_file != historical_coarse_map_file)
-            //                    {
-            //                        ss << "Updating coarse map" << endl;
-            //                        needs_update = true;
-            //                        historical_coarse_map_file = nextHistoricalMapParameters.coarse_map_file;
-            //                    }
-            //                    gen_since_historical = nextHistoricalMapParameters.generation;
-            //                    habitat_change_rate = nextHistoricalMapParameters.habitat_change_rate;
-            //
-            //                    ss << "Removing maps " << nextHistoricalMapParameters.fine_map_file << ", "
-            //                       << nextHistoricalMapParameters.coarse_map_file << " at " << generation << endl;
-            //                    ss << "New gen_since_historical: " << gen_since_historical << endl;
-            //                    writeInfo(ss.str());
-            //                    all_historical_map_parameters.pop();
-            //                }
-            //                else
-            //                {
-            //                    break;
-            //                }
-
-            //            }
-            //            if(all_historical_map_parameters.empty())
-            //            {
-            //                is_historical = true;
-            //            }
-            //            if(needs_update)
-            //            {
-            //                writeInfo("Returning true (needs update).");
-            //            }
-            //            else
-            //            {
-            //                writeInfo("Returning false (doesn't need update).");
-            //            }
             return needs_update;
         }
 
@@ -553,9 +500,17 @@ namespace necsim
          * @brief Checks if there will be another update to be performed on the map.
          * @return true if another map update exists
          */
-        bool requiresUpdate()
+        bool checkNeedsUpdate(const double &g)
         {
-            return !all_historical_map_parameters.empty() && !is_historical;
+            parseHistorical();
+            return g > gen_since_historical && !is_historical;
+
+        }
+
+        bool hasAnotherUpdate()
+        {
+            return historical_fine_map_file != "none" || historical_coarse_map_file != "none"
+                   || !all_historical_map_parameters.empty();
         }
 
         /**
@@ -585,8 +540,9 @@ namespace necsim
                             auto r = stod(configs[i].getOption("rate"));
                             auto g = stod(configs[i].getOption("time"));
                             HistoricalMapParameters &mapParameters = tmp_map_parameters[number];
-                            if(!doubleCompare(mapParameters.habitat_change_rate, r, r * 0.1)
-                               || !doubleCompare(mapParameters.generation, g, g * 0.1))
+                            if(!doubleCompare(mapParameters.habitat_change_rate, r,  0.00000001)
+                               || !(doubleCompare(mapParameters.generation, g, 0.00000001) ||
+                               doubleCompare(mapParameters.generation, g, g*0.01)))
                             {
                                 stringstream ss;
                                 ss << "Rates and times differ between fine and coarse map for historical map number "
@@ -618,8 +574,9 @@ namespace necsim
                             auto r = stod(configs[i].getOption("rate"));
                             auto g = stod(configs[i].getOption("time"));
                             HistoricalMapParameters &mapParameters = tmp_map_parameters[number];
-                            if(!doubleCompare(mapParameters.habitat_change_rate, r, r * 0.1)
-                               || !doubleCompare(mapParameters.generation, g, g * 0.1))
+                            if(!doubleCompare(mapParameters.habitat_change_rate, r,  0.00000001)
+                               || !(doubleCompare(mapParameters.generation, g, 0.00000001) ||
+                                    doubleCompare(mapParameters.generation, g, g*0.01)))
                             {
                                 stringstream ss;
                                 ss << "Rates and times differ between fine and coarse map for historical map number "
@@ -643,14 +600,6 @@ namespace necsim
                     tmp_sorted_historical_map_parameters.push_back(item.second);
                 }
                 sort(tmp_sorted_historical_map_parameters.begin(), tmp_sorted_historical_map_parameters.end());
-                stringstream ss; // TODO remove
-                ss << "Found " << tmp_map_parameters.size() << " historical maps: " << endl;
-                for(const auto &item:tmp_sorted_historical_map_parameters)
-                {
-                    ss << item.fine_map_file << ", " << item.coarse_map_file << ", " << item.generation << ", "
-                       << item.habitat_change_rate << endl;
-                }
-                writeInfo(ss.str());
                 for(const auto &item: tmp_map_parameters)
                 {
                     all_historical_map_parameters.push(item.second);

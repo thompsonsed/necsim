@@ -218,8 +218,8 @@ namespace necsim
             {
                 runSingleLoop();
             }
-            while((endactive < gillespie_threshold) && (endactive > 1) && (steps < 100)
-                  || difftime(sim_end, start) < maxtime && this_step.bContinueSim);
+            while((endactive < gillespie_threshold) && (endactive > 1) && ((steps < 100)
+                  || difftime(sim_end, start) < maxtime )&& this_step.bContinueSim);
             // Switch to gillespie
             setupGillespie();
             do

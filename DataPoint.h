@@ -178,7 +178,13 @@ namespace necsim
          * @brief Sets the position in space.
          * @param location the location of the new end point
          */
-        template<class T> void setEndpoint(const T &location);
+        template<class T> void setEndpoint(const T &location)
+        {
+            x = location.x;
+            y = location.y;
+            xwrap = location.xwrap;
+            ywrap = location.ywrap;
+        }
 
         /**
          * @brief An operator for piping the variables of the Datapoint object to the output stream.

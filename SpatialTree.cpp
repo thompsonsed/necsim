@@ -551,7 +551,7 @@ namespace necsim
             }
 #ifdef DEBUG
             unsigned long iCount = 1;
-            long pos = grid.get(y, x).getNext();
+            long pos = grid.get(oldy, oldx).getNext();
             if(pos == 0)
             {
                 iCount = 0;
@@ -571,12 +571,12 @@ namespace necsim
                 }
             }
 
-            if(iCount != grid.get(y, x).getNwrap())
+            if(iCount != grid.get(oldy, oldx).getNwrap())
             {
                 stringstream ss;
-                ss << "Nwrap: " << grid.get(y, x).getNwrap() << " Counted lineages: " << iCount << endl;
+                ss << "Nwrap: " << grid.get(oldy, oldx).getNwrap() << " Counted lineages: " << iCount << endl;
                 writeLog(50, ss);
-                throw FatalException("ERROR_MOVE_014: Nwrap not set correctly after move for grid cell");
+                throw FatalException("Nwrap not set correctly after move for grid cell");
             }
 #endif // DEBUG
         }
@@ -631,17 +631,17 @@ namespace necsim
             }
             this_step.coalchosen = grid.get(this_step.y, this_step.x).getRandLineage(NR);
 #ifdef DEBUG
-            if(this_step..coalthis_step.chosen != 0)
+            if(this_step.coalchosen != 0)
             {
-                if(active[this_step.coalchosen].getXpos() != (unsigned long) x ||
-                   active[this_step.coalchosen].getYpos() != (unsigned long) y ||
-                   active[this_step.coalchosen].getXwrap() != xwrap || active[this_step.coalchosen].getYwrap() != ywrap)
+                if(active[this_step.coalchosen].getXpos() != (unsigned long) this_step.x ||
+                   active[this_step.coalchosen].getYpos() != (unsigned long) this_step.y ||
+                   active[this_step.coalchosen].getXwrap() != this_step.xwrap|| active[this_step.coalchosen].getYwrap() != this_step.ywrap)
                 {
                     writeLog(50, "Logging this_step.chosen:");
                     active[this_step.chosen].logActive(50);
                     writeLog(50, "Logging this_step.coalchosen: ");
                     active[this_step.coalchosen].logActive(50);
-                    throw FatalException("ERROR_MOVE_006: NON FATAL. Nwrap not set correctly. Please report this bug.");
+                    throw FatalException("Nwrap not set correctly. Please report this bug.");
                 }
             }
 #endif
@@ -686,7 +686,6 @@ namespace necsim
             }
             else  // just add the lineage to next.
             {
-                addWrappedLineage(this_step.chosen, this_step.x, this_step.y);
                 if(grid.get(this_step.y, this_step.x).getNext() != 0)
                 {
                     throw FatalException("No nwrap recorded, but next is non-zero.");
@@ -807,7 +806,7 @@ namespace necsim
             {
                 this_step.coal = true;
                 this_step.coalchosen = match_list[randwrap - 1];
-                active[this_step.chosen].setEndpoint(this_step);
+                active[this_step.chosen].setEndpoint<Step>(this_step);
                 if(this_step.coalchosen == 0)
                 {
                     throw FatalException("Coalescence attempted with lineage of 0.");
@@ -944,7 +943,7 @@ namespace necsim
         calcMove();
         // Calculate the new position, perform the move if coalescence doesn't occur or
         // return the variables for the coalescence event if coalescence does occur.
-        active[this_step.chosen].setEndpoint(this_step);
+        active[this_step.chosen].setEndpoint<Step>(this_step);
         calcNewPos();
     }
 
@@ -1603,7 +1602,7 @@ namespace necsim
                 else
                 {
                     if(i !=
-                         grid.get(tmp_datapoint.getYpos(), tmp_datapoint.getXpos()).getSpecies(tmp_datapoint.getListpos()))
+                         grid.get(tmp_datapoint.getYpos(), tmp_datapoint.getXpos()).getLineageIndex(tmp_datapoint.getListpos()))
                     {
                         fail = true;
                     }

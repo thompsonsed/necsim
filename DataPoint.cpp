@@ -129,14 +129,6 @@ namespace necsim
         }
     }
 
-    template<class T> void DataPoint::setEndpoint(const T &location)
-    {
-        x = location.x;
-        y = location.y;
-        xwrap = location.xwrap;
-        ywrap = location.ywrap;
-    }
-
 
     ostream &operator<<(ostream &os, const DataPoint &d)
     {
@@ -148,9 +140,7 @@ namespace necsim
 
     istream &operator>>(istream &is, DataPoint &d)
     {
-        //os << m.num_rows<<" , "<<m.num_cols<<" , "<<endl;
         char delim;
-        //os << "datapoint" << endl;
         is >> d.x >> delim >> d.y >> delim >> d.xwrap >> delim >> d.ywrap >> delim >> d.next_lineage >> delim
            >> d.reference >> delim >> d.list_position >> delim >> d.nwrap >> delim;
         is >> d.min_max;

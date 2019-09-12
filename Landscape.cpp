@@ -101,14 +101,14 @@ namespace necsim
             }
 #endif // DEBUG
             mapvars = std::move(mapvarsin);
-            mapvars->setInitialHistoricalParameters();
+            mapvars->parseHistorical();
             deme = mapvars->deme;
             x_dim = mapvars->grid_x_size;
             y_dim = mapvars->grid_y_size;
             scale = mapvars->coarse_map_scale;
             check_set_dim = true;
             update_time = 0;
-            updateMap(0);
+            updateMap(0.0);
             gen_since_historical = mapvars->gen_since_historical;
             if(gen_since_historical == 0)
             {
@@ -160,7 +160,7 @@ namespace necsim
         }
         has_historical = file_input != "none";
         historical_fine_max = 0;
-        if(has_historical)
+        if(has_historical && !is_historical)
         {
             historical_fine_max = importToMapAndRound(file_input, historical_fine_map, map_x_size, map_y_size, deme);
         }
@@ -196,7 +196,7 @@ namespace necsim
         if(has_coarse)
         {
             has_historical = file_input != "none";
-            if(has_historical)
+            if(has_historical && !is_historical)
             {
                 historical_coarse_max = importToMapAndRound(file_input,
                                                             historical_coarse_map,
@@ -218,7 +218,7 @@ namespace necsim
     {
         if(mapvars->times_file != "null")
         {
-            mapvars->setInitialHistoricalParameters();
+            mapvars->parseHistorical();
         }
         if(fine_map.getCols() == 0 || fine_map.getRows() == 0)
         {
@@ -513,7 +513,7 @@ namespace necsim
         calcHistoricalCoarseMap();
         if(has_historical)
         {
-            is_historical = mapvars->is_historical;
+            is_historical = !mapvars->requiresUpdate();
         }
         recalculateHabitatMax();
     }

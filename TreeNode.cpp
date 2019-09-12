@@ -230,7 +230,7 @@ namespace necsim
         writeLog(level, "tip: " + to_string(tip));
         writeLog(level, "speciated: " + to_string(speciated));
         writeLog(level, "existance: " + to_string(does_exist));
-        writeLog(level, "x, y, (x wrap, y wrap): " + to_string(x) + ", " + to_string(y) + ", " +
+        writeLog(level, "x, y, (x wrap, y wrap): " + to_string(xpos) + ", " + to_string(ypos) + ", " +
                         to_string(xwrap) + ", " + to_string(ywrap));
         writeLog(level, "speciation rate: " + to_string(speciation_probability));
         writeLog(level, "generations (added, existed): " + to_string(generation_added) + ", " +

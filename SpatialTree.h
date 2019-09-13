@@ -81,6 +81,7 @@
 #include "DispersalCoordinator.h"
 #include "ActivityMap.h"
 #include "Logging.h"
+#include "GillespieCalculator.h"
 
 using namespace std;
 
@@ -113,15 +114,36 @@ namespace necsim
         unsigned long desired_specnum;
         // contains the DataMask for where we should start lineages from.
         DataMask samplegrid;
+
+        // The gillespie variables
+        double gillespie_threshold;
+        // Matrix of all the probabilities at every location in the map.
+        Matrix<GillespieProbability> probabilities;
+        // Vector used for holding the priority queue as a binary heap
+        vector<GillespieHeapNode> heap;
+        // Index to heap position, or UNUSED if cell is not used.
+        Matrix<unsigned long> cellToHeapPositions;
+        // matrix of self-dispersal probabilities;
+        Matrix<double> self_dispersal_probabilities;
+
+        // Total number of individuals present in the simulated world
+        unsigned long global_individuals;
+        // Mean death rate across the simulated world
+        double summed_death_rate;
+
+        // Defines a cell that is unused
+        static const unsigned long UNUSED = static_cast<long>(-1);
     public:
         /**
          * @brief The constructor for SpatialTree.
          */
-        SpatialTree() : Tree(), dispersal_coordinator(), death_map(make_shared<ActivityMap>()),
-                        reproduction_map(make_shared<ActivityMap>()),
-                        fine_map_input("none"), coarse_map_input("none"), historical_fine_map_input("none"),
-                        historical_coarse_map_input("none"), landscape(make_shared<Landscape>()),
-                        grid(), desired_specnum(1), samplegrid()
+        SpatialTree()
+                : Tree(), dispersal_coordinator(), death_map(make_shared<ActivityMap>()),
+                  reproduction_map(make_shared<ActivityMap>()), fine_map_input("none"), coarse_map_input("none"),
+                  historical_fine_map_input("none"), historical_coarse_map_input("none"),
+                  landscape(make_shared<Landscape>()), grid(), desired_specnum(1), samplegrid(),
+                  gillespie_threshold(0.0), probabilities(), heap(), cellToHeapPositions(),
+                  self_dispersal_probabilities(), global_individuals(0), summed_death_rate(1.0)
         {
 
         }
@@ -207,8 +229,13 @@ namespace necsim
          * @param current_gen the current generation timer
          * @return the number of individuals to sample at this location.
          */
-        unsigned long getIndividualsSampled(const long &x, const long &y,
-                                            const long &x_wrap, const long &y_wrap, const double &current_gen);
+        unsigned long getIndividualsSampled(const long &x,
+                                            const long &y,
+                                            const long &x_wrap,
+                                            const long &y_wrap,
+                                            const double &current_gen);
+
+        unsigned long getNumberLineagesAtLocation(const MapLocation &location);
 
         unsigned long getNumberIndividualsAtLocation(const MapLocation &location);
 
@@ -378,8 +405,12 @@ namespace necsim
          * @param data_added vector containing TreeNode objects to add to data
          * @return the number of lineages still to add
          */
-        unsigned long countCellExpansion(const long &x, const long &y, const long &xwrap, const long &ywrap,
-                                         const double &generationin, vector<TreeNode> &data_added);
+        unsigned long countCellExpansion(const long &x,
+                                         const long &y,
+                                         const long &xwrap,
+                                         const long &ywrap,
+                                         const double &generationin,
+                                         vector<TreeNode> &data_added);
 
         /**
          * @brief Expands the cell at the desired location by adding the supplied number of lineages
@@ -393,8 +424,149 @@ namespace necsim
          * @param generation_in the generation to set the new lineages to
          * @param add the total number of lineages to add at this location
          */
-        void expandCell(long x, long y, long x_wrap, long y_wrap, double generation_in, unsigned long add,
-                        vector<TreeNode> &data_added, vector<DataPoint> &active_added);
+        void expandCell(long x,
+                        long y,
+                        long x_wrap,
+                        long y_wrap,
+                        double generation_in,
+                        unsigned long add,
+                        vector<TreeNode> &data_added,
+                        vector<DataPoint> &active_added);
+
+        void addGillespie(const double &g_threshold) override;
+
+        bool runSimulationGillespie() override;
+
+        void runGillespieLoop();
+
+        /**
+         * @brief Sets up the Gillespie algorithm.
+         */
+        void setupGillespie();
+
+        void setupGillespieMaps();
+        /**
+         * @brief Calculates the x, y position on the fine map of the lineage
+         * @param location the map location
+         * @return cell object containing the x, y location
+         */
+        Cell getCellOfMapLocation(const MapLocation &location);
+
+        /**
+         * @brief Finds the locations that lineages are at and adds them to the list of locations.
+         *
+         * This also involves calculating the event probabilities for each cell.
+         */
+        void findLocations();
+
+        void checkMapEvents();
+
+        void checkSampleEvents();
+
+        void gillespieCellEvent(GillespieProbability &origin);
+
+        void gillespieUpdateMap();
+
+        void gillespieSampleIndividuals();
+
+        void gillespieCoalescenceEvent(GillespieProbability &origin);
+
+        void gillespieDispersalEvent(GillespieProbability &origin);
+
+        void gillespieSpeciationEvent(GillespieProbability &origin);
+
+        template<typename T>
+        const double getLocalDeathRate(const T &location);
+
+        template<typename T>
+        const double getLocalSelfDispersalRate(const T &location);
+
+        void clearGillespieObjects();
+
+        //        void updateHeapOrigin(GillespieProbability &origin)
+        //        {
+        //            // If cell is still inhabited
+        //            {
+        //                Cell pos = convertMapLocationToCell(origin.getMapLocation());
+        //
+        //                // Update probability and times of origin
+        //                updateInhabitedCellOnHeap(pos);
+        //
+        //            }
+        //            // Else
+        //            {
+        //                std::pop_heap(heap.begin(), heap.end());
+        //                heap.pop_back();
+        //            }
+        //        }
+
+        void gillespieUpdateGeneration(const unsigned long &lineage);
+
+        //        void updateHeapDestination(GillespieProbability &destination)
+        //        {
+        //            // If dispersal to other cell
+        //
+        //            Cell pos = convertMapLocationToCell(destination.getMapLocation());
+        //
+        //            // If cell is already inhabited
+        //            {
+        //                // Update probability and times of destination
+        //                updateInhabitedCellOnHeap(pos);
+        //            }
+        //            // Else
+        //            {
+        //                heap.emplace_back(GillespieHeapNode(pos,
+        //                                                    (destination.calcTimeToNextEvent(summed_death_rate,
+        //                                                                                     getNumberIndividualsAtLocation(
+        //                                                                                             destination
+        //                                                                                                     .getMapLocation()),
+        //                                                                                     global_individuals) + generation),
+        //                                                    &cellToHeapPositions.get(pos.y, pos.x)));
+        //                std::push_heap(heap.begin(), heap.end());
+        //            }
+        //        }
+
+        void updateCellCoalescenceProbability(GillespieProbability &origin, const unsigned long &n);
+
+        void updateInhabitedCellOnHeap(const Cell &pos);
+
+        void updateAllProbabilities();
+
+        void removeHeapTop();
+
+        template<typename T>
+        Cell convertMapLocationToCell(const T &location)
+        {
+            unsigned long x = landscape->convertSampleXToFineX(location.x, location.xwrap);
+            unsigned long y = landscape->convertSampleXToFineX(location.y, location.ywrap);
+
+            return Cell(x, y);
+        }
+
+        /**
+         * @brief Calculates the times for each event and sorts the event list.
+         */
+        void createEventList();
+
+        void sortEvents();
+
+        void addNewEvent(const unsigned long &x, const unsigned long &y);
+
+        /**
+         * @brief Adds the given location.
+         *
+         * Calculates the probabilities of coalescence, dispersal and speciation.
+         * @param location the location to add and calculate values for
+         */
+        void addLocation(const MapLocation &location);
+
+        double calculateCoalescenceProbability(const MapLocation &location);
+
+        unsigned long selectRandomLineage(const MapLocation &location) const;
+
+        pair<unsigned long, unsigned long> selectTwoRandomLineages(const MapLocation &location) const;
+
+        vector<unsigned long> detectLineages(const MapLocation &location) const;
 
 #ifdef DEBUG
 
@@ -430,6 +602,7 @@ namespace necsim
         void runChecks(const unsigned long &chosen, const unsigned long &coalchosen) override;
 
 #endif
+
     };
 };
 

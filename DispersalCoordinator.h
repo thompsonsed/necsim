@@ -26,6 +26,7 @@
 #include "Step.h"
 #include "Landscape.h"
 #include "ActivityMap.h"
+
 namespace necsim
 {
     /**
@@ -57,7 +58,7 @@ namespace necsim
         // Pointer to the reproduction map object for obtaining reproduction probabilities
         shared_ptr<ActivityMap> reproduction_map;
         // Pointer to the generation counter for the simulation
-        double* generation;
+        double *generation;
 
         // function ptr for our getDispersal function
         typedef void (DispersalCoordinator::*dispersal_fptr)(Step &this_step);
@@ -65,15 +66,21 @@ namespace necsim
         dispersal_fptr doDispersal;
 
         // Function pointer for end checks
-        typedef bool (DispersalCoordinator::*end_fptr)(const unsigned long &density, long &oldx, long &oldy,
-                                                       long &oldxwrap, long &oldywrap, const long &startx,
-                                                       const long &starty, const long &startxwrap,
+        typedef bool (DispersalCoordinator::*end_fptr)(const unsigned long &density,
+                                                       long &oldx,
+                                                       long &oldy,
+                                                       long &oldxwrap,
+                                                       long &oldywrap,
+                                                       const long &startx,
+                                                       const long &starty,
+                                                       const long &startxwrap,
                                                        const long &startywrap);
 
         // once setup will contain the end check function to use for this simulation.
         end_fptr checkEndPointFptr;
         unsigned long xdim;
         unsigned long ydim;
+        bool full_dispersal_map;
 
     public:
         DispersalCoordinator();
@@ -85,6 +92,14 @@ namespace necsim
          * @param NR_ptr the random number object to set to
          */
         void setRandomNumber(shared_ptr<RNGController> NR_ptr);
+
+        /**
+         * @brief Checks if using a full dispersal map.
+         *
+         * "Full" dispersal maps are those which are not "none", "null" and correspond to an file path.
+         * @return true if using a full dispersal map
+         */
+        bool isFullDispersalMap() const;
 
         /**
          * @brief Sets the pointer to the Landscape object
@@ -103,7 +118,7 @@ namespace necsim
          * @brief Sets the generation pointer to the provided double
          * @param generation_ptr pointer to the generation double
          */
-        void setGenerationPtr(double* generation_ptr);
+        void setGenerationPtr(double *generation_ptr);
 
         /**
          * @brief Sets the dispersal method and parameters
@@ -118,9 +133,14 @@ namespace necsim
          * @param tauin the width of the fat-tailed dispersal kernel
          * @param restrict_self if true, denies possibility that dispersal comes from the same cell as the parent
          */
-        void setDispersal(const string &dispersal_method, const string &dispersal_file,
-                          const unsigned long &dispersal_x, const unsigned long &dispersal_y, const double &m_probin,
-                          const double &cutoffin, const double &sigmain, const double &tauin,
+        void setDispersal(const string &dispersal_method,
+                          const string &dispersal_file,
+                          const unsigned long &dispersal_x,
+                          const unsigned long &dispersal_y,
+                          const double &m_probin,
+                          const double &cutoffin,
+                          const double &sigmain,
+                          const double &tauin,
                           const bool &restrict_self);
 
         /**
@@ -266,8 +286,15 @@ namespace necsim
          * @param startywrap the ending y wrap
          * @return true if the end point passes the density and restricted checks
          */
-        bool checkEndPoint(const unsigned long &density, long &oldx, long &oldy, long &oldxwrap, long &oldywrap,
-                           const long &startx, const long &starty, const long &startxwrap, const long &startywrap);
+        bool checkEndPoint(const unsigned long &density,
+                           long &oldx,
+                           long &oldy,
+                           long &oldxwrap,
+                           long &oldywrap,
+                           const long &startx,
+                           const long &starty,
+                           const long &startxwrap,
+                           const long &startywrap);
 
         /**
          * @brief Check the end point for the given coordinates and density
@@ -282,8 +309,14 @@ namespace necsim
          * @param startywrap the ending y wrap
          * @return true if the end point passes the density and restricted checks
          */
-        bool checkEndPointDensity(const unsigned long &density, long &oldx, long &oldy, long &oldxwrap, long &oldywrap,
-                                  const long &startx, const long &starty, const long &startxwrap,
+        bool checkEndPointDensity(const unsigned long &density,
+                                  long &oldx,
+                                  long &oldy,
+                                  long &oldxwrap,
+                                  long &oldywrap,
+                                  const long &startx,
+                                  const long &starty,
+                                  const long &startxwrap,
                                   const long &startywrap);
 
         /**
@@ -299,8 +332,14 @@ namespace necsim
          * @param startywrap the ending y wrap
          * @return true if the end point passes the density and restricted checks
          */
-        bool checkEndPointRestricted(const unsigned long &density, long &oldx, long &oldy, long &oldxwrap,
-                                     long &oldywrap, const long &startx, const long &starty, const long &startxwrap,
+        bool checkEndPointRestricted(const unsigned long &density,
+                                     long &oldx,
+                                     long &oldy,
+                                     long &oldxwrap,
+                                     long &oldywrap,
+                                     const long &startx,
+                                     const long &starty,
+                                     const long &startxwrap,
                                      const long &startywrap);
 
         /**
@@ -316,9 +355,15 @@ namespace necsim
          * @param startywrap the ending y wrap
          * @return true if the end point passes the density and restricted checks
          */
-        bool checkEndPointDensityReproduction(const unsigned long &density, long &oldx, long &oldy, long &oldxwrap,
-                                              long &oldywrap, const long &startx, const long &starty,
-                                              const long &startxwrap, const long &startywrap);
+        bool checkEndPointDensityReproduction(const unsigned long &density,
+                                              long &oldx,
+                                              long &oldy,
+                                              long &oldxwrap,
+                                              long &oldywrap,
+                                              const long &startx,
+                                              const long &starty,
+                                              const long &startxwrap,
+                                              const long &startywrap);
 
         /**
          * @brief Check the end point for the given coordinates and density
@@ -333,9 +378,14 @@ namespace necsim
          * @param startywrap the ending y wrap
          * @return true if the end point passes the density and restricted checks
          */
-        bool checkEndPointDensityRestrictedReproduction(const unsigned long &density, long &oldx, long &oldy,
-                                                        long &oldxwrap, long &oldywrap, const long &startx,
-                                                        const long &starty, const long &startxwrap,
+        bool checkEndPointDensityRestrictedReproduction(const unsigned long &density,
+                                                        long &oldx,
+                                                        long &oldy,
+                                                        long &oldxwrap,
+                                                        long &oldywrap,
+                                                        const long &startx,
+                                                        const long &starty,
+                                                        const long &startxwrap,
                                                         const long &startywrap);
 
         /**
@@ -350,6 +400,16 @@ namespace necsim
          * @return the probability of self-dispersal
          */
         double getSelfDispersalProbability(const Cell &cell) const;
+
+        /**
+         * @brief If required, reimports the raw dispersal map from disk.
+         */
+        void reimportRawDispersalMap();
+
+        /**
+         * @brief Removes all self-dispersal events from the dispersal map.
+         */
+        void removeSelfDispersal();
 
     };
 }

@@ -7,7 +7,8 @@
 #include <ciso646>
 
 #endif
-
+#ifndef NECSIM_HEAP_HPP
+#define NECSIM_HEAP_HPP
 namespace std
 {
 
@@ -15,12 +16,17 @@ namespace std
 
     template<class _RandomAccessIterator, class _Compare>
     inline _LIBCPP_INLINE_VISIBILITY
-    void
-    update_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _RandomAccessIterator __elem,
-                _Compare __comp)
+    void update_heap(_RandomAccessIterator __first,
+                     _RandomAccessIterator __last,
+                     _RandomAccessIterator __elem,
+                     _Compare __comp)
     {
-        typedef typename __comp_ref_type<_Compare>::type _Comp_ref;
 
+#if defined(__comp_ref_type)
+        typedef typename __comp_ref_type<_Compare>::type _Comp_ref;
+#else
+        using _Comp_ref = _Compare;
+#endif
         if((__first + 1) >= __last)
         {
             return;
@@ -45,11 +51,9 @@ namespace std
 
     template<class _RandomAccessIterator>
     inline _LIBCPP_INLINE_VISIBILITY
-    void
-    update_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _RandomAccessIterator __elem)
+    void update_heap(_RandomAccessIterator __first, _RandomAccessIterator __last, _RandomAccessIterator __elem)
     {
-        _VSTD::update_heap(__first, __last, __elem,
-                           __less<typename iterator_traits<_RandomAccessIterator>::value_type>());
+        update_heap(__first, __last, __elem, __less<typename iterator_traits<_RandomAccessIterator>::value_type>());
     }
 
 #elif defined(__GLIBCXX__) || (__GLIBCPP__)
@@ -211,3 +215,4 @@ namespace std
 #endif
 
 }
+#endif // NECSIM_HEAP_HPP

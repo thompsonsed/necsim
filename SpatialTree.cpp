@@ -422,13 +422,16 @@ namespace necsim
         return number_start;
     }
 
-    unsigned long SpatialTree::getIndividualsSampled(const long &x, const long &y, const long &x_wrap,
-                                                     const long &y_wrap, const double &current_gen)
+    unsigned long SpatialTree::getIndividualsSampled(const long &x,
+                                                     const long &y,
+                                                     const long &x_wrap,
+                                                     const long &y_wrap,
+                                                     const double &current_gen)
     {
         //	if(sim_parameters->uses_spatial_sampling)
         //	{
-        return static_cast<unsigned long>(max(floor(deme_sample * landscape->getVal(x, y, x_wrap, y_wrap, current_gen)
-                                                    * samplegrid.getExactValue(x, y, x_wrap, y_wrap)), 0.0));
+        return static_cast<unsigned long>(max(floor(deme_sample * landscape->getVal(x, y, x_wrap, y_wrap, current_gen) *
+                                                    samplegrid.getExactValue(x, y, x_wrap, y_wrap)), 0.0));
         //	}
         //	else
         //	{
@@ -436,7 +439,7 @@ namespace necsim
         //	}
     }
 
-    unsigned long SpatialTree::getNumberIndividualsAtLocation(const MapLocation &location)
+    unsigned long SpatialTree::getNumberLineagesAtLocation(const MapLocation &location)
     {
         if(location.isOnGrid())
         {
@@ -453,6 +456,11 @@ namespace necsim
             next = active[next].getNext();
         }
         return total;
+    }
+
+    unsigned long SpatialTree::getNumberIndividualsAtLocation(const MapLocation &location)
+    {
+        return landscape->getVal(location.x, location.y, location.xwrap, location.ywrap, generation);
     }
 
     void SpatialTree::removeOldPosition(const unsigned long &chosen)
@@ -510,8 +518,8 @@ namespace necsim
             else
             {
                 long lastpos = grid.get(oldy, oldx).getNext();
-                while(active[lastpos].getNext()
-                      != chosen)  // loop until we reach the next, then set the next correctly.
+                while(active[lastpos].getNext() !=
+                      chosen)  // loop until we reach the next, then set the next correctly.
                 {
                     lastpos = active[lastpos].getNext();
                 }
@@ -623,8 +631,8 @@ namespace necsim
             // then the procedure is relatively simple.
             // check for coalescence
             // check if the grid needs to be updated.
-            if(grid.get(this_step.y, this_step.x).getMaxSize()
-               != landscape->getVal(this_step.x, this_step.y, 0, 0, generation))
+            if(grid.get(this_step.y, this_step.x).getMaxSize() !=
+               landscape->getVal(this_step.x, this_step.y, 0, 0, generation))
             {
                 grid.get(this_step.y, this_step.x).setMaxsize(
                         landscape->getVal(this_step.x, this_step.y, 0, 0, generation));
@@ -705,10 +713,10 @@ namespace necsim
             }
             if(this_step.coalchosen != 0)
             {
-                if(active[this_step.coalchosen].getXpos() != (unsigned long) this_step.x
-                   || active[this_step.coalchosen].getYpos() != (unsigned long) this_step.y
-                   || active[this_step.coalchosen].getXwrap() != this_step.xwrap
-                   || active[this_step.coalchosen].getYwrap() != this_step.ywrap)
+                if(active[this_step.coalchosen].getXpos() != (unsigned long) this_step.x ||
+                   active[this_step.coalchosen].getYpos() != (unsigned long) this_step.y ||
+                   active[this_step.coalchosen].getXwrap() != this_step.xwrap ||
+                   active[this_step.coalchosen].getYwrap() != this_step.ywrap)
                 {
 #ifdef DEBUG
                     writeLog(50, "Logging this_step.chosen:");
@@ -839,8 +847,8 @@ namespace necsim
             tmpdatactive.setup(active[chosen]);
             // now need to remove the chosen lineage from memory, by replacing it with the lineage that lies in the last
             // place.
-            if(active[endactive].getXwrap() == 0
-               && active[endactive].getYwrap() == 0)  // if the end lineage is simple, we can just copy it across.
+            if(active[endactive].getXwrap() == 0 &&
+               active[endactive].getYwrap() == 0)  // if the end lineage is simple, we can just copy it across.
             {
                 // check endactive
                 if(active[endactive].getNwrap() != 0)
@@ -879,8 +887,8 @@ namespace necsim
                         throw FatalException(string("Nwrap for endactive not set correctly. Nwrap is 1, but "
                                                     "lineage at 1st position is " + to_string(
                                 (long long) grid.get(active[endactive].getYpos(),
-                                                     active[endactive].getXpos()).getNext())
-                                                    + ". Identified during the move."));
+                                                     active[endactive].getXpos()).getNext()) +
+                                                    ". Identified during the move."));
                     }
                     grid.get(active[endactive].getYpos(), active[endactive].getXpos()).setNext(chosen);
                 }
@@ -1167,30 +1175,33 @@ namespace necsim
     string SpatialTree::simulationParametersSqlInsertion()
     {
         string to_execute;
-        to_execute = "INSERT INTO SIMULATION_PARAMETERS VALUES(" + to_string((long long) seed) + ","
-                     + to_string((long long) job_type);
-        to_execute += ",'" + out_directory + "'," + boost::lexical_cast<std::string>((long double) spec) + ","
-                      + to_string((long double) sim_parameters->sigma) + ",";
-        to_execute += to_string((long double) sim_parameters->tau) + "," + to_string((long double) sim_parameters->deme)
-                      + ",";
+        to_execute = "INSERT INTO SIMULATION_PARAMETERS VALUES(" + to_string((long long) seed) + "," +
+                     to_string((long long) job_type);
+        to_execute += ",'" + out_directory + "'," + boost::lexical_cast<std::string>((long double) spec) + "," +
+                      to_string((long double) sim_parameters->sigma) + ",";
+        to_execute +=
+                to_string((long double) sim_parameters->tau) + "," + to_string((long double) sim_parameters->deme) +
+                ",";
         to_execute += to_string((long double) sim_parameters->deme_sample) + "," + to_string((long long) maxtime) + ",";
-        to_execute += to_string((long double) sim_parameters->dispersal_relative_cost) + ","
-                      + to_string((long long) desired_specnum) + ",";
+        to_execute += to_string((long double) sim_parameters->dispersal_relative_cost) + "," +
+                      to_string((long long) desired_specnum) + ",";
         to_execute += to_string((long double) sim_parameters->habitat_change_rate) + ",";
-        to_execute += to_string((long double) sim_parameters->gen_since_historical) + ",'" + sim_parameters->times_file
-                      + "','";
+        to_execute +=
+                to_string((long double) sim_parameters->gen_since_historical) + ",'" + sim_parameters->times_file +
+                "','";
         to_execute += coarse_map_input + "'," + to_string((long long) sim_parameters->coarse_map_x_size) + ",";
-        to_execute += to_string((long long) sim_parameters->coarse_map_y_size) + ","
-                      + to_string((long long) sim_parameters->coarse_map_x_offset) + ",";
-        to_execute += to_string((long long) sim_parameters->coarse_map_y_offset) + ","
-                      + to_string((long long) sim_parameters->coarse_map_scale) + ",'";
-        to_execute += fine_map_input + "'," + to_string((long long) sim_parameters->fine_map_x_size) + ","
-                      + to_string((long long) sim_parameters->fine_map_y_size);
-        to_execute += "," + to_string((long long) sim_parameters->fine_map_x_offset) + ","
-                      + to_string((long long) sim_parameters->fine_map_y_offset) + ",'";
-        to_execute += sim_parameters->sample_mask_file + "'," + to_string((long long) sim_parameters->grid_x_size) + ","
-                      + to_string((long long) sim_parameters->grid_y_size) + ","
-                      + to_string((long long) sim_parameters->sample_x_size) + ", ";
+        to_execute += to_string((long long) sim_parameters->coarse_map_y_size) + "," +
+                      to_string((long long) sim_parameters->coarse_map_x_offset) + ",";
+        to_execute += to_string((long long) sim_parameters->coarse_map_y_offset) + "," +
+                      to_string((long long) sim_parameters->coarse_map_scale) + ",'";
+        to_execute += fine_map_input + "'," + to_string((long long) sim_parameters->fine_map_x_size) + "," +
+                      to_string((long long) sim_parameters->fine_map_y_size);
+        to_execute += "," + to_string((long long) sim_parameters->fine_map_x_offset) + "," +
+                      to_string((long long) sim_parameters->fine_map_y_offset) + ",'";
+        to_execute +=
+                sim_parameters->sample_mask_file + "'," + to_string((long long) sim_parameters->grid_x_size) + "," +
+                to_string((long long) sim_parameters->grid_y_size) + "," +
+                to_string((long long) sim_parameters->sample_x_size) + ", ";
         to_execute += to_string((long long) sim_parameters->sample_y_size) + ", ";
         to_execute += to_string((long long) sim_parameters->sample_x_offset) + ", ";
         to_execute += to_string((long long) sim_parameters->sample_y_offset) + ", '";
@@ -1383,8 +1394,8 @@ namespace necsim
             writeLog(10, "\nActivity map validation complete.");
 #endif // DEBUG
         }
-        if(!(sim_parameters->reproduction_file == "none" || sim_parameters->reproduction_file == "null")
-           && !reproduction_map->isNull())
+        if(!(sim_parameters->reproduction_file == "none" || sim_parameters->reproduction_file == "null") &&
+           !reproduction_map->isNull())
         {
             has_printed = false;
             for(unsigned long i = 0; i < sim_parameters->fine_map_y_size; i++)
@@ -1457,8 +1468,12 @@ namespace necsim
 #endif
     }
 
-    unsigned long SpatialTree::countCellExpansion(const long &x, const long &y, const long &xwrap, const long &ywrap,
-                                                  const double &generation_in, vector<TreeNode> &data_added)
+    unsigned long SpatialTree::countCellExpansion(const long &x,
+                                                  const long &y,
+                                                  const long &xwrap,
+                                                  const long &ywrap,
+                                                  const double &generation_in,
+                                                  vector<TreeNode> &data_added)
     {
         unsigned long map_cover = landscape->getVal(x, y, xwrap, ywrap, generation_in);
         unsigned long num_to_add = getIndividualsSampled(x, y, xwrap, ywrap, generation_in);
@@ -1516,8 +1531,13 @@ namespace necsim
         return num_to_add;
     }
 
-    void SpatialTree::expandCell(long x, long y, long x_wrap, long y_wrap, double generation_in,
-                                 unsigned long num_to_add, vector<TreeNode> &data_added,
+    void SpatialTree::expandCell(long x,
+                                 long y,
+                                 long x_wrap,
+                                 long y_wrap,
+                                 double generation_in,
+                                 unsigned long num_to_add,
+                                 vector<TreeNode> &data_added,
                                  vector<DataPoint> &active_added)
     {
         if(num_to_add > 0)
@@ -1553,6 +1573,515 @@ namespace necsim
 
             }
         }
+    }
+
+    void SpatialTree::addGillespie(const double &g_threshold)
+    {
+        stringstream ss;
+        ss << "Using gillespie algorithm in simulation from generation " << g_threshold << "." << endl;
+        writeInfo(ss.str());
+        gillespie_threshold = g_threshold;
+        using_gillespie = true;
+    }
+
+    bool SpatialTree::runSimulationGillespie()
+    {
+        do
+        {
+            runSingleLoop();
+        }
+        while((endactive < gillespie_threshold) && (endactive > 1) &&
+              ((steps < 100) || difftime(sim_end, start) < maxtime) && this_step.bContinueSim);
+        // Switch to gillespie
+        writeInfo("Switching to Gillespie algorithm.\n");
+        setupGillespie();
+        writeInfo("Starting Gillespie event loop...\n");
+        do
+        {
+            runGillespieLoop();
+        }
+        while(endactive > 1);
+        return stopSimulation();
+
+    }
+
+    void SpatialTree::runGillespieLoop()
+    {
+
+        // Decide what event and execute
+        EventType next_event = heap.front().event_type;
+        // Update the event timer
+        steps += (heap.front().time_of_event - generation) * double(endactive);
+        generation = heap.front().time_of_event;
+        stringstream ss;
+        ss << "Event at " << heap.front().time_of_event << endl;
+        writeInfo(ss.str());
+        // Estimate the number of steps that have occurred.
+        switch(next_event)
+        {
+            case EventType::cell_event:
+            {
+                GillespieProbability &origin = probabilities.get(heap.front().cell.y, heap.front().cell.x);
+                gillespieCellEvent(origin);
+                break;
+            }
+
+            case EventType::map_event:
+                gillespieUpdateMap();
+                break;
+
+            case EventType::sample_event:
+                gillespieSampleIndividuals();
+                break;
+
+            case EventType::undefined:
+                throw FatalException("Undefined event in Gillespie algorithm. Please report this bug.");
+        }
+
+    }
+
+    void SpatialTree::setupGillespie()
+    {
+        setupGillespieMaps();
+        findLocations();
+        updateAllProbabilities();
+        createEventList();
+        checkMapEvents();
+        checkSampleEvents();
+        sortEvents();
+        // TODO add making dispersal map cumulative without the self-dispersal events
+    }
+
+    void SpatialTree::setupGillespieMaps()
+    {
+        if(dispersal_coordinator.isFullDispersalMap())
+        {
+            writeInfo("\tCreating cumulative dispersal map, excluding self-dispersal events...\n");
+            self_dispersal_probabilities.setSize(sim_parameters->fine_map_y_size, sim_parameters->fine_map_x_size);
+            dispersal_coordinator.reimportRawDispersalMap();
+            for(unsigned long i = 0; i < sim_parameters->fine_map_y_size; i++)
+            {
+                for(unsigned long j = 0; j < sim_parameters->fine_map_x_size; j++)
+                {
+                    self_dispersal_probabilities.get(i, j) = dispersal_coordinator.getSelfDispersalProbability(
+                            Cell(j, i));
+                }
+            }
+            dispersal_coordinator.removeSelfDispersal();
+        }
+        probabilities.setSize(sim_parameters->fine_map_y_size, sim_parameters->fine_map_x_size);
+    }
+
+    Cell SpatialTree::getCellOfMapLocation(const MapLocation &location)
+    {
+        Cell cell{};
+        cell.x = landscape->convertSampleXToFineX(location.x, location.xwrap);
+        cell.y = landscape->convertSampleYToFineY(location.y, location.ywrap);
+        return cell;
+    }
+
+    void SpatialTree::findLocations()
+    {
+        writeInfo("\tFinding all locations in the simulated world...\n");
+        for(unsigned long y = 0; y < sim_parameters->fine_map_y_size; y++)
+        {
+            for(unsigned long x = 0; x < sim_parameters->fine_map_x_size; x++)
+            {
+                long x_pos = x;
+                long y_pos = y;
+                long x_wrap = 0;
+                long y_wrap = 0;
+                landscape->convertFineToSample(x_pos, x_wrap, y_pos, y_wrap);
+                MapLocation location(x_pos, y_pos, x_wrap, y_wrap);
+                addLocation(location);
+            }
+        }
+
+    }
+
+    void SpatialTree::checkMapEvents()
+    {
+        double next_map_update = 0.0;
+        if(landscape->requiresUpdate())
+        {
+            next_map_update = sim_parameters->all_historical_map_parameters.front().generation;
+            if(next_map_update > 0.0 && next_map_update < generation)
+            {
+                //heap.emplace_back(GillespieHeapNode(generation, EventType::map_event));
+            }
+        }
+    }
+
+    void SpatialTree::checkSampleEvents()
+    {
+        for(const auto &item: reference_times)
+        {
+            // Find the first time that's after this point in time.
+            if(item > generation)
+            {
+                //heap.emplace_back(GillespieHeapNode(generation, EventType::sample_event));
+            }
+        }
+    }
+
+    void SpatialTree::gillespieCellEvent(GillespieProbability &origin)
+    {
+        CellEventType cell_event = origin.generateRandomEvent(NR);
+        origin.setRandomNumber(NR->d01());
+        switch(cell_event)
+        {
+            case CellEventType::coalescence_event:
+                // implement coalescence
+                gillespieCoalescenceEvent(origin);
+                break;
+
+            case CellEventType::dispersal_event:
+                // choose dispersal
+                gillespieDispersalEvent(origin);
+                break;
+
+            case CellEventType::speciation_event:
+                gillespieSpeciationEvent(origin);
+                break;
+
+            case CellEventType::undefined:
+                throw FatalException("Undefined cell event type. Please report this bug.");
+                break;
+        }
+
+    }
+
+    void SpatialTree::gillespieUpdateMap()
+    {
+        // First delete all existing objects
+        clearGillespieObjects();
+
+        // Update the existing landscape structure
+        if(landscape->updateMap(generation))
+        {
+            dispersal_coordinator.updateDispersalMap();
+            // Update all the heap variables
+            findLocations();
+            updateAllProbabilities();
+            createEventList();
+
+            // Now need to get the next update map event.
+            checkMapEvents();
+            checkSampleEvents();
+            sortEvents();
+        }
+        else
+        {
+            stringstream ss;
+            ss << "Didn't update map at generation " << generation
+               << ". Incorrect placement of map_event on events queue. Please report this bug." << endl;
+            throw FatalException(ss.str());
+        }
+
+    }
+
+    void SpatialTree::gillespieSampleIndividuals()
+    {
+        clearGillespieObjects();
+        addLineages(generation);
+        findLocations();
+        updateAllProbabilities();
+        createEventList();
+        checkMapEvents();
+        checkSampleEvents();
+        sortEvents();
+    }
+
+    void SpatialTree::gillespieCoalescenceEvent(GillespieProbability &origin)
+    {
+        auto lineages = selectTwoRandomLineages(origin.getMapLocation());
+        gillespieUpdateGeneration(lineages.first);
+        stringstream ss; // TODO remove
+        ss << "Location at " << origin.getMapLocation().x << ", " << origin.getMapLocation().y << endl;
+        ss << "Coalescing lineages at " << lineages.first << " and " << lineages.second << endl;
+        ss << heap.front().time_of_event << endl;
+
+        if(lineages.first > active.size() || lineages.second > active.size())
+        {
+            throw FatalException("Lineage indexing incorrect. Please report this bug."); // TODO remove
+        }
+        coalescenceEvent(lineages.first, lineages.second);
+        const MapLocation &location = origin.getMapLocation();
+        updateCellCoalescenceProbability(origin, getNumberIndividualsAtLocation(location));
+        ss << heap.front().time_of_event << endl;
+        updateInhabitedCellOnHeap(convertMapLocationToCell(location));
+        ss << heap.front().time_of_event << endl;
+        writeInfo(ss.str());
+    }
+
+    void SpatialTree::gillespieDispersalEvent(GillespieProbability &origin)
+    {
+        // Select a lineage in the target cell.
+        unsigned long chosen = selectRandomLineage(origin.getMapLocation());
+        // Sets the old location for the lineage and zeros out the coalescence stuff
+        recordLineagePosition();
+        // Remove the chosen lineage from the cell
+        removeOldPosition(chosen);
+        // Performs the move and calculates any coalescence events
+        calcNextStep();
+        // Get the destination cell and update the probabilities.
+        Cell destination_cell(convertMapLocationToCell(active[chosen]));
+        auto x = destination_cell.x;
+        auto y = destination_cell.y;
+        unsigned long n = getNumberLineagesAtLocation(origin.getMapLocation());
+        if(n > 0)
+        {
+            updateCellCoalescenceProbability(origin, getNumberIndividualsAtLocation(origin.getMapLocation()));
+            updateInhabitedCellOnHeap(destination_cell);
+        }
+        else
+        {
+            removeHeapTop();
+            cellToHeapPositions.get(y, x) = SpatialTree::UNUSED;
+        }
+
+        GillespieProbability &destination = probabilities.get(y, x);
+        if(cellToHeapPositions.get(y, x) == SpatialTree::UNUSED)
+        {
+            addNewEvent(x, y);
+        }
+        else if(!this_step.coal)
+        {
+            // Needs to update destination
+            destination.setCoalescenceProbability(calculateCoalescenceProbability(destination.getMapLocation()));
+            const double local_death_rate = getLocalDeathRate(active[chosen]);
+            destination.setRandomNumber(NR->d01());
+            const double t = destination.calcTimeToNextEvent(local_death_rate, summed_death_rate,
+                                                             getNumberIndividualsAtLocation(
+                                                                     destination.getMapLocation()));
+            heap[cellToHeapPositions.get(y, x)].time_of_event = t;
+            updateInhabitedCellOnHeap(destination_cell);
+        }
+
+    }
+
+    void SpatialTree::gillespieSpeciationEvent(GillespieProbability &origin)
+    {
+        const MapLocation &location = origin.getMapLocation();
+        unsigned long chosen = selectRandomLineage(location);
+        gillespieUpdateGeneration(chosen);
+        speciateLineage(active[chosen].getReference());
+        updateCellCoalescenceProbability(origin, getNumberIndividualsAtLocation(location));
+        updateInhabitedCellOnHeap(convertMapLocationToCell(origin.getMapLocation()));
+    }
+
+    template<typename T>
+    const double SpatialTree::getLocalDeathRate(const T &location)
+    {
+        const Cell cell = convertMapLocationToCell(location);
+        if(death_map->isNull())
+        {
+            return 1.0;
+        }
+        else
+        {
+            return death_map->get(cell.y, cell.x);
+        }
+    }
+
+    template<typename T>
+    const double SpatialTree::getLocalSelfDispersalRate(const T &location)
+    {
+        const Cell cell = convertMapLocationToCell(location);
+        if(dispersal_coordinator.isFullDispersalMap())
+        {
+            return 1.0;
+        }
+        return self_dispersal_probabilities.get(cell.y, cell.x);
+    }
+
+    void SpatialTree::clearGillespieObjects()
+    {
+        cellToHeapPositions.fill(0);
+        heap.clear();
+        for(auto &item : probabilities)
+        {
+            item.reset();
+        }
+    }
+
+    void SpatialTree::gillespieUpdateGeneration(const unsigned long &lineage)
+    {
+        TreeNode &tree_node = (*data)[active[lineage].getReference()];
+        unsigned long generations_existed = round(generation) - tree_node.getGeneration();
+        tree_node.setGeneration(generations_existed);
+    }
+
+    // TODO change n to the density of the cell
+    void SpatialTree::updateCellCoalescenceProbability(GillespieProbability &origin, const unsigned long &n)
+    {
+        const MapLocation &location = origin.getMapLocation();
+        origin.setCoalescenceProbability(calculateCoalescenceProbability(location));
+        origin.setRandomNumber(NR->d01());
+        heap.front().time_of_event = origin.calcTimeToNextEvent(getLocalDeathRate(location), summed_death_rate, n);
+    }
+
+    void SpatialTree::updateInhabitedCellOnHeap(const Cell &pos)
+    {
+        std::update_heap(heap.begin(), heap.end(), heap.begin() + cellToHeapPositions.get(pos.y, pos.x));
+    }
+
+    void SpatialTree::updateAllProbabilities()
+    {
+        writeInfo("\tCalculating global mean death rate and total number of individuals...\n");
+
+        if(!death_map->isNull())
+        {
+            summed_death_rate = 0.0;
+            for(unsigned long y = 0; y < sim_parameters->fine_map_y_size; y++)
+            {
+                for(unsigned long x = 0; x < sim_parameters->fine_map_y_size; x++)
+                {
+                    summed_death_rate += death_map->get(y, x) * landscape->getValFine(x, y, generation);
+                }
+            }
+        }
+        else
+        {
+            // calculate global death rate mean if death rates are equal
+            summed_death_rate = std::accumulate(landscape->getFineMap().begin(), landscape->getFineMap().end(),
+                                                (unsigned long) 0);
+        }
+    }
+
+    void SpatialTree::removeHeapTop()
+    {
+        std::pop_heap(heap.begin(), heap.end());
+        heap.pop_back();
+    }
+
+    void SpatialTree::createEventList()
+    {
+        writeInfo("\tAdding events to event list...\n");
+        cellToHeapPositions.setSize(sim_parameters->fine_map_y_size, sim_parameters->fine_map_x_size);
+        cellToHeapPositions.fill(SpatialTree::UNUSED);
+
+        for(unsigned long y = 0; y < sim_parameters->fine_map_y_size; y++)
+        {
+            for(unsigned long x = 0; x < sim_parameters->fine_map_x_size; x++)
+            {
+                addNewEvent(x, y);
+            }
+        }
+    }
+
+    void SpatialTree::sortEvents()
+    {
+        std::make_heap(heap.begin(), heap.end());
+        /*stringstream ss;
+        ss << "Heap[0]" << heap[0].time_of_event << ", " << heap[0].pos << endl;
+        ss << "Heap[1]" << heap[1].time_of_event << ", " << heap[1].pos << endl;
+        ss << "Attempting custom swap.\n";
+        using std::swap;
+        swap(heap[0], heap[1]);
+        ss << "Heap[0]" << heap[0].time_of_event << ", " << heap[0].pos << endl;
+        ss << "Heap[1]" << heap[1].time_of_event << ", " << heap[1].pos << endl;
+        writeInfo(ss.str());*/
+    }
+
+    void SpatialTree::addNewEvent(const unsigned long &x, const unsigned long &y)
+    {
+        const MapLocation &location = probabilities.get(y, x).getMapLocation();
+        if(getNumberLineagesAtLocation(location) > 0)
+        {
+            cellToHeapPositions.get(y, x) = heap.size();
+            heap.emplace_back(GillespieHeapNode(Cell(x, y), (probabilities.get(y, x).calcTimeToNextEvent(
+                    getLocalDeathRate(location), summed_death_rate, getNumberIndividualsAtLocation(location)) +
+                                                             generation), &cellToHeapPositions.get(y, x),
+                                                EventType::cell_event, &heap));
+        }
+    }
+
+    void SpatialTree::addLocation(const MapLocation &location)
+    {
+        Cell cell = getCellOfMapLocation(location);
+        GillespieProbability gp(location);
+        // check if any lineages exist there
+
+        gp.setDispersalOutsideCellProbability(1.0 - getLocalSelfDispersalRate(location));
+        gp.setCoalescenceProbability(calculateCoalescenceProbability(location));
+        gp.setSpeciationProbability(spec);
+        gp.setRandomNumber(NR->d01());
+
+        probabilities.get(static_cast<const unsigned long &>(cell.y), static_cast<const unsigned long &>(cell.x)) = gp;
+    }
+
+    double SpatialTree::calculateCoalescenceProbability(const MapLocation &location)
+    {
+        unsigned long max_number_individuals = landscape->getVal(location.x, location.y, location.xwrap, location.ywrap,
+                                                                 generation);
+        unsigned long current_number = getNumberIndividualsAtLocation(location);
+        return min((double(current_number) - 1.0) / double(max_number_individuals), 1.0);
+
+    }
+
+    unsigned long SpatialTree::selectRandomLineage(const MapLocation &location) const
+    {
+        vector<unsigned long> lineage_ids = detectLineages(location);
+        unsigned long random_index = NR->i0(lineage_ids.size());
+        return lineage_ids[random_index];
+    }
+
+    pair<unsigned long, unsigned long> SpatialTree::selectTwoRandomLineages(const MapLocation &location) const
+    {
+        vector<unsigned long> lineage_ids = detectLineages(location);
+        if(lineage_ids.size() < 2)
+        {
+            throw FatalException("Cannot select two lineages when fewer than two exist at location.");
+        }
+        pair<unsigned long, unsigned long> selected_lineages;
+        selected_lineages.first = lineage_ids[NR->i0(lineage_ids.size() - 1)];
+
+        do
+        {
+            selected_lineages.second = lineage_ids[NR->i0(lineage_ids.size() - 1)];
+        }
+        while(selected_lineages.second == selected_lineages.first);
+        return selected_lineages;
+    }
+
+    vector<unsigned long> SpatialTree::detectLineages(const MapLocation &location) const
+    {
+        const SpeciesList &species_list = grid.get(location.y, location.x);
+        vector<unsigned long> lineage_ids;
+        if(location.isOnGrid())
+        {
+            lineage_ids.reserve(species_list.getListSize());
+            for(unsigned long i = 0; i < species_list.getListLength(); i++)
+            {
+                unsigned long lineage_index = species_list.getLineageIndex(i);
+                if(lineage_index != 0)
+                {
+                    lineage_ids.push_back(lineage_index);
+                    if(lineage_ids.size() > species_list.getListSize())
+                    {
+                        break;
+                    }
+                }
+            }
+        }
+        else
+        {
+            lineage_ids.reserve(species_list.getNwrap());
+            unsigned long next = species_list.getNext();
+            do
+            {
+                const DataPoint &datapoint = active[next];
+                if(datapoint == location)
+                {
+                    lineage_ids.push_back(next);
+                }
+                next = active[next].getNext();
+            }
+            while(next != 0);
+        }
+        return lineage_ids;
+
     }
 
 #ifdef DEBUG
@@ -1790,6 +2319,8 @@ namespace necsim
             }
         }
     }
+
+
 
 #endif
 };

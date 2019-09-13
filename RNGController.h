@@ -618,15 +618,16 @@ namespace random_numbers
 
         }
 
-        long double randomExponential(long double lambda)
+        double randomExponential(double lambda)
         {
             return exponentialDistribution(lambda, d01());
         }
-
-        static long double exponentialDistribution(long double lambda, long double r)
+        template<typename T>
+        const static T exponentialDistribution(const T lambda, const T r)
         {
             return -log(r) / lambda;
         }
+
 
         /**
          * @brief Outputs the NRrand object to the output stream.

@@ -181,6 +181,26 @@ namespace necsim
          * @param col the column number to get the value at
          * @return the value at the specified row and column
          */
+        const T &get(const unsigned long &row, const unsigned long &col) const
+        {
+#ifdef DEBUG
+            if(row < 0 || row >= num_rows || col < 0 || col >= num_cols)
+            {
+                stringstream ss;
+                ss << "Index of " << row << ", " << col << " is out of range of matrix with size " << num_rows;
+                ss << ", " << num_cols << endl;
+                throw out_of_range(ss.str());
+            }
+#endif
+            return matrix[index(row, col)];
+        }
+
+        /**
+         * @brief Gets the value at a particular index.
+         * @param row the row number to get the value at
+         * @param col the column number to get the value at
+         * @return the value at the specified row and column
+         */
         T getCopy(const unsigned long &row, const unsigned long &col) const
         {
 #ifdef DEBUG

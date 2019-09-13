@@ -124,9 +124,10 @@ namespace necsim
         bool bIsProtracted;
         // variable for storing the paused sim location if files have been moved during paused/resumed simulations!
         string pause_sim_directory;
-        // Gillespie variables
-        // The number of individuals left at the point we should switch to using the gillespie algorithm.
-        unsigned long gillespie_threshold;
+        // Set to true to use the gillespie method - this is currently only supported for spatial simulations using a
+        // dispersal map and point speciation (i.e. the method is unsupported for non-spatial simulations,
+        // spatial simulations not using a dispersal map and those that use protracted speciation).
+        bool using_gillespie;
     public:
         Tree() : data(make_shared<vector<TreeNode>>()), enddata(0), sim_parameters(make_shared<SimParameters>()),
                  NR(make_shared<RNGController>()), speciation_rates(), seeded(false), seed(-1), job_type(-1),
@@ -139,7 +140,8 @@ namespace necsim
                  outdatabase(),
 #endif //sql_ram
                  this_step(), sql_output_database("null"), bFullMode(false), bResume(false), bConfig(true),
-                 has_paused(false), has_imported_pause(false), bIsProtracted(false), pause_sim_directory("null")
+                 has_paused(false), has_imported_pause(false), bIsProtracted(false), pause_sim_directory("null"),
+                 using_gillespie(false)
         {
 
         }
@@ -363,7 +365,6 @@ namespace necsim
          */
         bool runSimulationNoGillespie();
 
-
         /**
          * @brief Writes to the console that the simulation is beginning
          */
@@ -431,7 +432,8 @@ namespace necsim
          * @param no_generations the number of generations a lineage has existed for
          * @return if true, speciation has occured
          */
-        virtual bool calcSpeciation(const long double &random_number, const long double &speciation_rate,
+        virtual bool calcSpeciation(const long double &random_number,
+                                    const long double &speciation_rate,
                                     const unsigned long &no_generations);
 
         /**
@@ -694,7 +696,10 @@ namespace necsim
          * @param job_type the simulation job reference number
          * @param new_max_time the maximum simulation time to run for in seconds (0 keeps old simulation max time)
          */
-        void setResumeParameters(string pausedir, string outdir, unsigned long seed, unsigned long job_type,
+        void setResumeParameters(string pausedir,
+                                 string outdir,
+                                 unsigned long seed,
+                                 unsigned long job_type,
                                  unsigned long new_max_time);
 
         /**
@@ -730,6 +735,10 @@ namespace necsim
          * Reads in the parameters and objects from file and re-starts the simulation.
          */
         virtual void simResume();
+
+        virtual void addGillespie(const double &g_threshold);
+
+        virtual bool runSimulationGillespie();
 
 #ifdef DEBUG
 

@@ -13,16 +13,13 @@
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 #include "DispersalCoordinator.h"
-#include <utility>
-#include "custom_exceptions.h"
-#include "Logging.h"
 
 namespace necsim
 {
-    DispersalCoordinator::DispersalCoordinator() : dispersal_prob_map(), raw_dispersal_prob_map(), NR(nullptr),
-                                                   landscape(make_shared<Landscape>()),
-                                                   reproduction_map(make_shared<ActivityMap>()), generation(nullptr),
-                                                   doDispersal(nullptr), checkEndPointFptr(nullptr), xdim(0), ydim(0)
+    DispersalCoordinator::DispersalCoordinator()
+            : dispersal_prob_map(), raw_dispersal_prob_map(), NR(nullptr), landscape(make_shared<Landscape>()),
+              reproduction_map(make_shared<ActivityMap>()), generation(nullptr), doDispersal(nullptr),
+              checkEndPointFptr(nullptr), xdim(0), ydim(0), full_dispersal_map(false)
     {
 
     }
@@ -34,6 +31,10 @@ namespace necsim
         NR = std::move(NR_ptr);
     }
 
+    bool DispersalCoordinator::isFullDispersalMap() const
+    {
+        return full_dispersal_map;
+    }
     void DispersalCoordinator::setMaps(const shared_ptr<Landscape> &landscape_ptr, shared_ptr<ActivityMap> repr_map_ptr)
     {
         landscape = landscape_ptr;
@@ -51,16 +52,22 @@ namespace necsim
         setMaps(std::move(landscape_ptr), make_shared<ActivityMap>());
     }
 
-    void DispersalCoordinator::setGenerationPtr(double* generation_ptr)
+    void DispersalCoordinator::setGenerationPtr(double *generation_ptr)
     {
         generation = generation_ptr;
     }
 
-    void DispersalCoordinator::setDispersal(const string &dispersal_method, const string &dispersal_file,
-                                            const unsigned long &dispersal_x, const unsigned long &dispersal_y,
-                                            const double &m_probin, const double &cutoffin, const double &sigmain,
-                                            const double &tauin, const bool &restrict_self)
+    void DispersalCoordinator::setDispersal(const string &dispersal_method,
+                                            const string &dispersal_file,
+                                            const unsigned long &dispersal_x,
+                                            const unsigned long &dispersal_y,
+                                            const double &m_probin,
+                                            const double &cutoffin,
+                                            const double &sigmain,
+                                            const double &tauin,
+                                            const bool &restrict_self)
     {
+        full_dispersal_map = false;
         // Open our file connection
         if(dispersal_file == "none")
         {
@@ -86,6 +93,7 @@ namespace necsim
             writeInfo("Using dispersal file.\n");
             doDispersal = &DispersalCoordinator::disperseDispersalMap;
             importDispersal(dispersal_x * dispersal_y, dispersal_file);
+            full_dispersal_map = true;
         }
     }
 
@@ -155,8 +163,8 @@ namespace necsim
                         ss << "Source row: " << k << " destination row: " << index << endl;
                         ss << "Dispersal map value: " << dispersal_prob_map.get(k, index) << endl;
                         ss << "Origin density: "
-                           << landscape->getVal(origin_step.x, origin_step.y, origin_step.xwrap,
-                                                origin_step.ywrap, 0.0) << endl;
+                           << landscape->getVal(origin_step.x, origin_step.y, origin_step.xwrap, origin_step.ywrap, 0.0)
+                           << endl;
                         ss << "Destination density: " << landscape->getValFine(j, i, *generation) << endl;
                         writeError(ss.str());
                         throw FatalException("Dispersal map is non zero where density is 0.");
@@ -260,8 +268,7 @@ namespace necsim
                 assertReferenceMatches(y);
 #endif // DEBUG
                 bool origin_value =
-                        landscape->getVal(origin_step.x, origin_step.y, origin_step.xwrap, origin_step.ywrap, 0.0)
-                        > 0;
+                        landscape->getVal(origin_step.x, origin_step.y, origin_step.xwrap, origin_step.ywrap, 0.0) > 0;
                 double dispersal_total = 0.0;
                 for(unsigned long x = 0; x < dispersal_prob_map.getCols(); x++)
                 {
@@ -290,17 +297,16 @@ namespace necsim
                             stringstream ss;
                             ss << "Dispersal from " << origin_step.x << ", " << origin_step.y << " (";
                             ss << origin_step.xwrap << ", " << origin_step.ywrap << ") to ";
-                            ss << destination_step.x << ", " << destination_step.y << " ("
-                               << destination_step.xwrap;
+                            ss << destination_step.x << ", " << destination_step.y << " (" << destination_step.xwrap;
                             ss << ", " << destination_step.ywrap << ")" << endl;
                             ss << "Source row: " << y << " destination row: " << x << endl;
                             ss << "Dispersal map value: " << dispersal_prob << endl;
                             ss << "Origin density: "
-                               << landscape->getVal(origin_step.x, origin_step.y, origin_step.xwrap,
-                                                    origin_step.ywrap, 0.0) << endl;
+                               << landscape->getVal(origin_step.x, origin_step.y, origin_step.xwrap, origin_step.ywrap,
+                                                    0.0) << endl;
                             ss << "Destination density: "
-                               << landscape->getVal(destination_step.x, destination_step.y,
-                                                    destination_step.xwrap, destination_step.ywrap, 0.0) << endl;
+                               << landscape->getVal(destination_step.x, destination_step.y, destination_step.xwrap,
+                                                    destination_step.ywrap, 0.0) << endl;
                             writeError(ss.str());
                             throw FatalException("Dispersal map is non zero where density is 0.");
                         }
@@ -486,8 +492,8 @@ namespace necsim
                                                   this_step.ywrap, fail, *generation);
                 if(!fail)
                 {
-                    fail = !checkEndPoint(density, this_step.x, this_step.y, this_step.xwrap, this_step.ywrap,
-                                          startx, starty, startxwrap, startywrap);
+                    fail = !checkEndPoint(density, this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, startx,
+                                          starty, startxwrap, startywrap);
                 }
                 // This is a hack for those scenarios where habitat disappears and there is no easy replacement - then
                 // the parent just comes from a nearest habitat cell that exists.
@@ -519,8 +525,8 @@ namespace necsim
                 // This is to correctly mimic less-dense cells having a lower likelihood of being the parent to the cell.
                 if(!fail)
                 {
-                    fail = !checkEndPoint(density, this_step.x, this_step.y, this_step.xwrap, this_step.ywrap,
-                                          startx, starty, startxwrap, startywrap);
+                    fail = !checkEndPoint(density, this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, startx,
+                                          starty, startxwrap, startywrap);
                 }
             }
 
@@ -599,17 +605,28 @@ namespace necsim
         }
     }
 
-    bool DispersalCoordinator::checkEndPoint(const unsigned long &density, long &x, long &y, long &xwrap,
-                                             long &ywrap, const long &startx, const long &starty,
-                                             const long &startxwrap, const long &startywrap)
+    bool DispersalCoordinator::checkEndPoint(const unsigned long &density,
+                                             long &x,
+                                             long &y,
+                                             long &xwrap,
+                                             long &ywrap,
+                                             const long &startx,
+                                             const long &starty,
+                                             const long &startxwrap,
+                                             const long &startywrap)
     {
-        return (this->*checkEndPointFptr)(density, x, y, xwrap, ywrap, startx, starty, startxwrap,
-                                          startywrap);
+        return (this->*checkEndPointFptr)(density, x, y, xwrap, ywrap, startx, starty, startxwrap, startywrap);
     }
 
-    bool DispersalCoordinator::checkEndPointDensity(const unsigned long &density, long &x, long &y,
-                                                    long &xwrap, long &ywrap, const long &startx,
-                                                    const long &starty, const long &startxwrap, const long &startywrap)
+    bool DispersalCoordinator::checkEndPointDensity(const unsigned long &density,
+                                                    long &x,
+                                                    long &y,
+                                                    long &xwrap,
+                                                    long &ywrap,
+                                                    const long &startx,
+                                                    const long &starty,
+                                                    const long &startxwrap,
+                                                    const long &startywrap)
     {
         if((double(density) / double(landscape->getHabitatMax())) < NR->d01())
         {
@@ -622,9 +639,14 @@ namespace necsim
         return true;
     }
 
-    bool DispersalCoordinator::checkEndPointRestricted(const unsigned long &density, long &x, long &y,
-                                                       long &xwrap, long &ywrap, const long &startx,
-                                                       const long &starty, const long &startxwrap,
+    bool DispersalCoordinator::checkEndPointRestricted(const unsigned long &density,
+                                                       long &x,
+                                                       long &y,
+                                                       long &xwrap,
+                                                       long &ywrap,
+                                                       const long &startx,
+                                                       const long &starty,
+                                                       const long &startxwrap,
                                                        const long &startywrap)
     {
         if(startx == x && starty == y && startxwrap == xwrap && startywrap == ywrap)
@@ -634,9 +656,14 @@ namespace necsim
         return checkEndPointDensity(density, x, y, xwrap, ywrap, startx, starty, startxwrap, startywrap);
     }
 
-    bool DispersalCoordinator::checkEndPointDensityReproduction(const unsigned long &density, long &x, long &y,
-                                                                long &xwrap, long &ywrap, const long &startx,
-                                                                const long &starty, const long &startxwrap,
+    bool DispersalCoordinator::checkEndPointDensityReproduction(const unsigned long &density,
+                                                                long &x,
+                                                                long &y,
+                                                                long &xwrap,
+                                                                long &ywrap,
+                                                                const long &startx,
+                                                                const long &starty,
+                                                                const long &startxwrap,
                                                                 const long &startywrap)
     {
         if(checkEndPointDensity(density, x, y, xwrap, ywrap, startx, starty, startxwrap, startywrap))
@@ -655,9 +682,13 @@ namespace necsim
 
     }
 
-    bool DispersalCoordinator::checkEndPointDensityRestrictedReproduction(const unsigned long &density, long &x,
-                                                                          long &y, long &xwrap, long &ywrap,
-                                                                          const long &startx, const long &starty,
+    bool DispersalCoordinator::checkEndPointDensityRestrictedReproduction(const unsigned long &density,
+                                                                          long &x,
+                                                                          long &y,
+                                                                          long &xwrap,
+                                                                          long &ywrap,
+                                                                          const long &startx,
+                                                                          const long &starty,
                                                                           const long &startxwrap,
                                                                           const long &startywrap)
     {
@@ -684,9 +715,44 @@ namespace necsim
 
     double DispersalCoordinator::getSelfDispersalProbability(const Cell &cell) const
     {
+        if(!full_dispersal_map)
+        {
+            return 1.0;
+        }
         unsigned long cell_index = calculateCellIndex(cell);
+        if(cell_index >= raw_dispersal_prob_map.getCols())
+        {
+            stringstream ss;
+            ss << "Index of " << cell_index << " for cell " << cell.x << ", " << cell.y
+               << " is out of range of dispersal map with bounds " << raw_dispersal_prob_map.getCols() << ", "
+               << raw_dispersal_prob_map.getRows() << endl;
+            throw FatalException(ss.str());
+        }
         return raw_dispersal_prob_map.getCopy(cell_index, cell_index);
     }
 
+    void DispersalCoordinator::reimportRawDispersalMap()
+    {
+        if(raw_dispersal_prob_map.getCols() == 0 || raw_dispersal_prob_map.getRows() == 0)
+        {
+            raw_dispersal_prob_map.import(dispersal_prob_map.getFileName());
+        }
+    }
+
+    void DispersalCoordinator::removeSelfDispersal()
+    {
+        reimportRawDispersalMap();
+        Map<double> backup_dispersal_prob_map;
+        backup_dispersal_prob_map = raw_dispersal_prob_map;
+        for(unsigned long y = 0; y < raw_dispersal_prob_map.getRows(); y ++)
+        {
+            raw_dispersal_prob_map.get(y, y) = 0.0;
+        }
+        addDensity();
+        addReproduction();
+        fixDispersal();
+        raw_dispersal_prob_map = backup_dispersal_prob_map;
+
+    }
 
 }

@@ -67,6 +67,7 @@ namespace necsim
         using Matrix<T>::operator+=;
         using Matrix<T>::operator*=;
         using Matrix<T>::operator/=;
+        using Matrix<T>::operator=;
 
         Map() : Matrix<T>(0, 0), po_dataset(nullptr), po_band(nullptr), block_x_size(0), block_y_size(0),
                 no_data_value(0.0), file_name(""), gdal_data_type(GDT_Unknown), cpl_error(CE_None), upper_left_x(0.0),
@@ -287,7 +288,7 @@ namespace necsim
          * @brief Gets the upper left x (longitude) coordinate
          * @return upper left x of the map
          */
-        double getUpperLeftX()
+        double getUpperLeftX() const
         {
             return upper_left_x;
         }
@@ -296,9 +297,18 @@ namespace necsim
          * @brief Gets the upper left y (latitude) coordinate
          * @return upper left y of the map
          */
-        double getUpperLeftY()
+        double getUpperLeftY() const
         {
             return upper_left_y;
+        }
+
+        /**
+         * @brief Gets the name of the file that has been imported from.
+         * @return the file name
+         */
+        string getFileName() const
+        {
+            return file_name;
         }
 
         /**

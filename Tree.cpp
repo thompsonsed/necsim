@@ -478,6 +478,10 @@ namespace necsim
         {
             return stopSimulation();
         }
+        if(using_gillespie)
+        {
+            return runSimulationGillespie();
+        }
         return runSimulationNoGillespie();
     }
 
@@ -1533,6 +1537,18 @@ namespace necsim
         loadDataSave(is);
         time(&sim_start);
         writeInfo("\rLoading data from temp file...done.\n");
+    }
+
+    void Tree::addGillespie(const double & g_threshold)
+    {
+        throw FatalException("The gillespie algorithm is not supported for non-spatial coalescence trees yet. "
+                             "Please contact the project maintainer if this is a feature you would like to see.");
+    }
+
+    bool Tree::runSimulationGillespie()
+    {
+        throw FatalException("The gillespie algorithm is not supported for non-spatial coalescence trees yet. "
+                             "Please contact the project maintainer if this is a feature you would like to see.");
     }
 
 #ifdef DEBUG

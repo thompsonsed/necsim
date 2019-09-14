@@ -7,11 +7,8 @@
 #define NECSIM_GILLESPIECALCULATOR_H
 
 #include <map>
-#include <algorithm>
 #include <numeric>
 #include <memory>
-
-#include "heap.hpp"
 
 #include "Cell.h"
 #include "RNGController.h"
@@ -90,80 +87,108 @@ namespace necsim
         friend ostream &operator<<(ostream &os, const GillespieProbability &gp);
 
         friend std::istream &operator>>(std::istream &is, GillespieProbability &gp);
-
-        /*bool operator<(const GillespieProbability &gp) const
-        {
-            return (time_to_event < gp.time_to_event);
-        }*/
     };
 
     class GillespieHeapNode
     {
+    private:
+        void updateHeapPosition()
+        {
+            // Enclosing heap vector not known or no locator to report to
+            if (heap == nullptr || locator == nullptr)
+            {
+                return;
+            }
+            
+            // Node is outside its enclosing heap, i.e. it was probably moved to a temporary place
+            if (this < heap->data() || this >= (heap->data() + heap->size()))
+            {
+                return;
+            }
+            
+            // Store the heap vector index with the locator
+            *locator = this - heap->data();
+            
+            /*stringstream ss;
+            ss << "Heap element moved to " << *pos << endl;
+            necsim::writeInfo(ss.str());*/
+        }
+    
     public:
         Cell cell;
         double time_of_event;
-        // Pointer to index in heap
-        unsigned long *pos;
         EventType event_type;
+        
+        // Pointer to index in heap
         vector<GillespieHeapNode> *heap;
+        unsigned long *locator;
 
         GillespieHeapNode(const Cell cell,
                           const double time_of_event,
-                          unsigned long *pos,
                           const EventType &e,
-                          vector<GillespieHeapNode> *heap) : cell(cell), time_of_event(time_of_event), pos(pos),
-                                                             event_type(e), heap(heap){}
-
-        GillespieHeapNode() : GillespieHeapNode(Cell(), 0.0, nullptr, EventType::undefined, nullptr){}
-
-        GillespieHeapNode(const double time_of_event, const EventType &e) : GillespieHeapNode(Cell(), time_of_event,
-                                                                                              nullptr, e, nullptr){}
-
-        GillespieHeapNode(GillespieHeapNode &&other) noexcept
+                          vector<GillespieHeapNode> *heap,
+                          unsigned long *locator) : cell(cell), time_of_event(time_of_event), event_type(e),
+                                                    heap(heap), locator(locator)
         {
-            cell = other.cell;
-            time_of_event = other.time_of_event;
-            event_type = other.event_type;
-            pos = other.pos;
-            heap = other.heap;
-            
-            if (this->pos != nullptr && this->heap != nullptr)
-            {
-                if (this >= heap->data() && this < (heap->data() + heap->size()))
-                {
-                    /*stringstream ss;
-                    ss << "Custom move constructor to " << (this - heap->data()) << endl;
-                    necsim::writeInfo(ss.str());*/
-                    
-                    *pos = this - heap->data();
-                }
-            }
+            updateHeapPosition();
         }
+        
+        GillespieHeapNode(const double time_of_event, const EventType &e) : GillespieHeapNode(Cell(), time_of_event, e,
+                                                                                              nullptr, nullptr){}
 
-        GillespieHeapNode &operator=(GillespieHeapNode &&other)
+        GillespieHeapNode() : GillespieHeapNode(Cell(), 0.0, EventType::undefined, nullptr, nullptr){}
+        
+        GillespieHeapNode(const GillespieHeapNode &other) noexcept
         {
             cell = other.cell;
             time_of_event = other.time_of_event;
             event_type = other.event_type;
-            pos = other.pos;
-            heap = other.heap;
             
-            if (this->pos != nullptr && this->heap != nullptr)
-            {
-                if (this >= heap->data() && this < (heap->data() + heap->size()))
-                {
-                    /*stringstream ss;
-                    ss << "Custom move assignment to " << (this - heap->data()) << endl;
-                    necsim::writeInfo(ss.str());*/
-                    
-                    *pos = this - heap->data();
-                }
-            }
+            heap = other.heap;
+            locator = other.locator;
+            
+            updateHeapPosition();
+        }
+        
+        GillespieHeapNode &operator=(const GillespieHeapNode &other)
+        {
+            cell = other.cell;
+            time_of_event = other.time_of_event;
+            event_type = other.event_type;
+            
+            heap = other.heap;
+            locator = other.locator;
+            
+            updateHeapPosition();
 
             return *this;
         }
 
-        GillespieHeapNode(const GillespieHeapNode &other) = default;
+        GillespieHeapNode(GillespieHeapNode &&other) noexcept
+        {
+            cell = std::move(other.cell);
+            time_of_event = std::move(other.time_of_event);
+            event_type = std::move(other.event_type);
+            
+            heap = std::move(other.heap);
+            locator = std::move(other.locator);
+            
+            updateHeapPosition();
+        }
+
+        GillespieHeapNode &operator=(GillespieHeapNode &&other)
+        {
+            cell = std::move(other.cell);
+            time_of_event = std::move(other.time_of_event);
+            event_type = std::move(other.event_type);
+            
+            heap = std::move(other.heap);
+            locator = std::move(other.locator);
+            
+            updateHeapPosition();
+
+            return *this;
+        }
 
         bool operator<(const GillespieHeapNode &n) const
         {

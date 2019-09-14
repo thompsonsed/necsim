@@ -168,7 +168,7 @@ namespace necsim
                           sim_parameters->fine_map_x_size,
                           sim_parameters->fine_map_y_size,
                           NR);
-        death_map->setOffsets(sim_parameters->coarse_map_x_offset,
+        death_map->setOffsets(sim_parameters->fine_map_x_offset,
                               sim_parameters->fine_map_y_offset,
                               sim_parameters->grid_x_size,
                               sim_parameters->grid_y_size);
@@ -183,7 +183,7 @@ namespace necsim
                                      sim_parameters->fine_map_x_size,
                                      sim_parameters->fine_map_y_size,
                                      NR);
-            reproduction_map->setOffsets(sim_parameters->coarse_map_x_offset,
+            reproduction_map->setOffsets(sim_parameters->fine_map_x_offset,
                                          sim_parameters->fine_map_y_offset,
                                          sim_parameters->grid_x_size,
                                          sim_parameters->grid_y_size);

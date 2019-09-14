@@ -20,7 +20,7 @@
 #define dup2 _dup2
 #endif
 
-//#include "heap.h"
+#include "eastl/heap.h"
 
 namespace necsim
 {
@@ -1926,23 +1926,21 @@ namespace necsim
 
     void SpatialTree::updateInhabitedCellOnHeap(const Cell &pos)
     {
-        std::update_heap(heap.begin(), heap.end(), heap.begin() + cellToHeapPositions.get(pos.y, pos.x));
-        //eastl::change_heap(heap.begin(), heap.size(), cellToHeapPositions.get(pos.y, pos.x));
+        eastl::change_heap(heap.begin(), heap.size(), cellToHeapPositions.get(pos.y, pos.x));
         
         gillespieValidateHeap(); // TODO remove
     }
     
     void SpatialTree::gillespieValidateHeap() // TODO remove
     {
-        if(!std::is_heap(heap.begin(), heap.end()))
-        //if(!eastl::is_heap(heap.begin(), heap.end()))
+        if(!eastl::is_heap(heap.begin(), heap.end()))
         {
             throw FatalException("The heap property has been broken. Please report this bug."); // TODO remove
         }
         
         for (size_t i = 0; i < heap.size(); i++)
         {
-            if(*heap[i].pos != i)
+            if(*(heap[i].locator) != i)
             {
                 throw FatalException("The heap locator has been broken. Please report this bug."); // TODO remove
             }
@@ -1974,8 +1972,7 @@ namespace necsim
 
     void SpatialTree::removeHeapTop()
     {
-        std::pop_heap(heap.begin(), heap.end());
-        //eastl::pop_heap(heap.begin(), heap.end());
+        eastl::pop_heap(heap.begin(), heap.end());
         heap.pop_back();
         
         gillespieValidateHeap(); // TODO remove
@@ -1998,8 +1995,7 @@ namespace necsim
 
     void SpatialTree::sortEvents()
     {
-        std::make_heap(heap.begin(), heap.end());
-        //eastl::make_heap(heap.begin(), heap.end());
+        eastl::make_heap(heap.begin(), heap.end());
         
         gillespieValidateHeap(); // TODO remove
     }
@@ -2014,13 +2010,11 @@ namespace necsim
             
             heap.emplace_back(GillespieHeapNode(Cell(x, y), (probabilities.get(y, x).calcTimeToNextEvent(
                     getLocalDeathRate(location), summed_death_rate, getNumberIndividualsAtLocation(location)) +
-                                                             generation), &cellToHeapPositions.get(y, x),
-                                                EventType::cell_event, &heap));
+                    generation), EventType::cell_event, &heap, &cellToHeapPositions.get(y, x)));
             
             if(restoreHeap)
             {
-                std::push_heap(heap.begin(), heap.end());
-                //eastl::push_heap(heap.begin(), heap.end());
+                eastl::push_heap(heap.begin(), heap.end());
             }
         }
     }

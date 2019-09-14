@@ -19,6 +19,9 @@
 #include <io.h>
 #define dup2 _dup2
 #endif
+
+//#include "heap.h"
+
 namespace necsim
 {
     void SpatialTree::runFileChecks()
@@ -1707,7 +1710,7 @@ namespace necsim
             next_map_update = sim_parameters->all_historical_map_parameters.front().generation;
             if(next_map_update > 0.0 && next_map_update < generation)
             {
-                //heap.emplace_back(GillespieHeapNode(generation, EventType::map_event));
+                heap.emplace_back(GillespieHeapNode(generation, EventType::map_event));
             }
         }
     }
@@ -1719,7 +1722,7 @@ namespace necsim
             // Find the first time that's after this point in time.
             if(item > generation)
             {
-                //heap.emplace_back(GillespieHeapNode(generation, EventType::sample_event));
+                heap.emplace_back(GillespieHeapNode(generation, EventType::sample_event));
             }
         }
     }
@@ -1796,22 +1799,22 @@ namespace necsim
     {
         auto lineages = selectTwoRandomLineages(origin.getMapLocation());
         gillespieUpdateGeneration(lineages.first);
+        
         stringstream ss; // TODO remove
         ss << "Location at " << origin.getMapLocation().x << ", " << origin.getMapLocation().y << endl;
         ss << "Coalescing lineages at " << lineages.first << " and " << lineages.second << endl;
-        ss << heap.front().time_of_event << endl;
-
+        writeInfo(ss.str());
+        
         if(lineages.first > active.size() || lineages.second > active.size())
         {
             throw FatalException("Lineage indexing incorrect. Please report this bug."); // TODO remove
         }
+        
         coalescenceEvent(lineages.first, lineages.second);
+        
         const MapLocation &location = origin.getMapLocation();
         updateCellCoalescenceProbability(origin, getNumberIndividualsAtLocation(location));
-        ss << heap.front().time_of_event << endl;
         updateInhabitedCellOnHeap(convertMapLocationToCell(location));
-        ss << heap.front().time_of_event << endl;
-        writeInfo(ss.str());
     }
 
     void SpatialTree::gillespieDispersalEvent(GillespieProbability &origin)
@@ -1924,6 +1927,26 @@ namespace necsim
     void SpatialTree::updateInhabitedCellOnHeap(const Cell &pos)
     {
         std::update_heap(heap.begin(), heap.end(), heap.begin() + cellToHeapPositions.get(pos.y, pos.x));
+        //eastl::change_heap(heap.begin(), heap.size(), cellToHeapPositions.get(pos.y, pos.x));
+        
+        gillespieValidateHeap(); // TODO remove
+    }
+    
+    void SpatialTree::gillespieValidateHeap() // TODO remove
+    {
+        if(!std::is_heap(heap.begin(), heap.end()))
+        //if(!eastl::is_heap(heap.begin(), heap.end()))
+        {
+            throw FatalException("The heap property has been broken. Please report this bug."); // TODO remove
+        }
+        
+        for (size_t i = 0; i < heap.size(); i++)
+        {
+            if(*heap[i].pos != i)
+            {
+                throw FatalException("The heap locator has been broken. Please report this bug."); // TODO remove
+            }
+        }
     }
 
     void SpatialTree::updateAllProbabilities()
@@ -1952,7 +1975,10 @@ namespace necsim
     void SpatialTree::removeHeapTop()
     {
         std::pop_heap(heap.begin(), heap.end());
+        //eastl::pop_heap(heap.begin(), heap.end());
         heap.pop_back();
+        
+        gillespieValidateHeap(); // TODO remove
     }
 
     void SpatialTree::createEventList()
@@ -1965,7 +1991,7 @@ namespace necsim
         {
             for(unsigned long x = 0; x < sim_parameters->fine_map_x_size; x++)
             {
-                addNewEvent(x, y);
+                addNewEvent<false>(x, y);
             }
         }
     }
@@ -1973,27 +1999,29 @@ namespace necsim
     void SpatialTree::sortEvents()
     {
         std::make_heap(heap.begin(), heap.end());
-        /*stringstream ss;
-        ss << "Heap[0]" << heap[0].time_of_event << ", " << heap[0].pos << endl;
-        ss << "Heap[1]" << heap[1].time_of_event << ", " << heap[1].pos << endl;
-        ss << "Attempting custom swap.\n";
-        using std::swap;
-        swap(heap[0], heap[1]);
-        ss << "Heap[0]" << heap[0].time_of_event << ", " << heap[0].pos << endl;
-        ss << "Heap[1]" << heap[1].time_of_event << ", " << heap[1].pos << endl;
-        writeInfo(ss.str());*/
+        //eastl::make_heap(heap.begin(), heap.end());
+        
+        gillespieValidateHeap(); // TODO remove
     }
 
+    template<bool restoreHeap = true>
     void SpatialTree::addNewEvent(const unsigned long &x, const unsigned long &y)
     {
         const MapLocation &location = probabilities.get(y, x).getMapLocation();
         if(getNumberLineagesAtLocation(location) > 0)
         {
             cellToHeapPositions.get(y, x) = heap.size();
+            
             heap.emplace_back(GillespieHeapNode(Cell(x, y), (probabilities.get(y, x).calcTimeToNextEvent(
                     getLocalDeathRate(location), summed_death_rate, getNumberIndividualsAtLocation(location)) +
                                                              generation), &cellToHeapPositions.get(y, x),
                                                 EventType::cell_event, &heap));
+            
+            if(restoreHeap)
+            {
+                std::push_heap(heap.begin(), heap.end());
+                //eastl::push_heap(heap.begin(), heap.end());
+            }
         }
     }
 

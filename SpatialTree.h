@@ -474,6 +474,8 @@ namespace necsim
         void gillespieDispersalEvent(GillespieProbability &origin);
 
         void gillespieSpeciationEvent(GillespieProbability &origin);
+        
+        void gillespieValidateHeap(); // TODO remove
 
         template<typename T>
         const double getLocalDeathRate(const T &location);
@@ -549,7 +551,8 @@ namespace necsim
         void createEventList();
 
         void sortEvents();
-
+        
+        template<bool restoreHeap = true>
         void addNewEvent(const unsigned long &x, const unsigned long &y);
 
         /**

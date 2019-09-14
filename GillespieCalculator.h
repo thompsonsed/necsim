@@ -107,8 +107,8 @@ namespace necsim
         EventType event_type;
         vector<GillespieHeapNode> *heap;
 
-        GillespieHeapNode(Cell cell,
-                          double time_of_event,
+        GillespieHeapNode(const Cell cell,
+                          const double time_of_event,
                           unsigned long *pos,
                           const EventType &e,
                           vector<GillespieHeapNode> *heap) : cell(cell), time_of_event(time_of_event), pos(pos),
@@ -116,8 +116,8 @@ namespace necsim
 
         GillespieHeapNode() : GillespieHeapNode(Cell(), 0.0, nullptr, EventType::undefined, nullptr){}
 
-        //GillespieHeapNode(const double time_of_event, const EventType &e) : GillespieHeapNode(Cell(), time_of_event,
-        //                                                                                      nullptr, e, nullptr){}
+        GillespieHeapNode(const double time_of_event, const EventType &e) : GillespieHeapNode(Cell(), time_of_event,
+                                                                                              nullptr, e, nullptr){}
 
         GillespieHeapNode(GillespieHeapNode &&other) noexcept
         {
@@ -126,14 +126,18 @@ namespace necsim
             event_type = other.event_type;
             pos = other.pos;
             heap = other.heap;
-
-            stringstream ss;
-
-            ss << "Custom move constructor " << this << " " << &heap[0] << " "
-               << (reinterpret_cast<intptr_t>(this) - reinterpret_cast<intptr_t>(&heap[0])) / sizeof(GillespieHeapNode)
-               << endl;
-
-            necsim::writeInfo(ss.str());
+            
+            if (this->pos != nullptr && this->heap != nullptr)
+            {
+                if (this >= heap->data() && this < (heap->data() + heap->size()))
+                {
+                    /*stringstream ss;
+                    ss << "Custom move constructor to " << (this - heap->data()) << endl;
+                    necsim::writeInfo(ss.str());*/
+                    
+                    *pos = this - heap->data();
+                }
+            }
         }
 
         GillespieHeapNode &operator=(GillespieHeapNode &&other)
@@ -143,39 +147,23 @@ namespace necsim
             event_type = other.event_type;
             pos = other.pos;
             heap = other.heap;
-
-            stringstream ss;
-
-            ss << "Custom move assignment " << this << " " << &heap[0] << " "
-               << static_cast<long>(reinterpret_cast<intptr_t>(this) - reinterpret_cast<intptr_t>(&heap[0])) /
-                  sizeof(GillespieHeapNode) << endl;
-
-            necsim::writeInfo(ss.str());
+            
+            if (this->pos != nullptr && this->heap != nullptr)
+            {
+                if (this >= heap->data() && this < (heap->data() + heap->size()))
+                {
+                    /*stringstream ss;
+                    ss << "Custom move assignment to " << (this - heap->data()) << endl;
+                    necsim::writeInfo(ss.str());*/
+                    
+                    *pos = this - heap->data();
+                }
+            }
 
             return *this;
         }
 
         GillespieHeapNode(const GillespieHeapNode &other) = default;
-
-        /*friend void swap(GillespieHeapNode &lhs, GillespieHeapNode &rhs) noexcept
-        {
-            necsim::writeInfo("Custom swap");
-            using std::swap;
-            swap(lhs.cell, rhs.cell);
-            swap(lhs.time_of_event, rhs.time_of_event);
-            swap(lhs.event_type, rhs.event_type);
-            swap(*lhs.pos, *rhs.pos);
-        }
-
-        void swap(GillespieHeapNode &other) noexcept
-        {
-            necsim::writeInfo("Custom swap");
-            using std::swap;
-            swap(this->cell, other.cell);
-            swap(this->time_of_event, other.time_of_event);
-            swap(this->event_type, other.event_type);
-            swap(*this->pos, *other.pos);
-        }*/
 
         bool operator<(const GillespieHeapNode &n) const
         {
@@ -183,21 +171,6 @@ namespace necsim
         }
     };
 
-    /*void swap(GillespieHeapNode &lhs, GillespieHeapNode &rhs) noexcept;
-    {
-        writeInfo("Custom swap\n");
-        using std::swap;
-        swap(lhs.cell, rhs.cell);
-        swap(lhs.time_of_event, rhs.time_of_event);
-        swap(lhs.event_type, rhs.event_type);
-        swap(*lhs.pos, *rhs.pos);
-    }*/
-
 }
-
-/*namespace std
-{
-
-}*/
 
 #endif //NECSIM_GILLESPIECALCULATOR_H

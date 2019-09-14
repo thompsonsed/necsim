@@ -29,9 +29,9 @@ namespace necsim
 
     double GillespieProbability::getInCellProbability() const
     {
-        return speciation_probability + (1.0 - speciation_probability) *
-                                        ((1.0 - dispersal_outside_cell_probability) * coalescence_probability +
-                                         dispersal_outside_cell_probability);
+        return speciation_probability + (1.0 - speciation_probability)
+                                        * ((1.0 - dispersal_outside_cell_probability) * coalescence_probability
+                                           + dispersal_outside_cell_probability);
     }
 
     CellEventType GillespieProbability::generateRandomEvent(const shared_ptr<RNGController> &rng) const
@@ -49,6 +49,10 @@ namespace necsim
             }
             else
             {
+//                stringstream ss; // TODO remove
+//                ss << "Selecting coalescence probability with change " << coalescence_probability << "/"
+//                   << getInCellProbability() << endl;
+//                writeInfo(ss.str());
                 return CellEventType::coalescence_event;
             }
         }
@@ -59,22 +63,20 @@ namespace necsim
         return location;
     }
 
-    double GillespieProbability::getLambda(const double &local_death_rate,
-                                           const double &summed_death_rate,
+    double GillespieProbability::getLambda(const double &local_death_rate, const double &summed_death_rate,
                                            const unsigned long &n) const
     {
         return getInCellProbability() * local_death_rate * double(n) / summed_death_rate;
     }
 
-    double GillespieProbability::calcTimeToNextEvent(const double &local_death_rate,
-                                                     const double &summed_death_rate,
+    double GillespieProbability::calcTimeToNextEvent(const double &local_death_rate, const double &summed_death_rate,
                                                      const unsigned long &n) const
     {
-//        stringstream ss;
-//        ss << "Generating event with lambda " << getLambda(local_death_rate, summed_death_rate, n)
-//           << " and random number " << random_number << endl;
-//        ss << "Rates: " << local_death_rate << ", "  << summed_death_rate << ", " << n << endl;
-//        writeInfo(ss.str()); // TODO remove
+        //        stringstream ss;
+        //        ss << "Generating event with lambda " << getLambda(local_death_rate, summed_death_rate, n)
+        //           << " and random number " << random_number << endl;
+        //        ss << "Rates: " << local_death_rate << ", "  << summed_death_rate << ", " << n << endl;
+        //        writeInfo(ss.str()); // TODO remove
         return RNGController::exponentialDistribution(getLambda(local_death_rate, summed_death_rate, n), random_number);
     }
 

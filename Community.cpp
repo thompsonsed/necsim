@@ -229,6 +229,23 @@ namespace necsim
             }
             else
             {
+                // TODO remove
+                if(i == 103)
+                {
+                    stringstream ss;
+                    ss << "Logging for " << i << endl;
+                    ss << setprecision(64);
+                    ss << "Lineage parameters: " << endl;
+                    ss << "Speciation: " << this_node->hasSpeciated() << endl;
+                    ss << "Tip: " << this_node->isTip() << endl;
+                    ss << "Random number: " << this_node->getSpecRate() << endl;
+                    ss << "Gens alive: " << this_node->getGenRate() << endl;
+                    ss << "Gen added: " << this_node->getGeneration() << endl;
+                    ss << "Speciation check: " << checkSpeciation(this_node->getSpecRate(),
+                                                                  current_community_parameters->speciation_rate,
+                                                                  this_node->getGenRate()) << endl;
+                    writeInfo(ss.str());
+                }
                 if(checkSpeciation(this_node->getSpecRate(),
                                    current_community_parameters->speciation_rate,
                                    this_node->getGenRate()))
@@ -253,6 +270,22 @@ namespace necsim
                 if(!(*nodes)[this_node->getParent()].exists() && this_node->exists() && !this_node->hasSpeciated())
                 {
                     bSorter = true;
+                    if(i == 103) // TODO remove
+                    {
+                        stringstream ss;
+                        ss << "Logging for " << i << "again"<<  endl;
+                        ss << setprecision(64);
+                        ss << "Lineage parameters: " << endl;
+                        ss << "Speciation: " << this_node->hasSpeciated() << endl;
+                        ss << "Tip: " << this_node->isTip() << endl;
+                        ss << "Random number: " << this_node->getSpecRate() << endl;
+                        ss << "Gens alive: " << this_node->getGenRate() << endl;
+                        ss << "Gen added: " << this_node->getGeneration() << endl;
+                        ss << "Speciation check: " << checkSpeciation(this_node->getSpecRate(),
+                                                                      current_community_parameters->speciation_rate,
+                                                                      this_node->getGenRate()) << endl;
+                        writeInfo(ss.str());
+                    }
                     if(this_node->getParent() == 0)
                     {
                         stringstream ss;
@@ -367,6 +400,7 @@ namespace necsim
             loopon = false;
             // if we start at the end of the loop and work backwards, we should remove some of the repeat
             // speciation events.
+            bool p = false; // TODO remove
             for(unsigned long i = (nodes->size()) - 1; i > 0; i--)
             {
                 TreeNode* this_node = &(*nodes)[i];
@@ -375,6 +409,23 @@ namespace necsim
                 {
                     loopon = true;
                     unsigned long parent = this_node->getParent();
+                    if(i == 103 && !p) // TODO remove
+                    {
+                        p = true;
+                        stringstream ss;
+                        ss << "Logging for " << i << endl;
+                        ss << setprecision(64);
+                        ss << "Lineage parameters: " << endl;
+                        ss << "Speciation: " << this_node->hasSpeciated() << endl;
+                        ss << "Tip: " << this_node->isTip() << endl;
+                        ss << "Random number: " << this_node->getSpecRate() << endl;
+                        ss << "Gens alive: " << this_node->getGenRate() << endl;
+                        ss << "Gen added: " << this_node->getGeneration() << endl;
+                        ss << "Speciation check: " << checkSpeciation(this_node->getSpecRate(),
+                                                                      current_community_parameters->speciation_rate,
+                                                                      this_node->getGenRate()) << endl;
+                        writeInfo(ss.str());
+                    }
                     if(parent == 0)
                     {
                         stringstream ss;

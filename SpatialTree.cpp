@@ -164,10 +164,14 @@ namespace necsim
 
     void SpatialTree::importActivityMaps()
     {
-        death_map->import(sim_parameters->death_file, sim_parameters->fine_map_x_size, sim_parameters->fine_map_y_size,
+        death_map->import(sim_parameters->death_file,
+                          sim_parameters->fine_map_x_size,
+                          sim_parameters->fine_map_y_size,
                           NR);
-        death_map->setOffsets(sim_parameters->coarse_map_x_offset, sim_parameters->fine_map_y_offset,
-                              sim_parameters->grid_x_size, sim_parameters->grid_y_size);
+        death_map->setOffsets(sim_parameters->coarse_map_x_offset,
+                              sim_parameters->fine_map_y_offset,
+                              sim_parameters->grid_x_size,
+                              sim_parameters->grid_y_size);
         if(sim_parameters->death_file == sim_parameters->reproduction_file)
         {
             reproduction_map = death_map;
@@ -175,10 +179,14 @@ namespace necsim
         else
         {
 
-            reproduction_map->import(sim_parameters->reproduction_file, sim_parameters->fine_map_x_size,
-                                     sim_parameters->fine_map_y_size, NR);
-            reproduction_map->setOffsets(sim_parameters->coarse_map_x_offset, sim_parameters->fine_map_y_offset,
-                                         sim_parameters->grid_x_size, sim_parameters->grid_y_size);
+            reproduction_map->import(sim_parameters->reproduction_file,
+                                     sim_parameters->fine_map_x_size,
+                                     sim_parameters->fine_map_y_size,
+                                     NR);
+            reproduction_map->setOffsets(sim_parameters->coarse_map_x_offset,
+                                         sim_parameters->fine_map_y_offset,
+                                         sim_parameters->grid_x_size,
+                                         sim_parameters->grid_y_size);
         }
         // Now verify that the reproduction map is always non-zero when the density is non-zero.
         verifyActivityMaps();
@@ -248,10 +256,15 @@ namespace necsim
         dispersal_coordinator.setMaps(landscape, reproduction_map);
         dispersal_coordinator.setRandomNumber(NR);
         dispersal_coordinator.setGenerationPtr(&generation);
-        dispersal_coordinator.setDispersal(sim_parameters->dispersal_method, sim_parameters->dispersal_file,
-                                           sim_parameters->fine_map_x_size, sim_parameters->fine_map_y_size,
-                                           sim_parameters->m_prob, sim_parameters->cutoff, sim_parameters->sigma,
-                                           sim_parameters->tau, sim_parameters->restrict_self);
+        dispersal_coordinator.setDispersal(sim_parameters->dispersal_method,
+                                           sim_parameters->dispersal_file,
+                                           sim_parameters->fine_map_x_size,
+                                           sim_parameters->fine_map_y_size,
+                                           sim_parameters->m_prob,
+                                           sim_parameters->cutoff,
+                                           sim_parameters->sigma,
+                                           sim_parameters->tau,
+                                           sim_parameters->restrict_self);
     }
 
     void SpatialTree::setup()
@@ -367,8 +380,13 @@ namespace necsim
                                 {
                                     number_start++;
                                     // Add the lineage to the wrapped lineages
-                                    active[number_start].setup((unsigned long) x, (unsigned long) y, x_wrap, y_wrap,
-                                                               number_start, 0, 1);
+                                    active[number_start].setup((unsigned long) x,
+                                                               (unsigned long) y,
+                                                               x_wrap,
+                                                               y_wrap,
+                                                               number_start,
+                                                               0,
+                                                               1);
                                     addWrappedLineage(number_start, x, y);
                                     // Add a tip in the TreeNode for calculation of the coalescence tree at the
                                     // end of the simulation.
@@ -425,16 +443,13 @@ namespace necsim
         return number_start;
     }
 
-    unsigned long SpatialTree::getIndividualsSampled(const long &x,
-                                                     const long &y,
-                                                     const long &x_wrap,
-                                                     const long &y_wrap,
-                                                     const double &current_gen)
+    unsigned long SpatialTree::getIndividualsSampled(const long &x, const long &y, const long &x_wrap,
+                                                     const long &y_wrap, const double &current_gen)
     {
         //	if(sim_parameters->uses_spatial_sampling)
         //	{
-        return static_cast<unsigned long>(max(floor(deme_sample * landscape->getVal(x, y, x_wrap, y_wrap, current_gen) *
-                                                    samplegrid.getExactValue(x, y, x_wrap, y_wrap)), 0.0));
+        return static_cast<unsigned long>(max(floor(deme_sample * landscape->getVal(x, y, x_wrap, y_wrap, current_gen)
+                                                    * samplegrid.getExactValue(x, y, x_wrap, y_wrap)), 0.0));
         //	}
         //	else
         //	{
@@ -521,8 +536,8 @@ namespace necsim
             else
             {
                 long lastpos = grid.get(oldy, oldx).getNext();
-                while(active[lastpos].getNext() !=
-                      chosen)  // loop until we reach the next, then set the next correctly.
+                while(active[lastpos].getNext()
+                      != chosen)  // loop until we reach the next, then set the next correctly.
                 {
                     lastpos = active[lastpos].getNext();
                 }
@@ -634,11 +649,11 @@ namespace necsim
             // then the procedure is relatively simple.
             // check for coalescence
             // check if the grid needs to be updated.
-            if(grid.get(this_step.y, this_step.x).getMaxSize() !=
-               landscape->getVal(this_step.x, this_step.y, 0, 0, generation))
+            if(grid.get(this_step.y, this_step.x).getMaxSize()
+               != landscape->getVal(this_step.x, this_step.y, 0, 0, generation))
             {
-                grid.get(this_step.y, this_step.x).setMaxsize(
-                        landscape->getVal(this_step.x, this_step.y, 0, 0, generation));
+                grid.get(this_step.y, this_step.x)
+                    .setMaxsize(landscape->getVal(this_step.x, this_step.y, 0, 0, generation));
             }
             this_step.coalchosen = grid.get(this_step.y, this_step.x).getRandLineage(NR);
 #ifdef DEBUG
@@ -716,10 +731,10 @@ namespace necsim
             }
             if(this_step.coalchosen != 0)
             {
-                if(active[this_step.coalchosen].getXpos() != (unsigned long) this_step.x ||
-                   active[this_step.coalchosen].getYpos() != (unsigned long) this_step.y ||
-                   active[this_step.coalchosen].getXwrap() != this_step.xwrap ||
-                   active[this_step.coalchosen].getYwrap() != this_step.ywrap)
+                if(active[this_step.coalchosen].getXpos() != (unsigned long) this_step.x
+                   || active[this_step.coalchosen].getYpos() != (unsigned long) this_step.y
+                   || active[this_step.coalchosen].getXwrap() != this_step.xwrap
+                   || active[this_step.coalchosen].getYwrap() != this_step.ywrap)
                 {
 #ifdef DEBUG
                     writeLog(50, "Logging this_step.chosen:");
@@ -792,13 +807,13 @@ namespace necsim
             grid.get(this_step.y, this_step.x).increaseNwrap();
             active[this_step.chosen].setNwrap(grid.get(this_step.y, this_step.x).getNwrap()
 
-            );
+                                             );
             active[this_step.chosen].setListPosition(0);
         }
         else  // if there were matches, generate a random number to see if coalescence occured or not
         {
-            unsigned long randwrap = floor(NR->d01() * (landscape->getVal(this_step.x, this_step.y, this_step.xwrap,
-                                                                          this_step.ywrap, generation)) + 1);
+            unsigned long randwrap = floor(NR->d01() * (landscape
+                    ->getVal(this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, generation)) + 1);
             // Get the random reference from the match lineage_indices.
             // If the movement is to an empty space, then we can update the chain to include the new
             // lineage.
@@ -850,8 +865,8 @@ namespace necsim
             tmpdatactive.setup(active[chosen]);
             // now need to remove the chosen lineage from memory, by replacing it with the lineage that lies in the last
             // place.
-            if(active[endactive].getXwrap() == 0 &&
-               active[endactive].getYwrap() == 0)  // if the end lineage is simple, we can just copy it across.
+            if(active[endactive].getXwrap() == 0
+               && active[endactive].getYwrap() == 0)  // if the end lineage is simple, we can just copy it across.
             {
                 // check endactive
                 if(active[endactive].getNwrap() != 0)
@@ -861,8 +876,8 @@ namespace necsim
                     ss << active[endactive].getNwrap() << " ). Identified during switch of positions." << endl;
                     writeError(ss.str());
                 }
-                grid.get(active[endactive].getYpos(), active[endactive].getXpos()).setSpecies(
-                        active[endactive].getListpos(), chosen);
+                grid.get(active[endactive].getYpos(), active[endactive].getXpos())
+                    .setSpecies(active[endactive].getListpos(), chosen);
                 active[chosen].setup(active[endactive]);
                 active[endactive].setup(tmpdatactive);
                 active[endactive].setNwrap(0);
@@ -888,10 +903,9 @@ namespace necsim
                     if(grid.get(active[endactive].getYpos(), active[endactive].getXpos()).getNext() != endactive)
                     {
                         throw FatalException(string("Nwrap for endactive not set correctly. Nwrap is 1, but "
-                                                    "lineage at 1st position is " + to_string(
-                                (long long) grid.get(active[endactive].getYpos(),
-                                                     active[endactive].getXpos()).getNext()) +
-                                                    ". Identified during the move."));
+                                                    "lineage at 1st position is " + to_string((long long) grid
+                                .get(active[endactive].getYpos(), active[endactive].getXpos()).getNext())
+                                                    + ". Identified during the move."));
                     }
                     grid.get(active[endactive].getYpos(), active[endactive].getXpos()).setNext(chosen);
                 }
@@ -1093,8 +1107,10 @@ namespace necsim
 
     void SpatialTree::updateStepCoalescenceVariables()
     {
-        while(!death_map->actionOccurs(active[this_step.chosen].getXpos(), active[this_step.chosen].getYpos(),
-                                       active[this_step.chosen].getXwrap(), active[this_step.chosen].getYwrap()))
+        while(!death_map->actionOccurs(active[this_step.chosen].getXpos(),
+                                       active[this_step.chosen].getYpos(),
+                                       active[this_step.chosen].getXwrap(),
+                                       active[this_step.chosen].getYwrap()))
         {
             this_step.chosen = NR->i0(endactive - 1) + 1;  // cannot be 0
         }
@@ -1178,33 +1194,30 @@ namespace necsim
     string SpatialTree::simulationParametersSqlInsertion()
     {
         string to_execute;
-        to_execute = "INSERT INTO SIMULATION_PARAMETERS VALUES(" + to_string((long long) seed) + "," +
-                     to_string((long long) job_type);
-        to_execute += ",'" + out_directory + "'," + boost::lexical_cast<std::string>((long double) spec) + "," +
-                      to_string((long double) sim_parameters->sigma) + ",";
-        to_execute +=
-                to_string((long double) sim_parameters->tau) + "," + to_string((long double) sim_parameters->deme) +
-                ",";
+        to_execute = "INSERT INTO SIMULATION_PARAMETERS VALUES(" + to_string((long long) seed) + ","
+                     + to_string((long long) job_type);
+        to_execute += ",'" + out_directory + "'," + boost::lexical_cast<std::string>((long double) spec) + ","
+                      + to_string((long double) sim_parameters->sigma) + ",";
+        to_execute += to_string((long double) sim_parameters->tau) + "," + to_string((long double) sim_parameters->deme)
+                      + ",";
         to_execute += to_string((long double) sim_parameters->deme_sample) + "," + to_string((long long) maxtime) + ",";
-        to_execute += to_string((long double) sim_parameters->dispersal_relative_cost) + "," +
-                      to_string((long long) desired_specnum) + ",";
+        to_execute += to_string((long double) sim_parameters->dispersal_relative_cost) + ","
+                      + to_string((long long) desired_specnum) + ",";
         to_execute += to_string((long double) sim_parameters->habitat_change_rate) + ",";
-        to_execute +=
-                to_string((long double) sim_parameters->gen_since_historical) + ",'" + sim_parameters->times_file +
-                "','";
+        to_execute += to_string((long double) sim_parameters->gen_since_historical) + ",'" + sim_parameters->times_file
+                      + "','";
         to_execute += coarse_map_input + "'," + to_string((long long) sim_parameters->coarse_map_x_size) + ",";
-        to_execute += to_string((long long) sim_parameters->coarse_map_y_size) + "," +
-                      to_string((long long) sim_parameters->coarse_map_x_offset) + ",";
-        to_execute += to_string((long long) sim_parameters->coarse_map_y_offset) + "," +
-                      to_string((long long) sim_parameters->coarse_map_scale) + ",'";
-        to_execute += fine_map_input + "'," + to_string((long long) sim_parameters->fine_map_x_size) + "," +
-                      to_string((long long) sim_parameters->fine_map_y_size);
-        to_execute += "," + to_string((long long) sim_parameters->fine_map_x_offset) + "," +
-                      to_string((long long) sim_parameters->fine_map_y_offset) + ",'";
-        to_execute +=
-                sim_parameters->sample_mask_file + "'," + to_string((long long) sim_parameters->grid_x_size) + "," +
-                to_string((long long) sim_parameters->grid_y_size) + "," +
-                to_string((long long) sim_parameters->sample_x_size) + ", ";
+        to_execute += to_string((long long) sim_parameters->coarse_map_y_size) + ","
+                      + to_string((long long) sim_parameters->coarse_map_x_offset) + ",";
+        to_execute += to_string((long long) sim_parameters->coarse_map_y_offset) + ","
+                      + to_string((long long) sim_parameters->coarse_map_scale) + ",'";
+        to_execute += fine_map_input + "'," + to_string((long long) sim_parameters->fine_map_x_size) + ","
+                      + to_string((long long) sim_parameters->fine_map_y_size);
+        to_execute += "," + to_string((long long) sim_parameters->fine_map_x_offset) + ","
+                      + to_string((long long) sim_parameters->fine_map_y_offset) + ",'";
+        to_execute += sim_parameters->sample_mask_file + "'," + to_string((long long) sim_parameters->grid_x_size) + ","
+                      + to_string((long long) sim_parameters->grid_y_size) + ","
+                      + to_string((long long) sim_parameters->sample_x_size) + ", ";
         to_execute += to_string((long long) sim_parameters->sample_y_size) + ", ";
         to_execute += to_string((long long) sim_parameters->sample_x_offset) + ", ";
         to_execute += to_string((long long) sim_parameters->sample_y_offset) + ", '";
@@ -1308,8 +1321,7 @@ namespace necsim
                 {
                     if(active[i].getNwrap() == 0)
                     {
-                        throw runtime_error(
-                                "Nwrap should not be 0 if x and y wrap are not 0. Programming error likely.");
+                        throw runtime_error("Nwrap should not be 0 if x and y wrap are not 0. Programming error likely.");
                     }
                     if(active[i].getNwrap() == 1)
                     {
@@ -1397,8 +1409,8 @@ namespace necsim
             writeLog(10, "\nActivity map validation complete.");
 #endif // DEBUG
         }
-        if(!(sim_parameters->reproduction_file == "none" || sim_parameters->reproduction_file == "null") &&
-           !reproduction_map->isNull())
+        if(!(sim_parameters->reproduction_file == "none" || sim_parameters->reproduction_file == "null")
+           && !reproduction_map->isNull())
         {
             has_printed = false;
             for(unsigned long i = 0; i < sim_parameters->fine_map_y_size; i++)
@@ -1471,12 +1483,8 @@ namespace necsim
 #endif
     }
 
-    unsigned long SpatialTree::countCellExpansion(const long &x,
-                                                  const long &y,
-                                                  const long &xwrap,
-                                                  const long &ywrap,
-                                                  const double &generation_in,
-                                                  vector<TreeNode> &data_added)
+    unsigned long SpatialTree::countCellExpansion(const long &x, const long &y, const long &xwrap, const long &ywrap,
+                                                  const double &generation_in, vector<TreeNode> &data_added)
     {
         unsigned long map_cover = landscape->getVal(x, y, xwrap, ywrap, generation_in);
         unsigned long num_to_add = getIndividualsSampled(x, y, xwrap, ywrap, generation_in);
@@ -1534,13 +1542,8 @@ namespace necsim
         return num_to_add;
     }
 
-    void SpatialTree::expandCell(long x,
-                                 long y,
-                                 long x_wrap,
-                                 long y_wrap,
-                                 double generation_in,
-                                 unsigned long num_to_add,
-                                 vector<TreeNode> &data_added,
+    void SpatialTree::expandCell(long x, long y, long x_wrap, long y_wrap, double generation_in,
+                                 unsigned long num_to_add, vector<TreeNode> &data_added,
                                  vector<DataPoint> &active_added)
     {
         if(num_to_add > 0)
@@ -1593,8 +1596,8 @@ namespace necsim
         {
             runSingleLoop();
         }
-        while((endactive < gillespie_threshold) && (endactive > 1) &&
-              ((steps < 100) || difftime(sim_end, start) < maxtime) && this_step.bContinueSim);
+        while((endactive < gillespie_threshold) && (endactive > 1)
+              && ((steps < 100) || difftime(sim_end, start) < maxtime) && this_step.bContinueSim);
         // Switch to gillespie
         writeInfo("Switching to Gillespie algorithm.\n");
         setupGillespie();
@@ -1616,29 +1619,30 @@ namespace necsim
         // Update the event timer
         steps += (heap.front().time_of_event - generation) * double(endactive);
         generation = heap.front().time_of_event;
-        stringstream ss;
-        ss << "Event at " << heap.front().time_of_event << endl;
+        stringstream ss; //  TODO remove
+        ss << "\tEvent at " << heap.front().time_of_event << "has " << active.size() - 1 << " lineages remaining...\n"
+           << endl;
         writeInfo(ss.str());
         // Estimate the number of steps that have occurred.
         switch(next_event)
         {
-            case EventType::cell_event:
-            {
-                GillespieProbability &origin = probabilities.get(heap.front().cell.y, heap.front().cell.x);
-                gillespieCellEvent(origin);
-                break;
-            }
+        case EventType::cell_event:
+        {
+            GillespieProbability &origin = probabilities.get(heap.front().cell.y, heap.front().cell.x);
+            gillespieCellEvent(origin);
+            break;
+        }
 
-            case EventType::map_event:
-                gillespieUpdateMap();
-                break;
+        case EventType::map_event:
+            gillespieUpdateMap();
+            break;
 
-            case EventType::sample_event:
-                gillespieSampleIndividuals();
-                break;
+        case EventType::sample_event:
+            gillespieSampleIndividuals();
+            break;
 
-            case EventType::undefined:
-                throw FatalException("Undefined event in Gillespie algorithm. Please report this bug.");
+        case EventType::undefined:
+            throw FatalException("Undefined event in Gillespie algorithm. Please report this bug.");
         }
 
     }
@@ -1666,8 +1670,8 @@ namespace necsim
             {
                 for(unsigned long j = 0; j < sim_parameters->fine_map_x_size; j++)
                 {
-                    self_dispersal_probabilities.get(i, j) = dispersal_coordinator.getSelfDispersalProbability(
-                            Cell(j, i));
+                    self_dispersal_probabilities.get(i, j) = dispersal_coordinator
+                            .getSelfDispersalProbability(Cell(j, i));
                 }
             }
             dispersal_coordinator.removeSelfDispersal();
@@ -1733,23 +1737,26 @@ namespace necsim
         origin.setRandomNumber(NR->d01());
         switch(cell_event)
         {
-            case CellEventType::coalescence_event:
-                // implement coalescence
-                gillespieCoalescenceEvent(origin);
-                break;
+        case CellEventType::coalescence_event:
+            // implement coalescence
+            writeInfo("Coalescence event."); // TODO remove
+            gillespieCoalescenceEvent(origin);
+            break;
 
-            case CellEventType::dispersal_event:
-                // choose dispersal
-                gillespieDispersalEvent(origin);
-                break;
+        case CellEventType::dispersal_event:
+            // choose dispersal
+            writeInfo("Dispersal event."); // TODO remove
+            gillespieDispersalEvent(origin);
+            break;
 
-            case CellEventType::speciation_event:
-                gillespieSpeciationEvent(origin);
-                break;
+        case CellEventType::speciation_event:
+            writeInfo("Speciation event."); // TODO remove
+            gillespieSpeciationEvent(origin);
+            break;
 
-            case CellEventType::undefined:
-                throw FatalException("Undefined cell event type. Please report this bug.");
-                break;
+        case CellEventType::undefined:
+            throw FatalException("Undefined cell event type. Please report this bug.");
+            break;
         }
 
     }
@@ -1799,19 +1806,19 @@ namespace necsim
     {
         auto lineages = selectTwoRandomLineages(origin.getMapLocation());
         gillespieUpdateGeneration(lineages.first);
-        
-        stringstream ss; // TODO remove
-        ss << "Location at " << origin.getMapLocation().x << ", " << origin.getMapLocation().y << endl;
-        ss << "Coalescing lineages at " << lineages.first << " and " << lineages.second << endl;
-        writeInfo(ss.str());
-        
+
+        //        stringstream ss; // TODO remove
+        //        ss << "Location at " << origin.getMapLocation().x << ", " << origin.getMapLocation().y << endl;
+        //        ss << "Coalescing lineages at " << lineages.first << " and " << lineages.second << endl;
+        //        writeInfo(ss.str());
+
         if(lineages.first > active.size() || lineages.second > active.size())
         {
             throw FatalException("Lineage indexing incorrect. Please report this bug."); // TODO remove
         }
-        
+
         coalescenceEvent(lineages.first, lineages.second);
-        
+
         const MapLocation &location = origin.getMapLocation();
         updateCellCoalescenceProbability(origin, getNumberIndividualsAtLocation(location));
         updateInhabitedCellOnHeap(convertMapLocationToCell(location));
@@ -1854,9 +1861,10 @@ namespace necsim
             destination.setCoalescenceProbability(calculateCoalescenceProbability(destination.getMapLocation()));
             const double local_death_rate = getLocalDeathRate(active[chosen]);
             destination.setRandomNumber(NR->d01());
-            const double t = destination.calcTimeToNextEvent(local_death_rate, summed_death_rate,
-                                                             getNumberIndividualsAtLocation(
-                                                                     destination.getMapLocation()));
+            const double t = destination.calcTimeToNextEvent(local_death_rate,
+                                                             summed_death_rate,
+                                                             getNumberIndividualsAtLocation(destination
+                                                                                                    .getMapLocation()));
             heap[cellToHeapPositions.get(y, x)].time_of_event = t;
             updateInhabitedCellOnHeap(destination_cell);
         }
@@ -1873,8 +1881,7 @@ namespace necsim
         updateInhabitedCellOnHeap(convertMapLocationToCell(origin.getMapLocation()));
     }
 
-    template<typename T>
-    const double SpatialTree::getLocalDeathRate(const T &location)
+    template<typename T> const double SpatialTree::getLocalDeathRate(const T &location)
     {
         const Cell cell = convertMapLocationToCell(location);
         if(death_map->isNull())
@@ -1887,8 +1894,7 @@ namespace necsim
         }
     }
 
-    template<typename T>
-    const double SpatialTree::getLocalSelfDispersalRate(const T &location)
+    template<typename T> const double SpatialTree::getLocalSelfDispersalRate(const T &location)
     {
         const Cell cell = convertMapLocationToCell(location);
         if(dispersal_coordinator.isFullDispersalMap())
@@ -1909,13 +1915,18 @@ namespace necsim
     }
 
     void SpatialTree::gillespieUpdateGeneration(const unsigned long &lineage)
-    {
+    {// TODO remove
+        if(lineage == 0 || lineage > active.size())
+        {
+            stringstream ss;
+            ss << "Lineage " << lineage << " out of range of active." << endl;
+            throw FatalException(ss.str());
+        }
         TreeNode &tree_node = (*data)[active[lineage].getReference()];
         unsigned long generations_existed = round(generation) - tree_node.getGeneration();
         tree_node.setGeneration(generations_existed);
     }
 
-    // TODO change n to the density of the cell
     void SpatialTree::updateCellCoalescenceProbability(GillespieProbability &origin, const unsigned long &n)
     {
         const MapLocation &location = origin.getMapLocation();
@@ -1928,19 +1939,19 @@ namespace necsim
     {
         std::update_heap(heap.begin(), heap.end(), heap.begin() + cellToHeapPositions.get(pos.y, pos.x));
         //eastl::change_heap(heap.begin(), heap.size(), cellToHeapPositions.get(pos.y, pos.x));
-        
+
         gillespieValidateHeap(); // TODO remove
     }
-    
+
     void SpatialTree::gillespieValidateHeap() // TODO remove
     {
         if(!std::is_heap(heap.begin(), heap.end()))
-        //if(!eastl::is_heap(heap.begin(), heap.end()))
+            //if(!eastl::is_heap(heap.begin(), heap.end()))
         {
             throw FatalException("The heap property has been broken. Please report this bug."); // TODO remove
         }
-        
-        for (size_t i = 0; i < heap.size(); i++)
+
+        for(size_t i = 0; i < heap.size(); i++)
         {
             if(*heap[i].pos != i)
             {
@@ -1967,7 +1978,8 @@ namespace necsim
         else
         {
             // calculate global death rate mean if death rates are equal
-            summed_death_rate = std::accumulate(landscape->getFineMap().begin(), landscape->getFineMap().end(),
+            summed_death_rate = std::accumulate(landscape->getFineMap().begin(),
+                                                landscape->getFineMap().end(),
                                                 (unsigned long) 0);
         }
     }
@@ -1977,7 +1989,7 @@ namespace necsim
         std::pop_heap(heap.begin(), heap.end());
         //eastl::pop_heap(heap.begin(), heap.end());
         heap.pop_back();
-        
+
         gillespieValidateHeap(); // TODO remove
     }
 
@@ -1991,7 +2003,7 @@ namespace necsim
         {
             for(unsigned long x = 0; x < sim_parameters->fine_map_x_size; x++)
             {
-                addNewEvent<false>(x, y);
+                addNewEvent < false > (x, y);
             }
         }
     }
@@ -2000,23 +2012,27 @@ namespace necsim
     {
         std::make_heap(heap.begin(), heap.end());
         //eastl::make_heap(heap.begin(), heap.end());
-        
+
         gillespieValidateHeap(); // TODO remove
     }
 
-    template<bool restoreHeap = true>
-    void SpatialTree::addNewEvent(const unsigned long &x, const unsigned long &y)
+    template<bool restoreHeap = true> void SpatialTree::addNewEvent(const unsigned long &x, const unsigned long &y)
     {
         const MapLocation &location = probabilities.get(y, x).getMapLocation();
         if(getNumberLineagesAtLocation(location) > 0)
         {
             cellToHeapPositions.get(y, x) = heap.size();
-            
-            heap.emplace_back(GillespieHeapNode(Cell(x, y), (probabilities.get(y, x).calcTimeToNextEvent(
-                    getLocalDeathRate(location), summed_death_rate, getNumberIndividualsAtLocation(location)) +
-                                                             generation), &cellToHeapPositions.get(y, x),
-                                                EventType::cell_event, &heap));
-            
+
+            heap.emplace_back(GillespieHeapNode(Cell(x, y),
+                                                (probabilities.get(y, x)
+                                                              .calcTimeToNextEvent(getLocalDeathRate(location),
+                                                                                   summed_death_rate,
+                                                                                   getNumberIndividualsAtLocation(
+                                                                                           location)) + generation),
+                                                &cellToHeapPositions.get(y, x),
+                                                EventType::cell_event,
+                                                &heap));
+
             if(restoreHeap)
             {
                 std::push_heap(heap.begin(), heap.end());
@@ -2041,9 +2057,9 @@ namespace necsim
 
     double SpatialTree::calculateCoalescenceProbability(const MapLocation &location)
     {
-        unsigned long max_number_individuals = landscape->getVal(location.x, location.y, location.xwrap, location.ywrap,
-                                                                 generation);
-        unsigned long current_number = getNumberIndividualsAtLocation(location);
+        unsigned long max_number_individuals = landscape
+                ->getVal(location.x, location.y, location.xwrap, location.ywrap, generation);
+        unsigned long current_number = getNumberLineagesAtLocation(location);
         if(current_number == 1)
         {
             return 0.0;
@@ -2055,7 +2071,7 @@ namespace necsim
     unsigned long SpatialTree::selectRandomLineage(const MapLocation &location) const
     {
         vector<unsigned long> lineage_ids = detectLineages(location);
-        unsigned long random_index = NR->i0(lineage_ids.size());
+        unsigned long random_index = NR->i0(lineage_ids.size() - 1);
         return lineage_ids[random_index];
     }
 
@@ -2111,6 +2127,17 @@ namespace necsim
                 next = active[next].getNext();
             }
             while(next != 0);
+        }
+        // TODO remove or move to DEBUG
+        for(const auto &item: lineage_ids)
+        {
+            if(item == 0)
+            {
+                stringstream ss;
+                ss << "Lineages not correctly calculated for location " << location.x << ", " << location.y << "("
+                   << location.xwrap << ", " << location.ywrap << ")" << endl;
+                throw FatalException(ss.str());
+            }
         }
         return lineage_ids;
 

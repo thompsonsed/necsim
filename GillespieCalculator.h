@@ -9,6 +9,7 @@
 #include <map>
 #include <algorithm>
 #include <numeric>
+#include <memory>
 
 #include "heap.hpp"
 

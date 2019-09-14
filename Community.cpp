@@ -13,6 +13,7 @@
 #include <unordered_map>
 #include <numeric>
 #include "Community.h"
+
 namespace necsim
 {
     bool checkSpeciation(const long double &random_number, const long double &speciation_rate,
@@ -125,8 +126,13 @@ namespace necsim
         if(!has_imported_samplemask)
         {
             stringstream os;
-            samplemask.importBooleanMask(grid_x_size, grid_y_size, samplemask_x_size, samplemask_y_size,
-                                         samplemask_x_offset, samplemask_y_offset, sSamplemask);
+            samplemask.importBooleanMask(grid_x_size,
+                                         grid_y_size,
+                                         samplemask_x_size,
+                                         samplemask_y_size,
+                                         samplemask_x_offset,
+                                         samplemask_y_offset,
+                                         sSamplemask);
             if(sSamplemask != "null")
             {
                 unsigned long total = 0;
@@ -196,18 +202,21 @@ namespace necsim
                                      "Bug in expansion of data structures or object set up likely.");
             }
 #endif //DEBUG
-            this_node->setExistence(this_node->isTip()
-                                    && samplemask.getMaskVal(this_node->getXpos(), this_node->getYpos(),
-                                                             this_node->getXwrap(), this_node->getYwrap())
-                                    && doubleCompare(this_node->getGeneration(), current_community_parameters->time,
-                                                     0.0001));
+            this_node->setExistence(this_node->isTip() && samplemask.getMaskVal(this_node->getXpos(),
+                                                                                this_node->getYpos(),
+                                                                                this_node->getXwrap(),
+                                                                                this_node->getYwrap()) && doubleCompare(
+                    this_node->getGeneration(),
+                    current_community_parameters->time,
+                    0.0001));
             // Calculate if speciation occured at any point in the lineage's branch
             if(protracted)
             {
                 long double lineage_age = this_node->getGeneration() + this_node->getGenRate();
                 if(lineage_age >= applied_protracted_parameters.min_speciation_gen)
                 {
-                    if(checkSpeciation(this_node->getSpecRate(), current_community_parameters->speciation_rate,
+                    if(checkSpeciation(this_node->getSpecRate(),
+                                       current_community_parameters->speciation_rate,
                                        this_node->getGenRate()))
                     {
                         this_node->speciate();
@@ -220,7 +229,8 @@ namespace necsim
             }
             else
             {
-                if(checkSpeciation(this_node->getSpecRate(), current_community_parameters->speciation_rate,
+                if(checkSpeciation(this_node->getSpecRate(),
+                                   current_community_parameters->speciation_rate,
                                    this_node->getGenRate()))
                 {
                     this_node->speciate();
@@ -243,6 +253,23 @@ namespace necsim
                 if(!(*nodes)[this_node->getParent()].exists() && this_node->exists() && !this_node->hasSpeciated())
                 {
                     bSorter = true;
+                    if(this_node->getParent() == 0)
+                    {
+                        stringstream ss;
+                        ss << setprecision(64);
+                        ss << "Parent of lineage at " << i << " is 0, but node exists and has not speciated."
+                           << " Possible corrupt database, otherwise, please report this bug." << endl;
+                        ss << "Lineage parameters: " << endl;
+                        ss << "Speciation: " << this_node->hasSpeciated() << endl;
+                        ss << "Tip: " << this_node->isTip() << endl;
+                        ss << "Random number: " << this_node->getSpecRate() << endl;
+                        ss << "Gens alive: " << this_node->getGenRate() << endl;
+                        ss << "Gen added: " << this_node->getGeneration() << endl;
+                        ss << "Speciation check: " << checkSpeciation(this_node->getSpecRate(),
+                                                                      current_community_parameters->speciation_rate,
+                                                                      this_node->getGenRate()) << endl;
+                        throw FatalException(ss.str());
+                    }
                     (*nodes)[this_node->getParent()].setExistence(true);
                 }
             }
@@ -347,7 +374,25 @@ namespace necsim
                 if(this_node->getSpeciesID() == 0 && this_node->exists())
                 {
                     loopon = true;
-                    this_node->burnSpecies((*nodes)[this_node->getParent()].getSpeciesID());
+                    unsigned long parent = this_node->getParent();
+                    if(parent == 0)
+                    {
+                        stringstream ss;
+                        ss << setprecision(64);
+                        ss << "Parent of lineage at " << i << " is 0, but no species ID assigned and node exists."
+                           << " Possible corrupt database, otherwise, please report this bug." << endl;
+                        ss << "Lineage parameters: " << endl;
+                        ss << "Speciation: " << this_node->hasSpeciated() << endl;
+                        ss << "Tip: " << this_node->isTip() << endl;
+                        ss << "Random number: " << this_node->getSpecRate() << endl;
+                        ss << "Gens alive: " << this_node->getGenRate() << endl;
+                        ss << "Gen added: " << this_node->getGeneration() << endl;
+                        ss << "Speciation check: " << checkSpeciation(this_node->getSpecRate(),
+                                                                      current_community_parameters->speciation_rate,
+                                                                      this_node->getGenRate()) << endl;
+                        throw FatalException(ss.str());
+                    }
+                    this_node->burnSpecies((*nodes)[parent].getSpeciesID());
 #ifdef DEBUG
                     if((*nodes)[this_node->getParent()].getSpeciesID() == 0 &&
                        doubleCompare(this_node->getGeneration(), current_community_parameters->time, 0.001))
@@ -779,8 +824,8 @@ namespace necsim
         {
             return false;
         }
-        bool has_pair = past_communities.hasPair(speciation_rate, time, fragments, metacommunity_reference,
-                                                 proc_parameters);
+        bool has_pair = past_communities
+                .hasPair(speciation_rate, time, fragments, metacommunity_reference, proc_parameters);
         if(fragments
            && past_communities.hasPair(speciation_rate, time, false, metacommunity_reference, proc_parameters))
         {
@@ -918,9 +963,12 @@ namespace necsim
             //			os << nodes[i].exists() << endl;
             if(this_node->isTip() && this_node->exists()
                && doubleCompare(static_cast<double>(this_node->getGeneration()),
-                                static_cast<double>(current_community_parameters->time), 0.0001))
+                                static_cast<double>(current_community_parameters->time),
+                                0.0001))
             {
-                if(samplemask.getMaskVal(this_node->getXpos(), this_node->getYpos(), this_node->getXwrap(),
+                if(samplemask.getMaskVal(this_node->getXpos(),
+                                         this_node->getYpos(),
+                                         this_node->getXwrap(),
                                          this_node->getYwrap()))
                 {
                     long x = this_node->getXpos();
@@ -1232,9 +1280,10 @@ namespace necsim
             for(unsigned long j = 0; j < nodes->size(); j++)
             {
                 TreeNode* this_node = &(*nodes)[j];
-                if(this_node->isTip()
-                   && samplemask.getMaskVal(this_node->getXpos(), this_node->getYpos(), this_node->getXwrap(),
-                                            this_node->getYwrap())
+                if(this_node->isTip() && samplemask.getMaskVal(this_node->getXpos(),
+                                                               this_node->getYpos(),
+                                                               this_node->getXwrap(),
+                                                               this_node->getYwrap())
                    && doubleCompare(this_node->getGeneration(), current_community_parameters->time, 0.0001))
                 {
                     // if they exist exactly in the generation of interest.
@@ -1274,13 +1323,11 @@ namespace necsim
             {
                 if(minimum_protracted_parameters.max_speciation_gen == 0.0)
                 {
-                    throw FatalException(
-                            "Protracted speciation does not make sense when maximum speciation gen is 0.0.");
+                    throw FatalException("Protracted speciation does not make sense when maximum speciation gen is 0.0.");
                 }
                 if(minimum_protracted_parameters.min_speciation_gen > minimum_protracted_parameters.max_speciation_gen)
                 {
-                    throw FatalException(
-                            "Cannot have simulation with minimum speciation generation less than maximum!");
+                    throw FatalException("Cannot have simulation with minimum speciation generation less than maximum!");
                 }
             }
         }
@@ -1372,16 +1419,14 @@ namespace necsim
                              minimum_protracted_parameters.min_speciation_gen,
                              minimum_protracted_parameters.min_speciation_gen * 0.0000001))
             {
-                writeInfo(
-                        "Setting applied minimum protracted generation to simulated minimum protracted generation.\n");
+                writeInfo("Setting applied minimum protracted generation to simulated minimum protracted generation.\n");
                 applied_protracted_parameters.min_speciation_gen = minimum_protracted_parameters.min_speciation_gen;
             }
             if(doubleCompare(applied_protracted_parameters.max_speciation_gen,
                              minimum_protracted_parameters.max_speciation_gen,
                              minimum_protracted_parameters.max_speciation_gen * 0.0000001))
             {
-                writeInfo(
-                        "Setting applied maximum protracted generation to simulated maximum protracted generation.\n");
+                writeInfo("Setting applied maximum protracted generation to simulated maximum protracted generation.\n");
                 applied_protracted_parameters.max_speciation_gen = minimum_protracted_parameters.max_speciation_gen;
             }
 
@@ -1465,7 +1510,8 @@ namespace necsim
                                               sqlite3_column_double(stmt2->stmt, 1),
                                               sqlite3_column_double(stmt2->stmt, 2),
                                               bool(sqlite3_column_int(stmt2->stmt, 3)),
-                                              static_cast<unsigned long>(sqlite3_column_int(stmt2->stmt, 4)), tmp);
+                                              static_cast<unsigned long>(sqlite3_column_int(stmt2->stmt, 4)),
+                                              tmp);
                 }
                 rc = stmt2->step();
             }
@@ -1526,8 +1572,8 @@ namespace necsim
 #endif
             meta_reference = past_metacommunities.addNew(metacomm_parameters);
         }
-        current_community_parameters = past_communities.addNew(speciation_rate, time, fragments, meta_reference,
-                                                               protracted_parameters);
+        current_community_parameters = past_communities
+                .addNew(speciation_rate, time, fragments, meta_reference, protracted_parameters);
 #ifdef DEBUG
         for(const auto &i : past_communities.comm_parameters)
         {
@@ -1703,7 +1749,10 @@ namespace necsim
                 sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(item->reference));
                 sqlite3_bind_double(stmt->stmt, 2, static_cast<double>(item->speciation_rate));
                 sqlite3_bind_int(stmt->stmt, 3, static_cast<int>(item->metacommunity_size));
-                sqlite3_bind_text(stmt->stmt, 4, item->option.c_str(), static_cast<int>(item->option.length()),
+                sqlite3_bind_text(stmt->stmt,
+                                  4,
+                                  item->option.c_str(),
+                                  static_cast<int>(item->option.length()),
                                   SQLITE_TRANSIENT);
                 sqlite3_bind_int(stmt->stmt, 5, static_cast<int>(item->external_reference));
                 int step = stmt->step();
@@ -1877,11 +1926,17 @@ namespace necsim
                 for(auto time : spec_sim_parameters->all_times)
                 {
                     resetTree();
-                    if(!checkCalculationsPerformed(sr, time, spec_sim_parameters->use_fragments,
-                                                   *current_metacommunity_parameters, applied_protracted_parameters))
+                    if(!checkCalculationsPerformed(sr,
+                                                   time,
+                                                   spec_sim_parameters->use_fragments,
+                                                   *current_metacommunity_parameters,
+                                                   applied_protracted_parameters))
                     {
-                        addCalculationPerformed(sr, time, spec_sim_parameters->use_fragments,
-                                                *current_metacommunity_parameters, applied_protracted_parameters);
+                        addCalculationPerformed(sr,
+                                                time,
+                                                spec_sim_parameters->use_fragments,
+                                                *current_metacommunity_parameters,
+                                                applied_protracted_parameters);
                         createDatabase();
                         if(spec_sim_parameters->use_spatial)
                         {

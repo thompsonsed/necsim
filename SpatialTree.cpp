@@ -2016,6 +2016,10 @@ namespace necsim
         unsigned long max_number_individuals = landscape->getVal(location.x, location.y, location.xwrap, location.ywrap,
                                                                  generation);
         unsigned long current_number = getNumberIndividualsAtLocation(location);
+        if(current_number == 1)
+        {
+            return 0.0;
+        }
         return min((double(current_number) - 1.0) / double(max_number_individuals), 1.0);
 
     }

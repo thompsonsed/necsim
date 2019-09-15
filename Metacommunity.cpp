@@ -63,9 +63,9 @@ namespace necsim
             string sql_call = "SELECT seed, job_type from SIMULATION_PARAMETERS";
             auto stmt = database->prepare(sql_call);
             database->step();
-            seed = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0));
+            seed = sqlite3_column_int64(stmt->stmt, 0);
             random->setSeed(seed);
-            job_type = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 1));
+            job_type = sqlite3_column_int64(stmt->stmt, 1);
             database->finalise();
             parameters_checked = true;
         }

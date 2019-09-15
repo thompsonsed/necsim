@@ -286,7 +286,7 @@ namespace necsim
                     stmt); // this could be cleaned up if checkMaxIDNumber comes before the insert statement.
             for(unsigned long i = 0; i < distances.size(); i++)
             {
-                sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(max_id + i));
+                sqlite3_bind_int64(stmt->stmt, 1, max_id + i);
                 auto iter = parameter_references.find(distances[i].first);
 
 #ifdef DEBUG
@@ -301,7 +301,7 @@ namespace necsim
                     max_parameter_reference = reference;
                 }
                 sqlite3_bind_double(stmt->stmt, 2, distances[i].second);
-                sqlite3_bind_int(stmt->stmt, 3, static_cast<int>(reference));
+                sqlite3_bind_int64(stmt->stmt, 3, reference);
                 int step = stmt->step();
                 if(step != SQLITE_DONE)
                 {

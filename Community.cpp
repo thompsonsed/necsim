@@ -229,28 +229,22 @@ namespace necsim
             }
             else
             {
-                // TODO remove
-                if(i == 103)
-                {
-                    stringstream ss;
-                    ss << "Logging for " << i << endl;
-                    ss << setprecision(64);
-                    ss << "Lineage parameters: " << endl;
-                    ss << "Speciation: " << this_node->hasSpeciated() << endl;
-                    ss << "Tip: " << this_node->isTip() << endl;
-                    ss << "Random number: " << this_node->getSpecRate() << endl;
-                    ss << "Gens alive: " << this_node->getGenRate() << endl;
-                    ss << "Gen added: " << this_node->getGeneration() << endl;
-                    ss << "Speciation check: " << checkSpeciation(this_node->getSpecRate(),
-                                                                  current_community_parameters->speciation_rate,
-                                                                  this_node->getGenRate()) << endl;
-                    writeInfo(ss.str());
-                }
                 if(checkSpeciation(this_node->getSpecRate(),
                                    current_community_parameters->speciation_rate,
                                    this_node->getGenRate()))
                 {
                     this_node->speciate();
+                }
+                if(!this_node->hasSpeciated() && this_node->getParent() == 0)
+                {
+                    stringstream ss;
+                    ss << "\n\tLineage at " << i << " has not speciated and parent is 0. Integer overflow possible. "
+                                                    "Correcting by setting gens_alive to min value necessary for speciation."
+                       << endl;
+                    writeError(ss.str());
+                    double necessary_gen_rate =
+                            ceil(log(1 - this_node->getSpecRate()) / log(1 - min_spec_rate));
+                    this_node->setGenerationRate((unsigned long)necessary_gen_rate);
                 }
             }
         }
@@ -270,22 +264,6 @@ namespace necsim
                 if(!(*nodes)[this_node->getParent()].exists() && this_node->exists() && !this_node->hasSpeciated())
                 {
                     bSorter = true;
-                    if(i == 103) // TODO remove
-                    {
-                        stringstream ss;
-                        ss << "Logging for " << i << "again"<<  endl;
-                        ss << setprecision(64);
-                        ss << "Lineage parameters: " << endl;
-                        ss << "Speciation: " << this_node->hasSpeciated() << endl;
-                        ss << "Tip: " << this_node->isTip() << endl;
-                        ss << "Random number: " << this_node->getSpecRate() << endl;
-                        ss << "Gens alive: " << this_node->getGenRate() << endl;
-                        ss << "Gen added: " << this_node->getGeneration() << endl;
-                        ss << "Speciation check: " << checkSpeciation(this_node->getSpecRate(),
-                                                                      current_community_parameters->speciation_rate,
-                                                                      this_node->getGenRate()) << endl;
-                        writeInfo(ss.str());
-                    }
                     if(this_node->getParent() == 0)
                     {
                         stringstream ss;
@@ -400,7 +378,6 @@ namespace necsim
             loopon = false;
             // if we start at the end of the loop and work backwards, we should remove some of the repeat
             // speciation events.
-            bool p = false; // TODO remove
             for(unsigned long i = (nodes->size()) - 1; i > 0; i--)
             {
                 TreeNode* this_node = &(*nodes)[i];
@@ -409,23 +386,6 @@ namespace necsim
                 {
                     loopon = true;
                     unsigned long parent = this_node->getParent();
-                    if(i == 103 && !p) // TODO remove
-                    {
-                        p = true;
-                        stringstream ss;
-                        ss << "Logging for " << i << endl;
-                        ss << setprecision(64);
-                        ss << "Lineage parameters: " << endl;
-                        ss << "Speciation: " << this_node->hasSpeciated() << endl;
-                        ss << "Tip: " << this_node->isTip() << endl;
-                        ss << "Random number: " << this_node->getSpecRate() << endl;
-                        ss << "Gens alive: " << this_node->getGenRate() << endl;
-                        ss << "Gen added: " << this_node->getGeneration() << endl;
-                        ss << "Speciation check: " << checkSpeciation(this_node->getSpecRate(),
-                                                                      current_community_parameters->speciation_rate,
-                                                                      this_node->getGenRate()) << endl;
-                        writeInfo(ss.str());
-                    }
                     if(parent == 0)
                     {
                         stringstream ss;
@@ -631,7 +591,7 @@ namespace necsim
         auto stmt = database->prepare(count_command);
         unsigned long datasize;
         database->step();
-        datasize = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0));
+        datasize = sqlite3_column_int64(stmt->stmt, 0);
         stringstream ss;
         ss << "\n\tDetected " << datasize << " events in the coalescence tree." << endl;
         writeInfo(ss.str());
@@ -649,17 +609,17 @@ namespace necsim
 #endif
         for(unsigned long i = 0; i < datasize; i++)
         {
-            auto species_id = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 1));
+            unsigned long species_id = sqlite3_column_int64(stmt->stmt, 1);
             // These values come in as values on the grid (not the sample mask) AFAIK
-            long xval = sqlite3_column_int(stmt->stmt, 2);
-            long yval = sqlite3_column_int(stmt->stmt, 3);
-            long xwrap = sqlite3_column_int(stmt->stmt, 4);
-            long ywrap = sqlite3_column_int(stmt->stmt, 5);
-            auto tip = bool(sqlite3_column_int(stmt->stmt, 6));
-            auto speciation = bool(sqlite3_column_int(stmt->stmt, 7));
-            auto parent = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 8));
-            auto generation_rate = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 11));
-            auto existence = bool(sqlite3_column_int(stmt->stmt, 9));
+            long xval = sqlite3_column_int64(stmt->stmt, 2);
+            long yval = sqlite3_column_int64(stmt->stmt, 3);
+            long xwrap = sqlite3_column_int64(stmt->stmt, 4);
+            long ywrap = sqlite3_column_int64(stmt->stmt, 5);
+            auto tip = bool(sqlite3_column_int64(stmt->stmt, 6));
+            auto speciation = bool(sqlite3_column_int64(stmt->stmt, 7));
+            auto parent = sqlite3_column_int64(stmt->stmt, 8);
+            auto generation_rate = sqlite3_column_int64(stmt->stmt, 11);
+            auto existence = bool(sqlite3_column_int64(stmt->stmt, 9));
             double dSpec = sqlite3_column_double(stmt->stmt, 10);
             long double generationin = sqlite3_column_double(stmt->stmt, 12);
             // the -1 is to ensure that the lineage_indices includes all lineages, but fills the output from the beginning
@@ -711,7 +671,7 @@ namespace necsim
             string count_command = "SELECT MAX(ID) FROM SPECIES_ABUNDANCES;";
             auto stmt = database->prepare(count_command);
             database->step();
-            max_species_id = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0)) + 1;
+            max_species_id = sqlite3_column_int64(stmt->stmt, 0) + 1;
             // close the old statement
             database->finalise();
         }
@@ -747,7 +707,7 @@ namespace necsim
             string count_command = "SELECT MAX(ID) FROM SPECIES_LOCATIONS;";
             auto stmt = database->prepare(count_command);
             database->step();
-            max_locations_id = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0)) + 1;
+            max_locations_id = sqlite3_column_int64(stmt->stmt, 0) + 1;
             // close the old statement
             database->finalise();
         }
@@ -765,7 +725,7 @@ namespace necsim
             string count_command = "SELECT MAX(ID) FROM FRAGMENT_ABUNDANCES;";
             auto stmt = database->prepare(count_command);
             database->step();
-            max_fragment_id = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0)) + 1;
+            max_fragment_id = sqlite3_column_int64(stmt->stmt, 0) + 1;
             // close the old statement
             database->finalise();
         }
@@ -836,10 +796,10 @@ namespace necsim
             for(unsigned long i = 0; i < species_abundances->size(); i++)
             {
                 // lexical cast fixes a precision problem that allows for printing of very small doubles.
-                sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(max_species_id++));
-                sqlite3_bind_int(stmt->stmt, 2, static_cast<int>(i));
-                sqlite3_bind_int(stmt->stmt, 3, static_cast<int>(species_abundances->operator[](i)));
-                sqlite3_bind_int(stmt->stmt, 4, static_cast<int>(current_community_parameters->reference));
+                sqlite3_bind_int64(stmt->stmt, 1, max_species_id++);
+                sqlite3_bind_int64(stmt->stmt, 2, i);
+                sqlite3_bind_int64(stmt->stmt, 3, species_abundances->operator[](i));
+                sqlite3_bind_int64(stmt->stmt, 4, current_community_parameters->reference);
                 int step = stmt->step();
                 if(step != SQLITE_DONE)
                 {
@@ -910,13 +870,13 @@ namespace necsim
             if(*tmp_row != 0)
             {
                 // fixed precision problem - lexical cast allows for printing of very small doubles.
-                sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(max_fragment_id++));
+                sqlite3_bind_int64(stmt->stmt, 1, max_fragment_id++);
                 sqlite3_bind_text(stmt->stmt, 2, f.name.c_str(), -1, SQLITE_STATIC);
                 sqlite3_bind_double(stmt->stmt, 3, f.area);
-                sqlite3_bind_int(stmt->stmt, 4, static_cast<int>(f.num));
-                sqlite3_bind_int(stmt->stmt, 5, static_cast<int>(i));
-                sqlite3_bind_int(stmt->stmt, 6, static_cast<int>(*tmp_row));
-                sqlite3_bind_int(stmt->stmt, 7, static_cast<int>(current_community_parameters->reference));
+                sqlite3_bind_int64(stmt->stmt, 4, f.num);
+                sqlite3_bind_int64(stmt->stmt, 5, i);
+                sqlite3_bind_int64(stmt->stmt, 6, *tmp_row);
+                sqlite3_bind_int64(stmt->stmt, 7, current_community_parameters->reference);
                 int step = stmt->step();
                 if(step != SQLITE_DONE)
                 {
@@ -964,7 +924,7 @@ namespace necsim
         count_command += to_string(current_community_parameters->reference) + ";";
         auto stmt = database->prepare(count_command);
         database->step();
-        int tmp_val = sqlite3_column_int(stmt->stmt, 0);
+        int tmp_val = sqlite3_column_int64(stmt->stmt, 0);
         // close the old statement
         database->finalise();
         return tmp_val > 0;
@@ -981,7 +941,7 @@ namespace necsim
         count_command += to_string(current_community_parameters->reference) + ";";
         auto stmt = database->prepare(count_command);
         database->step();
-        int tmp_val = sqlite3_column_int(stmt->stmt, 0);
+        unsigned long tmp_val = sqlite3_column_int64(stmt->stmt, 0);
         // close the old statement
         database->finalise();
         return tmp_val > 0;
@@ -1028,11 +988,11 @@ namespace necsim
                     long ywrap = this_node->getYwrap();
                     long xval = x + (xwrap * grid_x_size) + samplemask_x_offset;
                     long yval = y + (ywrap * grid_y_size) + samplemask_y_offset;
-                    sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(max_locations_id++));
-                    sqlite3_bind_int(stmt->stmt, 2, static_cast<int>(this_node->getSpeciesID()));
-                    sqlite3_bind_int(stmt->stmt, 3, static_cast<int>(xval));
-                    sqlite3_bind_int(stmt->stmt, 4, static_cast<int>(yval));
-                    sqlite3_bind_int(stmt->stmt, 5, static_cast<int>(current_community_parameters->reference));
+                    sqlite3_bind_int64(stmt->stmt, 1, max_locations_id++);
+                    sqlite3_bind_int64(stmt->stmt, 2, this_node->getSpeciesID());
+                    sqlite3_bind_int64(stmt->stmt, 3, xval);
+                    sqlite3_bind_int64(stmt->stmt, 4, yval);
+                    sqlite3_bind_int64(stmt->stmt, 5, current_community_parameters->reference);
                     database->step();
                     stmt->clearAndReset();
                 }
@@ -1417,15 +1377,15 @@ namespace necsim
         auto stmt = database->prepare(sql_parameters);
         database->step();
         min_spec_rate = sqlite3_column_double(stmt->stmt, 0);
-        grid_x_size = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 1));
-        grid_y_size = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 2));
-        protracted = bool(sqlite3_column_int(stmt->stmt, 3));
+        grid_x_size = sqlite3_column_int64(stmt->stmt, 1);
+        grid_y_size = sqlite3_column_int64(stmt->stmt, 2);
+        protracted = bool(sqlite3_column_int64(stmt->stmt, 3));
         minimum_protracted_parameters.min_speciation_gen = sqlite3_column_double(stmt->stmt, 4);
         minimum_protracted_parameters.max_speciation_gen = sqlite3_column_double(stmt->stmt, 5);
-        samplemask_x_offset = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 6));
-        samplemask_y_offset = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 7));
-        samplemask_x_size = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 8));
-        samplemask_y_size = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 9));
+        samplemask_x_offset = sqlite3_column_int64(stmt->stmt, 6);
+        samplemask_y_offset = sqlite3_column_int64(stmt->stmt, 7);
+        samplemask_x_size = sqlite3_column_int64(stmt->stmt, 8);
+        samplemask_y_size = sqlite3_column_int64(stmt->stmt, 9);
         if(protracted)
         {
             if(minimum_protracted_parameters.max_speciation_gen == 0.0)
@@ -1543,7 +1503,7 @@ namespace necsim
             }
             while(rc == SQLITE_ROW)
             {
-                auto row_val = sqlite3_column_int(stmt2->stmt, 0);
+                auto row_val = sqlite3_column_int64(stmt2->stmt, 0);
                 if(row_val == 0)
                 {
                     writeWarning(
@@ -1560,8 +1520,8 @@ namespace necsim
                     past_communities.pushBack(static_cast<unsigned long>(row_val),
                                               sqlite3_column_double(stmt2->stmt, 1),
                                               sqlite3_column_double(stmt2->stmt, 2),
-                                              bool(sqlite3_column_int(stmt2->stmt, 3)),
-                                              static_cast<unsigned long>(sqlite3_column_int(stmt2->stmt, 4)),
+                                              bool(sqlite3_column_int64(stmt2->stmt, 3)),
+                                              static_cast<unsigned long>(sqlite3_column_int64(stmt2->stmt, 4)),
                                               tmp);
                 }
                 rc = stmt2->step();
@@ -1589,11 +1549,11 @@ namespace necsim
             int rc = stmt4->step();
             while(rc == SQLITE_ROW)
             {
-                past_metacommunities.pushBack(static_cast<unsigned long>(sqlite3_column_int(stmt4->stmt, 0)),
-                                              static_cast<unsigned long>(sqlite3_column_int(stmt4->stmt, 2)),
+                past_metacommunities.pushBack(sqlite3_column_int64(stmt4->stmt, 0),
+                                              sqlite3_column_int64(stmt4->stmt, 2),
                                               sqlite3_column_double(stmt4->stmt, 1),
                                               (char*) (sqlite3_column_text(stmt4->stmt, 3)),
-                                              static_cast<const unsigned long &>(sqlite3_column_int(stmt4->stmt, 4)));
+                                              sqlite3_column_int64(stmt4->stmt, 4));
                 rc = stmt4->step();
             }
             if(rc != SQLITE_OK && rc != SQLITE_DONE)
@@ -1652,7 +1612,7 @@ namespace necsim
             int rc = stmt2->step();
             while(rc != SQLITE_DONE)
             {
-                unique_community_refs.push_back(static_cast<unsigned long>(sqlite3_column_int(stmt2->stmt, 0)));
+                unique_community_refs.push_back(static_cast<unsigned long>(sqlite3_column_int64(stmt2->stmt, 0)));
                 rc = stmt2->step();
                 if(rc > 10000)
                 {
@@ -1675,7 +1635,7 @@ namespace necsim
             int rc = stmt2->step();
             while(rc != SQLITE_DONE)
             {
-                unique_metacommunity_refs.push_back(static_cast<unsigned long>(sqlite3_column_int(stmt2->stmt, 0)));
+                unique_metacommunity_refs.push_back(sqlite3_column_int64(stmt2->stmt, 0));
                 rc = stmt2->step();
                 if(rc > 10000)
                 {
@@ -1727,11 +1687,11 @@ namespace necsim
                 {
                     continue;
                 }
-                sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(item->reference));
+                sqlite3_bind_int64(stmt->stmt, 1, item->reference);
                 sqlite3_bind_double(stmt->stmt, 2, static_cast<double>(item->speciation_rate));
                 sqlite3_bind_double(stmt->stmt, 3, static_cast<double>(item->time));
-                sqlite3_bind_int(stmt->stmt, 4, static_cast<int>(item->fragment));
-                sqlite3_bind_int(stmt->stmt, 5, static_cast<int>(item->metacommunity_reference));
+                sqlite3_bind_int64(stmt->stmt, 4, item->fragment);
+                sqlite3_bind_int64(stmt->stmt, 5, item->metacommunity_reference);
                 if(protracted)
                 {
                     sqlite3_bind_double(stmt->stmt, 6, item->protracted_parameters.min_speciation_gen);
@@ -1797,15 +1757,15 @@ namespace necsim
                 {
                     continue;
                 }
-                sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(item->reference));
+                sqlite3_bind_int64(stmt->stmt, 1, item->reference);
                 sqlite3_bind_double(stmt->stmt, 2, static_cast<double>(item->speciation_rate));
-                sqlite3_bind_int(stmt->stmt, 3, static_cast<int>(item->metacommunity_size));
+                sqlite3_bind_int64(stmt->stmt, 3, item->metacommunity_size);
                 sqlite3_bind_text(stmt->stmt,
                                   4,
                                   item->option.c_str(),
                                   static_cast<int>(item->option.length()),
                                   SQLITE_TRANSIENT);
-                sqlite3_bind_int(stmt->stmt, 5, static_cast<int>(item->external_reference));
+                sqlite3_bind_int64(stmt->stmt, 5, item->external_reference);
                 int step = stmt->step();
                 if(step != SQLITE_DONE)
                 {
@@ -1857,20 +1817,20 @@ namespace necsim
         auto stmt = database->prepare(insert_species_list);
         // Start the transaction
         database->beginTransaction();
-        for(unsigned int i = 0; i <= enddata; i++)
+        for(unsigned long i = 0; i <= enddata; i++)
         {
-            sqlite3_bind_int(stmt->stmt, 1, i);
-            sqlite3_bind_int(stmt->stmt, 2, static_cast<int>((*nodes)[i].getSpeciesID()));
-            sqlite3_bind_int(stmt->stmt, 3, static_cast<int>((*nodes)[i].getXpos()));
-            sqlite3_bind_int(stmt->stmt, 4, static_cast<int>((*nodes)[i].getYpos()));
-            sqlite3_bind_int(stmt->stmt, 5, static_cast<int>((*nodes)[i].getXwrap()));
-            sqlite3_bind_int(stmt->stmt, 6, static_cast<int>((*nodes)[i].getYwrap()));
-            sqlite3_bind_int(stmt->stmt, 7, (*nodes)[i].isTip());
-            sqlite3_bind_int(stmt->stmt, 8, (*nodes)[i].hasSpeciated());
-            sqlite3_bind_int(stmt->stmt, 9, static_cast<int>((*nodes)[i].getParent()));
-            sqlite3_bind_int(stmt->stmt, 10, (*nodes)[i].exists());
+            sqlite3_bind_int64(stmt->stmt, 1, i);
+            sqlite3_bind_int64(stmt->stmt, 2, (*nodes)[i].getSpeciesID());
+            sqlite3_bind_int64(stmt->stmt, 3, (*nodes)[i].getXpos());
+            sqlite3_bind_int64(stmt->stmt, 4, (*nodes)[i].getYpos());
+            sqlite3_bind_int64(stmt->stmt, 5, (*nodes)[i].getXwrap());
+            sqlite3_bind_int64(stmt->stmt, 6, (*nodes)[i].getYwrap());
+            sqlite3_bind_int64(stmt->stmt, 7, (*nodes)[i].isTip());
+            sqlite3_bind_int64(stmt->stmt, 8, (*nodes)[i].hasSpeciated());
+            sqlite3_bind_int64(stmt->stmt, 9, (*nodes)[i].getParent());
+            sqlite3_bind_int64(stmt->stmt, 10, (*nodes)[i].exists());
             sqlite3_bind_double(stmt->stmt, 11, static_cast<double>((*nodes)[i].getSpecRate()));
-            sqlite3_bind_int(stmt->stmt, 12, static_cast<int>((*nodes)[i].getGenRate()));
+            sqlite3_bind_int64(stmt->stmt, 12, (*nodes)[i].getGenRate());
             sqlite3_bind_double(stmt->stmt, 13, static_cast<double>((*nodes)[i].getGeneration()));
             database->step();
             stmt->clearAndReset();
@@ -2107,7 +2067,7 @@ namespace necsim
         count_command += to_string(community_reference) + ";";
         auto stmt = database->prepare(count_command);
         database->step();
-        int tmp_val = sqlite3_column_int(stmt->stmt, 0);
+        long tmp_val = sqlite3_column_int64(stmt->stmt, 0);
         database->finalise();
         return static_cast<unsigned long>(tmp_val);
     }
@@ -2128,7 +2088,7 @@ namespace necsim
         call2 += "community_reference == " + to_string(community_reference);
         auto stmt = database->prepare(call2);
         database->step();
-        auto no_species = static_cast<unsigned int>(sqlite3_column_int(stmt->stmt, 0));
+        unsigned long no_species = sqlite3_column_int64(stmt->stmt, 0);
         if(no_species == 0)
         {
             stringstream ss;
@@ -2147,8 +2107,8 @@ namespace necsim
         unsigned long i = 0;
         while(i < no_species)
         {
-            auto species_id = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 0));
-            auto no_individuals = static_cast<unsigned long>(sqlite3_column_int(stmt->stmt, 1));
+            auto species_id =sqlite3_column_int64(stmt->stmt, 0);
+            auto no_individuals = sqlite3_column_int64(stmt->stmt, 1);
             if(no_individuals > 0)
             {
                 (*output_species_abundances)[species_id] = no_individuals;

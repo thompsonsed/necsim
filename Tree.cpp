@@ -419,11 +419,12 @@ namespace necsim
         // Check that we still want to continue the simulation.
         if(this_step.bContinueSim)
         {
+            auto chosen_reference = active[this_step.chosen].getReference();
             // increase the counter of the number of moves (or generations) the lineage has undergone.
-            (*data)[active[this_step.chosen].getReference()].increaseGen();
+            (*data)[chosen_reference].increaseGen();
             // Check if speciation happens
-            if(calcSpeciation((*data)[active[this_step.chosen].getReference()].getSpecRate(), 0.99999 * spec,
-                              (*data)[active[this_step.chosen].getReference()].getGenRate()))
+            if(calcSpeciation((*data)[chosen_reference].getSpecRate(), 0.99999 * spec,
+                              (*data)[chosen_reference].getGenRate()))
             {
                 speciation(this_step.chosen);
             }
@@ -1041,8 +1042,7 @@ namespace necsim
             {
                 if((!((*data)[i].hasSpeciated())) && ((*data)[i].getParent() == 0 && (*data)[i].exists()))
                 {
-                    throw FatalException(string("ERROR_MAIN_004: " + to_string((long long) i)
-                                                + " has not speciated and parent is 0."));
+                    throw FatalException(string(to_string((long long) i) + " has not speciated and parent is 0."));
                 }
             }
             // here we check the data is valid - alternative validity check.
@@ -1056,7 +1056,7 @@ namespace necsim
                         j = (*data)[j].getParent();
                         if(j == 0)
                         {
-                            throw FatalException("ERROR_MAIN_005: 0 found in parent while following speciation trail.");
+                            throw FatalException("0 found in parent while following speciation trail.");
                         }
                     }
                 }
@@ -1068,6 +1068,9 @@ namespace necsim
             writeLog(30, me.what());
             writeLog(30, "Returning max possible size (may cause RAM issues).");
 #endif // DEBUG
+            stringstream ss;
+            ss << "\nError found when validating coalescence tree post-simulation: " << me.what() << endl;
+            writeCritical(ss.str());
         }
         writeInfo("done.\n");
     }

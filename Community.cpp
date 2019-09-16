@@ -235,7 +235,7 @@ namespace necsim
                 {
                     this_node->speciate();
                 }
-                if(!this_node->hasSpeciated() && this_node->getParent() == 0)
+                if(!this_node->hasSpeciated() && this_node->getParent() == 0 && this_node->exists())
                 {
                     stringstream ss;
                     ss << "\n\tLineage at " << i << " has not speciated and parent is 0. Integer overflow possible. "
@@ -245,6 +245,7 @@ namespace necsim
                     double necessary_gen_rate =
                             ceil(log(1 - this_node->getSpecRate()) / log(1 - min_spec_rate));
                     this_node->setGenerationRate((unsigned long)necessary_gen_rate);
+                    this_node->speciate();
                 }
             }
         }

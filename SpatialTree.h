@@ -474,7 +474,9 @@ namespace necsim
         void gillespieDispersalEvent(GillespieProbability &origin);
 
         void gillespieSpeciationEvent(GillespieProbability &origin);
-        
+
+        void gillespieLocationRemainingCheck(GillespieProbability & location);
+
         void gillespieValidateHeap(); // TODO remove
 
         template<typename T>
@@ -587,6 +589,11 @@ namespace necsim
         void debugDispersal();
 
         /**
+         * @brief Checks the species list at all locations makes sense.
+         */
+        void validateLocations();
+
+        /**
          * @brief Checks that adding a lineage has resulting in the correct structures being created.
          *
          * This function is only relevant in debug mode.
@@ -596,6 +603,7 @@ namespace necsim
          * @param y the y coordinate
          */
         void debugAddingLineage(unsigned long numstart, long x, long y);
+
 
         /**
          * @brief Run checks at the end of each cycle which make certain the move has been successful.

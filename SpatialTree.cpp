@@ -443,8 +443,11 @@ namespace necsim
         return number_start;
     }
 
-    unsigned long SpatialTree::getIndividualsSampled(const long &x, const long &y, const long &x_wrap,
-                                                     const long &y_wrap, const double &current_gen)
+    unsigned long SpatialTree::getIndividualsSampled(const long &x,
+                                                     const long &y,
+                                                     const long &x_wrap,
+                                                     const long &y_wrap,
+                                                     const double &current_gen)
     {
         //	if(sim_parameters->uses_spatial_sampling)
         //	{
@@ -652,16 +655,20 @@ namespace necsim
             if(grid.get(this_step.y, this_step.x).getMaxSize()
                != landscape->getVal(this_step.x, this_step.y, 0, 0, generation))
             {
-                grid.get(this_step.y, this_step.x)
-                    .setMaxsize(landscape->getVal(this_step.x, this_step.y, 0, 0, generation));
+                grid.get(this_step.y, this_step.x).setMaxsize(landscape->getVal(this_step.x,
+                                                                                this_step.y,
+                                                                                0,
+                                                                                0,
+                                                                                generation));
             }
             this_step.coalchosen = grid.get(this_step.y, this_step.x).getRandLineage(NR);
 #ifdef DEBUG
             if(this_step.coalchosen != 0)
             {
-                if(active[this_step.coalchosen].getXpos() != (unsigned long) this_step.x ||
-                   active[this_step.coalchosen].getYpos() != (unsigned long) this_step.y ||
-                   active[this_step.coalchosen].getXwrap() != this_step.xwrap|| active[this_step.coalchosen].getYwrap() != this_step.ywrap)
+                if(active[this_step.coalchosen].getXpos() != (unsigned long) this_step.x
+                   || active[this_step.coalchosen].getYpos() != (unsigned long) this_step.y
+                   || active[this_step.coalchosen].getXwrap() != this_step.xwrap
+                   || active[this_step.coalchosen].getYwrap() != this_step.ywrap)
                 {
                     writeLog(50, "Logging this_step.chosen:");
                     active[this_step.chosen].logActive(50);
@@ -764,9 +771,9 @@ namespace necsim
         {
 #ifdef DEBUG
             if(active[next_active].getNwrap() != 1)
-                {
-                    throw FatalException("ERROR_MOVE_022a: Nwrap not set correctly in move.");
-                }
+            {
+                throw FatalException("ERROR_MOVE_022a: Nwrap not set correctly in move.");
+            }
 #endif
             match_list[matches] = next_active;  // add the match to the lineage_indices of matches.
             matches++;
@@ -788,9 +795,9 @@ namespace necsim
             ncount++;
 #ifdef DEBUG
             if(active[next_active].getNwrap() != ncount)
-                {
-                    throw FatalException("ERROR_MOVE_022d: Nwrap not set correctly in move.");
-                }
+            {
+                throw FatalException("ERROR_MOVE_022d: Nwrap not set correctly in move.");
+            }
 #endif
         }
         if(nwrap != ncount)
@@ -812,8 +819,11 @@ namespace necsim
         }
         else  // if there were matches, generate a random number to see if coalescence occured or not
         {
-            unsigned long randwrap = floor(NR->d01() * (landscape
-                    ->getVal(this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, generation)) + 1);
+            unsigned long randwrap = floor(NR->d01() * (landscape->getVal(this_step.x,
+                                                                          this_step.y,
+                                                                          this_step.xwrap,
+                                                                          this_step.ywrap,
+                                                                          generation)) + 1);
             // Get the random reference from the match lineage_indices.
             // If the movement is to an empty space, then we can update the chain to include the new
             // lineage.
@@ -876,8 +886,8 @@ namespace necsim
                     ss << active[endactive].getNwrap() << " ). Identified during switch of positions." << endl;
                     writeError(ss.str());
                 }
-                grid.get(active[endactive].getYpos(), active[endactive].getXpos())
-                    .setSpecies(active[endactive].getListpos(), chosen);
+                grid.get(active[endactive].getYpos(),
+                         active[endactive].getXpos()).setSpecies(active[endactive].getListpos(), chosen);
                 active[chosen].setup(active[endactive]);
                 active[endactive].setup(tmpdatactive);
                 active[endactive].setNwrap(0);
@@ -903,9 +913,9 @@ namespace necsim
                     if(grid.get(active[endactive].getYpos(), active[endactive].getXpos()).getNext() != endactive)
                     {
                         throw FatalException(string("Nwrap for endactive not set correctly. Nwrap is 1, but "
-                                                    "lineage at 1st position is " + to_string((long long) grid
-                                .get(active[endactive].getYpos(), active[endactive].getXpos()).getNext())
-                                                    + ". Identified during the move."));
+                                                    "lineage at 1st position is " + to_string((long long) grid.get(
+                                active[endactive].getYpos(),
+                                active[endactive].getXpos()).getNext()) + ". Identified during the move."));
                     }
                     grid.get(active[endactive].getYpos(), active[endactive].getXpos()).setNext(chosen);
                 }
@@ -930,8 +940,7 @@ namespace necsim
                                    << endl;
                                 ss << "endactive: " << endactive << endl;
                                 ss << "tmpactive: " << tmpactive << endl;
-                                ss << "tmpnwrap: " << tmpnwrap << " tmpcount: " << tmpcount
-                                   << endl;
+                                ss << "tmpnwrap: " << tmpnwrap << " tmpcount: " << tmpcount << endl;
                                 writeLog(50, ss);
                                 writeLog(50, "Logging chosen:");
                                 active[chosen].logActive(50);
@@ -1095,11 +1104,93 @@ namespace necsim
     {
         if(landscape->getVal(this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, generation) == 0)
         {
-            throw FatalException(
-                    string("ERROR_MOVE_007: Dispersal attempted to non-forest. "
-                           "Check dispersal function. Forest cover: " +
-                           to_string((long long) landscape->getVal(this_step.x, this_step.y, this_step.xwrap,
-                                                                   this_step.ywrap, generation))));
+            throw FatalException(string("ERROR_MOVE_007: Dispersal attempted to non-forest. "
+                                        "Check dispersal function. Forest cover: "
+                                        + to_string((long long) landscape->getVal(this_step.x,
+                                                                                  this_step.y,
+                                                                                  this_step.xwrap,
+                                                                                  this_step.ywrap,
+                                                                                  generation))));
+        }
+    }
+
+    void SpatialTree::validateLocations()
+    {
+        try
+        {
+            for(unsigned long y = 0; y < grid.getRows(); y++)
+            {
+                for(unsigned long x = 0; x < grid.getCols(); x++)
+                {
+                    SpeciesList &species_list = grid.get(y, x);
+                    for(unsigned long i = 0; i < species_list.getListLength(); i++)
+                    {
+                        auto index = species_list.getLineageIndex(i);
+                        if(index == 0)
+                        {
+                            continue;
+                        }
+                        if(index > endactive)
+                        {
+                            stringstream ss;
+                            ss << "Index at " << index << " is out of range of endactive " << endactive << endl;
+                            throw out_of_range(ss.str());
+                        }
+                        else
+                        {
+                            const DataPoint &datapoint = active[index];
+                            if(!datapoint.isOnGrid())
+                            {
+                                stringstream ss;
+                                ss << "Location at " << datapoint.x << ", " << datapoint.y << " (" << datapoint.xwrap
+                                   << ", " << datapoint.ywrap << ") is not on grid.";
+                                throw out_of_range(ss.str());
+                            }
+                            if(datapoint.x != x || datapoint.y != y)
+                            {
+                                stringstream ss;
+                                ss << "Location at " << datapoint.x << ", " << datapoint.y << " (" << datapoint.xwrap
+                                   << ", " << datapoint.ywrap << ") does not equal " << x << ", " << y << endl;
+                                throw out_of_range(ss.str());
+
+                            }
+                        }
+                    }
+                    unsigned long nwrap = species_list.getNwrap();
+                    unsigned long next = species_list.getNext();
+                    unsigned long nw = 0;
+                    while(next != 0)
+                    {
+                        nw++;
+                        if(next > endactive)
+                        {
+                            stringstream ss;
+                            ss << "Index at " << next << " is out of range of endactive " << endactive << endl;
+                            throw out_of_range(ss.str());
+                        }
+                        if(active[next].getNwrap() != nw)
+                        {
+                            stringstream ss;
+                            ss << "Index at " << next << " has incorrect nwrap: " << active[next].getNwrap() << " != "
+                               << nw << endl;
+                            throw out_of_range(ss.str());
+                        }
+                        next = active[next].getNext();
+                    }
+                    if(nw != nwrap)
+                    {
+                        stringstream ss;
+                        ss << "Nwrap set incorrectly: " << nw << " != " << nwrap << endl;
+                        throw out_of_range(ss.str());
+                    }
+                }
+            }
+        }
+        catch(out_of_range &oor)
+        {
+            stringstream ss;
+            ss << "Error validating locations: " << oor.what() << endl;
+            throw FatalException(ss.str());
         }
     }
 
@@ -1605,8 +1696,8 @@ namespace necsim
         {
             runSingleLoop();
         }
-        while((endactive < gillespie_threshold) && (endactive > 1) &&
-              ((steps < 100) || difftime(sim_end, start) < maxtime) && this_step.bContinueSim);
+        while((endactive < gillespie_threshold) && (endactive > 1)
+              && ((steps < 100) || difftime(sim_end, start) < maxtime) && this_step.bContinueSim);
         // Switch to gillespie
         writeInfo("Switching to Gillespie algorithm.\n");
         setupGillespie();
@@ -1614,6 +1705,9 @@ namespace necsim
         do
         {
             runGillespieLoop();
+#ifdef DEBUG
+            validateLineages();
+#endif // DEBUG
         }
         while(endactive > 1);
         return stopSimulation();
@@ -1629,7 +1723,7 @@ namespace necsim
         steps += (heap.front().time_of_event - generation) * double(endactive);
         generation = heap.front().time_of_event;
         stringstream ss; //  TODO remove
-        ss << "\tEvent at " << heap.front().time_of_event << "has " << active.size() - 1 << " lineages remaining...\n"
+        ss << "\tEvent at " << heap.front().time_of_event << " has " << endactive - 1 << " lineages remaining...\n"
            << endl;
         writeInfo(ss.str());
         // Estimate the number of steps that have occurred.
@@ -1679,8 +1773,8 @@ namespace necsim
             {
                 for(unsigned long j = 0; j < sim_parameters->fine_map_x_size; j++)
                 {
-                    self_dispersal_probabilities.get(i, j) = dispersal_coordinator
-                            .getSelfDispersalProbability(Cell(j, i));
+                    self_dispersal_probabilities.get(i, j) = dispersal_coordinator.getSelfDispersalProbability(Cell(j,
+                                                                                                                    i));
                 }
             }
             dispersal_coordinator.removeSelfDispersal();
@@ -1821,16 +1915,13 @@ namespace necsim
         //        ss << "Coalescing lineages at " << lineages.first << " and " << lineages.second << endl;
         //        writeInfo(ss.str());
 
-        if(lineages.first > active.size() || lineages.second > active.size())
+        if(lineages.first > endactive || lineages.second > endactive)
         {
             throw FatalException("Lineage indexing incorrect. Please report this bug."); // TODO remove
         }
-
+        removeOldPosition(lineages.first);
         coalescenceEvent(lineages.first, lineages.second);
-
-        const MapLocation &location = origin.getMapLocation();
-        updateCellCoalescenceProbability(origin, getNumberIndividualsAtLocation(location));
-        updateInhabitedCellOnHeap(convertMapLocationToCell(location));
+        gillespieLocationRemainingCheck(origin);
     }
 
     void SpatialTree::gillespieDispersalEvent(GillespieProbability &origin)
@@ -1847,17 +1938,7 @@ namespace necsim
         Cell destination_cell(convertMapLocationToCell(active[chosen]));
         auto x = destination_cell.x;
         auto y = destination_cell.y;
-        unsigned long n = getNumberLineagesAtLocation(origin.getMapLocation());
-        if(n > 0)
-        {
-            updateCellCoalescenceProbability(origin, getNumberIndividualsAtLocation(origin.getMapLocation()));
-            updateInhabitedCellOnHeap(destination_cell);
-        }
-        else
-        {
-            removeHeapTop();
-            cellToHeapPositions.get(y, x) = SpatialTree::UNUSED;
-        }
+        gillespieLocationRemainingCheck(origin);
 
         GillespieProbability &destination = probabilities.get(y, x);
         if(cellToHeapPositions.get(y, x) == SpatialTree::UNUSED)
@@ -1872,8 +1953,7 @@ namespace necsim
             destination.setRandomNumber(NR->d01());
             const double t = destination.calcTimeToNextEvent(local_death_rate,
                                                              summed_death_rate,
-                                                             getNumberIndividualsAtLocation(destination
-                                                                                                    .getMapLocation()));
+                                                             getNumberIndividualsAtLocation(destination.getMapLocation()));
             heap[cellToHeapPositions.get(y, x)].time_of_event = t;
             updateInhabitedCellOnHeap(destination_cell);
         }
@@ -1886,8 +1966,29 @@ namespace necsim
         unsigned long chosen = selectRandomLineage(location);
         gillespieUpdateGeneration(chosen);
         speciateLineage(active[chosen].getReference());
-        updateCellCoalescenceProbability(origin, getNumberIndividualsAtLocation(location));
-        updateInhabitedCellOnHeap(convertMapLocationToCell(origin.getMapLocation()));
+        removeOldPosition(chosen);
+        switchPositions(chosen);
+        gillespieLocationRemainingCheck(origin);
+    }
+
+    void SpatialTree::gillespieLocationRemainingCheck(GillespieProbability &origin)
+    {
+        const MapLocation &location = origin.getMapLocation();
+        unsigned long number_at_location = getNumberLineagesAtLocation(location);
+        if(number_at_location > 0)
+        {
+            updateCellCoalescenceProbability(origin, number_at_location);
+            // TODO remove
+            writeInfo("Updating inhabited cell on heap...\n");
+            updateInhabitedCellOnHeap(convertMapLocationToCell(origin.getMapLocation()));
+        }
+        else
+        {
+            writeInfo("Removing top of heap.\n"); // TODO remove
+            Cell cell = convertMapLocationToCell(location);
+            cellToHeapPositions.get(cell.y, cell.x) = SpatialTree::UNUSED;
+            removeHeapTop();
+        }
     }
 
     template<typename T> const double SpatialTree::getLocalDeathRate(const T &location)
@@ -1925,7 +2026,7 @@ namespace necsim
 
     void SpatialTree::gillespieUpdateGeneration(const unsigned long &lineage)
     {// TODO remove
-        if(lineage == 0 || lineage > active.size())
+        if(lineage == 0 || lineage > endactive)
         {
             stringstream ss;
             ss << "Lineage " << lineage << " out of range of active." << endl;
@@ -1947,7 +2048,7 @@ namespace necsim
     void SpatialTree::updateInhabitedCellOnHeap(const Cell &pos)
     {
         eastl::change_heap(heap.begin(), heap.size(), cellToHeapPositions.get(pos.y, pos.x));
-        
+
         gillespieValidateHeap(); // TODO remove
     }
 
@@ -1957,8 +2058,8 @@ namespace necsim
         {
             throw FatalException("The heap property has been broken. Please report this bug."); // TODO remove
         }
-        
-        for (size_t i = 0; i < heap.size(); i++)
+
+        for(size_t i = 0; i < heap.size(); i++)
         {
             if(*(heap[i].locator) != i)
             {
@@ -2009,7 +2110,7 @@ namespace necsim
         {
             for(unsigned long x = 0; x < sim_parameters->fine_map_x_size; x++)
             {
-                addNewEvent < false > (x, y);
+                addNewEvent<false>(x, y);
             }
         }
     }
@@ -2017,7 +2118,7 @@ namespace necsim
     void SpatialTree::sortEvents()
     {
         eastl::make_heap(heap.begin(), heap.end());
-        
+
         gillespieValidateHeap(); // TODO remove
     }
 
@@ -2027,11 +2128,18 @@ namespace necsim
         if(getNumberLineagesAtLocation(location) > 0)
         {
             cellToHeapPositions.get(y, x) = heap.size();
-            
-            heap.emplace_back(GillespieHeapNode(Cell(x, y), (probabilities.get(y, x).calcTimeToNextEvent(
-                    getLocalDeathRate(location), summed_death_rate, getNumberIndividualsAtLocation(location)) +
-                    generation), EventType::cell_event, &heap, &cellToHeapPositions.get(y, x)));
-            
+
+            heap.emplace_back(GillespieHeapNode(Cell(x, y),
+                                                (probabilities.get(y,
+                                                                   x).calcTimeToNextEvent(getLocalDeathRate(location),
+                                                                                          summed_death_rate,
+                                                                                          getNumberIndividualsAtLocation(
+                                                                                                  location))
+                                                 + generation),
+                                                EventType::cell_event,
+                                                &heap,
+                                                &cellToHeapPositions.get(y, x)));
+
             if(restoreHeap)
             {
                 eastl::push_heap(heap.begin(), heap.end());
@@ -2055,8 +2163,11 @@ namespace necsim
 
     double SpatialTree::calculateCoalescenceProbability(const MapLocation &location)
     {
-        unsigned long max_number_individuals = landscape
-                ->getVal(location.x, location.y, location.xwrap, location.ywrap, generation);
+        unsigned long max_number_individuals = landscape->getVal(location.x,
+                                                                 location.y,
+                                                                 location.xwrap,
+                                                                 location.ywrap,
+                                                                 generation);
         unsigned long current_number = getNumberLineagesAtLocation(location);
         if(current_number == 1)
         {
@@ -2097,6 +2208,13 @@ namespace necsim
         vector<unsigned long> lineage_ids;
         if(location.isOnGrid())
         {
+            if(species_list.getListSize() == 0)
+            {
+                stringstream ss;
+                ss << "Species list size is 0 " << " at " << location.x << ", " << location.y << " (" << location.xwrap
+                   << ", " << location.ywrap << ")" << endl;
+                throw FatalException(ss.str());
+            }
             lineage_ids.reserve(species_list.getListSize());
             for(unsigned long i = 0; i < species_list.getListLength(); i++)
             {
@@ -2115,16 +2233,30 @@ namespace necsim
         {
             lineage_ids.reserve(species_list.getNwrap());
             unsigned long next = species_list.getNext();
+            unsigned long i = 0; // TODO move to DEBUG
             do
             {
+                i++;
                 const DataPoint &datapoint = active[next];
                 if(datapoint == location)
                 {
                     lineage_ids.push_back(next);
                 }
                 next = active[next].getNext();
+                if(i < endactive)
+                {
+                    throw FatalException("i larger than endactive while detecting lineages. Please report this bug.");
+                }
             }
             while(next != 0);
+            // TODO move to debug
+            if(lineage_ids.size() != species_list.getNwrap())
+            {
+                stringstream ss;
+                ss << "Nwrap does not match length of detected lineages in " << location.x << ", " << location.y
+                   << endl;
+                throw FatalException(ss.str());
+            }
         }
         // TODO remove or move to DEBUG
         for(const auto &item: lineage_ids)
@@ -2187,8 +2319,8 @@ namespace necsim
                 }
                 else
                 {
-                    if(i !=
-                         grid.get(tmp_datapoint.getYpos(), tmp_datapoint.getXpos()).getLineageIndex(tmp_datapoint.getListpos()))
+                    if(i != grid.get(tmp_datapoint.getYpos(),
+                                     tmp_datapoint.getXpos()).getLineageIndex(tmp_datapoint.getListpos()))
                     {
                         fail = true;
                     }
@@ -2228,7 +2360,8 @@ namespace necsim
             {
                 stringstream ss;
                 ss << "Active reference: " << i << endl;
-                ss << "Grid wrapping: " << grid.get(tmp_datapoint.getYpos(), tmp_datapoint.getXpos()).getNwrap() << endl;
+                ss << "Grid wrapping: " << grid.get(tmp_datapoint.getYpos(), tmp_datapoint.getXpos()).getNwrap()
+                   << endl;
                 ss << "Endactive: " << endactive << endl;
                 ss << "Active size: " << active.size() << endl;
                 ss << "Enddata: " << enddata << endl;
@@ -2239,6 +2372,7 @@ namespace necsim
                 throw FatalException("Failure in lineage validation. Please report this bug.");
             }
         }
+        validateLocations();
         writeInfo("done.\n");
     }
 
@@ -2331,8 +2465,7 @@ namespace necsim
                     stringstream ss;
                     ss << "Lineage at 1st position: "
                        << grid.get(active[endactive].getYpos(), active[endactive].getXpos()).getNext() << endl;
-                    ss << "endactive: " << endactive << endl
-                       << "nwrap: " << nwrap << endl;
+                    ss << "endactive: " << endactive << endl << "nwrap: " << nwrap << endl;
                     ss << "chosen: " << chosen << endl;
                     writeLog(10, ss);
                     throw FatalException("ERROR_MOVE_016: Nwrap for endactive not set correctly. Nwrap is 1, "
@@ -2351,12 +2484,9 @@ namespace necsim
                     {
                         stringstream ss;
                         ss << "ERROR_MOVE_017: NON FATAL. Nrap for endactive not set correctly; looped "
-                              "beyond nwrap and not yet found enactive."
-                           << endl;
-                        ss << "endactive: " << endactive << endl
-                           << "nwrap: " << nwrap << endl
-                           << "x,y: " << active[endactive].getXpos() << "," << active[endactive].getYpos()
-                           << endl;
+                              "beyond nwrap and not yet found enactive." << endl;
+                        ss << "endactive: " << endactive << endl << "nwrap: " << nwrap << endl << "x,y: "
+                           << active[endactive].getXpos() << "," << active[endactive].getYpos() << endl;
                         ss << "chosen: " << chosen << endl;
                         writeLog(10, ss);
                     }
@@ -2364,20 +2494,16 @@ namespace necsim
                 if(tmpnwrap != nwrap)
                 {
                     stringstream ss;
-                    ss << "ERROR_MOVE_018: NON FATAL. Nwrap for endactive not set correctly. Nwrap is "
-                       << nwrap << " but endactive is at position " << tmpnwrap << endl;
-                    ss << "endactive: " << endactive << endl
-                       << "nwrap: " << nwrap << endl
-                       << "x,y: " << active[endactive].getXpos() << "," << active[endactive].getYpos()
-                       << endl;
+                    ss << "ERROR_MOVE_018: NON FATAL. Nwrap for endactive not set correctly. Nwrap is " << nwrap
+                       << " but endactive is at position " << tmpnwrap << endl;
+                    ss << "endactive: " << endactive << endl << "nwrap: " << nwrap << endl << "x,y: "
+                       << active[endactive].getXpos() << "," << active[endactive].getYpos() << endl;
                     ss << "chosen: " << chosen << endl;
                     writeLog(10, ss);
                 }
             }
         }
     }
-
-
 
 #endif
 };

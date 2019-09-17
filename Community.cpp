@@ -16,12 +16,17 @@
 
 namespace necsim
 {
-    bool checkSpeciation(const long double &random_number, const long double &speciation_rate,
+    bool checkSpeciation(const long double &random_number,
+                         const long double &speciation_rate,
                          const unsigned long &no_generations)
     {
-        // bool result1, result2, result3, result4;
-        long double res = 1.0 - pow(double(1.0 - speciation_rate), double(no_generations));
+        const long double res = inverseSpeciation(speciation_rate, no_generations);
         return random_number <= res;
+    }
+
+    double inverseSpeciation(const long double &speciation_rate, const unsigned long &no_generations)
+    {
+        return 1.0 - pow(double(1.0 - speciation_rate), double(no_generations));
     }
 
     Samplematrix::Samplematrix()
@@ -173,7 +178,7 @@ namespace necsim
         return precount;
     }
 
-    unsigned long Community::calculateCoalescencetree()
+    unsigned long Community::calculateCoalescenceTree()
     {
         if(!has_imported_samplemask)
         {
@@ -242,9 +247,8 @@ namespace necsim
                                                     "Correcting by setting gens_alive to min value necessary for speciation."
                        << endl;
                     writeError(ss.str());
-                    double necessary_gen_rate =
-                            ceil(log(1 - this_node->getSpecRate()) / log(1 - min_spec_rate));
-                    this_node->setGenerationRate((unsigned long)necessary_gen_rate);
+                    double necessary_gen_rate = ceil(log(1 - this_node->getSpecRate()) / log(1 - min_spec_rate));
+                    this_node->setGenerationRate((unsigned long) necessary_gen_rate);
                     this_node->speciate();
                 }
             }
@@ -406,8 +410,8 @@ namespace necsim
                     }
                     this_node->burnSpecies((*nodes)[parent].getSpeciesID());
 #ifdef DEBUG
-                    if((*nodes)[this_node->getParent()].getSpeciesID() == 0 &&
-                       doubleCompare(this_node->getGeneration(), current_community_parameters->time, 0.001))
+                    if((*nodes)[this_node->getParent()].getSpeciesID() == 0
+                       && doubleCompare(this_node->getGeneration(), current_community_parameters->time, 0.001))
                     {
 
                         if(!error_printed)
@@ -468,40 +472,48 @@ namespace necsim
                 // The line that counts the number of individuals
                 species_abundances->operator[](this_node->getSpeciesID())++;
 #ifdef DEBUG
-                if(!samplemask.getMaskVal(this_node->getXpos(), this_node->getYpos(),
-                                          this_node->getXwrap(), this_node->getYwrap()) &&
-                   doubleCompare(this_node->getGeneration(), current_community_parameters->time, 0.0001))
+                if(!samplemask.getMaskVal(this_node->getXpos(),
+                                          this_node->getYpos(),
+                                          this_node->getXwrap(),
+                                          this_node->getYwrap())
+                   && doubleCompare(this_node->getGeneration(), current_community_parameters->time, 0.0001))
                 {
                     stringstream ss;
                     ss << "x,y " << (*nodes)[i].getXpos() << ", " << (*nodes)[i].getYpos() << endl;
-                    ss << "tip: " << (*nodes)[i].isTip() << " Existance: " << (*nodes)[i].exists()
-                         << " samplemask: " << samplemask.getMaskVal(this_node->getXpos(), this_node->getYpos(),
-                                                                     this_node->getXwrap(), this_node->getYwrap()) << endl;
-                    ss
-                            << "ERROR_SQL_005: Tip doesn't exist. Something went wrong either in the import or "
-                                    "main simulation running."
-                            << endl;
+                    ss << "tip: " << (*nodes)[i].isTip() << " Existance: " << (*nodes)[i].exists() << " samplemask: "
+                       << samplemask.getMaskVal(this_node->getXpos(),
+                                                this_node->getYpos(),
+                                                this_node->getXwrap(),
+                                                this_node->getYwrap()) << endl;
+                    ss << "ERROR_SQL_005: Tip doesn't exist. Something went wrong either in the import or "
+                          "main simulation running." << endl;
                     writeWarning(ss.str());
 
                 }
-                if(this_node->getSpeciesID() == 0 && samplemask.getMaskVal(this_node->getXpos(), this_node->getYpos(),
-                                                                           this_node->getXwrap(), this_node->getYwrap()) &&
-                   doubleCompare(this_node->getGeneration(), current_community_parameters->time, 0.0001))
+                if(this_node->getSpeciesID() == 0 && samplemask.getMaskVal(this_node->getXpos(),
+                                                                           this_node->getYpos(),
+                                                                           this_node->getXwrap(),
+                                                                           this_node->getYwrap())
+                   && doubleCompare(this_node->getGeneration(), current_community_parameters->time, 0.0001))
                 {
                     stringstream ss;
                     ss << "x,y " << this_node->getXpos() << ", " << this_node->getYpos() << endl;
                     ss << "generation (point,required): " << this_node->getGeneration() << ", "
                        << current_community_parameters->time << endl;
-                    TreeNode *p_node = &(*nodes)[this_node->getParent()];
-                    ss << "samplemasktest: " << samplemask.getTestVal(this_node->getXpos(), this_node->getYpos(),
-                                                                      this_node->getXwrap(), this_node->getYwrap()) << endl;
-                    ss << "samplemask: " << samplemask.getVal(this_node->getXpos(), this_node->getYpos(),
-                                                              this_node->getXwrap(), this_node->getYwrap()) << endl;
-                    ss << "parent (tip, exists, generations): " << p_node->isTip() << ", "
-                       << p_node->exists() << ", " << p_node->getGeneration() << endl;
+                    TreeNode* p_node = &(*nodes)[this_node->getParent()];
+                    ss << "samplemasktest: " << samplemask.getTestVal(this_node->getXpos(),
+                                                                      this_node->getYpos(),
+                                                                      this_node->getXwrap(),
+                                                                      this_node->getYwrap()) << endl;
+                    ss << "samplemask: " << samplemask.getVal(this_node->getXpos(),
+                                                              this_node->getYpos(),
+                                                              this_node->getXwrap(),
+                                                              this_node->getYwrap()) << endl;
+                    ss << "parent (tip, exists, generations): " << p_node->isTip() << ", " << p_node->exists() << ", "
+                       << p_node->getGeneration() << endl;
                     ss << "species id zero - i: " << i << " parent: " << p_node->getParent()
-                       << " speciation_probability: " << p_node->getSpecRate() << "has speciated: " << p_node->hasSpeciated()
-                       << endl;
+                       << " speciation_probability: " << p_node->getSpecRate() << "has speciated: "
+                       << p_node->hasSpeciated() << endl;
                     writeCritical(ss.str());
                     throw runtime_error("Fatal, exiting program.");
                 }
@@ -765,7 +777,7 @@ namespace necsim
                 throw FatalException(ss.str());
             }
         }
-        unsigned long nspec = calculateCoalescencetree();
+        unsigned long nspec = calculateCoalescenceTree();
         calcSpeciesAbundance();
         stringstream ss;
         ss << "\tNumber of species: " << nspec << endl;
@@ -826,7 +838,8 @@ namespace necsim
         }
     }
 
-    bool Community::checkCalculationsPerformed(const long double &speciation_rate, const double &time,
+    bool Community::checkCalculationsPerformed(const long double &speciation_rate,
+                                               const double &time,
                                                const bool &fragments,
                                                const MetacommunityParameters &metacomm_parameters,
                                                const ProtractedSpeciationParameters &proc_parameters)
@@ -836,8 +849,11 @@ namespace necsim
         {
             return false;
         }
-        bool has_pair = past_communities
-                .hasPair(speciation_rate, time, fragments, metacommunity_reference, proc_parameters);
+        bool has_pair = past_communities.hasPair(speciation_rate,
+                                                 time,
+                                                 fragments,
+                                                 metacommunity_reference,
+                                                 proc_parameters);
         if(fragments
            && past_communities.hasPair(speciation_rate, time, false, metacommunity_reference, proc_parameters))
         {
@@ -1446,11 +1462,14 @@ namespace necsim
                || applied_protracted_parameters.max_speciation_gen > minimum_protracted_parameters.max_speciation_gen)
             {
 #ifdef DEBUG
-                writeLog(50, "Applied speciation current_metacommunity_parameters: " +
-                to_string(applied_protracted_parameters.min_speciation_gen) + ", " +
-                        to_string(applied_protracted_parameters.max_speciation_gen));
-                writeLog(50, "Simulated speciation current_metacommunity_parameters: " + to_string(minimum_protracted_parameters.min_speciation_gen) +
-                 ", " + to_string(minimum_protracted_parameters.max_speciation_gen));
+                writeLog(50,
+                         "Applied speciation current_metacommunity_parameters: "
+                         + to_string(applied_protracted_parameters.min_speciation_gen) + ", "
+                         + to_string(applied_protracted_parameters.max_speciation_gen));
+                writeLog(50,
+                         "Simulated speciation current_metacommunity_parameters: "
+                         + to_string(minimum_protracted_parameters.min_speciation_gen) + ", "
+                         + to_string(minimum_protracted_parameters.max_speciation_gen));
 #endif // DEBUG
                 stringstream ss;
                 ss << "Applied protracted speciation current_metacommunity_parameters: "
@@ -1569,8 +1588,10 @@ namespace necsim
         }
     }
 
-    void Community::addCalculationPerformed(const long double &speciation_rate, const double &time,
-                                            const bool &fragments, const MetacommunityParameters &metacomm_parameters,
+    void Community::addCalculationPerformed(const long double &speciation_rate,
+                                            const double &time,
+                                            const bool &fragments,
+                                            const MetacommunityParameters &metacomm_parameters,
                                             const ProtractedSpeciationParameters &protracted_parameters)
     {
         auto meta_reference = past_metacommunities.getReference(metacomm_parameters);
@@ -1578,23 +1599,27 @@ namespace necsim
         {
 #ifdef DEBUG
             stringstream ss;
-            ss << "Adding metacommunity (" << metacomm_parameters.metacommunity_size << ", " <<
-               metacomm_parameters.speciation_rate << ")" << endl;
+            ss << "Adding metacommunity (" << metacomm_parameters.metacommunity_size << ", "
+               << metacomm_parameters.speciation_rate << ")" << endl;
             writeInfo(ss.str());
 #endif
             meta_reference = past_metacommunities.addNew(metacomm_parameters);
         }
-        current_community_parameters = past_communities
-                .addNew(speciation_rate, time, fragments, meta_reference, protracted_parameters);
+        current_community_parameters = past_communities.addNew(speciation_rate,
+                                                               time,
+                                                               fragments,
+                                                               meta_reference,
+                                                               protracted_parameters);
 #ifdef DEBUG
         for(const auto &i : past_communities.comm_parameters)
         {
-            if(doubleCompare(i->time, current_community_parameters->time, 0.00001) &&
-                doubleCompare(i->speciation_rate, current_community_parameters->speciation_rate,
-                              i->speciation_rate*0.00001) &&
-                    i->protracted_parameters == current_community_parameters->protracted_parameters &&
-                    i->metacommunity_reference == current_community_parameters->metacommunity_reference &&
-                    i->reference != current_community_parameters->reference)
+            if(doubleCompare(i->time, current_community_parameters->time, 0.00001) && doubleCompare(i->speciation_rate,
+                                                                                                    current_community_parameters->speciation_rate,
+                                                                                                    i->speciation_rate
+                                                                                                    * 0.00001)
+               && i->protracted_parameters == current_community_parameters->protracted_parameters
+               && i->metacommunity_reference == current_community_parameters->metacommunity_reference
+               && i->reference != current_community_parameters->reference)
             {
                 throw FatalException("Communities are identical, but references differ! Please report this bug.");
             }
@@ -1774,7 +1799,8 @@ namespace necsim
                     stringstream ss;
                     ss << database->getErrorMsg(step);
                     ss << "Metacommunity reference: " << item->reference << endl;
-                    ss << "Speciation rate: " << item->speciation_rate << ", metacommunity size: " << item->metacommunity_size << endl;
+                    ss << "Speciation rate: " << item->speciation_rate << ", metacommunity size: "
+                       << item->metacommunity_size << endl;
                     writeLog(10, ss);
 #endif // DEBUG
                     throw FatalException("Could not insert into database. Check destination file has not "
@@ -2073,8 +2099,7 @@ namespace necsim
         return static_cast<unsigned long>(tmp_val);
     }
 
-    shared_ptr<map<unsigned long, unsigned long>> Community::getSpeciesAbundances(
-            const unsigned long &community_reference)
+    shared_ptr<map<unsigned long, unsigned long>> Community::getSpeciesAbundances(const unsigned long &community_reference)
     {
         if(!bSqlConnection)
         {
@@ -2108,7 +2133,7 @@ namespace necsim
         unsigned long i = 0;
         while(i < no_species)
         {
-            auto species_id =sqlite3_column_int64(stmt->stmt, 0);
+            auto species_id = sqlite3_column_int64(stmt->stmt, 0);
             auto no_individuals = sqlite3_column_int64(stmt->stmt, 1);
             if(no_individuals > 0)
             {

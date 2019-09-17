@@ -750,6 +750,11 @@ namespace necsim
         virtual void validateLineages();
 
         /**
+         * @brief Validates the coalescence tree.
+         */
+        void validateCoalescenceTree();
+
+        /**
          * @brief Runs the debug checks at the end of each step.
          *
          * Should only be run if compiled with the DEBUG flag.

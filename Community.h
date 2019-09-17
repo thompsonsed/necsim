@@ -50,6 +50,15 @@ namespace necsim
                          const unsigned long &no_generations);
 
     /**
+     * @brief Calculates the random number required for speciation to occur in exactly n generations
+     * @param speciation_rate the speciation rate
+     * @param no_generations the number of generations speciation can occur over
+     * @return
+     */
+    double inverseSpeciation(const long double &speciation_rate,
+                             const unsigned long &no_generations);
+
+    /**
      * @brief Contains the information needed for defining a fragment.
      */
     struct Fragment
@@ -255,7 +264,7 @@ namespace necsim
 
          * @return the number of species present.
          */
-        unsigned long calculateCoalescencetree();
+        unsigned long calculateCoalescenceTree();
 
         /**
          * @brief Speciates TreeNode and updates the species count.

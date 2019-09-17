@@ -63,6 +63,10 @@ namespace necsim
         return location;
     }
 
+    const MapLocation &GillespieProbability::getMapLocation() const
+    {
+        return location;
+    }
     double GillespieProbability::getLambda(const double &local_death_rate, const double &summed_death_rate,
                                            const unsigned long &n) const
     {

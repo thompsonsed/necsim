@@ -20,6 +20,7 @@
 #include "Tree.h"
 #include "Logging.h"
 #include "LogFile.h"
+
 namespace necsim
 {
     void Tree::importSimulationVariables(const string &configfile)
@@ -104,9 +105,11 @@ namespace necsim
             writeInfo(os.str());
             if(!has_imported_pause)
             {
-                setResumeParameters(sim_parameters->output_directory, sim_parameters->output_directory,
+                setResumeParameters(sim_parameters->output_directory,
+                                    sim_parameters->output_directory,
                                     static_cast<unsigned long>(sim_parameters->seed),
-                                    static_cast<unsigned long>(sim_parameters->job_type), sim_parameters->max_time);
+                                    static_cast<unsigned long>(sim_parameters->job_type),
+                                    sim_parameters->max_time);
             }
             has_paused = true;
         }
@@ -423,7 +426,8 @@ namespace necsim
             // increase the counter of the number of moves (or generations) the lineage has undergone.
             (*data)[chosen_reference].increaseGen();
             // Check if speciation happens
-            if(calcSpeciation((*data)[chosen_reference].getSpecRate(), 0.99999 * spec,
+            if(calcSpeciation((*data)[chosen_reference].getSpecRate(),
+                              0.99999 * spec,
                               (*data)[chosen_reference].getGenRate()))
             {
                 speciation(this_step.chosen);
@@ -498,7 +502,6 @@ namespace necsim
         // Otherwise, pause the simulation and save objects to file.
         return stopSimulation();
     }
-
 
     bool Tree::stopSimulation()
     {
@@ -672,7 +675,8 @@ namespace necsim
         }
     }
 
-    bool Tree::calcSpeciation(const long double &random_number, const long double &speciation_rate,
+    bool Tree::calcSpeciation(const long double &random_number,
+                              const long double &speciation_rate,
                               const unsigned long &no_generations)
     {
         return checkSpeciation(random_number, speciation_rate, no_generations);
@@ -683,8 +687,12 @@ namespace necsim
         // coalescence occured, so we need to adjust the data appropriatedly
         // our chosen lineage has merged with the coalchosen lineage, so we need to sync up the data->
         enddata++;
-        (*data)[enddata].setup(0, active[chosen].getXpos(), active[chosen].getYpos(), active[chosen].getXwrap(),
-                               active[chosen].getYwrap(), generation);
+        (*data)[enddata].setup(0,
+                               active[chosen].getXpos(),
+                               active[chosen].getYpos(),
+                               active[chosen].getXwrap(),
+                               active[chosen].getYwrap(),
+                               generation);
 
         // First perform the move
         (*data)[active[chosen].getReference()].setParent(enddata);
@@ -792,7 +800,11 @@ namespace necsim
     void Tree::convertTip(unsigned long i, double generationin, vector<TreeNode> &data_added)
     {
         TreeNode tmp_tree_node;
-        tmp_tree_node.setup(true, active[i].getXpos(), active[i].getYpos(), active[i].getXwrap(), active[i].getYwrap(),
+        tmp_tree_node.setup(true,
+                            active[i].getXpos(),
+                            active[i].getYpos(),
+                            active[i].getXwrap(),
+                            active[i].getYwrap(),
                             generationin);
         // Now link the old tip to the new tip
         auto data_pos = enddata + data_added.size() + 1;
@@ -815,7 +827,7 @@ namespace necsim
     void Tree::applySpecRateInternal(long double sr, double t)
     {
         setupCommunityCalculation(sr, t);
-        community.calculateCoalescencetree();
+        community.calculateCoalescenceTree();
         community.calcSpeciesAbundance();
     }
 
@@ -1357,7 +1369,10 @@ namespace necsim
         return in1;
     }
 
-    void Tree::setResumeParameters(string pausedir, string outdir, unsigned long seed, unsigned long job_type,
+    void Tree::setResumeParameters(string pausedir,
+                                   string outdir,
+                                   unsigned long seed,
+                                   unsigned long job_type,
                                    unsigned long new_max_time)
     {
         if(!has_imported_pause)
@@ -1542,7 +1557,7 @@ namespace necsim
         writeInfo("\rLoading data from temp file...done.\n");
     }
 
-    void Tree::addGillespie(const double & g_threshold)
+    void Tree::addGillespie(const double &g_threshold)
     {
         throw FatalException("The gillespie algorithm is not supported for non-spatial coalescence trees yet. "
                              "Please contact the project maintainer if this is a feature you would like to see.");
@@ -1584,6 +1599,66 @@ namespace necsim
             }
         }
         writeInfo("done.\n");
+        validateCoalescenceTree();
+    }
+
+    void Tree::validateCoalescenceTree()
+    {
+        writeInfo("Validating coalescence tree...");
+        // Get the active lineages
+        set<unsigned long> active_lineage_refs;
+        for(unsigned long i = 1; i < endactive + 1; i ++)
+        {
+            active_lineage_refs.insert(active[i].getReference());
+        }
+        try
+        {
+            for(unsigned long i = 1; i < enddata - 1; i++)
+            {
+                if(active_lineage_refs.count(i) == 0)
+                {
+                    const auto &tree_node = (*data)[i];
+                    if(checkSpeciation(tree_node.getSpecRate(), spec, tree_node.getGenRate()))
+                    {
+                        if(tree_node.getParent() != 0)
+                        {
+                            stringstream ss;
+                            ss << "Tree node at " << i << " can speciate, but parent is not 0. Please report this bug."
+                               << endl;
+                            throw FatalException(ss.str());
+                        }
+                    }
+                    else
+                    {
+                        if(tree_node.getParent() == 0)
+                        {
+
+                            stringstream ss;
+                            ss << "Tree node at " << i << " has not speciated, but parent is 0. Please report this bug."
+                               << endl;
+                            unsigned long j = 0;
+                            for(unsigned long z = 0; z < endactive; z++)
+                            {
+                                if(active[z].getReference() == i)
+                                {
+                                    j = z;
+                                    break;
+                                }
+                            }
+                            ss << "Location in active is: " << j << endl;
+                            throw FatalException(ss.str());
+                        }
+                    }
+                }
+            }
+            writeInfo("done.\n");
+        }
+        catch(FatalException &fe)
+        {
+            stringstream ss;
+            ss << "Error validating coalescence tree: " << fe.what();
+            throw FatalException(ss.str());
+        }
     }
 
     void Tree::debugEndStep()
@@ -1626,28 +1701,28 @@ namespace necsim
             return;
         }
         stringstream ss;
-        if(active[this_step.coalchosen].getXpos() != active[this_step.chosen].getXpos() ||
-           active[this_step.coalchosen].getYpos() != active[this_step.chosen].getYpos() ||
-           active[this_step.coalchosen].getXwrap() != active[this_step.chosen].getXwrap() ||
-           active[this_step.coalchosen].getYwrap() != active[this_step.chosen].getYwrap())
+        if(active[this_step.coalchosen].getXpos() != active[this_step.chosen].getXpos()
+           || active[this_step.coalchosen].getYpos() != active[this_step.chosen].getYpos()
+           || active[this_step.coalchosen].getXwrap() != active[this_step.chosen].getXwrap()
+           || active[this_step.coalchosen].getYwrap() != active[this_step.chosen].getYwrap())
         {
             writeLog(50, "Logging chosen: " + to_string(this_step.chosen));
             (*data)[active[this_step.chosen].getReference()].logLineageInformation(50);
             writeLog(50, "Logging coalchosen: " + to_string(this_step.coalchosen));
             (*data)[active[this_step.coalchosen].getReference()].logLineageInformation(50);
-            ss << "ERROR_MOVE_006: NON FATAL. Nwrap not set correctly. Check move programming function." << endl;
+            ss << "Nwrap not set correctly. Check move programming function." << endl;
             throw FatalException(ss.str());
         }
-        if(active[this_step.coalchosen].getXpos() != (unsigned long) this_step.x ||
-           active[this_step.coalchosen].getYpos() != (unsigned long) this_step.y ||
-           active[this_step.coalchosen].getXwrap() != this_step.xwrap ||
-           active[this_step.coalchosen].getYwrap() != this_step.ywrap)
+        if(active[this_step.coalchosen].getXpos() != (unsigned long) this_step.x
+           || active[this_step.coalchosen].getYpos() != (unsigned long) this_step.y
+           || active[this_step.coalchosen].getXwrap() != this_step.xwrap
+           || active[this_step.coalchosen].getYwrap() != this_step.ywrap)
         {
             writeLog(50, "Logging chosen: " + to_string(this_step.chosen));
             (*data)[active[this_step.chosen].getReference()].logLineageInformation(50);
             writeLog(50, "Logging coalchosen: " + to_string(this_step.coalchosen));
             (*data)[active[this_step.coalchosen].getReference()].logLineageInformation(50);
-            ss << "ERROR_MOVE_006: NON FATAL. Nwrap not set correctly. Check move programming function." << endl;
+            ss << "Nwrap not set correctly. Check move programming function." << endl;
             throw FatalException(ss.str());
         }
     }

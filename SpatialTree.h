@@ -487,6 +487,10 @@ namespace necsim
 
         void clearGillespieObjects();
 
+        void setStepVariable(const necsim::GillespieProbability &origin,
+                             const unsigned long &chosen,
+                             const unsigned long &coal_chosen);
+
         //        void updateHeapOrigin(GillespieProbability &origin)
         //        {
         //            // If cell is still inhabited
@@ -575,12 +579,7 @@ namespace necsim
 
 #ifdef DEBUG
 
-        /**
-         * @brief Validates all lineages have been set up correctly. This may take considerable time for larger simulations.
-         *
-         * This function is only relevant in debug mode.
-         */
-        void validateLineages() override;
+
 
         /**
          * @brief Runs the debug checks upon a dispersal event.
@@ -592,6 +591,13 @@ namespace necsim
          * @brief Checks the species list at all locations makes sense.
          */
         void validateLocations();
+
+        /**
+         * @brief Validates all lineages have been set up correctly. This may take considerable time for larger simulations.
+         *
+         * This function is only relevant in debug mode.
+         */
+        void validateLineages() override;
 
         /**
          * @brief Checks that adding a lineage has resulting in the correct structures being created.

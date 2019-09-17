@@ -618,7 +618,7 @@ namespace necsim
             long ywrap = sqlite3_column_int64(stmt->stmt, 5);
             auto tip = bool(sqlite3_column_int64(stmt->stmt, 6));
             auto speciation = bool(sqlite3_column_int64(stmt->stmt, 7));
-            auto parent = sqlite3_column_int64(stmt->stmt, 8);
+            unsigned long parent = sqlite3_column_int64(stmt->stmt, 8);
             auto generation_rate = sqlite3_column_int64(stmt->stmt, 11);
             auto existence = bool(sqlite3_column_int64(stmt->stmt, 9));
             double dSpec = sqlite3_column_double(stmt->stmt, 10);

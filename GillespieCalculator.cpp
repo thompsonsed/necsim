@@ -90,14 +90,13 @@ namespace necsim
         dispersal_outside_cell_probability = 0.0;
         coalescence_probability = 0.0;
         speciation_probability = 0.0;
-        cell_turnover_probability = 0.0;
         random_number = 0.0;
     }
 
     ostream &operator<<(ostream &os, const GillespieProbability &gp)
     {
         os << gp.random_number << "," << gp.speciation_probability << "," << gp.coalescence_probability << ","
-           << gp.cell_turnover_probability << "," << gp.dispersal_outside_cell_probability << "," << gp.location
+           << "," << gp.dispersal_outside_cell_probability << "," << gp.location
            << endl;
         return os;
     }
@@ -106,7 +105,7 @@ namespace necsim
     {
         char delim;
         is >> gp.random_number >> delim >> gp.speciation_probability >> delim >> gp.coalescence_probability >> delim
-           >> gp.cell_turnover_probability >> delim >> gp.dispersal_outside_cell_probability >> delim >> gp.location;
+           >> gp.dispersal_outside_cell_probability >> delim >> gp.location;
         return is;
     }
 

@@ -37,7 +37,6 @@ namespace necsim
         double dispersal_outside_cell_probability;
         double coalescence_probability;
         double speciation_probability;
-        double cell_turnover_probability;
         double random_number;
         MapLocation location;
 
@@ -112,7 +111,7 @@ namespace necsim
             // Store the heap vector index with the locator
             *locator = this - heap->data();
 
-            /*stringstream ss;
+            /*stringstream ss; // TODO remove
             ss << "Heap element moved to " << *pos << endl;
             necsim::writeInfo(ss.str());*/
         }

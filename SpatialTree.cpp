@@ -1770,6 +1770,10 @@ namespace necsim
             throw FatalException("Undefined cell event type. Please report this bug.");
             break;
         }
+#ifdef DEBUG
+        validateHeap();
+        validateGillespie();
+#endif // DEBUG
 
     }
 
@@ -1851,6 +1855,7 @@ namespace necsim
         calcNextStep();
         if(this_step.coal)
         {
+            writeInfo("Coalescence between lineages following dispersal."); // TODO remove
             coalescenceEvent(this_step.chosen, this_step.coalchosen);
         }
         // Get the destination cell and update the probabilities.
@@ -1862,14 +1867,21 @@ namespace necsim
         GillespieProbability &destination = probabilities.get(y, x);
         if(cellToHeapPositions.get(y, x) == SpatialTree::UNUSED)
         {
+            writeInfo("Adding new cell to heap.\n");
+            fullSetupGillespieProbability(destination, destination.getMapLocation());
             addNewEvent(x, y);
         }
         else if(!this_step.coal)
         {
+            if(this_step.coalchosen != 0) // Move to debug
+            {
+                throw FatalException("Coalchosen is not set correctly during gillespie dispersal");
+            }
+            // TODO remove
+            writeInfo("No coalescence following dispersal. ");
             // Needs to update destination
-            destination.setCoalescenceProbability(calculateCoalescenceProbability(destination.getMapLocation()));
+            setupGillespieProbability(destination, destination.getMapLocation());
             const double local_death_rate = getLocalDeathRate(active[chosen]);
-            destination.setRandomNumber(NR->d01());
             const double t = destination.calcTimeToNextEvent(local_death_rate,
                                                              summed_death_rate,
                                                              getNumberIndividualsAtLocation(destination.getMapLocation()));
@@ -1901,7 +1913,7 @@ namespace necsim
         if(number_at_location > 0)
         {
             updateCellCoalescenceProbability(origin, number_at_location);
-            updateInhabitedCellOnHeap(convertMapLocationToCell(origin.getMapLocation()));
+            updateInhabitedCellOnHeap(convertMapLocationToCell(location));
         }
         else
         {
@@ -1976,8 +1988,7 @@ namespace necsim
     void SpatialTree::updateCellCoalescenceProbability(GillespieProbability &origin, const unsigned long &n)
     {
         const MapLocation &location = origin.getMapLocation();
-        origin.setCoalescenceProbability(calculateCoalescenceProbability(location));
-        origin.setRandomNumber(NR->d01());
+        setupGillespieProbability(origin, location);
         heap.front().time_of_event = origin.calcTimeToNextEvent(getLocalDeathRate(location), summed_death_rate, n);
     }
 
@@ -2056,6 +2067,7 @@ namespace necsim
 
             if(restoreHeap)
             {
+                writeInfo("Restoring heap\n");
                 eastl::push_heap(heap.begin(), heap.end());
             }
         }
@@ -2066,14 +2078,25 @@ namespace necsim
         Cell cell = getCellOfMapLocation(location);
         GillespieProbability gp(location);
         // check if any lineages exist there
-        if(getNumberIndividualsAtLocation(location) > 0)
+        if(getNumberLineagesAtLocation(location) > 0)
         {
-            gp.setDispersalOutsideCellProbability(1.0 - getLocalSelfDispersalRate(location));
-            gp.setCoalescenceProbability(calculateCoalescenceProbability(location));
-            gp.setSpeciationProbability(spec);
-            gp.setRandomNumber(NR->d01());
+            fullSetupGillespieProbability(gp, location);
         }
         probabilities.get(static_cast<const unsigned long &>(cell.y), static_cast<const unsigned long &>(cell.x)) = gp;
+    }
+
+    void SpatialTree::setupGillespieProbability(GillespieProbability &gp, const MapLocation &location)
+    {
+        gp.setCoalescenceProbability(calculateCoalescenceProbability(location));
+        gp.setRandomNumber(NR->d01());
+    }
+
+    void SpatialTree::fullSetupGillespieProbability(necsim::GillespieProbability &gp,
+                                                    const necsim::MapLocation &location)
+    {
+        gp.setDispersalOutsideCellProbability(1.0 - getLocalSelfDispersalRate(location));
+        gp.setSpeciationProbability(spec);
+        setupGillespieProbability(gp, location);
     }
 
     double SpatialTree::calculateCoalescenceProbability(const MapLocation &location)
@@ -2185,6 +2208,16 @@ namespace necsim
     }
 
 #ifdef DEBUG
+
+    void SpatialTree::validateHeap()
+    {
+        writeInfo("Validating heap...\n");
+
+        if(!eastl::is_heap(heap.begin(), heap.end()))
+        {
+            throw FatalException("Heap is not sorted!\n");
+        }
+    }
 
     void SpatialTree::debugDispersal()
     {
@@ -2513,6 +2546,81 @@ namespace necsim
                 }
             }
         }
+    }
+
+    void SpatialTree::validateGillespie()
+    {
+        for(unsigned long y = 0; y < sim_parameters->fine_map_y_size; y++)
+        {
+            for(unsigned long x = 0; x < sim_parameters->fine_map_x_size; x++)
+            {
+                long x_val = x;
+                long y_val = y;
+                long x_wrap = 0;
+                long y_wrap = 0;
+                landscape->convertFineToSample(x_val, x_wrap, y_val, y_wrap);
+                const MapLocation location(x_val, y_val, x_wrap, y_wrap);
+                const auto &gp = probabilities.get(y, x);
+
+                if(getNumberLineagesAtLocation(location) > 0)
+                {
+                    if(gp.getMapLocation() != location)
+                    {
+                        throw FatalException("Map location does not match its intended position.");
+                    }
+                }
+//                else
+//                {
+//                    if(gp.getInCellProbability() > 0.0)
+//                    {
+//                        throw FatalException("In cell probability is not 0 for empty cell.");
+//                    }
+
+//                }
+            }
+        }
+        for(const auto &item : heap)
+        {
+            const auto &gp = probabilities.get(item.cell.y, item.cell.x);
+            if(item.event_type != EventType::undefined)
+            {
+                const auto location = gp.getMapLocation();
+                if(gp.getInCellProbability() == 0.0)
+                {
+                    stringstream ss;
+                    ss << "Heap at " << item.cell.x << ", " << item.cell.y << " has cell with 0 in-cell probability: "
+                       << gp.getInCellProbability() << endl;
+                    ss << "Probabilities: " << gp << endl;
+                    ss << "Individuals (lineages) at location (" << location.x << ", " << location.y << "): "
+                       << getNumberIndividualsAtLocation(gp.getMapLocation()) << " ("
+                       << getNumberLineagesAtLocation(gp.getMapLocation()) << ")" << endl;
+                    ss << "Calculated probabilities: " << endl;
+                    ss << "\tCoalescence: " << calculateCoalescenceProbability(location) << endl;
+                    ss << "\tSpeciation: " << spec << endl;
+                    ss << "\tDispersal: " << 1.0 - getLocalSelfDispersalRate(location) << endl;
+                    throw FatalException(ss.str());
+                }
+                if(item.time_of_event < generation)
+                {
+                    stringstream ss;
+                    ss << "Heap has event with time lower than current generation counter: " << item.time_of_event
+                       << " < " << generation << endl;
+                    ss << "Individuals (lineages) at location (" << location.x << ", " << location.y << "): "
+                       << getNumberIndividualsAtLocation(gp.getMapLocation()) << " ("
+                       << getNumberLineagesAtLocation(gp.getMapLocation()) << ")" << endl;
+                    ss << "Calculated probabilities: " << endl;
+                    ss << "\tCoalescence: " << calculateCoalescenceProbability(location) << endl;
+                    ss << "\tSpeciation: " << spec << endl;
+                    ss << "\tDispersal: " << 1.0 - getLocalSelfDispersalRate(location) << endl;
+                    throw FatalException(ss.str());
+                }
+            }
+            else
+            {
+                throw FatalException("Heap has undefined event.");
+            }
+        }
+
     }
 
 #endif

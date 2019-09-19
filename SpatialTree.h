@@ -477,7 +477,6 @@ namespace necsim
 
         void gillespieLocationRemainingCheck(GillespieProbability & location);
 
-        void gillespieValidateHeap(); // TODO remove
 
         template<typename T>
         const double getLocalDeathRate(const T &location);
@@ -569,6 +568,10 @@ namespace necsim
          */
         void addLocation(const MapLocation &location);
 
+        void setupGillespieProbability(GillespieProbability &gp, const MapLocation &location);
+
+        void fullSetupGillespieProbability(GillespieProbability &gp, const MapLocation &location);
+
         double calculateCoalescenceProbability(const MapLocation &location);
 
         unsigned long selectRandomLineage(const MapLocation &location) const;
@@ -579,7 +582,7 @@ namespace necsim
 
 #ifdef DEBUG
 
-
+        void validateHeap();
 
         /**
          * @brief Runs the debug checks upon a dispersal event.
@@ -617,6 +620,8 @@ namespace necsim
          * @param coalchosen the lineage which is coalescing with the chosen lineage which we are also required to check
          */
         void runChecks(const unsigned long &chosen, const unsigned long &coalchosen) override;
+
+        void validateGillespie();
 
 #endif
 

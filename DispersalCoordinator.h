@@ -399,7 +399,9 @@ namespace necsim
          * @param cell the cell to check the probability of self-dispersal from
          * @return the probability of self-dispersal
          */
-        double getSelfDispersalProbability(const Cell &cell) const;
+        double getSelfDispersalValue(const Cell &cell) const;
+
+        double sumDispersalValues(const Cell &cell) const;
 
         /**
          * @brief If required, reimports the raw dispersal map from disk.

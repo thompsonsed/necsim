@@ -1677,8 +1677,13 @@ namespace necsim
             {
                 for(unsigned long j = 0; j < sim_parameters->fine_map_x_size; j++)
                 {
-                    self_dispersal_probabilities.get(i, j) = dispersal_coordinator.getSelfDispersalProbability(Cell(j,
-                                                                                                                    i));
+                    const Cell cell(j, i);
+                    const double sdp = dispersal_coordinator.getSelfDispersalValue(cell)
+                                       / dispersal_coordinator.sumDispersalValues(cell);
+                    stringstream ss; // TODO remove
+                    ss << "Self dispersal probability at " << i << ", " << j << " is " << sdp << endl;
+                    writeInfo(ss.str());
+                    self_dispersal_probabilities.get(i, j) = sdp;
                 }
             }
             dispersal_coordinator.removeSelfDispersal();
@@ -1844,6 +1849,10 @@ namespace necsim
         removeOldPosition(chosen);
         // Performs the move and calculates any coalescence events
         calcNextStep();
+        if(this_step.coal)
+        {
+            coalescenceEvent(this_step.chosen, this_step.coalchosen);
+        }
         // Get the destination cell and update the probabilities.
         Cell destination_cell(convertMapLocationToCell(active[chosen]));
         auto x = destination_cell.x;
@@ -1877,7 +1886,7 @@ namespace necsim
         setStepVariable(origin, chosen, 0);
         gillespieUpdateGeneration(chosen);
         const auto reference = active[chosen].getReference();
-        TreeNode &tmp_treenode=(*data)[reference];
+        TreeNode &tmp_treenode = (*data)[reference];
         tmp_treenode.setSpec(inverseSpeciation(spec, tmp_treenode.getGenRate()));
         speciateLineage(reference);
         removeOldPosition(chosen);
@@ -1918,7 +1927,7 @@ namespace necsim
     template<typename T> const double SpatialTree::getLocalSelfDispersalRate(const T &location)
     {
         const Cell cell = convertMapLocationToCell(location);
-        if(dispersal_coordinator.isFullDispersalMap())
+        if(!dispersal_coordinator.isFullDispersalMap())
         {
             return 1.0;
         }
@@ -2057,12 +2066,13 @@ namespace necsim
         Cell cell = getCellOfMapLocation(location);
         GillespieProbability gp(location);
         // check if any lineages exist there
-
-        gp.setDispersalOutsideCellProbability(1.0 - getLocalSelfDispersalRate(location));
-        gp.setCoalescenceProbability(calculateCoalescenceProbability(location));
-        gp.setSpeciationProbability(spec);
-        gp.setRandomNumber(NR->d01());
-
+        if(getNumberIndividualsAtLocation(location) > 0)
+        {
+            gp.setDispersalOutsideCellProbability(1.0 - getLocalSelfDispersalRate(location));
+            gp.setCoalescenceProbability(calculateCoalescenceProbability(location));
+            gp.setSpeciationProbability(spec);
+            gp.setRandomNumber(NR->d01());
+        }
         probabilities.get(static_cast<const unsigned long &>(cell.y), static_cast<const unsigned long &>(cell.x)) = gp;
     }
 

@@ -713,7 +713,7 @@ namespace necsim
         (this->*doDispersal)(this_step);
     }
 
-    double DispersalCoordinator::getSelfDispersalProbability(const Cell &cell) const
+    double DispersalCoordinator::getSelfDispersalValue(const Cell &cell) const
     {
         if(!full_dispersal_map)
         {
@@ -729,6 +729,22 @@ namespace necsim
             throw FatalException(ss.str());
         }
         return raw_dispersal_prob_map.getCopy(cell_index, cell_index);
+    }
+
+    double DispersalCoordinator::sumDispersalValues(const Cell &cell) const
+    {
+        if(!full_dispersal_map)
+        {
+            return raw_dispersal_prob_map.getCols();
+        }
+        unsigned long cell_index = calculateCellIndex(cell);
+        double sum_total = 0.0;
+        for(unsigned long x = 0; x < raw_dispersal_prob_map.getRows(); x ++)
+        {
+            sum_total += raw_dispersal_prob_map.get(cell_index, x);
+        }
+        return sum_total;
+
     }
 
     void DispersalCoordinator::reimportRawDispersalMap()

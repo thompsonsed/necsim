@@ -1884,7 +1884,7 @@ namespace necsim
             const double local_death_rate = getLocalDeathRate(active[chosen]);
             const double t = destination.calcTimeToNextEvent(local_death_rate,
                                                              summed_death_rate,
-                                                             getNumberIndividualsAtLocation(destination.getMapLocation()));
+                                                             getNumberIndividualsAtLocation(destination.getMapLocation())) + generation;
             heap[cellToHeapPositions.get(y, x)].time_of_event = t;
             updateInhabitedCellOnHeap(destination_cell);
         }
@@ -1917,8 +1917,6 @@ namespace necsim
         }
         else
         {
-            Cell cell = convertMapLocationToCell(location);
-            cellToHeapPositions.get(cell.y, cell.x) = SpatialTree::UNUSED;
             removeHeapTop();
         }
     }
@@ -1989,7 +1987,7 @@ namespace necsim
     {
         const MapLocation &location = origin.getMapLocation();
         setupGillespieProbability(origin, location);
-        heap.front().time_of_event = origin.calcTimeToNextEvent(getLocalDeathRate(location), summed_death_rate, n);
+        heap.front().time_of_event = origin.calcTimeToNextEvent(getLocalDeathRate(location), summed_death_rate, n) + generation;
     }
 
     void SpatialTree::updateInhabitedCellOnHeap(const Cell &pos)
@@ -2024,6 +2022,7 @@ namespace necsim
     void SpatialTree::removeHeapTop()
     {
         eastl::pop_heap(heap.begin(), heap.end());
+        *(heap.back().locator) = SpatialTree::UNUSED;
         heap.pop_back();
     }
 
@@ -2216,6 +2215,14 @@ namespace necsim
         if(!eastl::is_heap(heap.begin(), heap.end()))
         {
             throw FatalException("Heap is not sorted!\n");
+        }
+        
+        for (size_t i = 0; i < heap.size(); i++)
+        {
+            if(*(heap[i].locator) != i)
+            {
+                throw FatalException("Heap locator is broken!\n");
+            }
         }
     }
 
@@ -2550,6 +2557,7 @@ namespace necsim
 
     void SpatialTree::validateGillespie()
     {
+        writeInfo("Validating gillespie...\n");
         for(unsigned long y = 0; y < sim_parameters->fine_map_y_size; y++)
         {
             for(unsigned long x = 0; x < sim_parameters->fine_map_x_size; x++)
@@ -2612,6 +2620,13 @@ namespace necsim
                     ss << "\tCoalescence: " << calculateCoalescenceProbability(location) << endl;
                     ss << "\tSpeciation: " << spec << endl;
                     ss << "\tDispersal: " << 1.0 - getLocalSelfDispersalRate(location) << endl;
+                    throw FatalException(ss.str());
+                }
+                if(grid.get(location.y, location.x).getListSize() == 0)
+                {
+                    stringstream ss;
+                    ss << "Heap contains event with empty species list at " << location.x << ", " << location.y
+                       << " (" << location.xwrap << ", " << location.ywrap << ")" << endl;
                     throw FatalException(ss.str());
                 }
             }

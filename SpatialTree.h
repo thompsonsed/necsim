@@ -132,7 +132,7 @@ namespace necsim
         double summed_death_rate;
 
         // Defines a cell that is unused
-        static const unsigned long UNUSED = static_cast<long>(-1);
+        static const unsigned long UNUSED = static_cast<unsigned long>(-1);
     public:
         /**
          * @brief The constructor for SpatialTree.

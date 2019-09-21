@@ -529,9 +529,20 @@ void Landscape::setLandscape(string landscape_type)
         writeInfo("Setting tiled fine infinite landscape.\n");
         getValFunc = &Landscape::getValFineTiled;
     }
+    else if(landscape_type == "clamped_coarse")
+    {
+        writeInfo("Setting clamped coarse infinite landscape.\n");
+        getValFunc = &Landscape::getValCoarseClamped;
+    }
+    else if (landscape_type == "clamped_fine")
+    {
+        writeInfo("Setting clamped fine infinite landscape.\n");
+        getValFunc = &Landscape::getValFineClamped;
+    }
     else if(landscape_type == "closed")
     {
         infinite_boundaries = false;
+        writeInfo("Setting finite landscape.\n");
         getValFunc = &Landscape::getValFinite;
     }
     else
@@ -601,6 +612,23 @@ unsigned long Landscape::getValFineTiled(
         throw out_of_range(ss.str());
     }
 #endif
+    return getValFine(newx, newy, current_generation);
+}
+
+unsigned long Landscape::getValCoarseClamped(
+        const double &x, const double &y, const long &xwrap, const long &ywrap, const double &current_generation)
+{
+    double newx = fmin(fmax(x + (xwrap * x_dim) + fine_x_offset + coarse_x_offset, 0.0f), coarse_map.getCols() - 1);
+    double newy = fmin(fmax(y + (ywrap * y_dim) + fine_x_offset + coarse_x_offset, 0.0f), coarse_map.getRows() - 1);
+    return getValCoarse(newx, newy, current_generation);
+}
+
+unsigned long Landscape::getValFineClamped(
+        const double &x, const double &y, const long &xwrap, const long &ywrap, const double &current_generation)
+{
+
+    double newx = fmin(fmax(x + (xwrap * x_dim) + fine_x_offset, 0.0f), fine_map.getCols() - 1);
+    double newy = fmin(fmax(y + (ywrap * y_dim) + fine_y_offset, 0.0f), fine_map.getRows() - 1);
     return getValFine(newx, newy, current_generation);
 }
 
@@ -854,9 +882,7 @@ unsigned long Landscape::runDispersal(const double &dist,
     }
     else  // we need to see which deforested patches we pass over
     {
-        //
         throw FatalException("Using dispersal relative cost is deprecated.");
-
     }
     unsigned long ret = getVal(newx, newy, 0, 0, generation);
     if(ret > 0)
@@ -873,6 +899,7 @@ unsigned long Landscape::runDispersal(const double &dist,
                     to_string((long long) getVal(newx, newy, newxwrap, newywrap, generation))));
         }
 #endif
+        // Round-to-zero intended here as fixGridCoordinates() makes newx and newy non-negative
         startx = newx;
         starty = newy;
         startxwrap = newxwrap;

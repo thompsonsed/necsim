@@ -9,8 +9,10 @@
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 
-
 #include <utility>
+#include <thread>
+#include <functional>
+#include <limits>
 
 #include "SimulateDispersal.h"
 #include "Logging.h"
@@ -113,6 +115,11 @@ void SimulateDispersal::setNumberSteps(const vector<unsigned long> &s)
     }
 }
 
+void SimulateDispersal::setNumberWorkers(unsigned long n)
+{
+    num_workers = max(n, 1UL);
+}
+
 unsigned long SimulateDispersal::getMaxNumberSteps()
 {
     unsigned long max_number_steps = 0;
@@ -170,7 +177,7 @@ const Cell &SimulateDispersal::getRandomCell()
     return cells[index];
 }
 
-void SimulateDispersal::getEndPoint(Cell &this_cell)
+void SimulateDispersal::getEndPoint(Cell &this_cell, DispersalCoordinator &dispersal_coordinator)
 {
     Step tmp_step(this_cell);
     dispersal_coordinator.disperse(tmp_step);
@@ -200,15 +207,87 @@ void SimulateDispersal::runMeanDispersalDistance()
         // Check the end point
         getEndPoint(this_cell);
         // Now store the output location
-        distances[i] = make_pair(1, distanceBetweenCells(this_cell, start_cell));
+        distances[i] = make_tuple(1, start_cell, distanceBetweenCells(this_cell, start_cell));
     }
     writeInfo("Dispersal simulation complete.\n");
+}
+
+void SimulateDispersal::runDistanceWorker(const unsigned long seed, const unsigned long bidx, const unsigned long eidx,
+                                          const unsigned long num_repeats, std::mutex &mutex, unsigned long &finished) {
+    mutex.lock();
+
+    shared_ptr<RNGController> thread_random = make_shared<RNGController>();
+    thread_random->wipeSeed();
+    thread_random->setSeed(seed);
+
+    double thread_generation = 0.0;
+
+    DispersalCoordinator thread_dispersal_coordinator;
+    thread_dispersal_coordinator.setMaps(density_landscape);
+    thread_dispersal_coordinator.setRandomNumber(thread_random);
+    thread_dispersal_coordinator.setGenerationPtr(&thread_generation);
+    thread_dispersal_coordinator.setDispersal(simParameters);
+
+    mutex.unlock();
+
+    Cell this_cell{}, start_cell{};
+
+    vector<double> distance_accumulator;
+    distance_accumulator.resize(num_steps.size());
+
+    const unsigned long max_number_steps = getMaxNumberSteps();
+
+    for(unsigned long i = bidx; i < eidx; i++)
+    {
+        mutex.lock();
+        writeRepeatInfo(finished);
+        finished++;
+        mutex.unlock();
+
+        std::fill(distance_accumulator.begin(), distance_accumulator.end(), 0.0);
+
+        start_cell = cells[i];
+
+        for (unsigned long k = 0; k < num_repeats; k++)
+        {
+            // iterator for elements in the set.
+            auto step_iterator = num_steps.begin();
+            unsigned long step_index = 0;
+            this_cell = start_cell;
+            thread_generation = 0.0;
+
+            // Keep looping until we get a valid end point
+            for(unsigned long j = 1; j <= max_number_steps; j++)
+            {
+                getEndPoint(this_cell, thread_dispersal_coordinator);
+                thread_generation += 0.5;
+
+                if(j == *step_iterator)
+                {
+                    distance_accumulator[step_index] += distanceBetweenCells(start_cell, this_cell);
+
+                    step_iterator++;
+                    step_index++;
+                }
+            }
+        }
+
+        unsigned long step_index = 0;
+
+        for (auto step_iterator = num_steps.begin(); step_iterator != num_steps.end(); step_iterator++)
+        {
+            distances[i * num_steps.size() + step_index] = make_tuple(*step_iterator, start_cell,
+                                                                      distance_accumulator[step_index] / static_cast<double>(num_repeats));
+
+            step_index++;
+        }
+    }
 }
 
 void SimulateDispersal::runMeanDistanceTravelled()
 {
     stringstream ss;
-    ss << "Simulating dispersal " << num_repeats << " times for (";
+    ss << "Simulating dispersal in " << num_repeats << " random habitable cells once for (";
     // The maximum number of steps
     setSizes();
     unsigned long max_number_steps = getMaxNumberSteps();
@@ -220,35 +299,121 @@ void SimulateDispersal::runMeanDistanceTravelled()
             ss << ", ";
         }
     }
-    ss << ") generations.\n";
+    ss << ") generations using ";
+    ss << num_workers;
+    ss << " threads.\n";
     writeInfo(ss.str());
     storeCellList();
-    Cell this_cell{}, start_cell{};
-    // Reference for the distances vector
-    unsigned long dist_i = 0;
-    for(unsigned long i = 0; i < num_repeats; i++)
-    {
-        writeRepeatInfo(i);
-        // iterator for elements in the set.
-        auto step_iterator = num_steps.begin();
-        this_cell = getRandomCell();
-        start_cell = this_cell;
-        generation = 0.0;
-        // Keep looping until we get a valid end point
-        for(unsigned long j = 1; j <= max_number_steps; j++)
-        {
-            getEndPoint(this_cell);
-            generation += 0.5;
-            if(j == *step_iterator)
-            {
-                distances[dist_i] = make_pair(j, distanceBetweenCells(start_cell, this_cell));
-                step_iterator++;
-                dist_i++;
-            }
-        }
+
+    vector<std::thread> threads;
+    threads.resize(num_workers);
+
+    std::mutex mutex;
+    unsigned long finished = 0;
+
+    for(unsigned long i = 0; i < num_workers; i++) {
+        threads[i] = std::thread(&SimulateDispersal::runDistanceWorker, this, random->i0(std::numeric_limits<unsigned long>::max() - 1),
+                                 num_repeats * i / num_workers, num_repeats * (i+1) / num_workers, 1, std::ref(mutex), std::ref(finished));
     }
+
+    for(unsigned long i = 0; i < num_workers; i++) {
+        threads[i].join();
+    }
+
     writeRepeatInfo(num_repeats);
     writeInfo("\nDispersal simulation complete.\n");
+}
+
+void SimulateDispersal::runAllDistanceTravelled()
+{
+    unsigned long old_num_repeats = this->num_repeats;
+
+    storeCellList();
+    setNumberRepeats(cells.size());
+
+    stringstream ss;
+    ss << "Simulating dispersal in all " << num_repeats << " habitable cells " << old_num_repeats << " times for (";
+    // The maximum number of steps
+    setSizes();
+    unsigned long max_number_steps = getMaxNumberSteps();
+    for(const auto &item : num_steps)
+    {
+        ss << item;
+        if(item != max_number_steps)
+        {
+            ss << ", ";
+        }
+    }
+    ss << ") generations using ";
+    ss << num_workers;
+    ss << " threads.\n";
+    writeInfo(ss.str());
+
+    vector<std::thread> threads;
+    threads.resize(num_workers);
+
+    std::mutex mutex;
+    unsigned long finished = 0;
+
+    for(unsigned long i = 0; i < num_workers; i++) {
+        threads[i] = std::thread(&SimulateDispersal::runDistanceWorker, this, random->i0(std::numeric_limits<unsigned long>::max() - 1),
+                                 num_repeats * i / num_workers, num_repeats * (i+1) / num_workers, old_num_repeats, std::ref(mutex), std::ref(finished));
+    }
+
+    for(unsigned long i = 0; i < num_workers; i++) {
+        threads[i].join();
+    }
+
+    writeRepeatInfo(num_repeats);
+    writeInfo("\nDispersal simulation complete.\n");
+
+    setNumberRepeats(old_num_repeats);
+}
+
+void SimulateDispersal::runSampleDistanceTravelled(const vector<Cell> &samples)
+{
+    cells = samples;
+
+    unsigned long old_num_repeats = this->num_repeats;
+    setNumberRepeats(cells.size());
+
+    stringstream ss;
+    ss << "Simulating dispersal in " << num_repeats << " sampled habitable cells " << old_num_repeats << " times for (";
+    // The maximum number of steps
+    setSizes();
+    unsigned long max_number_steps = getMaxNumberSteps();
+    for(const auto &item : num_steps)
+    {
+        ss << item;
+        if(item != max_number_steps)
+        {
+            ss << ", ";
+        }
+    }
+    ss << ") generations using ";
+    ss << num_workers;
+    ss << " threads.\n";
+    writeInfo(ss.str());
+
+    vector<std::thread> threads;
+    threads.resize(num_workers);
+
+    std::mutex mutex;
+    unsigned long finished = 0;
+
+    for(unsigned long i = 0; i < num_workers; i++) {
+        threads[i] = std::thread(&SimulateDispersal::runDistanceWorker, this, random->i0(std::numeric_limits<unsigned long>::max() - 1),
+                                 num_repeats * i / num_workers, num_repeats * (i+1) / num_workers, old_num_repeats, std::ref(mutex), std::ref(finished));
+    }
+
+    for(unsigned long i = 0; i < num_workers; i++) {
+        threads[i].join();
+    }
+
+    writeRepeatInfo(num_repeats);
+    writeInfo("\nDispersal simulation complete.\n");
+
+    setNumberRepeats(old_num_repeats);
 }
 
 void SimulateDispersal::writeRepeatInfo(unsigned long i)
@@ -274,9 +439,9 @@ void SimulateDispersal::writeDatabase(string table_name)
         // Do the sql output
         // First create the table
         string create_table = "CREATE TABLE IF NOT EXISTS " + table_name + " (id INT PRIMARY KEY not null, ";
-        create_table += " distance DOUBLE not null, parameter_reference INT NOT NULL);";
+        create_table += " x INT NOT NULL, y INT NOT NULL, distance DOUBLE not null, parameter_reference INT NOT NULL);";
         database.execute(create_table);
-        string insert_table = "INSERT INTO " + table_name + " (id, distance, parameter_reference) VALUES (?, ?, ?);";
+        string insert_table = "INSERT INTO " + table_name + " (id, x, y, distance, parameter_reference) VALUES (?, ?, ?, ?, ?);";
         auto stmt = database.prepare(insert_table);
         database.beginTransaction();
         unsigned long max_id = checkMaxIdNumber(table_name);
@@ -284,7 +449,7 @@ void SimulateDispersal::writeDatabase(string table_name)
         for(unsigned long i = 0; i < distances.size(); i++)
         {
             sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(max_id + i));
-            auto iter = parameter_references.find(distances[i].first);
+            auto iter = parameter_references.find(get<0>(distances[i]));
 
 #ifdef DEBUG
             if(iter == parameter_references.end())
@@ -297,8 +462,10 @@ void SimulateDispersal::writeDatabase(string table_name)
             {
                 max_parameter_reference = reference;
             }
-            sqlite3_bind_double(stmt->stmt, 2, distances[i].second);
-            sqlite3_bind_int(stmt->stmt, 3, static_cast<int>(reference));
+            sqlite3_bind_int(stmt->stmt, 2, get<1>(distances[i]).x);
+            sqlite3_bind_int(stmt->stmt, 3, get<1>(distances[i]).y);
+            sqlite3_bind_double(stmt->stmt, 4, get<2>(distances[i]));
+            sqlite3_bind_int(stmt->stmt, 5, static_cast<int>(reference));
             int step = stmt->step();
             if(step != SQLITE_DONE)
             {

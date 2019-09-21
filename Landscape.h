@@ -351,10 +351,8 @@ public:
 
     /**
      * @brief Sets the landscape functions to either infinite or finite
-     * @param is_infinite a string of either closed, infinite, tiled_fine or tiled_coarse,
-     * corresponding to the relevant landscape type.
-     *
-     *
+     * @param is_infinite a string of either closed, infinite, tiled_fine, tiled_coarse,
+     * clamped_fine or clamped_coarse corresponding to the relevant landscape type.
      */
     void setLandscape(string is_infinite);
 
@@ -444,6 +442,34 @@ public:
      */
     unsigned long getValFineTiled(const double &x, const double &y, const long &xwrap, const long &ywrap,
                                   const double &current_generation);
+
+    /**
+     * @brief Gets the value at a particular coordinate from the correct map.
+     * Takes in to account temporal and spatial referencing.
+     * This version assumes an infinite landscape of clamped coarse maps.
+     * @param x the x position on the grid.
+     * @param y the y position on the grid.
+     * @param xwrap the number of wraps in the x dimension..
+     * @param ywrap the number of wraps in the y dimension..
+     * @param current_generation the current generation time.
+     * @return the value on the correct map at the correct space.
+     */
+    unsigned long getValCoarseClamped(const double &x, const double &y, const long &xwrap, const long &ywrap,
+                                      const double &current_generation);
+
+    /**
+     * @brief Gets the value at a particular coordinate from the correct map.
+     * Takes in to account temporal and spatial referencing.
+     * This version assumes an infinite landscape of clamped fine maps.
+     * @param x the x position on the grid.
+     * @param y the y position on the grid.
+     * @param xwrap the number of wraps in the x dimension..
+     * @param ywrap the number of wraps in the y dimension..
+     * @param current_generation the current generation time.
+     * @return the value on the correct map at the correct space.
+     */
+    unsigned long getValFineClamped(const double &x, const double &y, const long &xwrap, const long &ywrap,
+                                    const double &current_generation);
 
     /**
      * @brief Gets the x position on the fine map, given an x and x wrapping.

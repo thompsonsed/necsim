@@ -56,6 +56,6 @@ struct Cell
  * @param c2 Cell containing second point
  * @return the distance between the two points
  */
-double distanceBetweenCells(Cell &c1, Cell &c2);
+double distanceBetweenCells(Cell const &c1, Cell const &c2);
 
 #endif // CELL_H

@@ -24,6 +24,7 @@
 #include <stdexcept>
 #include <sqlite3.h>
 #include <set>
+#include <mutex>
 #include "Landscape.h"
 #include "DispersalCoordinator.h"
 #include "RNGController.h"
@@ -54,7 +55,7 @@ protected:
     // The sqlite3 database object for storing outputs
     SQLiteHandler database;
     // Vector for storing pairs of dispersal distances to parameter references
-    vector<pair<unsigned long, double>> distances;
+    vector<tuple<unsigned long, Cell, double>> distances;
     // Maps distances to parameter references
     map<unsigned long, unsigned long> parameter_references;
     // Vector for storing the cells (for randomly choosing from)
@@ -63,12 +64,38 @@ protected:
     unsigned long num_repeats;
     // The number of num_steps within each dispersal loop for the average distance travelled, which should be
     set<unsigned long> num_steps;
+    // The number of threads launched to parallelise the distance simulation
+    unsigned long num_workers;
     // generation counter
     double generation;
     // If true, sequentially selects dispersal probabilities, default is true
     bool is_sequential;
     // Reference number for this set of current_metacommunity_parameters in the database output
     unsigned long max_parameter_reference;
+
+    /**
+     * @brief Checks the density a given distance from the start point, calling the relevant landscape function.
+     *
+     * This also takes into account the rejection sampling of density based on the maximal density value from the map.
+     *
+     * @param this_cell Cell containing the x and y coordinates of the starting position
+     * @param dispersal_coordinator Reference to the dispersal coordinator to use
+     */
+    void getEndPoint(Cell &this_cell, DispersalCoordinator &dispersal_coordinator);
+
+    /**
+     * @brief Runs the distance simulation for cells[bidx:eidx] and reports the progress
+     *
+     * @param seed Seed to use to initialse the per worker rng and dispersal coordinator
+     * @param bidx First inclusive index into the cells vector of random walk origins to simulate in this worker
+     * @param eidx Last exclusive index into the cells vector of random walk origins to simulate in this worker
+     * @param num_repeats The number of repeats to average over for each cell
+     * @param mutex The mutex to synchronise progress feedback to the user
+     * @param finished The total number of cells simulated across all workers
+     */
+    void runDistanceWorker(const unsigned long seed, const unsigned long bidx, const unsigned long eidx,
+                           const unsigned long num_repeats, std::mutex &mutex, unsigned long &finished);
+
 public:
     SimulateDispersal() : density_landscape(make_shared<Landscape>()), data_mask(), dispersal_coordinator(),
                           simParameters(make_shared<SimParameters>()), random(make_shared<RNGController>()), database(),
@@ -146,6 +173,12 @@ public:
     void setNumberSteps(const vector<unsigned long> &s);
 
     /**
+     * @brief Sets the number of threads launched to parallelise the distance simulation
+     * @param n the number of workers
+     */
+    void setNumberWorkers(unsigned long n);
+
+    /**
      * @brief Gets the maximum number of steps that is to be applied.
      * @return
      */
@@ -169,7 +202,10 @@ public:
      *
      * @param this_cell Cell containing the x and y coordinates of the starting position
      */
-    void getEndPoint(Cell &this_cell);
+    void getEndPoint(Cell &this_cell)
+    {
+        return getEndPoint(this_cell, dispersal_coordinator);
+    }
 
     /**
      * @brief Simulates the dispersal kernel for the set parameters, storing the mean dispersal distance
@@ -180,6 +216,18 @@ public:
      * @brief Simulates the dispersal kernel for the set parameters, storing the mean distance travelled.
      */
     void runMeanDistanceTravelled();
+
+    /**
+     * @brief Simulates the dispersal kernel for the set parameters on all habitable cells, storing the mean distance travelled.
+     */
+    void runAllDistanceTravelled();
+
+    /**
+     * @brief Simulates the dispersal kernel for the set parameters on the given sample cells, storing the mean distance travelled.
+     *
+     * @param samples Vector of cells to be sampled during the distance simulation
+     */
+    void runSampleDistanceTravelled(const vector<Cell> &samples);
 
     /**
      * @brief Writes the information about this repeat to the logger.

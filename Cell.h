@@ -30,6 +30,13 @@ namespace necsim
         {
         }
 
+        /**
+         * @brief Constructor for Cell, taking the x and y position.
+         * @param x the x location
+         * @param y the y location
+         */
+        Cell(long x, long y) : x(x), y(y)
+        {
 
         }
 
@@ -68,6 +75,6 @@ namespace necsim
      * @param c2 Cell containing second point
      * @return the distance between the two points
      */
-    double distanceBetweenCells(Cell &c1, Cell &c2);
+    double distanceBetweenCells(const Cell &c1, const Cell &c2);
 }
 #endif // CELL_H

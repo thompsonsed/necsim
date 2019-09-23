@@ -10,8 +10,7 @@
 
 #include <cmath>
 #include "Cell.h"
-
-
+namespace necsim
 {
     double distanceBetweenCells(Cell const &c1, Cell const &c2)
     {

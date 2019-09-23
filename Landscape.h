@@ -40,7 +40,10 @@ namespace necsim
      * @param scalar the scalar to multiply all values in the final matrix by (before rounding to integer)
      * @return the maximum value from the imported matrix
      */
-    uint32_t importToMapAndRound(string map_file, Map<uint32_t> &map_in, unsigned long map_x, unsigned long map_y,
+    uint32_t importToMapAndRound(string map_file,
+                                 Map<uint32_t> &map_in,
+                                 unsigned long map_x,
+                                 unsigned long map_y,
                                  double scalar);
 
     /**
@@ -50,7 +53,9 @@ namespace necsim
      * @param radius the radius of the spiral
      * @param theta the theta of rotation of the spiral
      */
-    unsigned long archimedesSpiralX(const double &centre_x, const double &centre_y, const double &radius,
+    unsigned long archimedesSpiralX(const double &centre_x,
+                                    const double &centre_y,
+                                    const double &radius,
                                     const double &theta);
 
     /**
@@ -60,7 +65,9 @@ namespace necsim
      * @param radius the radius of the spiral
      * @param theta the theta of rotation of the spiral
      */
-    unsigned long archimedesSpiralY(const double &centre_x, const double &centre_y, const double &radius,
+    unsigned long archimedesSpiralY(const double &centre_x,
+                                    const double &centre_y,
+                                    const double &radius,
                                     const double &theta);
 
     /**
@@ -153,7 +160,10 @@ namespace necsim
         bool has_coarse;
 
         // Typedef for single application of the infinite landscape verses bounded landscape.
-        typedef unsigned long (Landscape::*fptr)(const double &x, const double &y, const long &xwrap, const long &ywrap,
+        typedef unsigned long (Landscape::*fptr)(const double &x,
+                                                 const double &y,
+                                                 const long &xwrap,
+                                                 const long &ywrap,
                                                  const double &dCurrentGen);
 
         fptr getValFunc;
@@ -385,7 +395,7 @@ namespace necsim
          *
          *
          */
-        void setLandscape(const string& is_infinite);
+        void setLandscape(const string &is_infinite);
 
         /**
          * @brief Gets the value at a particular coordinate from the correct map.
@@ -399,7 +409,10 @@ namespace necsim
          * @param current_generation the current generation time.
          * @return the value on the correct map at the correct space.
          */
-        unsigned long getVal(const double &x, const double &y, const long &xwrap, const long &ywrap,
+        unsigned long getVal(const double &x,
+                             const double &y,
+                             const long &xwrap,
+                             const long &ywrap,
                              const double &current_generation);
 
         /**
@@ -430,7 +443,10 @@ namespace necsim
          * @param current_generation the current generation time.
          * @return the value on the correct map at the correct space.
          */
-        unsigned long getValFinite(const double &x, const double &y, const long &xwrap, const long &ywrap,
+        unsigned long getValFinite(const double &x,
+                                   const double &y,
+                                   const long &xwrap,
+                                   const long &ywrap,
                                    const double &current_generation);
 
         /**
@@ -443,7 +459,10 @@ namespace necsim
          * @param current_generation the current generation time.
          * @return the value on the correct map at the correct space.
          */
-        unsigned long getValInfinite(const double &x, const double &y, const long &xwrap, const long &ywrap,
+        unsigned long getValInfinite(const double &x,
+                                     const double &y,
+                                     const long &xwrap,
+                                     const long &ywrap,
                                      const double &current_generation);
 
         /**
@@ -457,7 +476,10 @@ namespace necsim
          * @param current_generation the current generation time.
          * @return the value on the correct map at the correct space.
          */
-        unsigned long getValCoarseTiled(const double &x, const double &y, const long &xwrap, const long &ywrap,
+        unsigned long getValCoarseTiled(const double &x,
+                                        const double &y,
+                                        const long &xwrap,
+                                        const long &ywrap,
                                         const double &current_generation);
 
         /**
@@ -471,8 +493,45 @@ namespace necsim
          * @param current_generation the current generation time.
          * @return the value on the correct map at the correct space.
          */
-        unsigned long getValFineTiled(const double &x, const double &y, const long &xwrap, const long &ywrap,
+        unsigned long getValFineTiled(const double &x,
+                                      const double &y,
+                                      const long &xwrap,
+                                      const long &ywrap,
                                       const double &current_generation);
+
+        /**
+         * @brief Gets the value at a particular coordinate from the correct map.
+         * Takes in to account temporal and spatial referencing.
+         * This version assumes an infinite landscape of clamped coarse maps.
+         * @param x the x position on the grid.
+         * @param y the y position on the grid.
+         * @param xwrap the number of wraps in the x dimension..
+         * @param ywrap the number of wraps in the y dimension..
+         * @param current_generation the current generation time.
+         * @return the value on the correct map at the correct space.
+         */
+        unsigned long getValCoarseClamped(const double &x,
+                                          const double &y,
+                                          const long &xwrap,
+                                          const long &ywrap,
+                                          const double &current_generation);
+
+        /**
+         * @brief Gets the value at a particular coordinate from the correct map.
+         * Takes in to account temporal and spatial referencing.
+         * This version assumes an infinite landscape of clamped fine maps.
+         * @param x the x position on the grid.
+         * @param y the y position on the grid.
+         * @param xwrap the number of wraps in the x dimension..
+         * @param ywrap the number of wraps in the y dimension..
+         * @param current_generation the current generation time.
+         * @return the value on the correct map at the correct space.
+         */
+        unsigned long getValFineClamped(const double &x,
+                                        const double &y,
+                                        const long &xwrap,
+                                        const long &ywrap,
+                                        const double &current_generation);
 
         /**
          * @brief Gets the x position on the fine map, given an x and x wrapping.
@@ -587,8 +646,14 @@ namespace necsim
          * @param generation the time in generations since the start of the simulation.
          * @return the density value at the end dispersal point
          */
-        unsigned long runDispersal(const double &dist, const double &angle, long &startx, long &starty,
-                                   long &startxwrap, long &startywrap, bool &disp_comp, const double &generation);
+        unsigned long runDispersal(const double &dist,
+                                   const double &angle,
+                                   long &startx,
+                                   long &starty,
+                                   long &startxwrap,
+                                   long &startywrap,
+                                   bool &disp_comp,
+                                   const double &generation);
 
         /**
          * @brief Calculates the distance from the start position to the nearest habitat cell.
@@ -599,8 +664,11 @@ namespace necsim
          * @param generation the generation timer
          * @return the distance from the start position to the nearest habitat cell
          */
-        double distanceToNearestHabitat(const long &start_x, const long &start_y, const long &start_x_wrap,
-                                        const long &start_y_wrap, const double &generation);
+        double distanceToNearestHabitat(const long &start_x,
+                                        const long &start_y,
+                                        const long &start_x_wrap,
+                                        const long &start_y_wrap,
+                                        const double &generation);
 
         /**
          * @brief Gets the nearest habitat cells from a particular point, spiraling outwards.
@@ -612,8 +680,13 @@ namespace necsim
          * @param end_y the end y coordinate value to modify
          * @param generation the generation timer
          */
-        void findNearestHabitatCell(const long &start_x, const long &start_y, const long &start_x_wrap,
-                                    const long &start_y_wrap, double &end_x, double &end_y, const double &generation);
+        void findNearestHabitatCell(const long &start_x,
+                                    const long &start_y,
+                                    const long &start_x_wrap,
+                                    const long &start_y_wrap,
+                                    double &end_x,
+                                    double &end_y,
+                                    const double &generation);
 
         /**
          * @brief Finds the nearest habitat cell using a much slower method (scanning the entire map for cells.
@@ -626,8 +699,13 @@ namespace necsim
          * @param generation the generation timer
          * @return true if a habitat cell is found
          */
-        bool findAnyHabitatCell(const long &start_x, const long &start_y, const long &start_x_wrap,
-                                const long &start_y_wrap, double &end_x, double &end_y, const double &generation);
+        bool findAnyHabitatCell(const long &start_x,
+                                const long &start_y,
+                                const long &start_x_wrap,
+                                const long &start_y_wrap,
+                                double &end_x,
+                                double &end_y,
+                                const double &generation);
 
         /**
          * @brief Operator for outputting the Map object variables to an output stream.
@@ -647,8 +725,7 @@ namespace necsim
                << r.dispersal_relative_cost << "\n";
             os << r.update_time << "\n" << r.habitat_change_rate << "\n" << r.gen_since_historical << "\n"
                << r.current_map_time << "\n" << r.is_historical << "\n";
-            os << r.NextMap << "\n" << r.landscape_type << "\n" << r.fine_max << "\n"
-               << r.coarse_max << "\n";
+            os << r.NextMap << "\n" << r.landscape_type << "\n" << r.fine_max << "\n" << r.coarse_max << "\n";
             os << r.historical_fine_max << "\n" << r.historical_coarse_max << "\n" << r.habitat_max << "\n"
                << r.has_coarse << "\n" << r.has_historical << "\n";
             return os;

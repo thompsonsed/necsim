@@ -108,6 +108,14 @@ namespace necsim
         num_repeats = n;
     }
 
+    void SimulateDispersal::setNumberSteps(const vector<unsigned long> &s)
+    {
+        for(const auto item : s)
+        {
+            num_steps.insert(item);
+        }
+    }
+
     void SimulateDispersal::setNumberWorkers(unsigned long n)
     {
         num_workers = max(n, 1UL);
@@ -168,6 +176,11 @@ namespace necsim
         }
         auto index = static_cast<unsigned long>(floor(random->d01() * cells.size()));
         return cells[index];
+    }
+
+    void SimulateDispersal::getEndPoint(Cell &this_cell)
+    {
+        getEndPoint(this_cell, dispersal_coordinator);
     }
 
     void SimulateDispersal::getEndPoint(Cell &this_cell, DispersalCoordinator &dispersal_coordinator)
@@ -352,6 +365,61 @@ namespace necsim
                 ss << ", ";
             }
             writeInfo("Dispersal simulation complete.\n");
+        }
+        ss << ") generations using ";
+        ss << num_workers;
+        ss << " threads.\n";
+        writeInfo(ss.str());
+
+        vector<std::thread> threads;
+        threads.resize(num_workers);
+
+        std::mutex mutex;
+        unsigned long finished = 0;
+
+        for(unsigned long i = 0; i < num_workers; i++)
+        {
+            threads[i] = std::thread(&SimulateDispersal::runDistanceWorker,
+                                     this,
+                                     random->i0(std::numeric_limits<unsigned long>::max() - 1),
+                                     num_repeats * i / num_workers,
+                                     num_repeats * (i + 1) / num_workers,
+                                     old_num_repeats,
+                                     std::ref(mutex),
+                                     std::ref(finished));
+        }
+
+        for(unsigned long i = 0; i < num_workers; i++)
+        {
+            threads[i].join();
+        }
+
+        writeRepeatInfo(num_repeats);
+        writeInfo("\nDispersal simulation complete.\n");
+
+        setNumberRepeats(old_num_repeats);
+    }
+
+    void SimulateDispersal::runSampleDistanceTravelled(const vector<Cell> &samples)
+    {
+        cells = samples;
+
+        unsigned long old_num_repeats = this->num_repeats;
+        setNumberRepeats(cells.size());
+
+        stringstream ss;
+        ss << "Simulating dispersal in " << num_repeats << " sampled habitable cells " << old_num_repeats
+           << " times for (";
+        // The maximum number of steps
+        setSizes();
+        unsigned long max_number_steps = getMaxNumberSteps();
+        for(const auto &item : num_steps)
+        {
+            ss << item;
+            if(item != max_number_steps)
+            {
+                ss << ", ";
+            }
         }
         ss << ") generations using ";
         ss << num_workers;

@@ -1604,7 +1604,7 @@ namespace necsim
 #ifdef DEBUG
         validateLineages();
 #endif // DEBUG
-        writeInfo("Starting Gillespie event loop...\n");
+        writeInfo("Starting Gillespie event loop...");
 
         do
         {
@@ -1621,15 +1621,16 @@ namespace necsim
     void SpatialTree::runGillespieLoop()
     {
 
+        writeStepToConsole();
         // Decide what event and execute
         EventType next_event = heap.front().event_type;
         // Update the event timer
         steps += (heap.front().time_of_event - generation) * double(endactive);
         generation = heap.front().time_of_event;
-        stringstream ss; //  TODO remove
-        ss << "\tEvent at " << heap.front().time_of_event << " has " << endactive - 1 << " lineages remaining...\n"
-           << endl;
-        writeInfo(ss.str());
+//        stringstream ss; //  TODO remove
+//        ss << "\tEvent at " << heap.front().time_of_event << " has " << endactive - 1 << " lineages remaining...\n"
+//           << endl;
+//        writeInfo(ss.str());
         // Estimate the number of steps that have occurred.
         switch(next_event)
         {
@@ -1680,9 +1681,11 @@ namespace necsim
                     const Cell cell(j, i);
                     const double sdp = dispersal_coordinator.getSelfDispersalValue(cell)
                                        / dispersal_coordinator.sumDispersalValues(cell);
-                    stringstream ss; // TODO remove
-                    ss << "Self dispersal probability at " << i << ", " << j << " is " << sdp << endl;
-                    writeInfo(ss.str());
+//                    stringstream ss; // TODO remove
+//                    ss << "Self dispersal probability at " << i << ", " << j << " is " << sdp << " with "
+//                       << dispersal_coordinator.getSelfDispersalValue(cell) << "/"
+//                       << dispersal_coordinator.sumDispersalValues(cell) << endl;
+//                    writeInfo(ss.str());
                     self_dispersal_probabilities.get(i, j) = sdp;
                 }
             }
@@ -1751,18 +1754,18 @@ namespace necsim
         {
         case CellEventType::coalescence_event:
             // implement coalescence
-            writeInfo("Coalescence event."); // TODO remove
+//            writeInfo("Coalescence event."); // TODO remove
             gillespieCoalescenceEvent(origin);
             break;
 
         case CellEventType::dispersal_event:
             // choose dispersal
-            writeInfo("Dispersal event."); // TODO remove
+//            writeInfo("Dispersal event."); // TODO remove
             gillespieDispersalEvent(origin);
             break;
 
         case CellEventType::speciation_event:
-            writeInfo("Speciation event."); // TODO remove
+//            writeInfo("Speciation event."); // TODO remove
             gillespieSpeciationEvent(origin);
             break;
 
@@ -1855,7 +1858,7 @@ namespace necsim
         calcNextStep();
         if(this_step.coal)
         {
-            writeInfo("Coalescence between lineages following dispersal."); // TODO remove
+//            writeInfo("Coalescence between lineages following dispersal."); // TODO remove
             coalescenceEvent(this_step.chosen, this_step.coalchosen);
         }
         // Get the destination cell and update the probabilities.
@@ -1867,7 +1870,6 @@ namespace necsim
         GillespieProbability &destination = probabilities.get(y, x);
         if(cellToHeapPositions.get(y, x) == SpatialTree::UNUSED)
         {
-            writeInfo("Adding new cell to heap.\n");
             fullSetupGillespieProbability(destination, destination.getMapLocation());
             addNewEvent(x, y);
         }
@@ -1877,14 +1879,15 @@ namespace necsim
             {
                 throw FatalException("Coalchosen is not set correctly during gillespie dispersal");
             }
-            // TODO remove
-            writeInfo("No coalescence following dispersal. ");
+//             TODO remove
+//            writeInfo("No coalescence following dispersal. ");
             // Needs to update destination
             setupGillespieProbability(destination, destination.getMapLocation());
             const double local_death_rate = getLocalDeathRate(active[chosen]);
             const double t = destination.calcTimeToNextEvent(local_death_rate,
                                                              summed_death_rate,
-                                                             getNumberIndividualsAtLocation(destination.getMapLocation())) + generation;
+                                                             getNumberIndividualsAtLocation(destination.getMapLocation()))
+                             + generation;
             heap[cellToHeapPositions.get(y, x)].time_of_event = t;
             updateInhabitedCellOnHeap(destination_cell);
         }
@@ -1987,7 +1990,8 @@ namespace necsim
     {
         const MapLocation &location = origin.getMapLocation();
         setupGillespieProbability(origin, location);
-        heap.front().time_of_event = origin.calcTimeToNextEvent(getLocalDeathRate(location), summed_death_rate, n) + generation;
+        heap.front().time_of_event =
+                origin.calcTimeToNextEvent(getLocalDeathRate(location), summed_death_rate, n) + generation;
     }
 
     void SpatialTree::updateInhabitedCellOnHeap(const Cell &pos)
@@ -2066,7 +2070,6 @@ namespace necsim
 
             if(restoreHeap)
             {
-                writeInfo("Restoring heap\n");
                 eastl::push_heap(heap.begin(), heap.end());
             }
         }
@@ -2216,8 +2219,8 @@ namespace necsim
         {
             throw FatalException("Heap is not sorted!\n");
         }
-        
-        for (size_t i = 0; i < heap.size(); i++)
+
+        for(size_t i = 0; i < heap.size(); i++)
         {
             if(*(heap[i].locator) != i)
             {
@@ -2625,8 +2628,8 @@ namespace necsim
                 if(grid.get(location.y, location.x).getListSize() == 0)
                 {
                     stringstream ss;
-                    ss << "Heap contains event with empty species list at " << location.x << ", " << location.y
-                       << " (" << location.xwrap << ", " << location.ywrap << ")" << endl;
+                    ss << "Heap contains event with empty species list at " << location.x << ", " << location.y << " ("
+                       << location.xwrap << ", " << location.ywrap << ")" << endl;
                     throw FatalException(ss.str());
                 }
             }

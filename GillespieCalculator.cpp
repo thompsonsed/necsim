@@ -3,6 +3,7 @@
 //
 
 #include "GillespieCalculator.h"
+#include "custom_exceptions.h"
 
 namespace necsim
 {
@@ -36,6 +37,26 @@ namespace necsim
 
     CellEventType GillespieProbability::generateRandomEvent(const shared_ptr<RNGController> &rng) const
     {
+#ifdef DEBUG
+        if(speciation_probability + (1 - speciation_probability) * (dispersal_outside_cell_probability
+                                                                    + (1 - dispersal_outside_cell_probability)
+                                                                      * coalescence_probability) > 1)
+        {
+            stringstream ss;
+            ss << "Event probabilities do not sum to 1. " << endl;
+            ss << "Dispersal: " << (1 - speciation_probability) * dispersal_outside_cell_probability << endl;
+            ss << "Speciation: " << speciation_probability << endl;
+            ss << "Coalescence: "
+               << (1 - speciation_probability)*(1 - dispersal_outside_cell_probability) * coalescence_probability
+               << endl;
+            ss << "Total: " << speciation_probability + (1 - speciation_probability)
+                                                        * (dispersal_outside_cell_probability
+                                                           + (1 - dispersal_outside_cell_probability)
+                                                             * coalescence_probability) << endl;
+            throw FatalException(ss.str());
+            }
+#endif //DEBUG
+
         double p = rng->d01() * getInCellProbability();
         if(p < speciation_probability)
         {
@@ -45,6 +66,11 @@ namespace necsim
         {
             if(p < speciation_probability + (1 - speciation_probability) * dispersal_outside_cell_probability)
             {
+//                 TODO remove
+//                stringstream ss;
+//                ss << "Selecting dispersal event with " << dispersal_outside_cell_probability << " chance and "
+//                   << coalescence_probability << " chance of coalescence." << endl;
+//                writeInfo(ss.str());
                 return CellEventType::dispersal_event;
             }
             else
@@ -67,13 +93,16 @@ namespace necsim
     {
         return location;
     }
-    double GillespieProbability::getLambda(const double &local_death_rate, const double &summed_death_rate,
+
+    double GillespieProbability::getLambda(const double &local_death_rate,
+                                           const double &summed_death_rate,
                                            const unsigned long &n) const
     {
         return getInCellProbability() * local_death_rate * double(n) / summed_death_rate;
     }
 
-    double GillespieProbability::calcTimeToNextEvent(const double &local_death_rate, const double &summed_death_rate,
+    double GillespieProbability::calcTimeToNextEvent(const double &local_death_rate,
+                                                     const double &summed_death_rate,
                                                      const unsigned long &n) const
     {
         //        stringstream ss;
@@ -95,9 +124,8 @@ namespace necsim
 
     ostream &operator<<(ostream &os, const GillespieProbability &gp)
     {
-        os << gp.random_number << "," << gp.speciation_probability << "," << gp.coalescence_probability << ","
-           << "," << gp.dispersal_outside_cell_probability << "," << gp.location
-           << endl;
+        os << gp.random_number << "," << gp.speciation_probability << "," << gp.coalescence_probability << "," << ","
+           << gp.dispersal_outside_cell_probability << "," << gp.location << endl;
         return os;
     }
 

@@ -30,13 +30,6 @@ namespace necsim
         {
         }
 
-        /**
-         * @brief Constructor for Cell, taking the x and y position.
-         * @param x the x location
-         * @param y the y location
-         */
-        Cell(long x, long y) : x(x), y(y)
-        {
 
         }
 

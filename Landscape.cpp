@@ -1,5 +1,3 @@
-#include <utility>
-
 // This file is part of necsim project which is released under MIT license.
 // See file **LICENSE.txt** or visit https://opensource.org/licenses/MIT) for full license details
 /**
@@ -12,6 +10,7 @@
 #define _USE_MATH_DEFINES
 
 #include <cmath>
+#include <utility>
 #include "Landscape.h"
 #include "file_system.h"
 
@@ -119,7 +118,7 @@ namespace necsim
         }
         else
         {
-            writeError("ERROR_MAP_001: Dimensions have already been set");
+            writeError("Dimensions have already been set");
         }
     }
 
@@ -143,7 +142,7 @@ namespace necsim
         unsigned long mapysize = mapvars->fine_map_y_size;
         if(!check_set_dim)  // checks that the dimensions have been set.
         {
-            throw FatalException("ERROR_MAP_002: dimensions not set.");
+            throw FatalException("Dimensions not set.");
         }
         // Note that the default "null" type is to have 100% forest cover in every cell.
         fine_max = importToMapAndRound(fileinput, fine_map, mapxsize, mapysize, deme);
@@ -621,7 +620,27 @@ namespace necsim
         return getValFine(newx, newy, current_generation);
     }
 
-    unsigned long Landscape::getValCoarse(const double &xval, const double &yval, const double &current_generation)
+unsigned long Landscape::getValCoarseClamped(
+        const double &x, const double &y, const long &xwrap, const long &ywrap, const double &current_generation)
+{
+    double newx = fmin(fmax(x + (xwrap * x_dim) + fine_x_offset + coarse_x_offset, 0.0f), coarse_map.getCols() - 1);
+    double newy = fmin(fmax(y + (ywrap * y_dim) + fine_x_offset + coarse_x_offset, 0.0f), coarse_map.getRows() - 1);
+    return getValCoarse(newx, newy, current_generation);
+}
+
+unsigned long Landscape::getValFineClamped(
+        const double &x, const double &y, const long &xwrap, const long &ywrap, const double &current_generation)
+{
+
+    double newx = fmin(fmax(x + (xwrap * x_dim) + fine_x_offset, 0.0f), fine_map.getCols() - 1);
+    double newy = fmin(fmax(y + (ywrap * y_dim) + fine_y_offset, 0.0f), fine_map.getRows() - 1);
+    return getValFine(newx, newy, current_generation);
+}
+
+unsigned long Landscape::getValCoarse(const double &xval, const double &yval, const double &current_generation)
+{
+    unsigned long retval = 0;
+    if(has_historical)
     {
         unsigned long retval = 0;
         if(has_historical)
@@ -834,13 +853,9 @@ namespace necsim
         }
         return isOnFine(x, y, xwrap, ywrap);
     }
-
-    void Landscape::fixGridCoordinates(double &x, double &y, long &xwrap, long &ywrap)
+    else  // we need to see which deforested patches we pass over
     {
-        xwrap += floor(x / x_dim);
-        ywrap += floor(y / y_dim);
-        x = x - xwrap * x_dim;
-        y = y - ywrap * y_dim;
+        throw FatalException("Using dispersal relative cost is deprecated.");
     }
 
     unsigned long Landscape::runDispersal(const double &dist, const double &angle, long &startx, long &starty,
@@ -855,6 +870,15 @@ namespace necsim
             return;
         }
 #endif
+        // Round-to-zero intended here as fixGridCoordinates() makes newx and newy non-negative
+        startx = newx;
+        starty = newy;
+        startxwrap = newxwrap;
+        startywrap = newywrap;
+        disp_comp = false;
+    }
+    return ret;
+};
 
         // Different calculations for each quadrant to ensure that the dispersal reads the probabilities correctly.
         double newx, newy;

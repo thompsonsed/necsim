@@ -9,3 +9,5 @@ cmake-build-debug/
 \.idea/
 
 cmake-build-release/
+
+**/.ipynb_checkpoints

@@ -197,7 +197,31 @@ namespace necsim
         void getEndPoint(Cell &this_cell, DispersalCoordinator &dispersal_coordinator);
 
         /**
-         * @brief Runs the distance simulation for cells[bidx:eidx] and reports the progress
+         * @brief Runs the distance simulation edix-bidx times and reports the progress
+         *
+         * @tparam chooseRandomCells If true random walks will be chosen randomly from the cells vector, otherwise uses cells[bidx:edix]
+         *
+         * @param bidx First inclusive index into the cells vector of random walk origins to simulate in this worker
+         * @param eidx Last exclusive index into the cells vector of random walk origins to simulate in this worker
+         * @param num_repeats The number of repeats to average over for each cell
+         * @param mutex The mutex to synchronise progress feedback to the user
+         * @param finished The total number of cells simulated across all workers
+         * @param dispersal_coordinator Reference to the dispersal corrdinator to use
+         * @param generation Reference to the generation variable used byt the dispersal coordinator
+         */
+        template <bool chooseRandomCells=false>
+        void runDistanceLoop(const unsigned long bidx,
+                             const unsigned long eidx,
+                             const unsigned long num_repeats,
+                             std::mutex &mutex,
+                             unsigned long &finished,
+                             DispersalCoordinator &dispersal_coordinator,
+                             double &generation);
+
+        /**
+         * @brief Runs the distance simulation eidx-bidx times on a separate worker and reports the progress
+         *
+         * @tparam chooseRandomCells If true random walks will be chosen randomly from the cells vector, otherwise uses cells[bidx:edix]
          *
          * @param seed Seed to use to initialse the per worker rng and dispersal coordinator
          * @param bidx First inclusive index into the cells vector of random walk origins to simulate in this worker
@@ -206,6 +230,7 @@ namespace necsim
          * @param mutex The mutex to synchronise progress feedback to the user
          * @param finished The total number of cells simulated across all workers
          */
+        template <bool chooseRandomCells=false>
         void runDistanceWorker(const unsigned long seed,
                                const unsigned long bidx,
                                const unsigned long eidx,

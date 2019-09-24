@@ -218,29 +218,15 @@ namespace necsim
         writeInfo("Dispersal simulation complete.\n");
     }
 
-    void SimulateDispersal::runDistanceWorker(const unsigned long seed,
-                                              const unsigned long bidx,
-                                              const unsigned long eidx,
-                                              const unsigned long num_repeats,
-                                              std::mutex &mutex,
-                                              unsigned long &finished)
+    template <bool chooseRandomCells=false>
+    void SimulateDispersal::runDistanceLoop(const unsigned long bidx,
+                                            const unsigned long eidx,
+                                            const unsigned long num_repeats,
+                                            std::mutex &mutex,
+                                            unsigned long &finished,
+                                            DispersalCoordinator &dispersal_coordinator,
+                                            double &generation)
     {
-        mutex.lock();
-
-        shared_ptr<RNGController> thread_random = make_shared<RNGController>();
-        thread_random->wipeSeed();
-        thread_random->setSeed(seed);
-
-        double thread_generation = 0.0;
-
-        DispersalCoordinator thread_dispersal_coordinator;
-        thread_dispersal_coordinator.setMaps(density_landscape);
-        thread_dispersal_coordinator.setRandomNumber(thread_random);
-        thread_dispersal_coordinator.setGenerationPtr(&thread_generation);
-        thread_dispersal_coordinator.setDispersal(simParameters);
-
-        mutex.unlock();
-
         Cell this_cell{}, start_cell{};
 
         vector<double> distance_accumulator;
@@ -257,7 +243,12 @@ namespace necsim
 
             std::fill(distance_accumulator.begin(), distance_accumulator.end(), 0.0);
 
-            start_cell = cells[i];
+            if (chooseRandomCells)
+            {
+                start_cell = getRandomCell();
+            } else {
+                start_cell = cells[i];
+            }
 
             for(unsigned long k = 0; k < num_repeats; k++)
             {
@@ -265,13 +256,13 @@ namespace necsim
                 auto step_iterator = num_steps.begin();
                 unsigned long step_index = 0;
                 this_cell = start_cell;
-                thread_generation = 0.0;
+                generation = 0.0;
 
                 // Keep looping until we get a valid end point
                 for(unsigned long j = 1; j <= max_number_steps; j++)
                 {
-                    getEndPoint(this_cell, thread_dispersal_coordinator);
-                    thread_generation += 0.5;
+                    getEndPoint(this_cell, dispersal_coordinator);
+                    generation += 0.5;
 
                     if(j == *step_iterator)
                     {
@@ -297,6 +288,33 @@ namespace necsim
         }
     }
 
+    template <bool chooseRandomCells=false>
+    void SimulateDispersal::runDistanceWorker(const unsigned long seed,
+                                              const unsigned long bidx,
+                                              const unsigned long eidx,
+                                              const unsigned long num_repeats,
+                                              std::mutex &mutex,
+                                              unsigned long &finished)
+    {
+        mutex.lock();
+
+        shared_ptr<RNGController> thread_random = make_shared<RNGController>();
+        thread_random->wipeSeed();
+        thread_random->setSeed(seed);
+
+        double thread_generation = 0.0;
+
+        DispersalCoordinator thread_dispersal_coordinator;
+        thread_dispersal_coordinator.setMaps(density_landscape);
+        thread_dispersal_coordinator.setRandomNumber(thread_random);
+        thread_dispersal_coordinator.setGenerationPtr(&thread_generation);
+        thread_dispersal_coordinator.setDispersal(simParameters);
+
+        mutex.unlock();
+
+        runDistanceLoop<chooseRandomCells>(bidx, eidx, num_repeats, mutex, finished, thread_dispersal_coordinator, thread_generation);
+    }
+
     void SimulateDispersal::runMeanDistanceTravelled()
     {
         stringstream ss;
@@ -312,33 +330,42 @@ namespace necsim
                 ss << ", ";
             }
         }
-        ss << ") generations using ";
-        ss << num_workers;
-        ss << " threads.\n";
+        ss << ") generations ";
+        if (num_workers > 1)
+        {
+            ss << "using " << num_workers << " threads.\n";
+        } else {
+            ss << "sequentially.\n";
+        }
         writeInfo(ss.str());
         storeCellList();
-
-        vector<std::thread> threads;
-        threads.resize(num_workers);
 
         std::mutex mutex;
         unsigned long finished = 0;
 
-        for(unsigned long i = 0; i < num_workers; i++)
+        if (num_workers <= 1)
         {
-            threads[i] = std::thread(&SimulateDispersal::runDistanceWorker,
-                                     this,
-                                     random->i0(std::numeric_limits<unsigned long>::max() - 1),
-                                     num_repeats * i / num_workers,
-                                     num_repeats * (i + 1) / num_workers,
-                                     1,
-                                     std::ref(mutex),
-                                     std::ref(finished));
-        }
+            runDistanceLoop<true>(0, num_repeats, 1, std::ref(mutex), std::ref(finished), std::ref(dispersal_coordinator), std::ref(generation));
+        } else {
+            vector<std::thread> threads;
+            threads.resize(num_workers);
 
-        for(unsigned long i = 0; i < num_workers; i++)
-        {
-            threads[i].join();
+            for(unsigned long i = 0; i < num_workers; i++)
+            {
+                threads[i] = std::thread(&SimulateDispersal::runDistanceWorker<true>,
+                                         this,
+                                         random->i0(std::numeric_limits<unsigned long>::max() - 1),
+                                         num_repeats * i / num_workers,
+                                         num_repeats * (i + 1) / num_workers,
+                                         1,
+                                         std::ref(mutex),
+                                         std::ref(finished));
+            }
+
+            for(unsigned long i = 0; i < num_workers; i++)
+            {
+                threads[i].join();
+            }
         }
 
         writeRepeatInfo(num_repeats);
@@ -366,32 +393,41 @@ namespace necsim
             }
             writeInfo("Dispersal simulation complete.\n");
         }
-        ss << ") generations using ";
-        ss << num_workers;
-        ss << " threads.\n";
+        ss << ") generations ";
+        if (num_workers > 1)
+        {
+            ss << "using " << num_workers << " threads.\n";
+        } else {
+            ss << "sequentially.\n";
+        }
         writeInfo(ss.str());
-
-        vector<std::thread> threads;
-        threads.resize(num_workers);
 
         std::mutex mutex;
         unsigned long finished = 0;
 
-        for(unsigned long i = 0; i < num_workers; i++)
+        if (num_workers <= 1)
         {
-            threads[i] = std::thread(&SimulateDispersal::runDistanceWorker,
-                                     this,
-                                     random->i0(std::numeric_limits<unsigned long>::max() - 1),
-                                     num_repeats * i / num_workers,
-                                     num_repeats * (i + 1) / num_workers,
-                                     old_num_repeats,
-                                     std::ref(mutex),
-                                     std::ref(finished));
-        }
+            runDistanceLoop(0, num_repeats, old_num_repeats, std::ref(mutex), std::ref(finished), std::ref(dispersal_coordinator), std::ref(generation));
+        } else {
+            vector<std::thread> threads;
+            threads.resize(num_workers);
 
-        for(unsigned long i = 0; i < num_workers; i++)
-        {
-            threads[i].join();
+            for(unsigned long i = 0; i < num_workers; i++)
+            {
+                threads[i] = std::thread(&SimulateDispersal::runDistanceWorker,
+                                         this,
+                                         random->i0(std::numeric_limits<unsigned long>::max() - 1),
+                                         num_repeats * i / num_workers,
+                                         num_repeats * (i + 1) / num_workers,
+                                         old_num_repeats,
+                                         std::ref(mutex),
+                                         std::ref(finished));
+            }
+
+            for(unsigned long i = 0; i < num_workers; i++)
+            {
+                threads[i].join();
+            }
         }
 
         writeRepeatInfo(num_repeats);
@@ -421,32 +457,41 @@ namespace necsim
                 ss << ", ";
             }
         }
-        ss << ") generations using ";
-        ss << num_workers;
-        ss << " threads.\n";
+        ss << ") generations ";
+        if (num_workers > 1)
+        {
+            ss << "using " << num_workers << " threads.\n";
+        } else {
+            ss << "sequentially.\n";
+        }
         writeInfo(ss.str());
-
-        vector<std::thread> threads;
-        threads.resize(num_workers);
 
         std::mutex mutex;
         unsigned long finished = 0;
 
-        for(unsigned long i = 0; i < num_workers; i++)
+        if (num_workers <= 1)
         {
-            threads[i] = std::thread(&SimulateDispersal::runDistanceWorker,
-                                     this,
-                                     random->i0(std::numeric_limits<unsigned long>::max() - 1),
-                                     num_repeats * i / num_workers,
-                                     num_repeats * (i + 1) / num_workers,
-                                     old_num_repeats,
-                                     std::ref(mutex),
-                                     std::ref(finished));
-        }
+            runDistanceLoop(0, num_repeats, old_num_repeats, std::ref(mutex), std::ref(finished), std::ref(dispersal_coordinator), std::ref(generation));
+        } else {
+            vector<std::thread> threads;
+            threads.resize(num_workers);
 
-        for(unsigned long i = 0; i < num_workers; i++)
-        {
-            threads[i].join();
+            for(unsigned long i = 0; i < num_workers; i++)
+            {
+                threads[i] = std::thread(&SimulateDispersal::runDistanceWorker,
+                                         this,
+                                         random->i0(std::numeric_limits<unsigned long>::max() - 1),
+                                         num_repeats * i / num_workers,
+                                         num_repeats * (i + 1) / num_workers,
+                                         old_num_repeats,
+                                         std::ref(mutex),
+                                         std::ref(finished));
+            }
+
+            for(unsigned long i = 0; i < num_workers; i++)
+            {
+                threads[i].join();
+            }
         }
 
         writeRepeatInfo(num_repeats);

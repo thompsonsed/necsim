@@ -112,7 +112,7 @@ namespace necsim
          * @brief Sets the pointer to the Landscape object
          * @param landscape_ptr pointer to a Landscape object
          */
-        void setMaps(shared_ptr<Landscape> landscape_ptr);
+        void setMaps(const shared_ptr<Landscape> &landscape_ptr);
 
         /**
          * @brief Sets the generation pointer to the provided double
@@ -214,8 +214,13 @@ namespace necsim
          * @param expected the expected cell reference.
          */
         void assertReferenceMatches(unsigned long expected);
+
 #endif // DEBUG
 
+        /**
+         * @brief Checks that there is no self-dispersal in the dispersal map.
+         */
+        void validateNoSelfDispersalInDispersalMap();
         /**
          * @brief Picks a random cell from the whole map and stores the value in the step object
          * @param this_step the step object to store end points in
@@ -401,6 +406,11 @@ namespace necsim
          */
         double getSelfDispersalValue(const Cell &cell) const;
 
+        /**
+         * @brief Sums the dispersal values from a given cell to all other cells in the landscape.
+         * @param cell
+         * @return the sum of all dispersal values
+         */
         double sumDispersalValues(const Cell &cell) const;
 
         /**
@@ -409,7 +419,7 @@ namespace necsim
         void reimportRawDispersalMap();
 
         /**
-         * @brief Removes all self-dispersal events from the dispersal map.
+         * @brief Removes all self-dispersal events and recalculates the cumulative dispersal map.
          */
         void removeSelfDispersal();
 

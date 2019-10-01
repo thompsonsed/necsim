@@ -1681,15 +1681,21 @@ namespace necsim
                     const Cell cell(j, i);
                     const double sdp = dispersal_coordinator.getSelfDispersalValue(cell)
                                        / dispersal_coordinator.sumDispersalValues(cell);
-//                    stringstream ss; // TODO remove
-//                    ss << "Self dispersal probability at " << i << ", " << j << " is " << sdp << " with "
-//                       << dispersal_coordinator.getSelfDispersalValue(cell) << "/"
-//                       << dispersal_coordinator.sumDispersalValues(cell) << endl;
-//                    writeInfo(ss.str());
+//                    if(dispersal_coordinator.getSelfDispersalValue(cell) > 0.00000001)
+//                    {
+//                        stringstream ss; // TODO remove
+//                        ss << "Self dispersal probability at " << i << ", " << j << " with index "
+//                           << dispersal_coordinator.calculateCellIndex(cell) << " is " << sdp << " with "
+//                           << dispersal_coordinator.getSelfDispersalValue(cell) << "/"
+//                           << dispersal_coordinator.sumDispersalValues(cell) << endl;
+//                        writeInfo(ss.str());
+//                        throw FatalException(ss.str());
+//                    }
                     self_dispersal_probabilities.get(i, j) = sdp;
                 }
             }
             dispersal_coordinator.removeSelfDispersal();
+//            dispersal_coordinator.validateNoSelfDispersalInDispersalMap(); // TODO move to DEBUG
         }
         probabilities.setSize(sim_parameters->fine_map_y_size, sim_parameters->fine_map_x_size);
     }
@@ -1848,6 +1854,7 @@ namespace necsim
     void SpatialTree::gillespieDispersalEvent(GillespieProbability &origin)
     {
         // Select a lineage in the target cell.
+        const MapLocation original_map_location = origin.getMapLocation(); // TODO remove
         unsigned long chosen = selectRandomLineage(origin.getMapLocation());
         setStepVariable(origin, chosen, 0);
         // Sets the old location for the lineage and zeros out the coalescence stuff
@@ -1862,12 +1869,17 @@ namespace necsim
             coalescenceEvent(this_step.chosen, this_step.coalchosen);
         }
         // Get the destination cell and update the probabilities.
-        Cell destination_cell(convertMapLocationToCell(active[chosen]));
+        Cell destination_cell(convertMapLocationToCell(this_step));
         auto x = destination_cell.x;
         auto y = destination_cell.y;
         gillespieLocationRemainingCheck(origin);
 
         GillespieProbability &destination = probabilities.get(y, x);
+        const MapLocation dest_map_location = destination.getMapLocation(); // TODO remove
+        if(original_map_location == dest_map_location)
+        {
+            throw FatalException("Dispersal occured to same cell!. Please report this bug.");
+        }
         if(cellToHeapPositions.get(y, x) == SpatialTree::UNUSED)
         {
             fullSetupGillespieProbability(destination, destination.getMapLocation());

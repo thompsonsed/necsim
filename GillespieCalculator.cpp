@@ -30,6 +30,25 @@ namespace necsim
 
     double GillespieProbability::getInCellProbability() const
     {
+        // TODO remove
+//        stringstream ss;
+//        ss << setprecision(30);
+//        ss << "Location: " << location << endl;
+//        ss << "Cell index: " << location.x + (location.y * 35) << endl;
+//        ss << "Speciation probability: " << speciation_probability << endl;
+//        ss << "Dispersal outside cell probability: " << dispersal_outside_cell_probability << endl;
+//        ss << "Coalescence probability: " << coalescence_probability << endl;
+//        ss << "Total in cell probability: " << speciation_probability + (1.0 - speciation_probability)
+//                                                                        * ((1.0 - dispersal_outside_cell_probability)
+//                                                                           * coalescence_probability
+//                                                                           + dispersal_outside_cell_probability)
+//           << endl;
+//        ss << "Rated dispersal probability: " << (1.0 - speciation_probability) * dispersal_outside_cell_probability
+//           << endl;
+//        ss << "Rated coalescence probability: "
+//           << (1.0 - speciation_probability) * (1.0 - dispersal_outside_cell_probability) * coalescence_probability
+//           << endl;
+//        throw FatalException(ss.str());
         return speciation_probability + (1.0 - speciation_probability)
                                         * ((1.0 - dispersal_outside_cell_probability) * coalescence_probability
                                            + dispersal_outside_cell_probability);
@@ -38,23 +57,23 @@ namespace necsim
     CellEventType GillespieProbability::generateRandomEvent(const shared_ptr<RNGController> &rng) const
     {
 #ifdef DEBUG
-        if(speciation_probability + (1 - speciation_probability) * (dispersal_outside_cell_probability
-                                                                    + (1 - dispersal_outside_cell_probability)
-                                                                      * coalescence_probability) > 1)
+        if(speciation_probability + (1.0 - speciation_probability) * (dispersal_outside_cell_probability
+                                                                    + (1.0 - dispersal_outside_cell_probability)
+                                                                      * coalescence_probability) > 1.0)
         {
             stringstream ss;
             ss << "Event probabilities do not sum to 1. " << endl;
-            ss << "Dispersal: " << (1 - speciation_probability) * dispersal_outside_cell_probability << endl;
+            ss << "Dispersal: " << (1.0 - speciation_probability) * dispersal_outside_cell_probability << endl;
             ss << "Speciation: " << speciation_probability << endl;
             ss << "Coalescence: "
-               << (1 - speciation_probability)*(1 - dispersal_outside_cell_probability) * coalescence_probability
+               << (1 - speciation_probability) * (1.0 - dispersal_outside_cell_probability) * coalescence_probability
                << endl;
-            ss << "Total: " << speciation_probability + (1 - speciation_probability)
+            ss << "Total: " << speciation_probability + (1.0 - speciation_probability)
                                                         * (dispersal_outside_cell_probability
-                                                           + (1 - dispersal_outside_cell_probability)
+                                                           + (1.0 - dispersal_outside_cell_probability)
                                                              * coalescence_probability) << endl;
             throw FatalException(ss.str());
-            }
+        }
 #endif //DEBUG
 
         double p = rng->d01() * getInCellProbability();
@@ -64,7 +83,7 @@ namespace necsim
         }
         else
         {
-            if(p < speciation_probability + (1 - speciation_probability) * dispersal_outside_cell_probability)
+            if(p < speciation_probability + (1.0 - speciation_probability) * dispersal_outside_cell_probability)
             {
 //                 TODO remove
 //                stringstream ss;
@@ -76,7 +95,7 @@ namespace necsim
             else
             {
 //                stringstream ss; // TODO remove
-//                ss << "Selecting coalescence probability with change " << coalescence_probability << "/"
+//                ss << "Selecting coalescence probability with chance " << coalescence_probability << "/"
 //                   << getInCellProbability() << endl;
 //                writeInfo(ss.str());
                 return CellEventType::coalescence_event;

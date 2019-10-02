@@ -392,7 +392,7 @@ namespace necsim
             {
                 Step tmp_step;
                 calculateCellCoordinates(tmp_step, i);
-                if(dispersal_prob_map.get(i, i - 1) >= dispersal_prob_map.get(i, i)
+                if(dispersal_prob_map.get(i, i - 1) > dispersal_prob_map.get(i, i)
                    && dispersal_prob_map.get(i, i) > 0.0)
                 {
                     cell.x = tmp_step.x;
@@ -416,8 +416,14 @@ namespace necsim
         catch(FatalException &fe)
         {
             stringstream ss;
+            unsigned long index = calculateCellIndex(cell);
             ss << "Cell at " << cell.x << ", " << cell.y << " has incorrect self-dispersal assignment: " << fe.what()
                << endl;
+            ss << "Dispersal value: " << dispersal_prob_map.get(index, index) << endl;
+            if(index > 0)
+            {
+                ss << "Prior value: " << dispersal_prob_map.get(index, index - 1) << endl;
+            }
             throw FatalException(ss.str());
         }
 
@@ -861,11 +867,11 @@ namespace necsim
             raw_dispersal_prob_map.get(y, y) = 0.0;
         }
         dispersal_prob_map = raw_dispersal_prob_map;
-        validateNoSelfDispersalInDispersalMap(); // TODO remove
         addDensity();
         addReproduction();
         fixDispersal();
         raw_dispersal_prob_map = backup_dispersal_prob_map;
+        validateNoSelfDispersalInDispersalMap(); // TODO remove
 
     }
 

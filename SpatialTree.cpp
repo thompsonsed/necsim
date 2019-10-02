@@ -460,7 +460,7 @@ namespace necsim
         //	}
     }
 
-    unsigned long SpatialTree::getNumberLineagesAtLocation(const MapLocation &location)
+    unsigned long SpatialTree::getNumberLineagesAtLocation(const MapLocation &location) const
     {
         if(location.isOnGrid())
         {
@@ -479,7 +479,7 @@ namespace necsim
         return total;
     }
 
-    unsigned long SpatialTree::getNumberIndividualsAtLocation(const MapLocation &location)
+    unsigned long SpatialTree::getNumberIndividualsAtLocation(const MapLocation &location) const
     {
         return landscape->getVal(location.x, location.y, location.xwrap, location.ywrap, generation);
     }
@@ -1603,6 +1603,8 @@ namespace necsim
         setupGillespie();
 #ifdef DEBUG
         validateLineages();
+        gillespie_speciation_events = countSpeciationEvents();
+        unsigned long counter = 0;
 #endif // DEBUG
         writeInfo("Starting Gillespie event loop...");
 
@@ -1610,7 +1612,59 @@ namespace necsim
         {
             runGillespieLoop();
 #ifdef DEBUG
-            validateLineages();
+            counter++;
+            // Only runs the full checks every 1000 time steps. Change for more frequent debugging.
+            try
+            {
+                if(counter == 10000)
+                {
+                    validateLineages();
+                    validateHeap();
+                    validateGillespie();
+                    counter = 0;
+                }
+                validateSpeciationEvents();
+            }
+            catch(FatalException &fe)
+            {
+                stringstream ss;
+                ss << "Validation of Gillespie loop failed. Last event was ";
+                switch(last_event.first)
+                {
+                case EventType::undefined:
+                    ss << "undefined ";
+                    break;
+                case EventType::cell_event:
+                    ss << "cell event ";
+                    break;
+                case EventType::map_event:
+                    ss << "map event ";
+                    break;
+                case EventType::sample_event:
+                    ss << "sample event ";
+                    break;
+                }
+                ss << "and ";
+                switch(last_event.second)
+                {
+                case CellEventType::undefined:
+                    ss << "undefined.";
+                    break;
+                case CellEventType::coalescence_event:
+                    ss << "dispersal.";
+                    break;
+                case CellEventType::speciation_event:
+                    ss << "speciation.";
+                    break;
+                case CellEventType::dispersal_event:
+                    ss << "dispersal.";
+                    break;
+                }
+                ss << endl << "Error was " << fe.what() << endl;
+                throw FatalException(ss.str());
+
+            }
+
 #endif // DEBUG
         }
         while(endactive > 1);
@@ -1624,6 +1678,10 @@ namespace necsim
         writeStepToConsole();
         // Decide what event and execute
         EventType next_event = heap.front().event_type;
+#ifdef DEBUG
+        last_event.first = next_event;
+        last_event.second = CellEventType::undefined;
+#endif // DEBUG
         // Update the event timer
         steps += (heap.front().time_of_event - generation) * double(endactive);
         generation = heap.front().time_of_event;
@@ -1657,6 +1715,7 @@ namespace necsim
 
     void SpatialTree::setupGillespie()
     {
+        setupGillespieLineages();
         setupGillespieMaps();
         findLocations();
         updateAllProbabilities();
@@ -1665,6 +1724,30 @@ namespace necsim
         checkSampleEvents();
         sortEvents();
         // TODO add making dispersal map cumulative without the self-dispersal events
+    }
+
+    void SpatialTree::setupGillespieLineages()
+    {
+        data->resize(endactive + data->size());
+        for(unsigned long chosen = 1; chosen < endactive; chosen++)
+        {
+            // Ensures that lineages can't speciate
+            enddata++;
+            TreeNode &end_tree_node = (*data)[enddata];
+            TreeNode &active_tree_node = (*data)[active[chosen].getReference()];
+            end_tree_node.setup(0,
+                                active[chosen].getXpos(),
+                                active[chosen].getYpos(),
+                                active[chosen].getXwrap(),
+                                active[chosen].getYwrap(),
+                                generation);
+
+            // First perform the move
+            active_tree_node.setParent(enddata);
+            end_tree_node.setGenerationRate(0);
+            end_tree_node.setSpec(1.0);
+            active[chosen].setReference(enddata);
+        }
     }
 
     void SpatialTree::setupGillespieMaps()
@@ -1756,6 +1839,9 @@ namespace necsim
     {
         CellEventType cell_event = origin.generateRandomEvent(NR);
         origin.setRandomNumber(NR->d01());
+#ifdef DEBUG
+        last_event.second = cell_event;
+#endif // DEBUG
         switch(cell_event)
         {
         case CellEventType::coalescence_event:
@@ -1779,11 +1865,6 @@ namespace necsim
             throw FatalException("Undefined cell event type. Please report this bug.");
             break;
         }
-#ifdef DEBUG
-        validateHeap();
-        validateGillespie();
-#endif // DEBUG
-
     }
 
     void SpatialTree::gillespieUpdateMap()
@@ -1909,15 +1990,34 @@ namespace necsim
     void SpatialTree::gillespieSpeciationEvent(GillespieProbability &origin)
     {
         const MapLocation &location = origin.getMapLocation();
-        unsigned long chosen = selectRandomLineage(location);
+        const unsigned long chosen = selectRandomLineage(location);
+#ifdef DEBUG
+        if(chosen == 0)
+        {
+            throw FatalException("Lineage selected for speciation is 0 - please report this bug.");
+        }
+#endif // DEBUG
         setStepVariable(origin, chosen, 0);
         gillespieUpdateGeneration(chosen);
         const auto reference = active[chosen].getReference();
-        TreeNode &tmp_treenode = (*data)[reference];
-        tmp_treenode.setSpec(inverseSpeciation(spec, tmp_treenode.getGenRate()));
+
         speciateLineage(reference);
         removeOldPosition(chosen);
         switchPositions(chosen);
+        TreeNode &tmp_treenode = (*data)[reference];
+        tmp_treenode.setSpec(inverseSpeciation(spec, max(tmp_treenode.getGenRate() - 1, (unsigned long) 1)));
+#ifdef DEBUG
+        if(!checkSpeciation(tmp_treenode.getSpecRate(), spec, tmp_treenode.getGenRate()))
+        {
+            stringstream ss;
+            ss << "Lineage has not speciated during Gillespie speciation event." << endl;
+            ss << "Inverse speciation: " << inverseSpeciation(spec, tmp_treenode.getGenRate()) << endl;
+            ss << "Gen rate: " << tmp_treenode.getGenRate() << endl;
+            throw FatalException(ss.str());
+        }
+        gillespie_speciation_events++;
+#endif // DEBUG
+
         gillespieLocationRemainingCheck(origin);
     }
 
@@ -1936,7 +2036,7 @@ namespace necsim
         }
     }
 
-    template<typename T> const double SpatialTree::getLocalDeathRate(const T &location)
+    template<typename T> double SpatialTree::getLocalDeathRate(const T &location) const
     {
         const Cell cell = convertMapLocationToCell(location);
         if(death_map->isNull())
@@ -1949,7 +2049,7 @@ namespace necsim
         }
     }
 
-    template<typename T> const double SpatialTree::getLocalSelfDispersalRate(const T &location)
+    template<typename T> double SpatialTree::getLocalSelfDispersalRate(const T &location) const
     {
         const Cell cell = convertMapLocationToCell(location);
         if(!dispersal_coordinator.isFullDispersalMap())
@@ -1994,8 +2094,10 @@ namespace necsim
         }
 #endif // DEBUG
         TreeNode &tree_node = (*data)[active[lineage].getReference()];
-        unsigned long generations_existed = round(generation) - tree_node.getGeneration();
-        tree_node.setGeneration(generations_existed);
+        const double generations_passed = round(generation - tree_node.getGeneration()) * endactive / 2.0;
+        unsigned long steps_passed = max(generations_passed, 1.0);
+        tree_node.setGeneration(generation);
+        tree_node.setGenerationRate(steps_passed);
     }
 
     void SpatialTree::updateCellCoalescenceProbability(GillespieProbability &origin, const unsigned long &n)
@@ -2113,7 +2215,7 @@ namespace necsim
         setupGillespieProbability(gp, location);
     }
 
-    double SpatialTree::calculateCoalescenceProbability(const MapLocation &location)
+    double SpatialTree::calculateCoalescenceProbability(const MapLocation &location) const
     {
         unsigned long max_number_individuals = landscape->getVal(location.x,
                                                                  location.y,
@@ -2143,6 +2245,7 @@ namespace necsim
         {
             throw FatalException("Cannot select two lineages when fewer than two exist at location.");
         }
+
         pair<unsigned long, unsigned long> selected_lineages;
         selected_lineages.first = lineage_ids[NR->i0(lineage_ids.size() - 1)];
 
@@ -2151,6 +2254,12 @@ namespace necsim
             selected_lineages.second = lineage_ids[NR->i0(lineage_ids.size() - 1)];
         }
         while(selected_lineages.second == selected_lineages.first);
+        if(selected_lineages.first == 0 || selected_lineages.second == 0)
+        {
+            stringstream ss;
+            ss << "Selected a zero lineage at " << location << endl;
+            throw FatalException(ss.str());
+        }
         return selected_lineages;
     }
 
@@ -2570,7 +2679,7 @@ namespace necsim
         }
     }
 
-    void SpatialTree::validateGillespie()
+    void SpatialTree::validateGillespie() const
     {
         writeInfo("Validating gillespie...\n");
         for(unsigned long y = 0; y < sim_parameters->fine_map_y_size; y++)
@@ -2651,6 +2760,34 @@ namespace necsim
             }
         }
 
+    }
+
+    void SpatialTree::validateSpeciationEvents() const
+    {
+        const unsigned long counted_speciation_events = countSpeciationEvents();
+        if(counted_speciation_events != gillespie_speciation_events)
+        {
+            stringstream ss;
+            ss << "Counted speciation events of " << counted_speciation_events
+               << " in coalescence tree does not equal number of counted events ( " << gillespie_speciation_events
+               << ")." << endl;
+            throw FatalException(ss.str());
+        }
+
+    }
+
+    unsigned long SpatialTree::countSpeciationEvents() const
+    {
+        unsigned long counted_speciation_events = 0;
+        for(unsigned long i = 0; i <= enddata; i++)
+        {
+            const TreeNode &this_node = (*data)[i];
+            if(checkSpeciation(this_node.getSpecRate(), spec, this_node.getGenRate()))
+            {
+                counted_speciation_events++;
+            }
+        }
+        return counted_speciation_events;
     }
 
 #endif

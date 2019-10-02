@@ -133,6 +133,10 @@ namespace necsim
 
         // Defines a cell that is unused
         static const unsigned long UNUSED = static_cast<unsigned long>(-1);
+#ifdef DEBUG
+        unsigned long gillespie_speciation_events{0};
+        pair<EventType, CellEventType> last_event;
+#endif // DEBUG
     public:
         /**
          * @brief The constructor for SpatialTree.
@@ -235,9 +239,9 @@ namespace necsim
                                             const long &y_wrap,
                                             const double &current_gen);
 
-        unsigned long getNumberLineagesAtLocation(const MapLocation &location);
+        unsigned long getNumberLineagesAtLocation(const MapLocation &location) const;
 
-        unsigned long getNumberIndividualsAtLocation(const MapLocation &location);
+        unsigned long getNumberIndividualsAtLocation(const MapLocation &location) const;
 
         /**
          * @brief Removes the old position within active by checking any wrapping and removing connections.
@@ -444,6 +448,11 @@ namespace necsim
          */
         void setupGillespie();
 
+        /**
+         * @brief Resets lineage speciation rates to 0.
+         */
+        void setupGillespieLineages();
+
         void setupGillespieMaps();
         /**
          * @brief Calculates the x, y position on the fine map of the lineage
@@ -479,10 +488,10 @@ namespace necsim
 
 
         template<typename T>
-        const double getLocalDeathRate(const T &location);
+        double getLocalDeathRate(const T &location) const;
 
         template<typename T>
-        const double getLocalSelfDispersalRate(const T &location);
+         double getLocalSelfDispersalRate(const T &location) const;
 
         void clearGillespieObjects();
 
@@ -542,7 +551,7 @@ namespace necsim
         void removeHeapTop();
 
         template<typename T>
-        Cell convertMapLocationToCell(const T &location)
+        Cell convertMapLocationToCell(const T &location) const
         {
             unsigned long x = landscape->convertSampleXToFineX(location.x, location.xwrap);
             unsigned long y = landscape->convertSampleXToFineX(location.y, location.ywrap);
@@ -572,7 +581,7 @@ namespace necsim
 
         void fullSetupGillespieProbability(GillespieProbability &gp, const MapLocation &location);
 
-        double calculateCoalescenceProbability(const MapLocation &location);
+        double calculateCoalescenceProbability(const MapLocation &location) const;
 
         unsigned long selectRandomLineage(const MapLocation &location) const;
 
@@ -621,8 +630,22 @@ namespace necsim
          */
         void runChecks(const unsigned long &chosen, const unsigned long &coalchosen) override;
 
-        void validateGillespie();
+        /**
+         * @brief Performs a set of checks that the Gillespie algorithm operated as expected.
+         */
+        void validateGillespie() const;
 
+        /**
+         * @brief Ensures that the expected number of speciation events counted in the coalescence tree equals the
+         * number of speciation events that have occured.
+         */
+        void validateSpeciationEvents() const;
+
+        /**
+         * @brief Estimates the number of speciation events in the coalescence tree with the base speciation rate.
+         * @param estimate of the number of speciation events
+         */
+        unsigned long countSpeciationEvents() const;
 #endif
 
     };

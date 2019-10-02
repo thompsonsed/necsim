@@ -255,6 +255,9 @@ namespace necsim
         }
 
 #ifdef DEBUG
+        stringstream ss2;
+        ss2 << "\n\tInitial count of species: " << countSpecies() << endl;
+        writeInfo(ss2.str());
         writeLog(10, "Calculating lineage existence.");
 #endif // DEBUG
         // now continue looping to calculate species identities for lineages given the new speciation probabilities.

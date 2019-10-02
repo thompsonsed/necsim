@@ -7,7 +7,6 @@
 
 namespace necsim
 {
-
     void GillespieProbability::setDispersalOutsideCellProbability(const double &d)
     {
         this->dispersal_outside_cell_probability = d;
@@ -58,8 +57,8 @@ namespace necsim
     {
 #ifdef DEBUG
         if(speciation_probability + (1.0 - speciation_probability) * (dispersal_outside_cell_probability
-                                                                    + (1.0 - dispersal_outside_cell_probability)
-                                                                      * coalescence_probability) > 1.0)
+                                                                      + (1.0 - dispersal_outside_cell_probability)
+                                                                        * coalescence_probability) > 1.0)
         {
             stringstream ss;
             ss << "Event probabilities do not sum to 1. " << endl;
@@ -83,23 +82,21 @@ namespace necsim
         }
         else
         {
+//            stringstream ss; // TODO remove
+
             if(p < speciation_probability + (1.0 - speciation_probability) * dispersal_outside_cell_probability)
             {
-//                 TODO remove
-//                stringstream ss;
 //                ss << "Selecting dispersal event with " << dispersal_outside_cell_probability << " chance and "
 //                   << coalescence_probability << " chance of coalescence." << endl;
-//                writeInfo(ss.str());
                 return CellEventType::dispersal_event;
             }
             else
             {
-//                stringstream ss; // TODO remove
 //                ss << "Selecting coalescence probability with chance " << coalescence_probability << "/"
 //                   << getInCellProbability() << endl;
-//                writeInfo(ss.str());
                 return CellEventType::coalescence_event;
             }
+
         }
     }
 

@@ -611,7 +611,7 @@ namespace necsim
     void Tree::speciation(const unsigned long &chosen)
     {
         // alter the data such that it reflects the speciation event.
-        unsigned long data_position = active[chosen].getReference();
+        const unsigned long data_position = active[chosen].getReference();
 #ifdef DEBUG
         // Store debug information in DEBUG mode
         if((*data)[data_position].hasSpeciated())

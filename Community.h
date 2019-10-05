@@ -51,11 +51,12 @@ namespace necsim
 
     /**
      * @brief Calculates the random number required for speciation to occur in exactly n generations
+     * This is equivalent to calculating 1 - the probability that speciation does not occur in n generations.
      * @param speciation_rate the speciation rate
      * @param no_generations the number of generations speciation can occur over
      * @return
      */
-    double inverseSpeciation(const long double &speciation_rate,
+    long double inverseSpeciation(const long double &speciation_rate,
                              const unsigned long &no_generations);
 
     /**

@@ -168,7 +168,7 @@ namespace necsim
         return speciation_probability;
     }
 
-    unsigned long TreeNode::getGenRate() const
+    unsigned long TreeNode::getGenerationRate() const
     {
         return generations_existed;
     }

@@ -427,8 +427,7 @@ namespace necsim
             (*data)[chosen_reference].increaseGen();
             // Check if speciation happens
             if(calcSpeciation((*data)[chosen_reference].getSpecRate(),
-                              0.99999 * spec,
-                              (*data)[chosen_reference].getGenRate()))
+                              0.99999 * spec, (*data)[chosen_reference].getGenerationRate()))
             {
                 speciation(this_step.chosen);
             }
@@ -505,6 +504,10 @@ namespace necsim
 
     bool Tree::stopSimulation()
     {
+        // TODO remove
+        stringstream ss;
+        ss << "-----\nTotal coalescence events: " << coalescence_events << endl;
+        writeInfo(ss.str());
         if(endactive > 1)
         {
             stringstream os;
@@ -1042,7 +1045,7 @@ namespace necsim
         unsigned long spec_up_to = 0;
         for(unsigned int i = 1; i <= enddata; i++)
         {
-            if(calcSpeciation((*data)[i].getSpecRate(), spec, (*data)[i].getGenRate()))
+            if(calcSpeciation((*data)[i].getSpecRate(), spec, (*data)[i].getGenerationRate()))
             {
                 spec_up_to++;
                 (*data)[i].speciate();
@@ -1618,7 +1621,7 @@ namespace necsim
                 if(active_lineage_refs.count(i) == 0)
                 {
                     const auto &tree_node = (*data)[i];
-                    if(checkSpeciation(tree_node.getSpecRate(), spec, tree_node.getGenRate()))
+                    if(checkSpeciation(tree_node.getSpecRate(), spec, tree_node.getGenerationRate()))
                     {
                         if(tree_node.getParent() != 0)
                         {

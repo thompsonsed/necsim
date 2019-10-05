@@ -622,7 +622,7 @@ namespace necsim
         // need to allow for the case that the number of gens was 0
         long double newminmax = 1;
         long double oldminmax = active[current].getMinmax();
-        if((*data)[active[current].getReference()].getGenRate() == 0)
+        if((*data)[active[current].getReference()].getGenerationRate() == 0)
         {
             newminmax = (*data)[active[current].getReference()].getSpecRate();
         }
@@ -630,7 +630,7 @@ namespace necsim
         {
             // variables need to be defined separately for the decimal division to function properly.
             long double tmpdSpec = (*data)[active[current].getReference()].getSpecRate();
-            long double tmpiGen = (*data)[active[current].getReference()].getGenRate();
+            long double tmpiGen = (*data)[active[current].getReference()].getGenerationRate();
             newminmax = 1 - (pow(1 - tmpdSpec, (1 / tmpiGen)));
         }
         long double toret = min(newminmax, oldminmax);
@@ -754,6 +754,7 @@ namespace necsim
                 }
             }
         }
+        coalescence_events += this_step.coal; // TODO remove
     }
 
     void SpatialTree::calcWrappedCoalescence(const unsigned long &nwrap)
@@ -1025,13 +1026,13 @@ namespace necsim
                 (*data)[i].setExistence(true);
             }
             double maxret = 1;
-            if((*data)[i].getGenRate() == 0)
+            if((*data)[i].getGenerationRate() == 0)
             {
                 maxret = 1;
             }
             else
             {
-                maxret = (*data)[i].getGenRate();
+                maxret = (*data)[i].getGenerationRate();
             }
             // This is the line that compares the individual random numbers against the speciation rate.
             if((*data)[i].getSpecRate() < (1 - pow(double(1 - dMinmax), maxret)))
@@ -1668,6 +1669,10 @@ namespace necsim
 #endif // DEBUG
         }
         while(endactive > 1);
+        // TODO remove
+        stringstream ss;
+        ss << "Total coalescence events: " << coalescence_events << endl;
+        writeInfo(ss.str());
         return stopSimulation();
 
     }
@@ -1734,7 +1739,7 @@ namespace necsim
             enddata++;
             TreeNode &end_tree_node = (*data)[enddata];
             TreeNode &active_tree_node = (*data)[active[chosen].getReference()];
-            end_tree_node.setup(0,
+            end_tree_node.setup(false,
                                 active[chosen].getXpos(),
                                 active[chosen].getYpos(),
                                 active[chosen].getXwrap(),
@@ -1744,8 +1749,11 @@ namespace necsim
             // First perform the move
             active_tree_node.setParent(enddata);
             assignNonSpeciationProbability(chosen);
+#ifdef DEBUG
+            checkNoSpeciation(chosen);
+#endif // DEBUG
             end_tree_node.setGenerationRate(0);
-            end_tree_node.setSpec(1.0);
+            end_tree_node.setSpec(2.0);
             active[chosen].setReference(enddata);
         }
     }
@@ -1910,8 +1918,11 @@ namespace necsim
 
     void SpatialTree::gillespieCoalescenceEvent(GillespieProbability &origin)
     {
+        // TODO remove
+        coalescence_events++;
         auto lineages = selectTwoRandomLineages(origin.getMapLocation());
         gillespieUpdateGeneration(lineages.first);
+        gillespieUpdateGeneration(lineages.second);
         setStepVariable(origin, lineages.first, lineages.second);
         assignNonSpeciationProbability(lineages.first);
         assignNonSpeciationProbability(lineages.second);
@@ -1942,23 +1953,27 @@ namespace necsim
         setStepVariable(origin, chosen, 0);
         // Sets the old location for the lineage and zeros out the coalescence stuff
         recordLineagePosition();
+        gillespieUpdateGeneration(chosen);
         // Remove the chosen lineage from the cell
         removeOldPosition(chosen);
         // Performs the move and calculates any coalescence events
         calcNextStep();
+        assignNonSpeciationProbability(this_step.chosen);
         if(this_step.coal)
         {
+            gillespieUpdateGeneration(this_step.coalchosen);
 //            writeInfo("Coalescence between lineages following dispersal."); // TODO remove
-            assignNonSpeciationProbability(this_step.chosen);
             assignNonSpeciationProbability(this_step.coalchosen);
             coalescenceEvent(this_step.chosen, this_step.coalchosen);
+#ifdef DEBUG
+            checkNoSpeciation(this_step.coalchosen);
+#endif // DEBUG
         }
         // Get the destination cell and update the probabilities.
         Cell destination_cell(convertMapLocationToCell(this_step));
         auto x = destination_cell.x;
         auto y = destination_cell.y;
         gillespieLocationRemainingCheck(origin);
-
         GillespieProbability &destination = probabilities.get(y, x);
         const MapLocation dest_map_location = destination.getMapLocation(); // TODO remove
         if(original_map_location == dest_map_location)
@@ -1981,14 +1996,16 @@ namespace necsim
             // Needs to update destination
             setupGillespieProbability(destination, destination.getMapLocation());
             const double local_death_rate = getLocalDeathRate(active[chosen]);
-            const double t = destination.calcTimeToNextEvent(local_death_rate,
-                                                             summed_death_rate,
-                                                             getNumberIndividualsAtLocation(destination.getMapLocation()))
+            const double t = (destination.calcTimeToNextEvent(local_death_rate,
+                                                              summed_death_rate,
+                                                              getNumberIndividualsAtLocation(destination.getMapLocation())))
                              + generation;
             heap[cellToHeapPositions.get(y, x)].time_of_event = t;
             updateInhabitedCellOnHeap(destination_cell);
         }
-
+#ifdef DEBUG
+        checkNoSpeciation(this_step.chosen);
+#endif
     }
 
     void SpatialTree::gillespieSpeciationEvent(GillespieProbability &origin)
@@ -2009,14 +2026,14 @@ namespace necsim
         removeOldPosition(chosen);
         switchPositions(chosen);
         TreeNode &tmp_treenode = (*data)[reference];
-        tmp_treenode.setSpec(inverseSpeciation(spec, max(tmp_treenode.getGenRate() - 1, (unsigned long) 1)));
+        tmp_treenode.setSpec(inverseSpeciation(spec, max(tmp_treenode.getGenerationRate(), (unsigned long) 1)));
 #ifdef DEBUG
-        if(!checkSpeciation(tmp_treenode.getSpecRate(), spec, tmp_treenode.getGenRate()))
+        if(!checkSpeciation(tmp_treenode.getSpecRate(), spec, tmp_treenode.getGenerationRate()))
         {
             stringstream ss;
             ss << "Lineage has not speciated during Gillespie speciation event." << endl;
-            ss << "Inverse speciation: " << inverseSpeciation(spec, tmp_treenode.getGenRate()) << endl;
-            ss << "Gen rate: " << tmp_treenode.getGenRate() << endl;
+            ss << "Inverse speciation: " << inverseSpeciation(spec, tmp_treenode.getGenerationRate()) << endl;
+            ss << "Gen rate: " << tmp_treenode.getGenerationRate() << endl;
             throw FatalException(ss.str());
         }
         gillespie_speciation_events++;
@@ -2098,10 +2115,26 @@ namespace necsim
         }
 #endif // DEBUG
         TreeNode &tree_node = (*data)[active[lineage].getReference()];
-        const double generations_passed = round(generation - tree_node.getGeneration()) * endactive / 2.0;
-        unsigned long steps_passed = max(generations_passed, 1.0);
-        tree_node.setGeneration(generation);
-        tree_node.setGenerationRate(steps_passed);
+        const double generations_passed = generation - tree_node.getGeneration();
+        // TODO remove
+//        stringstream ss;
+//        ss << "-----" << endl;
+//        ss << "Generation timer: " << generation << endl;
+//        ss << "Last tree-node generation: " << tree_node.getGeneration() << endl;
+//        ss << "Local death rate: " << getLocalDeathRate(active[lineage]) << endl;
+//        ss << "N at location: " << getNumberLineagesAtLocation(active[lineage]) << endl;
+//        ss << "Mean death rate: " << summed_death_rate / (double)global_individuals << endl;
+//        const double local_generation = (convertGlobalGenerationsToLocalGenerations(active[lineage],
+//                                                    generations_passed));
+//        ss << "Generations passed: " << generations_passed << endl;
+//        ss << "Local generation :" << local_generation << endl;
+//        writeInfo(ss.str());
+//        tree_node.setGeneration(generation);
+        const auto generation_rate = static_cast<unsigned long>(round(max(
+                convertGlobalGenerationsToLocalGenerations(active[lineage], generations_passed)
+                / ((double) global_individuals * getNumberIndividualsAtLocation(active[lineage])), 1.0)))
+                                     + tree_node.getGenerationRate();
+        tree_node.setGenerationRate(generation_rate);
     }
 
     void SpatialTree::updateCellCoalescenceProbability(GillespieProbability &origin, const unsigned long &n)
@@ -2109,7 +2142,7 @@ namespace necsim
         const MapLocation &location = origin.getMapLocation();
         setupGillespieProbability(origin, location);
         heap.front().time_of_event =
-                origin.calcTimeToNextEvent(getLocalDeathRate(location), summed_death_rate, n) + generation;
+                (origin.calcTimeToNextEvent(getLocalDeathRate(location), summed_death_rate, n)) + generation;
     }
 
     void SpatialTree::updateInhabitedCellOnHeap(const Cell &pos)
@@ -2128,7 +2161,9 @@ namespace necsim
             {
                 for(unsigned long x = 0; x < sim_parameters->fine_map_y_size; x++)
                 {
-                    summed_death_rate += death_map->get(y, x) * landscape->getValFine(x, y, generation);
+                    const auto local_individuals = landscape->getValFine(x, y, generation);
+                    summed_death_rate += death_map->get(y, x) * local_individuals;
+                    global_individuals += local_individuals;
                 }
             }
         }
@@ -2138,6 +2173,7 @@ namespace necsim
             summed_death_rate = std::accumulate(landscape->getFineMap().begin(),
                                                 landscape->getFineMap().end(),
                                                 (unsigned long) 0);
+            global_individuals = static_cast<unsigned long>(summed_death_rate);
         }
     }
 
@@ -2176,11 +2212,11 @@ namespace necsim
             cellToHeapPositions.get(y, x) = heap.size();
 
             heap.emplace_back(GillespieHeapNode(Cell(x, y),
-                                                (probabilities.get(y,
-                                                                   x).calcTimeToNextEvent(getLocalDeathRate(location),
-                                                                                          summed_death_rate,
-                                                                                          getNumberIndividualsAtLocation(
-                                                                                                  location))
+                                                ((probabilities.get(y,
+                                                                    x).calcTimeToNextEvent(getLocalDeathRate(location),
+                                                                                           summed_death_rate,
+                                                                                           getNumberIndividualsAtLocation(
+                                                                                                   location)))
                                                  + generation),
                                                 EventType::cell_event,
                                                 &heap,
@@ -2337,15 +2373,37 @@ namespace necsim
     void SpatialTree::assignNonSpeciationProbability(const unsigned long chosen)
     {
         TreeNode &tree_node = (*data)[active[chosen].getReference()];
-        if(tree_node.getGenRate() == 0)
+        if(tree_node.getGenerationRate() == 0)
         {
             tree_node.setGenerationRate(1);
         }
         // Gets the minimum speciation rate for this lineage to have speciated in this time
-        const double min_speciation_rate = inverseSpeciation(spec, tree_node.getGenRate());
+        const long double min_speciation_rate = inverseSpeciation(spec, tree_node.getGenerationRate());
         // Generate a new random number which doesn't allow for speciation to have occur, given the current
         // speciation rate (i.e. uniform random number from min_speciation_rate to 1.0).
-        tree_node.setSpec(min_speciation_rate + (NR->d01() * (1 - min_speciation_rate)));
+        const long double new_spec_rate = min_speciation_rate + (NR->d01() * (1.0 - min_speciation_rate));
+        // Handle the case when speciation should never happen over exceptionally long timescales.
+        if(new_spec_rate >= 1.0)
+        {
+            tree_node.setSpec(1.0000000001);
+        }
+        else
+        {
+            tree_node.setSpec(new_spec_rate);
+        }
+        if(checkSpeciation(tree_node.getSpecRate(), spec, tree_node.getGenerationRate())) // TODO remove
+        {
+            stringstream ss;
+            ss << "Lineage at " << chosen << " has been assigned a spec rate of " << tree_node.getSpecRate()
+               << " for a speciation rate of " << spec << " and a gen rate of " << tree_node.getGenerationRate()
+               << ", which causes speciation (the inverse speciation value is "
+               << inverseSpeciation(spec, tree_node.getGenerationRate())
+               << "). This should not be the case - please report this bug." << endl;
+            throw FatalException(ss.str());
+        }
+#ifdef DEBUG
+        checkNoSpeciation(chosen);
+#endif // DEBUG
     }
 
 #ifdef DEBUG
@@ -2800,7 +2858,7 @@ namespace necsim
         for(unsigned long i = 0; i <= enddata; i++)
         {
             const TreeNode &this_node = (*data)[i];
-            if(checkSpeciation(this_node.getSpecRate(), spec, this_node.getGenRate()))
+            if(checkSpeciation(this_node.getSpecRate(), spec, this_node.getGenerationRate()))
             {
                 counted_speciation_events++;
             }
@@ -2808,5 +2866,22 @@ namespace necsim
         return counted_speciation_events;
     }
 
-#endif
+    void SpatialTree::checkNoSpeciation(const unsigned long &chosen) const
+    {
+        TreeNode &active_tree_node = (*data)[active[chosen].getReference()];
+        if(checkSpeciation(active_tree_node.getSpecRate(), spec, active_tree_node.getGenerationRate()))
+        {
+            stringstream ss;
+            ss << "Error during check for no speciation: lineage at " << chosen << " has been assigned a spec rate of "
+               << active_tree_node.getSpecRate() << " for a speciation rate of " << spec << " and a gen rate of "
+               << active_tree_node.getGenerationRate() << ", which causes speciation (the inverse speciation value is "
+               << inverseSpeciation(spec, active_tree_node.getGenerationRate())
+               << "). This should not be the case - please report this bug." << endl;
+            throw FatalException(ss.str());
+        }
+
+
+    }
+
+#endif // DEBUG
 };

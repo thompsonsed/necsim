@@ -30,7 +30,7 @@ namespace necsim
     void ProtractedTree::speciateLineage(const unsigned long &data_position)
     {
         (*data)[data_position].setSpec(0.0);
-        if(speciation_generation_min >= (*data)[data_position].getGenRate() + (*data)[data_position].getGeneration())
+        if(speciation_generation_min >= (*data)[data_position].getGenerationRate() + (*data)[data_position].getGeneration())
         {
             (*data)[data_position].setGenerationRate(static_cast<unsigned long>(floor(speciation_generation_min)) + 2);
         }

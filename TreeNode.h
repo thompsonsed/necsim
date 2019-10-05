@@ -255,7 +255,7 @@ namespace necsim
          * @brief Getter for the number of generations the lineage has existed.
          * @return the number of generations of existence.
          */
-        unsigned long getGenRate() const;
+        unsigned long getGenerationRate() const;
 
         /**
          * @brief Getter for the generation the lineage was created.

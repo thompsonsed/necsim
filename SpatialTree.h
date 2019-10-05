@@ -131,6 +131,9 @@ namespace necsim
         // Mean death rate across the simulated world
         double summed_death_rate;
 
+        // TODO remove
+        unsigned long dispersal_events;
+
         // Defines a cell that is unused
         static const unsigned long UNUSED = static_cast<unsigned long>(-1);
 #ifdef DEBUG
@@ -578,6 +581,11 @@ namespace necsim
 
         double calculateCoalescenceProbability(const MapLocation &location) const;
 
+        template<typename T> double convertGlobalGenerationsToLocalGenerations(const T &location, const double g) const
+        {
+            return g * getLocalDeathRate(location) / (summed_death_rate / (double) global_individuals);
+        }
+
         unsigned long selectRandomLineage(const MapLocation &location) const;
 
         pair<unsigned long, unsigned long> selectTwoRandomLineages(const MapLocation &location) const;
@@ -590,6 +598,7 @@ namespace necsim
          * @param chosen the index in the active lineages to set the speciation probability for
          */
         void assignNonSpeciationProbability(const unsigned long chosen);
+
 #ifdef DEBUG
 
         void validateHeap();
@@ -647,6 +656,8 @@ namespace necsim
          * @param estimate of the number of speciation events
          */
         unsigned long countSpeciationEvents() const;
+
+        void checkNoSpeciation(const unsigned long &chosen) const;
 #endif
 
     };

@@ -24,9 +24,9 @@ namespace necsim
         return random_number <= res;
     }
 
-    double inverseSpeciation(const long double &speciation_rate, const unsigned long &no_generations)
+    long double inverseSpeciation(const long double &speciation_rate, const unsigned long &no_generations)
     {
-        return 1.0 - pow(double(1.0 - speciation_rate), double(no_generations));
+        return 1.0 - pow((long double)(1.0 - speciation_rate), (long double)(no_generations));
     }
 
     Samplematrix::Samplematrix()
@@ -217,12 +217,11 @@ namespace necsim
             // Calculate if speciation occured at any point in the lineage's branch
             if(protracted)
             {
-                long double lineage_age = this_node->getGeneration() + this_node->getGenRate();
+                long double lineage_age = this_node->getGeneration() + this_node->getGenerationRate();
                 if(lineage_age >= applied_protracted_parameters.min_speciation_gen)
                 {
                     if(checkSpeciation(this_node->getSpecRate(),
-                                       current_community_parameters->speciation_rate,
-                                       this_node->getGenRate()))
+                                       current_community_parameters->speciation_rate, this_node->getGenerationRate()))
                     {
                         this_node->speciate();
                     }
@@ -235,8 +234,7 @@ namespace necsim
             else
             {
                 if(checkSpeciation(this_node->getSpecRate(),
-                                   current_community_parameters->speciation_rate,
-                                   this_node->getGenRate()))
+                                   current_community_parameters->speciation_rate, this_node->getGenerationRate()))
                 {
                     this_node->speciate();
                 }
@@ -282,11 +280,11 @@ namespace necsim
                         ss << "Speciation: " << this_node->hasSpeciated() << endl;
                         ss << "Tip: " << this_node->isTip() << endl;
                         ss << "Random number: " << this_node->getSpecRate() << endl;
-                        ss << "Gens alive: " << this_node->getGenRate() << endl;
+                        ss << "Gens alive: " << this_node->getGenerationRate() << endl;
                         ss << "Gen added: " << this_node->getGeneration() << endl;
                         ss << "Speciation check: " << checkSpeciation(this_node->getSpecRate(),
                                                                       current_community_parameters->speciation_rate,
-                                                                      this_node->getGenRate()) << endl;
+                                                                      this_node->getGenerationRate()) << endl;
                         throw FatalException(ss.str());
                     }
                     (*nodes)[this_node->getParent()].setExistence(true);
@@ -404,11 +402,11 @@ namespace necsim
                         ss << "Speciation: " << this_node->hasSpeciated() << endl;
                         ss << "Tip: " << this_node->isTip() << endl;
                         ss << "Random number: " << this_node->getSpecRate() << endl;
-                        ss << "Gens alive: " << this_node->getGenRate() << endl;
+                        ss << "Gens alive: " << this_node->getGenerationRate() << endl;
                         ss << "Gen added: " << this_node->getGeneration() << endl;
                         ss << "Speciation check: " << checkSpeciation(this_node->getSpecRate(),
                                                                       current_community_parameters->speciation_rate,
-                                                                      this_node->getGenRate()) << endl;
+                                                                      this_node->getGenerationRate()) << endl;
                         throw FatalException(ss.str());
                     }
                     this_node->burnSpecies((*nodes)[parent].getSpeciesID());
@@ -1860,7 +1858,7 @@ namespace necsim
             sqlite3_bind_int64(stmt->stmt, 9, (*nodes)[i].getParent());
             sqlite3_bind_int64(stmt->stmt, 10, (*nodes)[i].exists());
             sqlite3_bind_double(stmt->stmt, 11, static_cast<double>((*nodes)[i].getSpecRate()));
-            sqlite3_bind_int64(stmt->stmt, 12, (*nodes)[i].getGenRate());
+            sqlite3_bind_int64(stmt->stmt, 12, (*nodes)[i].getGenerationRate());
             sqlite3_bind_double(stmt->stmt, 13, static_cast<double>((*nodes)[i].getGeneration()));
             database->step();
             stmt->clearAndReset();
@@ -2072,7 +2070,7 @@ namespace necsim
         {
             TreeNode* this_node = &(*nodes)[i];
             if(this_node->getParent() == 0
-               && !checkSpeciation(this_node->getSpecRate(), min_spec_rate, this_node->getGenRate()))
+               && !checkSpeciation(this_node->getSpecRate(), min_spec_rate, this_node->getGenerationRate()))
             {
                 this_node->setSpec(0.0);
             }

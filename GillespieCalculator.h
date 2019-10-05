@@ -111,9 +111,6 @@ namespace necsim
             // Store the heap vector index with the locator
             *locator = this - heap->data();
 
-            /*stringstream ss; // TODO remove
-            ss << "Heap element moved to " << *pos << endl;
-            necsim::writeInfo(ss.str());*/
         }
 
     public:

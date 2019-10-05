@@ -131,8 +131,6 @@ namespace necsim
         // Mean death rate across the simulated world
         double summed_death_rate;
 
-        // TODO remove
-        unsigned long dispersal_events;
 
         // Defines a cell that is unused
         static const unsigned long UNUSED = static_cast<unsigned long>(-1);

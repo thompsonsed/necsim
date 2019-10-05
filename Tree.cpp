@@ -504,10 +504,6 @@ namespace necsim
 
     bool Tree::stopSimulation()
     {
-        // TODO remove
-        stringstream ss;
-        ss << "-----\nTotal coalescence events: " << coalescence_events << endl;
-        writeInfo(ss.str());
         if(endactive > 1)
         {
             stringstream os;

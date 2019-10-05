@@ -129,8 +129,6 @@ namespace necsim
         // spatial simulations not using a dispersal map and those that use protracted speciation).
         bool using_gillespie;
 
-        unsigned long coalescence_events;
-
     public:
         Tree() : data(make_shared<vector<TreeNode>>()), enddata(0), sim_parameters(make_shared<SimParameters>()),
                  NR(make_shared<RNGController>()), speciation_rates(), seeded(false), seed(-1), job_type(-1),
@@ -139,7 +137,6 @@ namespace necsim
                  startendactive(0), maxsimsize(0), community(data), steps(0), maxtime(0), generation(0.0), deme(0.0),
                  deme_sample(0.0), spec(0.0), out_directory(""), database(make_shared<SQLiteHandler>()),
                  sim_complete(false), has_imported_vars(false),
-                 coalescence_events(0),
 #ifdef sql_ram
                  outdatabase(),
 #endif //sql_ram

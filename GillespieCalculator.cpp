@@ -29,25 +29,6 @@ namespace necsim
 
     double GillespieProbability::getInCellProbability() const
     {
-        // TODO remove
-//        stringstream ss;
-//        ss << setprecision(30);
-//        ss << "Location: " << location << endl;
-//        ss << "Cell index: " << location.x + (location.y * 35) << endl;
-//        ss << "Speciation probability: " << speciation_probability << endl;
-//        ss << "Dispersal outside cell probability: " << dispersal_outside_cell_probability << endl;
-//        ss << "Coalescence probability: " << coalescence_probability << endl;
-//        ss << "Total in cell probability: " << speciation_probability + (1.0 - speciation_probability)
-//                                                                        * ((1.0 - dispersal_outside_cell_probability)
-//                                                                           * coalescence_probability
-//                                                                           + dispersal_outside_cell_probability)
-//           << endl;
-//        ss << "Rated dispersal probability: " << (1.0 - speciation_probability) * dispersal_outside_cell_probability
-//           << endl;
-//        ss << "Rated coalescence probability: "
-//           << (1.0 - speciation_probability) * (1.0 - dispersal_outside_cell_probability) * coalescence_probability
-//           << endl;
-//        throw FatalException(ss.str());
         return speciation_probability + (1.0 - speciation_probability)
                                         * ((1.0 - dispersal_outside_cell_probability) * coalescence_probability
                                            + dispersal_outside_cell_probability);
@@ -82,18 +63,13 @@ namespace necsim
         }
         else
         {
-//            stringstream ss; // TODO remove
 
             if(p < speciation_probability + (1.0 - speciation_probability) * dispersal_outside_cell_probability)
             {
-//                ss << "Selecting dispersal event with " << dispersal_outside_cell_probability << " chance and "
-//                   << coalescence_probability << " chance of coalescence." << endl;
                 return CellEventType::dispersal_event;
             }
             else
             {
-//                ss << "Selecting coalescence probability with chance " << coalescence_probability << "/"
-//                   << getInCellProbability() << endl;
                 return CellEventType::coalescence_event;
             }
 
@@ -121,11 +97,6 @@ namespace necsim
                                                      const double &summed_death_rate,
                                                      const unsigned long &n) const
     {
-        //        stringstream ss;
-        //        ss << "Generating event with lambda " << getLambda(local_death_rate, summed_death_rate, n)
-        //           << " and random number " << random_number << endl;
-        //        ss << "Rates: " << local_death_rate << ", "  << summed_death_rate << ", " << n << endl;
-        //        writeInfo(ss.str()); // TODO remove
         return RNGController::exponentialDistribution(getLambda(local_death_rate, summed_death_rate, n), random_number);
     }
 

@@ -215,12 +215,13 @@ namespace necsim
          */
         void assertReferenceMatches(unsigned long expected);
 
-#endif // DEBUG
-
         /**
          * @brief Checks that there is no self-dispersal in the dispersal map.
          */
         void validateNoSelfDispersalInDispersalMap();
+#endif // DEBUG
+
+
         /**
          * @brief Picks a random cell from the whole map and stores the value in the step object
          * @param this_step the step object to store end points in

@@ -375,9 +375,7 @@ namespace necsim
         }
     }
 
-#endif // DEBUG
-
-    void DispersalCoordinator::validateNoSelfDispersalInDispersalMap()
+        void DispersalCoordinator::validateNoSelfDispersalInDispersalMap()
     {
         Cell cell;
         try
@@ -400,7 +398,8 @@ namespace necsim
                     throw FatalException("Self dispersal non-zero.");
                 }
                 const Step orig_step = tmp_step;
-                for(unsigned long j = 0; j < 1000; j++) // TODO remove
+                // Generate 1000 random events to check for self-dispersal
+                for(unsigned long j = 0; j < 1000; j++)
                 {
                     disperseDispersalMap(tmp_step);
                     if(tmp_step == orig_step)
@@ -428,6 +427,9 @@ namespace necsim
         }
 
     }
+
+
+#endif // DEBUG
 
     void DispersalCoordinator::disperseNullDispersalMap(Step &this_step)
     {
@@ -871,7 +873,9 @@ namespace necsim
         addReproduction();
         fixDispersal();
         raw_dispersal_prob_map = backup_dispersal_prob_map;
-        validateNoSelfDispersalInDispersalMap(); // TODO remove
+#ifdef DEBUG
+        validateNoSelfDispersalInDispersalMap();
+#endif //DEBUG
 
     }
 

@@ -141,13 +141,12 @@ namespace necsim
         /**
          * @brief The constructor for SpatialTree.
          */
-        SpatialTree()
-                : Tree(), dispersal_coordinator(), death_map(make_shared<ActivityMap>()),
-                  reproduction_map(make_shared<ActivityMap>()), fine_map_input("none"), coarse_map_input("none"),
-                  historical_fine_map_input("none"), historical_coarse_map_input("none"),
-                  landscape(make_shared<Landscape>()), grid(), desired_specnum(1), samplegrid(),
-                  gillespie_threshold(0.0), probabilities(), heap(), cellToHeapPositions(),
-                  self_dispersal_probabilities(), global_individuals(0), summed_death_rate(1.0)
+        SpatialTree() : Tree(), dispersal_coordinator(), death_map(make_shared<ActivityMap>()),
+                        reproduction_map(make_shared<ActivityMap>()), fine_map_input("none"), coarse_map_input("none"),
+                        historical_fine_map_input("none"), historical_coarse_map_input("none"),
+                        landscape(make_shared<Landscape>()), grid(), desired_specnum(1), samplegrid(),
+                        gillespie_threshold(0.0), probabilities(), heap(), cellToHeapPositions(),
+                        self_dispersal_probabilities(), global_individuals(0), summed_death_rate(1.0)
         {
 
         }
@@ -454,6 +453,7 @@ namespace necsim
         void setupGillespieLineages();
 
         void setupGillespieMaps();
+
         /**
          * @brief Calculates the x, y position on the fine map of the lineage
          * @param location the map location
@@ -484,14 +484,11 @@ namespace necsim
 
         void gillespieSpeciationEvent(GillespieProbability &origin);
 
-        void gillespieLocationRemainingCheck(GillespieProbability & location);
+        void gillespieLocationRemainingCheck(GillespieProbability &location);
 
+        template<typename T> double getLocalDeathRate(const T &location) const;
 
-        template<typename T>
-        double getLocalDeathRate(const T &location) const;
-
-        template<typename T>
-         double getLocalSelfDispersalRate(const T &location) const;
+        template<typename T> double getLocalSelfDispersalRate(const T &location) const;
 
         void clearGillespieObjects();
 
@@ -550,8 +547,7 @@ namespace necsim
 
         void removeHeapTop();
 
-        template<typename T>
-        Cell convertMapLocationToCell(const T &location) const
+        template<typename T> Cell convertMapLocationToCell(const T &location) const
         {
             unsigned long x = landscape->convertSampleXToFineX(location.x, location.xwrap);
             unsigned long y = landscape->convertSampleXToFineX(location.y, location.ywrap);
@@ -565,9 +561,8 @@ namespace necsim
         void createEventList();
 
         void sortEvents();
-        
-        template<bool restoreHeap = true>
-        void addNewEvent(const unsigned long &x, const unsigned long &y);
+
+        template<bool restoreHeap = true> void addNewEvent(const unsigned long &x, const unsigned long &y);
 
         /**
          * @brief Adds the given location.
@@ -594,16 +589,7 @@ namespace necsim
          * occurring, but didn't occur during this branch of the coalescence tree.
          * @param chosen the index in the active lineages to set the speciation probability for
          */
-        void assignNonSpeciationProbability(const unsigned long chosen)
-        {
-            TreeNode &tree_node = (*data)[active[chosen].getReference()];
-            if(tree_node.getGenRate() == 0)
-            {
-                tree_node.setGenerationRate(1);
-            }
-            tree_node.setSpec(0.0);
-        }
-
+        void assignNonSpeciationProbability(const unsigned long chosen);
 #ifdef DEBUG
 
         void validateHeap();

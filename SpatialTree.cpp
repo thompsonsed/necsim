@@ -1723,7 +1723,6 @@ namespace necsim
         checkMapEvents();
         checkSampleEvents();
         sortEvents();
-        // TODO add making dispersal map cumulative without the self-dispersal events
     }
 
     void SpatialTree::setupGillespieLineages()
@@ -1744,6 +1743,7 @@ namespace necsim
 
             // First perform the move
             active_tree_node.setParent(enddata);
+            assignNonSpeciationProbability(chosen);
             end_tree_node.setGenerationRate(0);
             end_tree_node.setSpec(1.0);
             active[chosen].setReference(enddata);
@@ -1913,6 +1913,8 @@ namespace necsim
         auto lineages = selectTwoRandomLineages(origin.getMapLocation());
         gillespieUpdateGeneration(lineages.first);
         setStepVariable(origin, lineages.first, lineages.second);
+        assignNonSpeciationProbability(lineages.first);
+        assignNonSpeciationProbability(lineages.second);
         removeOldPosition(lineages.first);
         this_step.coal = true;
         active[this_step.chosen].setEndpoint<Step>(this_step);
@@ -1948,6 +1950,7 @@ namespace necsim
         {
 //            writeInfo("Coalescence between lineages following dispersal."); // TODO remove
             assignNonSpeciationProbability(this_step.chosen);
+            assignNonSpeciationProbability(this_step.coalchosen);
             coalescenceEvent(this_step.chosen, this_step.coalchosen);
         }
         // Get the destination cell and update the probabilities.
@@ -2329,6 +2332,20 @@ namespace necsim
 #endif // DEBUG
         return lineage_ids;
 
+    }
+
+    void SpatialTree::assignNonSpeciationProbability(const unsigned long chosen)
+    {
+        TreeNode &tree_node = (*data)[active[chosen].getReference()];
+        if(tree_node.getGenRate() == 0)
+        {
+            tree_node.setGenerationRate(1);
+        }
+        // Gets the minimum speciation rate for this lineage to have speciated in this time
+        const double min_speciation_rate = inverseSpeciation(spec, tree_node.getGenRate());
+        // Generate a new random number which doesn't allow for speciation to have occur, given the current
+        // speciation rate (i.e. uniform random number from min_speciation_rate to 1.0).
+        tree_node.setSpec(min_speciation_rate + (NR->d01() * (1 - min_speciation_rate)));
     }
 
 #ifdef DEBUG

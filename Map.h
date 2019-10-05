@@ -39,8 +39,8 @@ namespace necsim
     class Map : public virtual Matrix<T>
     {
     protected:
-        GDALDataset* po_dataset;
-        GDALRasterBand* po_band;
+        shared_ptr<GDALDataset*> po_dataset;
+        shared_ptr<GDALRasterBand*> po_band;
         unsigned long block_x_size, block_y_size;
         double no_data_value;
         string file_name;
@@ -112,7 +112,8 @@ namespace necsim
             {
                 file_name = filename_in;
                 setCPLErrorHandler();
-                po_dataset = (GDALDataset*) GDALOpen(file_name.c_str(), GA_ReadOnly);
+//                GDALDataset * tmp_ptr = (GDALDataset*)GDALOpen(file_name.c_str(), GA_ReadOnly);
+                po_dataset = make_shared<GDALDataset*>((GDALDataset*)GDALOpen(file_name.c_str(), GA_ReadOnly));
                 removeCPLErrorHandler();
             }
             else
@@ -153,7 +154,10 @@ namespace necsim
             if(po_dataset)
             {
                 setCPLErrorHandler();
-                GDALClose(po_dataset);
+                if(po_dataset.use_count() == 1)
+                {
+                    GDALClose(*po_dataset);
+                }
                 removeCPLErrorHandler();
                 po_dataset = nullptr;
                 po_band = nullptr;
@@ -166,13 +170,13 @@ namespace necsim
         void getRasterBand()
         {
             setCPLErrorHandler();
-            if(po_dataset->GetRasterCount() < 1)
+            if((*po_dataset)->GetRasterCount() < 1)
             {
                 stringstream ss;
                 ss << "No raster band detected in " << file_name << endl;
                 throw FatalException(ss.str());
             }
-            po_band = po_dataset->GetRasterBand(1);
+            po_band = make_shared<GDALRasterBand*>((GDALRasterBand*)(*po_dataset)->GetRasterBand(1));
             removeCPLErrorHandler();
             if(po_band == nullptr)
             {
@@ -188,8 +192,8 @@ namespace necsim
         void getBlockSizes()
         {
             setCPLErrorHandler();
-            block_x_size = static_cast<unsigned long>(po_dataset->GetRasterXSize());
-            block_y_size = static_cast<unsigned long>(po_dataset->GetRasterYSize());
+            block_x_size = static_cast<unsigned long>((*po_dataset)->GetRasterXSize());
+            block_y_size = static_cast<unsigned long>((*po_dataset)->GetRasterYSize());
             removeCPLErrorHandler();
         }
 
@@ -212,7 +216,7 @@ namespace necsim
             try
             {
                 int pbSuccess;
-                no_data_value = po_band->GetNoDataValue(&pbSuccess);
+                no_data_value = (*po_band)->GetNoDataValue(&pbSuccess);
                 if(!pbSuccess)
                 {
                     no_data_value = 0.0;
@@ -226,11 +230,11 @@ namespace necsim
             ss << "No data value is: " << no_data_value << endl;
             writeInfo(ss.str());
             // Check sizes match
-            gdal_data_type = po_band->GetRasterDataType();
+            gdal_data_type = (*po_band)->GetRasterDataType();
             const static double default_values[6] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
             double geoTransform[6] = {0.0, 1.0, 0.0, 0.0, 0.0, 1.0};
             writeInfo("Getting geo transform...");
-            cpl_error = po_dataset->GetGeoTransform(geoTransform);
+            cpl_error = (*po_dataset)->GetGeoTransform(geoTransform);
             if(cpl_error >= CE_Warning)
             {
                 ss.str("");
@@ -474,7 +478,7 @@ namespace necsim
             for(uint32_t j = 0; j < num_rows; j++)
             {
                 printNumberComplete(j, number_printed);
-                cpl_error = po_band->RasterIO(GF_Read, 0, j, static_cast<int>(block_x_size), 1, &matrix[j * num_cols],
+                cpl_error = (*po_band)->RasterIO(GF_Read, 0, j, static_cast<int>(block_x_size), 1, &matrix[j * num_cols],
                                               static_cast<int>(block_x_size), 1, gdal_data_type, 0, 0);
                 checkTifImportFailure();
                 // Now convert the no data values to 0
@@ -505,7 +509,7 @@ namespace necsim
             for(uint32_t j = 0; j < num_rows; j++)
             {
                 printNumberComplete(j, number_printed);
-                cpl_error = po_band->RasterIO(GF_Read, 0, j, static_cast<int>(block_x_size), 1, &t1[0],
+                cpl_error = (*po_band)->RasterIO(GF_Read, 0, j, static_cast<int>(block_x_size), 1, &t1[0],
                                               static_cast<int>(block_x_size), 1, GDT_Float64, 0, 0);
                 checkTifImportFailure();
                 // now copy the data to our Map, converting float to int. Round or floor...? hmm, floor?
@@ -583,7 +587,7 @@ namespace necsim
             for(uint32_t j = 0; j < num_rows; j++)
             {
                 printNumberComplete(j, number_printed);
-                cpl_error = po_band->RasterIO(GF_Read, 0, j, int_block_x_size, 1, t1, int_block_x_size, 1, dt_buff, 0,
+                cpl_error = (*po_band)->RasterIO(GF_Read, 0, j, int_block_x_size, 1, t1, int_block_x_size, 1, dt_buff, 0,
                                               0);
                 checkTifImportFailure();
                 for(unsigned long i = 0; i < num_cols; i++)
@@ -663,7 +667,7 @@ namespace necsim
         }
 
         /**
-         * @brief Equality operator
+         * @brief Assignment operator
          * @param m the Map object to copy from
          * @return the self Map object
          */
@@ -682,6 +686,7 @@ namespace necsim
             this->upper_left_y = m.upper_left_y;
             this->x_res = m.x_res;
             this->y_res = m.y_res;
+            this->cpl_error_set = m.cpl_error_set;
             return *this;
         }
 

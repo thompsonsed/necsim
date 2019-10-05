@@ -1947,6 +1947,7 @@ namespace necsim
         if(this_step.coal)
         {
 //            writeInfo("Coalescence between lineages following dispersal."); // TODO remove
+            assignNonSpeciationProbability(this_step.chosen);
             coalescenceEvent(this_step.chosen, this_step.coalchosen);
         }
         // Get the destination cell and update the probabilities.

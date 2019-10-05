@@ -589,6 +589,21 @@ namespace necsim
 
         vector<unsigned long> detectLineages(const MapLocation &location) const;
 
+        /**
+         * @brief Sets the speciation probability of the provided lineage so that speciation has a random chance of
+         * occurring, but didn't occur during this branch of the coalescence tree.
+         * @param chosen the index in the active lineages to set the speciation probability for
+         */
+        void assignNonSpeciationProbability(const unsigned long chosen)
+        {
+            TreeNode &tree_node = (*data)[active[chosen].getReference()];
+            if(tree_node.getGenRate() == 0)
+            {
+                tree_node.setGenerationRate(1);
+            }
+            tree_node.setSpec(0.0);
+        }
+
 #ifdef DEBUG
 
         void validateHeap();

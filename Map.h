@@ -18,6 +18,7 @@
 #include <gdal_priv.h>
 #include <cpl_conv.h> // for CPLMalloc()
 #include <sstream>
+#include <memory>
 #include "Logging.h"
 #include "Matrix.h"
 #include "custom_exceptions.h"

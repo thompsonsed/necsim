@@ -2163,7 +2163,7 @@ namespace necsim
         eastl::make_heap(heap.begin(), heap.end());
     }
 
-    template<bool restoreHeap = true> void SpatialTree::addNewEvent(const unsigned long &x, const unsigned long &y)
+    template<bool restoreHeap> void SpatialTree::addNewEvent(const unsigned long &x, const unsigned long &y)
     {
         const MapLocation &location = probabilities.get(y, x).getMapLocation();
         if(getNumberLineagesAtLocation(location) > 0)

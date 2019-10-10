@@ -2106,7 +2106,7 @@ namespace necsim
 
     void SpatialTree::updateInhabitedCellOnHeap(const Cell &pos)
     {
-        eastl::change_heap(heap.begin(), heap.size(), cellToHeapPositions.get(pos.y, pos.x));
+        eastl::change_heap(heap.begin(), (unsigned long) heap.size(), cellToHeapPositions.get(pos.y, pos.x));
     }
 
     void SpatialTree::updateAllProbabilities()

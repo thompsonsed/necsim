@@ -230,7 +230,7 @@ namespace necsim
          * @param mutex The mutex to synchronise progress feedback to the user
          * @param finished The total number of cells simulated across all workers
          */
-        template <bool chooseRandomCells=false>
+        template <bool chooseRandomCells>
         void runDistanceWorker(const unsigned long seed,
                                const unsigned long bidx,
                                const unsigned long eidx,

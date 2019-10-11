@@ -218,7 +218,7 @@ namespace necsim
         writeInfo("Dispersal simulation complete.\n");
     }
 
-    template <bool chooseRandomCells=false>
+    template <bool chooseRandomCells>
     void SimulateDispersal::runDistanceLoop(const unsigned long bidx,
                                             const unsigned long eidx,
                                             const unsigned long num_repeats,
@@ -288,7 +288,7 @@ namespace necsim
         }
     }
 
-    template <bool chooseRandomCells=false>
+    template <bool chooseRandomCells>
     void SimulateDispersal::runDistanceWorker(const unsigned long seed,
                                               const unsigned long bidx,
                                               const unsigned long eidx,

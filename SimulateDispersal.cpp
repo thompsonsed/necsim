@@ -414,7 +414,7 @@ namespace necsim
 
             for(unsigned long i = 0; i < num_workers; i++)
             {
-                threads[i] = std::thread(&SimulateDispersal::runDistanceWorker,
+                threads[i] = std::thread(&SimulateDispersal::runDistanceWorker<true>,
                                          this,
                                          random->i0(std::numeric_limits<unsigned long>::max() - 1),
                                          num_repeats * i / num_workers,
@@ -478,7 +478,7 @@ namespace necsim
 
             for(unsigned long i = 0; i < num_workers; i++)
             {
-                threads[i] = std::thread(&SimulateDispersal::runDistanceWorker,
+                threads[i] = std::thread(&SimulateDispersal::runDistanceWorker<true>,
                                          this,
                                          random->i0(std::numeric_limits<unsigned long>::max() - 1),
                                          num_repeats * i / num_workers,

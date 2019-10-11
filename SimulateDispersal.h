@@ -209,7 +209,7 @@ namespace necsim
          * @param dispersal_coordinator Reference to the dispersal corrdinator to use
          * @param generation Reference to the generation variable used byt the dispersal coordinator
          */
-        template <bool chooseRandomCells=false>
+        template <bool chooseRandomCells>
         void runDistanceLoop(const unsigned long bidx,
                              const unsigned long eidx,
                              const unsigned long num_repeats,

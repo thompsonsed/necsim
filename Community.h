@@ -153,7 +153,7 @@ namespace necsim
         // The dimensions of the sample grid size.
         unsigned long grid_x_size, grid_y_size;
         // The dimensions of the original sample map file
-        unsigned long samplemask_x_size, samplemask_y_size, samplemask_x_offset, samplemask_y_offset;
+        unsigned long samplemask_x_size, samplemask_y_size, samplemask_x_offset, samplemask_y_offset, seed;
         // Vector containing past speciation rates
         CommunitiesArray past_communities;
         MetacommunitiesArray past_metacommunities;
@@ -187,7 +187,8 @@ namespace necsim
                                                              protracted(false), minimum_protracted_parameters(),
                                                              applied_protracted_parameters(), max_species_id(0),
                                                              max_fragment_id(0), max_locations_id(0),
-                                                             spec_sim_parameters(make_shared<SpecSimParameters>())
+                                                             spec_sim_parameters(make_shared<SpecSimParameters>()),
+                                                             seed(0)
         {
 
         }
@@ -674,6 +675,9 @@ namespace necsim
          * @brief Speciates the remaining lineages in an incomplete simulation to force it to appear complete.
          */
         void speciateRemainingLineages(const string &filename);
+
+
+        void applyNonSpatialRemainingLineages(const string &filename);
 
         /**
          * @brief Gets the species richness for the community reference from the database.

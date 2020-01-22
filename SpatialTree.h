@@ -115,7 +115,7 @@ namespace necsim
         // contains the DataMask for where we should start lineages from.
         DataMask samplegrid;
 
-        // The gillespie variables
+        // The Gillespie variables
         double gillespie_threshold;
         // Matrix of all the probabilities at every location in the map.
         Matrix<GillespieProbability> probabilities;
@@ -439,8 +439,15 @@ namespace necsim
 
         void addGillespie(const double &g_threshold) override;
 
+        /**
+         * @brief Runs the Gillespie simulation
+         * @return true if the simulation has finished
+         */
         bool runSimulationGillespie() override;
 
+        /**
+         * @brief Runs the Gillespie simulation
+         */
         void runGillespieLoop();
 
         /**
@@ -453,6 +460,9 @@ namespace necsim
          */
         void setupGillespieLineages();
 
+        /**
+         * @brief Sets up the Gillespie map objects, including the probability map for calculating self-dispersals
+         */
         void setupGillespieMaps();
 
         /**
@@ -469,30 +479,85 @@ namespace necsim
          */
         void findLocations();
 
+        /**
+         * @brief Checks for changes to the landscape and adds a Gillespie object for the next map event
+         */
         void checkMapEvents();
 
+        /**
+         * @brief Checks for sample events and recalculates Gillespie probabilities if necessary
+         */
         void checkSampleEvents();
 
+        /**
+         * @brief Performs an event for a given set of Gillespie probabilities
+         * @param origin the Gillespie probabilities to use
+         */
         void gillespieCellEvent(GillespieProbability &origin);
 
+        /**
+         * @brief Updates the map for the Gillespie algorithm.
+         *
+         * Called when the landscape changes.
+         */
         void gillespieUpdateMap();
 
+        /**
+         * @brief Updates the individuals when a new sample event occurs
+         */
         void gillespieSampleIndividuals();
 
+        /**
+         * @brief Performs a Gillespie coalescence event
+         * @param origin the Gillespie event with probabilities and locations
+         */
         void gillespieCoalescenceEvent(GillespieProbability &origin);
 
+        /**
+         * @brief Performs a Gillespie dispersal event
+         * @param origin the Gillespie event with probabilities and locations
+         */
         void gillespieDispersalEvent(GillespieProbability &origin);
 
+        /**
+         * @brief Performs a Gillespie speciation event
+         * @param origin the Gillespie event with probabilities and locations
+         */
         void gillespieSpeciationEvent(GillespieProbability &origin);
 
+        /**
+         * @brief Checks that there are individuals remaining at the location and updates probabilities
+         * @param location the location to update Gillespie probabilities at
+         */
         void gillespieLocationRemainingCheck(GillespieProbability &location);
 
+        /**
+         * @brief Gets the local death rate
+         * @tparam T the location class
+         * @param location the location on the map
+         * @return the local death rate
+         */
         template<typename T> double getLocalDeathRate(const T &location) const;
 
+        /**
+         * @brief Get the local self-dispersal rate
+         * @tparam T the location class
+         * @param location the location on the map
+         * @return the self-dispersal rate
+         */
         template<typename T> double getLocalSelfDispersalRate(const T &location) const;
 
+        /**
+         * @brief Clears all Gillespie-related objects
+         */
         void clearGillespieObjects();
 
+        /**
+         * @brief Sets the step variable for the Gillespie process
+         * @param origin the Gillespie probabilities to use
+         * @param chosen the chosen id
+         * @param coal_chosen the coalescence chosen id
+         */
         void setStepVariable(const necsim::GillespieProbability &origin,
                              const unsigned long &chosen,
                              const unsigned long &coal_chosen);
@@ -514,6 +579,10 @@ namespace necsim
         //            }
         //        }
 
+        /**
+         * @brief Updates the generation timer for the Gillespie process
+         * @param lineage the lineage to update the generation timer for
+         */
         void gillespieUpdateGeneration(const unsigned long &lineage);
 
         //        void updateHeapDestination(GillespieProbability &destination)
@@ -540,14 +609,35 @@ namespace necsim
         //            }
         //        }
 
+        /**
+         * @brief Update the coalescence probability in the given cell
+         * @param origin the Gillespie probability to update
+         * @param n
+         */
         void updateCellCoalescenceProbability(GillespieProbability &origin, const unsigned long &n);
 
+        /**
+         * @brief Updates inhabited cell on the heap
+         * @param pos the Cell position to update at
+         */
         void updateInhabitedCellOnHeap(const Cell &pos);
 
+        /**
+         * @brief Updates all probabilities in the Gillespie tree
+         */
         void updateAllProbabilities();
 
+        /**
+         * @brief Removes the top element from the heap
+         */
         void removeHeapTop();
 
+        /**
+         * @brief Converts the map location to a cell object with locations given in reference to the fine map
+         * @tparam T the map location class
+         * @param location the location to convert
+         * @return the cell on the sample map
+         */
         template<typename T> Cell convertMapLocationToCell(const T &location) const
         {
             unsigned long x = landscape->convertSampleXToFineX(location.x, location.xwrap);
@@ -561,33 +651,83 @@ namespace necsim
          */
         void createEventList();
 
+        /**
+         * @brief Sorts the events according to their estimated time
+         */
         void sortEvents();
 
+        /**
+         * @brief Adds a new event for the given x, y location
+         * @tparam restoreHeap if true, restores the heap
+         * @param x the x location
+         * @param y the y location
+         */
         template<bool restoreHeap = true> void addNewEvent(const unsigned long &x, const unsigned long &y);
+        // TODO check restoreHeap needs to be true
 
         /**
-         * @brief Adds the given location.
+         * @brief Adds the given location
          *
          * Calculates the probabilities of coalescence, dispersal and speciation.
          * @param location the location to add and calculate values for
          */
         void addLocation(const MapLocation &location);
 
+        /**
+         * @brief Updates the Gillespie probabilities at the given location
+         * @param gp the Gillespie probability object to store in
+         * @param location the location on the map
+         */
         void setupGillespieProbability(GillespieProbability &gp, const MapLocation &location);
 
+        /**
+         * @brief Sets up the Gillespie process at a given location
+         * @param gp the Gillespie probability object to store in
+         * @param location the location on the map
+         */
         void fullSetupGillespieProbability(GillespieProbability &gp, const MapLocation &location);
 
+        /**
+         * @brief Calculates the coalescence probability at a given location
+         * @param location the location on the map
+         * @return the probability of coalescence
+         */
         double calculateCoalescenceProbability(const MapLocation &location) const;
 
+        /**
+         * @brief Converts the global generation counter to a local generation counter.
+         *
+         * Determines the number of generations that have turned over locally
+         *
+         * @tparam T location class
+         * @param location the location on the map
+         * @param g the global death rate
+         * @return the local death rate
+         */
         template<typename T> double convertGlobalGenerationsToLocalGenerations(const T &location, const double g) const
         {
             return g * getLocalDeathRate(location) / (summed_death_rate / (double) global_individuals);
         }
 
+        /**
+         * @brief Selects a single random lineage from the map location
+         * @param location the location on the map
+         * @return the id of the random lineage
+         */
         unsigned long selectRandomLineage(const MapLocation &location) const;
 
+        /**
+         * @brief Selects two lineages randomly from the location.
+         * @param location the location on the map
+         * @return the two random lineages from that location
+         */
         pair<unsigned long, unsigned long> selectTwoRandomLineages(const MapLocation &location) const;
 
+        /**
+         * @brief Detects which lineage exist in the given location.
+         * @param location the map location to check lineages at
+         * @return a vector of indices of lineages at that location
+         */
         vector<unsigned long> detectLineages(const MapLocation &location) const;
 
         /**

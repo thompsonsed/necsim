@@ -19,6 +19,7 @@
 #include <cpl_conv.h> // for CPLMalloc()
 #include <sstream>
 #include <memory>
+#include "cpp17_includes.h"
 #include "Logging.h"
 #include "Matrix.h"
 #include "custom_exceptions.h"
@@ -324,6 +325,12 @@ namespace necsim
          */
         void import(const string &filename) override
         {
+            if(!fs::exists(filename) || fs::is_directory(filename))
+            {
+                stringstream ss;
+                ss << "Cannot import from " << filename << ": file does not exist.";
+                throw FatalException(ss.str());
+            }
             if(!importTif(filename))
             {
                 Matrix<T>::import(filename);

@@ -8,10 +8,12 @@
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 //#define use_csv
+
 #include <algorithm>
 #include <set>
 #include <unordered_map>
 #include <numeric>
+#include "cpp17_includes.h"
 #include "Community.h"
 #include "RNGController.h"
 
@@ -539,7 +541,7 @@ namespace necsim
         // open the database objects
         SQLiteHandler out_database;
         // open one db in memory and one from the file.
-        if(!boost::filesystem::exists(input_file))
+        if(!fs::exists(input_file))
         {
             stringstream ss;
             ss << "Output database does not exist at " << input_file << ": cannot open sql connection." << endl;

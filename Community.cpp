@@ -2089,48 +2089,49 @@ namespace necsim
 
     void Community::applyNonSpatialRemainingLineages(const string &filename, const unsigned long &n_individuals)
     {
-        importSimParameters(filename);
-        importSamplemask("null");
-        importData(filename);
-        spec_sim_parameters->filename = filename;
-        // Skip the first entry as it's always blank
-        (*nodes)[0] = TreeNode();
-        vector<TreeNode*> activeNodes;
-
-        for(unsigned long i = 1; i < nodes->size(); i++)
-        {
-            TreeNode* this_node = &(*nodes)[i];
-            if(this_node->getParent() == 0
-               && !checkSpeciation(this_node->getSpecRate(), min_spec_rate, this_node->getGenerationRate()))
-            {
-                activeNodes.push_back(this_node);
-            }
-        }
-        random_numbers::RNGController rngController;
-        rngController.setSeed(seed);
-        double baseline_probability = 1.0/double(n_individuals);
-        double coalescence_probability = baseline_probability * activeNodes.size();
-        unsigned long total = activeNodes.size();
-        map<bool, unsigned long> coalescence_and_parent;
-        while(total > 1)
-        {
-            double time_coalescence = 
-            if(rngController.d01() < )
-        }
-        while(activeNodes.size() > 1)
-        {
-            unsigned long random_index = rngController.i0(activeNodes.size());
-        }
-        for(unsigned long i = 1; i < activeNodes.size(); i ++)
-        {
-
-        }
-
-        deleteSpeciesList();
-        createSpeciesList();
-        writeSpeciesList(nodes->size() - 1);
-        forceSimCompleteParameter();
-        exportDatabase();
+        throw FatalException("Applying non-spatial speciation process to end simulation is not yet implemented.");
+//        importSimParameters(filename);
+//        importSamplemask("null");
+//        importData(filename);
+//        spec_sim_parameters->filename = filename;
+//        // Skip the first entry as it's always blank
+//        (*nodes)[0] = TreeNode();
+//        vector<TreeNode*> activeNodes;
+//
+//        for(unsigned long i = 1; i < nodes->size(); i++)
+//        {
+//            TreeNode* this_node = &(*nodes)[i];
+//            if(this_node->getParent() == 0
+//               && !checkSpeciation(this_node->getSpecRate(), min_spec_rate, this_node->getGenerationRate()))
+//            {
+//                activeNodes.push_back(this_node);
+//            }
+//        }
+//        random_numbers::RNGController rngController;
+//        rngController.setSeed(seed);
+//        double baseline_probability = 1.0/double(n_individuals);
+//        double coalescence_probability = baseline_probability * activeNodes.size();
+//        unsigned long total = activeNodes.size();
+//        map<bool, unsigned long> coalescence_and_parent;
+//        while(total > 1)
+//        {
+//            double time_coalescence =
+//            if(rngController.d01() < )
+//        }
+//        while(activeNodes.size() > 1)
+//        {
+//            unsigned long random_index = rngController.i0(activeNodes.size());
+//        }
+//        for(unsigned long i = 1; i < activeNodes.size(); i ++)
+//        {
+//
+//        }
+//
+//        deleteSpeciesList();
+//        createSpeciesList();
+//        writeSpeciesList(nodes->size() - 1);
+//        forceSimCompleteParameter();
+//        exportDatabase();
 
     }
 

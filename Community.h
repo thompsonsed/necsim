@@ -677,7 +677,7 @@ namespace necsim
         void speciateRemainingLineages(const string &filename);
 
 
-        void applyNonSpatialRemainingLineages(const string &filename);
+        void applyNonSpatialRemainingLineages(const string &filename, const unsigned long &n_individuals);
 
         /**
          * @brief Gets the species richness for the community reference from the database.

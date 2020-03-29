@@ -228,6 +228,7 @@ namespace necsim
          */
         void disperseNullDispersalMap(Step &this_step);
 
+        void disperseNullGillespieDispersalMap(Step &this_step);
         /**
          * @brief Picks a random dispersal distance from the dispersal map
          * @param this_step the step object to store end points in

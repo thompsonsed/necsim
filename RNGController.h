@@ -618,15 +618,54 @@ namespace random_numbers
 
         }
 
+        /**
+         * @brief Generates a random value from an exponential distribution with the given lambda
+         * @param lambda the lambda parameter for an exponential
+         * @return the random value from the exponential distribution
+         */
         double randomExponential(double lambda)
         {
-            return exponentialDistribution(lambda, d01());
+            return exponentialDistributionQuantile(lambda, d01());
         }
+
+        /**
+         * @brief Calculates the value from the exponential distribution
+         * @tparam T output class type
+         * @param lambda the lambda parameter from the exponential distribution
+         * @param x the x parameter from the exponential distribution
+         * @return the value from the exponential distribution
+         */
         template<typename T>
-        const static T exponentialDistribution(const T lambda, const T r)
+        const static T exponentialDistribution(const T lambda, const T x)
         {
-            return -log(r) / lambda;
+            return lambda * exp(-lambda * x);
         }
+
+        /**
+         * @brief Calculates the value from the exponential distribution given a quantile and lambda parameter
+         * @tparam T output class type
+         * @param lambda the lambda parameter from the exponential distribution
+         * @param q the quantile of the exponential distribution
+         * @return the value from the exponential distribution
+         */
+        template<typename T>
+        const static T exponentialDistributionQuantile(const T lambda, const T q)
+        {
+            return -log(1.0 - q) / lambda;
+        }
+
+        /**
+         * @brief Generates two random values in the range of 0 to limit_1 and limit_2 ranges, returning pair.
+         * @tparam T output class type
+         * @param limit_1 the upper bound of the first parameter
+         * @param limit_2 the upper bound of the second parameter
+         * @return pair of values
+         */
+        template<typename T>
+        pair<T, T> twoRandomValuesInZeroRange(T limit_1, T limit_2)
+        {
+            return make_pair<T, T>(d01() * (limit_1 - 1.0), d01() * (limit_2 - 1.0));
+        };
 
 
         /**

@@ -46,7 +46,8 @@ namespace necsim
      * @param number_of_generations the number of generations the lineage has existed
      * @return bool the speciation state of the lineage
      */
-    bool checkSpeciation(const long double &random_number, const long double &speciation_rate,
+    bool checkSpeciation(const long double &random_number,
+                         const long double &speciation_rate,
                          const unsigned long &no_generations);
 
     /**
@@ -56,8 +57,7 @@ namespace necsim
      * @param no_generations the number of generations speciation can occur over
      * @return
      */
-    long double inverseSpeciation(const long double &speciation_rate,
-                             const unsigned long &no_generations);
+    long double inverseSpeciation(const long double &speciation_rate, const unsigned long &no_generations);
 
     /**
      * @brief Contains the information needed for defining a fragment.
@@ -182,13 +182,12 @@ namespace necsim
                                                                      make_shared<MetacommunityParameters>()),
                                                              min_spec_rate(0.0), grid_x_size(0), grid_y_size(0),
                                                              samplemask_x_size(0), samplemask_y_size(0),
-                                                             samplemask_x_offset(0), samplemask_y_offset(0),
+                                                             samplemask_x_offset(0), samplemask_y_offset(0), seed(0),
                                                              past_communities(), past_metacommunities(),
                                                              protracted(false), minimum_protracted_parameters(),
                                                              applied_protracted_parameters(), max_species_id(0),
                                                              max_fragment_id(0), max_locations_id(0),
-                                                             spec_sim_parameters(make_shared<SpecSimParameters>()),
-                                                             seed(0)
+                                                             spec_sim_parameters(make_shared<SpecSimParameters>())
         {
 
         }
@@ -224,8 +223,8 @@ namespace necsim
          * @param database points to the database object to open
          * @return
          */
-        ProtractedSpeciationParameters setupInternal(shared_ptr<SimParameters> sim_parameters,
-                                                     shared_ptr<SQLiteHandler> database);
+        ProtractedSpeciationParameters
+        setupInternal(shared_ptr<SimParameters> sim_parameters, shared_ptr<SQLiteHandler> database);
 
         /**
          * @brief Sets the database object for the sqlite functions.
@@ -278,7 +277,7 @@ namespace necsim
          * @param treenode pointer to the TreeNode object for this lineage
          * @param species_list the set of all species ids.
          */
-        virtual void addSpecies(unsigned long &species_count, TreeNode* treenode, set<unsigned long> &species_list);
+        virtual void addSpecies(unsigned long &species_count, TreeNode *treenode, set<unsigned long> &species_list);
 
         /**
          * @brief Calculates the species abundance of the dataset.
@@ -461,7 +460,9 @@ namespace necsim
          * @param proc_parameters protracted speciation parameters to add
          * @return
          */
-        bool checkCalculationsPerformed(const long double &speciation_rate, const double &time, const bool &fragments,
+        bool checkCalculationsPerformed(const long double &speciation_rate,
+                                        const double &time,
+                                        const bool &fragments,
                                         const MetacommunityParameters &metacomm_parameters,
                                         const ProtractedSpeciationParameters &proc_parameters);
 
@@ -476,7 +477,9 @@ namespace necsim
          * @param metacommunity_speciation_rate the metacommunity speciation rate of the performed calculation
          * @param protracted_parameters protracted speciation parameters to add
          */
-        void addCalculationPerformed(const long double &speciation_rate, const double &time, const bool &fragments,
+        void addCalculationPerformed(const long double &speciation_rate,
+                                     const double &time,
+                                     const bool &fragments,
                                      const MetacommunityParameters &metacomm_parameters,
                                      const ProtractedSpeciationParameters &protracted_parameters);
 
@@ -676,8 +679,7 @@ namespace necsim
          */
         void speciateRemainingLineages(const string &filename);
 
-
-        void applyNonSpatialRemainingLineages(const string &filename);
+        void applyNonSpatialRemainingLineages(const string &filename, const unsigned long &n_individuals);
 
         /**
          * @brief Gets the species richness for the community reference from the database.

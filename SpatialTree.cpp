@@ -1599,7 +1599,7 @@ namespace necsim
         while((endactive < gillespie_threshold) && (endactive > 1)
               && ((steps < 100) || difftime(sim_end, start) < maxtime) && this_step.bContinueSim);
         // Switch to gillespie
-        writeInfo("Switching to Gillespie algorithm.\n");
+        writeInfo("\n\tSwitching to Gillespie algorithm.\n");
         setupGillespie();
 #ifdef DEBUG
         validateLineages();

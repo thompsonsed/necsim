@@ -80,10 +80,20 @@ namespace necsim
          */
         double getLambda(const double &local_death_rate, const double &summed_death_rate, const unsigned long &n) const;
 
+        /**
+         * @brief Calculates the time to the next event
+         * @param local_death_rate the local death rate
+         * @param mean_death_rate the average death rate across the landscape
+         * @param n the number of individuals at the location
+         * @return the time to the next event
+         */
         double calcTimeToNextEvent(const double &local_death_rate,
                                    const double &mean_death_rate,
                                    const unsigned long &n) const;
 
+        /**
+         * @brief Resets the probabilities
+         */
         void reset();
 
         friend ostream &operator<<(ostream &os, const GillespieProbability &gp);
@@ -91,9 +101,15 @@ namespace necsim
         friend std::istream &operator>>(std::istream &is, GillespieProbability &gp);
     };
 
+    /**
+     * @brief The container for the locations of Gillespie probability objects on the heap.
+     */
     class GillespieHeapNode
     {
     private:
+        /**
+         * @brief Updates the position on the heap
+         */
         void updateHeapPosition()
         {
             // Enclosing heap vector not known or no locator to report to

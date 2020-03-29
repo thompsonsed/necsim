@@ -3,7 +3,6 @@
 //
 
 #include "GillespieCalculator.h"
-#include "custom_exceptions.h"
 
 namespace necsim
 {
@@ -29,9 +28,9 @@ namespace necsim
 
     double GillespieProbability::getInCellProbability() const
     {
-        return speciation_probability + (1.0 - speciation_probability)
-                                        * ((1.0 - dispersal_outside_cell_probability) * coalescence_probability
-                                           + dispersal_outside_cell_probability);
+        return speciation_probability + (1.0 - speciation_probability) *
+                                        ((1.0 - dispersal_outside_cell_probability) * coalescence_probability +
+                                         dispersal_outside_cell_probability);
     }
 
     CellEventType GillespieProbability::generateRandomEvent(const shared_ptr<RNGController> &rng) const
@@ -97,7 +96,8 @@ namespace necsim
                                                      const double &summed_death_rate,
                                                      const unsigned long &n) const
     {
-        return RNGController::exponentialDistribution(getLambda(local_death_rate, summed_death_rate, n), random_number);
+        return RNGController::exponentialDistributionQuantile(getLambda(local_death_rate, summed_death_rate, n),
+                                                              random_number);
     }
 
     void GillespieProbability::reset()

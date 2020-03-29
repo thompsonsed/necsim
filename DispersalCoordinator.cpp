@@ -16,11 +16,10 @@
 
 namespace necsim
 {
-    DispersalCoordinator::DispersalCoordinator() : dispersal_prob_map(), raw_dispersal_prob_map(), NR(nullptr),
-                                                   landscape(make_shared<Landscape>()),
-                                                   reproduction_map(make_shared<ActivityMap>()), generation(nullptr),
-                                                   doDispersal(nullptr), checkEndPointFptr(nullptr), xdim(0), ydim(0),
-                                                   full_dispersal_map(false)
+    DispersalCoordinator::DispersalCoordinator()
+            : dispersal_prob_map(), raw_dispersal_prob_map(), NR(nullptr), landscape(make_shared<Landscape>()),
+              reproduction_map(make_shared<ActivityMap>()), generation(nullptr), doDispersal(nullptr),
+              checkEndPointFptr(nullptr), xdim(0), ydim(0), full_dispersal_map(false)
     {
 
     }
@@ -54,7 +53,7 @@ namespace necsim
         setMaps(landscape_ptr, make_shared<ActivityMap>());
     }
 
-    void DispersalCoordinator::setGenerationPtr(double* generation_ptr)
+    void DispersalCoordinator::setGenerationPtr(double *generation_ptr)
     {
         generation = generation_ptr;
     }
@@ -90,6 +89,11 @@ namespace necsim
             doDispersal = &DispersalCoordinator::disperseNullDispersalMap;
             reproduction_map->standardiseValues();
         }
+        else if(dispersal_file == "null_gillespie")
+        {
+            writeInfo("Using null dispersal map for gillespie.\n");
+            doDispersal = &DispersalCoordinator::disperseNullGillespieDispersalMap;
+        }
         else
         {
             writeInfo("Using dispersal file.\n");
@@ -106,15 +110,9 @@ namespace necsim
             throw FatalException(
                     "Simulation current_metacommunity_parameters pointer has not been set for DispersalCoordinator.");
         }
-        setDispersal(simParameters->dispersal_method,
-                     simParameters->dispersal_file,
-                     simParameters->fine_map_x_size,
-                     simParameters->fine_map_y_size,
-                     simParameters->m_prob,
-                     simParameters->cutoff,
-                     simParameters->sigma,
-                     simParameters->tau,
-                     simParameters->restrict_self);
+        setDispersal(simParameters->dispersal_method, simParameters->dispersal_file, simParameters->fine_map_x_size,
+                     simParameters->fine_map_y_size, simParameters->m_prob, simParameters->cutoff, simParameters->sigma,
+                     simParameters->tau, simParameters->restrict_self);
     }
 
     void DispersalCoordinator::importDispersal(const unsigned long &dispersal_dim, const string &dispersal_file)
@@ -285,11 +283,9 @@ namespace necsim
 #ifdef DEBUG
                     assertReferenceMatches(x);
 #endif // DEBUG
-                    bool destination_value = landscape->getVal(destination_step.x,
-                                                               destination_step.y,
-                                                               destination_step.xwrap,
-                                                               destination_step.ywrap,
-                                                               0.0) > 0;
+                    bool destination_value =
+                            landscape->getVal(destination_step.x, destination_step.y, destination_step.xwrap,
+                                              destination_step.ywrap, 0.0) > 0;
                     double dispersal_prob;
                     if(x == 0)
                     {
@@ -311,16 +307,12 @@ namespace necsim
                             ss << ", " << destination_step.ywrap << ")" << endl;
                             ss << "Source row: " << y << " destination row: " << x << endl;
                             ss << "Dispersal map value: " << dispersal_prob << endl;
-                            ss << "Origin density: " << landscape->getVal(origin_step.x,
-                                                                          origin_step.y,
-                                                                          origin_step.xwrap,
-                                                                          origin_step.ywrap,
-                                                                          0.0) << endl;
-                            ss << "Destination density: " << landscape->getVal(destination_step.x,
-                                                                               destination_step.y,
-                                                                               destination_step.xwrap,
-                                                                               destination_step.ywrap,
-                                                                               0.0) << endl;
+                            ss << "Origin density: "
+                               << landscape->getVal(origin_step.x, origin_step.y, origin_step.xwrap, origin_step.ywrap,
+                                                    0.0) << endl;
+                            ss << "Destination density: "
+                               << landscape->getVal(destination_step.x, destination_step.y, destination_step.xwrap,
+                                                    destination_step.ywrap, 0.0) << endl;
                             writeError(ss.str());
                             throw FatalException("Dispersal map is non zero where density is 0.");
                         }
@@ -439,11 +431,30 @@ namespace necsim
         // rejection sample based on reproduction values.
         do
         {
-            rand_x = floor(NR->d01() * (xdim - 1));
-            rand_y = floor(NR->d01() * (ydim - 1));
+            // TODO replace this with a single call
+            std::tie(rand_x, rand_y) = NR->twoRandomValuesInZeroRange<long>(static_cast<long>(xdim),
+                                                                            static_cast<long>(ydim));
         }
         while(!reproduction_map->actionOccurs(rand_x, rand_y, 0, 0));
         calculateCellCoordinates(this_step, rand_x + rand_y * xdim);
+    }
+
+    void DispersalCoordinator::disperseNullGillespieDispersalMap(necsim::Step &this_step)
+    {
+        // Pick a random cell - that's all we need
+        long rand_x = landscape->convertSampleXToFineX(this_step.x, this_step.xwrap);
+        long rand_y = landscape->convertSampleYToFineY(this_step.y, this_step.ywrap);
+        // rejection sample based on reproduction values.
+        long original_index = rand_x + rand_y * xdim;
+        long new_index = original_index;
+        do
+        {
+            std::tie(rand_x, rand_y) = NR->twoRandomValuesInZeroRange<long>(static_cast<long>(xdim),
+                                                                            static_cast<long>(ydim));
+            new_index = rand_x + rand_y * xdim;
+        }
+        while(!reproduction_map->actionOccurs(rand_x, rand_y, 0, 0) && original_index != new_index);
+        calculateCellCoordinates(this_step, new_index);
     }
 
     void DispersalCoordinator::disperseDispersalMap(Step &this_step)
@@ -528,11 +539,8 @@ namespace necsim
         // greater than or equal to that distance.
         if(!landscape->getVal(this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, *generation))
         {
-            auto min_distance = landscape->distanceToNearestHabitat(this_step.x,
-                                                                    this_step.y,
-                                                                    this_step.xwrap,
-                                                                    this_step.ywrap,
-                                                                    *generation);
+            auto min_distance = landscape->distanceToNearestHabitat(this_step.x, this_step.y, this_step.xwrap,
+                                                                    this_step.ywrap, *generation);
 #ifdef DEBUG
             if(!landscape->isOnMap(this_step.x, this_step.y + min_distance, this_step.xwrap, this_step.ywrap)
                && !landscape->isOnMap(this_step.x + min_distance, this_step.y, this_step.xwrap, this_step.ywrap)
@@ -559,25 +567,12 @@ namespace necsim
                 }
 #endif // DEBUG
                 angle = NR->direction();
-                density = landscape->runDispersal(dist,
-                                                  angle,
-                                                  this_step.x,
-                                                  this_step.y,
-                                                  this_step.xwrap,
-                                                  this_step.ywrap,
-                                                  fail,
-                                                  *generation);
+                density = landscape->runDispersal(dist, angle, this_step.x, this_step.y, this_step.xwrap,
+                                                  this_step.ywrap, fail, *generation);
                 if(!fail)
                 {
-                    fail = !checkEndPoint(density,
-                                          this_step.x,
-                                          this_step.y,
-                                          this_step.xwrap,
-                                          this_step.ywrap,
-                                          startx,
-                                          starty,
-                                          startxwrap,
-                                          startywrap);
+                    fail = !checkEndPoint(density, this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, startx,
+                                          starty, startxwrap, startywrap);
                 }
                 // This is a hack for those scenarios where habitat disappears and there is no easy replacement - then
                 // the parent just comes from a nearest habitat cell that exists.
@@ -602,27 +597,14 @@ namespace necsim
             {
                 angle = NR->direction();
                 dist = NR->dispersal();
-                density = landscape->runDispersal(dist,
-                                                  angle,
-                                                  this_step.x,
-                                                  this_step.y,
-                                                  this_step.xwrap,
-                                                  this_step.ywrap,
-                                                  fail,
-                                                  *generation);
+                density = landscape->runDispersal(dist, angle, this_step.x, this_step.y, this_step.xwrap,
+                                                  this_step.ywrap, fail, *generation);
                 // Discard the dispersal event a percentage of the time, based on the maximum value of the habitat map.
                 // This is to correctly mimic less-dense cells having a lower likelihood of being the parent to the cell.
                 if(!fail)
                 {
-                    fail = !checkEndPoint(density,
-                                          this_step.x,
-                                          this_step.y,
-                                          this_step.xwrap,
-                                          this_step.ywrap,
-                                          startx,
-                                          starty,
-                                          startxwrap,
-                                          startywrap);
+                    fail = !checkEndPoint(density, this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, startx,
+                                          starty, startxwrap, startywrap);
                 }
             }
 
@@ -646,12 +628,7 @@ namespace necsim
         double end_y = this_step.y + 0.5;
         long end_x_wrap = 0;
         long end_y_wrap = 0;
-        landscape->findNearestHabitatCell(this_step.x,
-                                          this_step.y,
-                                          this_step.xwrap,
-                                          this_step.ywrap,
-                                          end_x,
-                                          end_y,
+        landscape->findNearestHabitatCell(this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, end_x, end_y,
                                           *generation);
         landscape->fixGridCoordinates(end_x, end_y, end_x_wrap, end_y_wrap);
         end_x_wrap += this_step.xwrap;
@@ -666,12 +643,7 @@ namespace necsim
             ss << ". Density of new cell was "
                << landscape->checkMap(end_x, end_y, end_x_wrap, end_y_wrap, *generation);
             double tmpx, tmpy;
-            landscape->findNearestHabitatCell(this_step.x,
-                                              this_step.y,
-                                              this_step.xwrap,
-                                              this_step.ywrap,
-                                              tmpx,
-                                              tmpy,
+            landscape->findNearestHabitatCell(this_step.x, this_step.y, this_step.xwrap, this_step.ywrap, tmpx, tmpy,
                                               *generation);
             ss << "Coords of nearest habitat :" << tmpx << ", " << tmpy << endl;
             ss << endl;

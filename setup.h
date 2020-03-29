@@ -29,11 +29,12 @@ typedef __darwin_uuid_t uuid_t;
 
 #include <sstream>
 #include <ctime>
-#include <boost/filesystem.hpp>
+
 #include <cstdio>
 #include <ctime>
 #include <iostream>
 #include <iomanip>
+#include "cpp17_includes.h"
 
 // Forward declaring the global variables
 // store the log file name for access anywhere.

@@ -16,8 +16,6 @@
 #include <cstring>
 #include <stdexcept>
 #include <string>
-//# include <boost/filesystem.hpp>
-//#include <boost/lexical_cast.hpp>
 #include <set>
 #include <utility>
 #include <memory>
@@ -137,10 +135,10 @@ namespace necsim
         bool in_mem; // boolean for whether the database is in memory or not.
         bool database_set; // boolean for whether the database has been set already.
         shared_ptr<SQLiteHandler> database; // stores the in-memory database connection.
-        bool bSqlConnection; // true if the data connection has been established.
+        bool sql_connection_open; // true if the data connection has been established.
         shared_ptr<vector<TreeNode>> nodes; // in older versions this was called lineage_indices.
         shared_ptr<vector<unsigned long>> species_abundances;
-        unsigned long iSpecies;
+        unsigned long species_index;
         bool has_imported_samplemask; // checks whether the samplemask has already been imported.
         bool has_imported_data; // checks whether the main sim data has been imported.
         Samplematrix samplemask; // the samplemask object for defining the areas we want to sample from.
@@ -172,9 +170,9 @@ namespace necsim
          */
         explicit Community(shared_ptr<vector<TreeNode>> r) : in_mem(false), database_set(false),
                                                              database(make_shared<SQLiteHandler>()),
-                                                             bSqlConnection(false), nodes(std::move(r)),
+                                                             sql_connection_open(false), nodes(std::move(r)),
                                                              species_abundances(make_shared<vector<unsigned long>>()),
-                                                             iSpecies(0), has_imported_samplemask(false),
+                                                             species_index(0), has_imported_samplemask(false),
                                                              has_imported_data(false), samplemask(), fragments(),
                                                              current_community_parameters(make_shared<CommunityParameters>()),
                                                              current_metacommunity_parameters(make_shared<MetacommunityParameters>()),
@@ -206,7 +204,7 @@ namespace necsim
             {
                 nodes.reset();
             }
-            closeSqlConnection();
+            closeSQLConnection();
         }
 
         /**
@@ -229,6 +227,11 @@ namespace necsim
          * @param dbin the sqlite3 input database.
          */
         void setDatabase(shared_ptr<SQLiteHandler> dbin);
+
+        /**
+         * @brief Removes the setting of the memory option, indicating the database is written to hard drive.
+         */
+        void unsetMemoryOption();
 
         /**
          * @brief Get the boolean of whether the data has been imported yet.
@@ -296,12 +299,26 @@ namespace necsim
          * files.
          * @param input_file the sql database output from a necsim simulation.
          */
-        void openSqlConnection(string input_file);
+        void openSQLConnection(string input_file);
 
         /**
          * @brief Safely destroys the SQL connection.
          */
-        void closeSqlConnection();
+        void closeSQLConnection();
+
+        /**
+         * @brief Pauses the SQL connection, to be re-opened at a later time.
+         *
+         * Has no effect if the database is stored in memory.
+         */
+        void pauseSQLConnection();
+
+        /**
+         * @brief Resumes the SQL connection, assuming it has previously been paused.
+         *
+         * Has no effect if the database is stored in memory.
+         */
+        void resumeSQLConnection();
 
         /**
          * @brief Opens a connection to an in-memory database. This will eventually be written to the output file.

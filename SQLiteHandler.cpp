@@ -41,7 +41,7 @@ namespace necsim
         sqlite3_reset(stmt);
     }
 
-    SQLiteHandler::SQLiteHandler() : database(nullptr), file_name(), stmt(nullptr)
+    SQLiteHandler::SQLiteHandler() : database(nullptr), file_name(""), stmt(nullptr)
     {
 
     }
@@ -51,8 +51,25 @@ namespace necsim
         close();
     }
 
+    void SQLiteHandler::open()
+    {
+        if(file_name.empty())
+        {
+            throw FatalException("Cannot open a database connection before setting a file name. "
+                                 "If attempting to open an in-memory database, please use file_name=':memory:'.");
+        }
+        if(database == nullptr)
+        {
+            open(file_name);
+        }
+    }
+
     void SQLiteHandler::open(const std::string &file_name)
     {
+        if(database != nullptr)
+        {
+            close();
+        }
         openSQLiteDatabase(file_name, database);
         this->file_name = file_name;
     }
@@ -180,6 +197,11 @@ namespace necsim
     bool SQLiteHandler::isOpen()
     {
         return database != nullptr;
+    }
+
+    bool SQLiteHandler::hasOpened()
+    {
+        return !file_name.empty();
     }
 
     bool SQLiteHandler::hasTable(const std::string &table_name)

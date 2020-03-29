@@ -25,7 +25,9 @@ The recommended method of usage is through the pycoalescence package, using a Py
 You are free to modify and distribute the code as per the license specified in **LICENCE.txt** to suit any additional neutral simulation requirements (or any other purpose).
 
 ## INSTRUCTIONS ##
-###Compiling the program###
+
+### Compiling the program###
+
 See the Requirements section for a full lineage_indices of the necessary prerequisites. Once these are installed, compiling the program should be relatively easy. necsim requires a linker to the boost libraries, as well as the sqlite3 library. It is recommended to run with the maximum optimisation possible.
 
 
@@ -34,11 +36,12 @@ Additionally, if support is required for tif files (an alternative to importing 
 For compilation on High Performance Computing (HPC) systems, they will likely use intel compilers. The header files for the sqlite and boost packages may need to be copied in to the working directory to avoid problems with linking to libraries. Check the service providers' documentation for whether these libraries are already installed on the HPC. 
 for the application of different speciation rates.
 
-###Running simulations###
+### Running simulations###
+
 Note that the recommended method of running and analysing simulations is through the [**pycoalescence**](https://pycoalescence.readthedocs.io) Python package.
 The routine relies on supplying command line arguments (see below) for all the major simulation variables. Alternatively, supplying a config .txt file and using the command line arguments `./necsim -c /path/to/config.txt` can be used for parsing command line arguments from the text file. 
 
-####Command Line Arguments ####
+#### Command Line Arguments ####
 The following command line arguments are required. This lineage_indices can be accessed by running `“./necsim -h”` or `./necsim -help`
 
 The command line options to be specified are:
@@ -98,7 +101,7 @@ Alternatively, by specifying the -f flag, (full mode) as the first argument, the
 30.  the link to the file containing every generation that the lineage_indices should be expanded. This should be in the format of a lineage_indices.
 31. (and onwards) - speciation rates to apply after the simulation is complete.
 
-####Config Files ####
+#### Config Files ####
 The program also accepts a config file, specified by running `./necsim -c /path/to/config.txt`. The format of the config file is
 ```
 rand_seed = i
@@ -137,7 +140,7 @@ speciationrate2 = d
 ```
 where `i` represents a positive integer, `d` is a decimal value between 0 and 1, and `f` is any positive number (float). Whilst this does help with readability of the code, the order of the arguments is essential at this stage (i.e. don't switch the order of the lines). Future versions may alter the system of reading such that the current_metacommunity_parameters are set according to their key. Any number of speciation rates (or 0) can be at the end of the file.
 
-####Outputs####
+#### Outputs ####
 Upon successful completion of a simulation, necsim will produce an SQLite database file in the output directory in an SQL\_data folder. This database contains several tables, which can be accessed using a program like [DB Browser for SQLite](http://sqlitebrowser.org/) or Microsoft Access. Alternatively, most programming languages have an SQLite interface ([RSQlite](https://cran.r-project.org/web/packages/RSQLite/index.html), [Python sqlite3](https://docs.python.org/2/library/sqlite3.html))
 
 * The main table within the database is the SPECIES\_LIST table, which is the location and inheritence of every lineage recorded. Several other important data structures (such as whether it is a "tip" of the phylogenetic tree of not) which are used  when re-constructing the species identity.

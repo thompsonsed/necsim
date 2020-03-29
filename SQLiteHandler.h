@@ -79,8 +79,21 @@ namespace necsim
         ~SQLiteHandler();
 
         /**
-         * @brief Opens a database connection to the specified file name. If the file name is ":memory:", instead opens a
-         * connection to an in-memory database object.
+         * @brief Opens a database connection to the previously specified file name.
+         *
+         * If the file name is ":memory:", instead opens a connection to an in-memory database object.
+         * If a connection has previously been opened, keeps the existing connection.
+         *
+         * @param file_name the name of the file to open (or ":memory:" for in-memory databases)
+         */
+         void open();
+
+        /**
+         * @brief Opens a database connection to the specified file name.
+         *
+         * If the file name is ":memory:", instead opens a connection to an in-memory database object.
+         * If a connection has previously been opened, closes the connection first.
+         *
          * @param file_name the name of the file to open (or ":memory:" for in-memory databases)
          */
         void open(const std::string &file_name);
@@ -163,6 +176,12 @@ namespace necsim
          * @return true, if the database is not a nullptr.
          */
         bool isOpen();
+
+        /**
+         * @brief Checks if the database has ever been opened on this connection (i.e. there is a valid file name set).
+         * @return true, if the database has previously been opened.
+         */
+        bool hasOpened();
 
         /**
          * @brief Checks if the database has the specified table.

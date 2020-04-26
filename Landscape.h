@@ -181,7 +181,7 @@ namespace necsim
                       landscape_type("closed"), infinite_boundaries(false), next_map(""), has_coarse(false),
                       getValFunc(nullptr)
         {
-
+            setLandscape("closed");
         }
 
         /**

@@ -787,8 +787,14 @@ namespace necsim
         }
         else
         {
-            (*data)[active[tmp_active].getReference()].setGeneration(generationin);
-            (*data)[active[tmp_active].getReference()].setTip(true);
+            auto cur_active = active[tmp_active];
+            auto cur_data = (*data)[cur_active.getReference()];
+            cur_data.setGeneration(generationin);
+            cur_data.setTip(true);
+            cur_data.setPosition(cur_active.getXpos(),
+                                 cur_active.getYpos(),
+                                 cur_active.getXwrap(),
+                                 cur_active.getYwrap());
         }
     }
 

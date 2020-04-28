@@ -792,9 +792,9 @@ namespace necsim
             cur_data->setGeneration(generationin);
             cur_data->setTip(true);
             cur_data->setPosition(cur_active->getXpos(),
-                                 cur_active->getYpos(),
-                                 cur_active->getXwrap(),
-                                 cur_active->getYwrap());
+                                  cur_active->getYpos(),
+                                  cur_active->getXwrap(),
+                                  cur_active->getYwrap());
         }
     }
 

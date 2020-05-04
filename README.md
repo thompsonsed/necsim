@@ -1,10 +1,11 @@
-# necsim #
+# necsim
 
 Version: 1.0
 This project is released under MIT licence
 See file **LICENSE.txt** or go to [here](https://opensource.org/licenses/MIT) for full license details.
 
-## CONTENTS ##
+## CONTENTS
+
 * **INTRODUCTION**
 * **INSTRUCTIONS**
 * **REQUIREMENTS**
@@ -14,7 +15,7 @@ See file **LICENSE.txt** or go to [here](https://opensource.org/licenses/MIT) fo
 * **FAQS**
 * **CONTACTS**
 
-## INTRODUCTION ##
+## INTRODUCTION
 
 necsim is a generic spatial coalescence simulator for neutral systems. It applies the model to temporally and spatially varying density maps for a specific set of supplied current_metacommunity_parameters, and outputs information for each individual to a SQL database.
 
@@ -24,9 +25,9 @@ The recommended method of usage is through the pycoalescence package, using a Py
 
 You are free to modify and distribute the code as per the license specified in **LICENCE.txt** to suit any additional neutral simulation requirements (or any other purpose).
 
-## INSTRUCTIONS ##
+## INSTRUCTIONS
 
-### Compiling the program###
+### Compiling the program
 
 See the Requirements section for a full lineage_indices of the necessary prerequisites. Once these are installed, compiling the program should be relatively easy. necsim requires a linker to the boost libraries, as well as the sqlite3 library. It is recommended to run with the maximum optimisation possible.
 
@@ -36,12 +37,13 @@ Additionally, if support is required for tif files (an alternative to importing 
 For compilation on High Performance Computing (HPC) systems, they will likely use intel compilers. The header files for the sqlite and boost packages may need to be copied in to the working directory to avoid problems with linking to libraries. Check the service providers' documentation for whether these libraries are already installed on the HPC. 
 for the application of different speciation rates.
 
-### Running simulations###
+### Running simulations
 
 Note that the recommended method of running and analysing simulations is through the [**pycoalescence**](https://pycoalescence.readthedocs.io) Python package.
 The routine relies on supplying command line arguments (see below) for all the major simulation variables. Alternatively, supplying a config .txt file and using the command line arguments `./necsim -c /path/to/config.txt` can be used for parsing command line arguments from the text file. 
 
-#### Command Line Arguments ####
+#### Command Line Arguments
+
 The following command line arguments are required. This lineage_indices can be accessed by running `“./necsim -h”` or `./necsim -help`
 
 The command line options to be specified are:
@@ -101,7 +103,8 @@ Alternatively, by specifying the -f flag, (full mode) as the first argument, the
 30.  the link to the file containing every generation that the lineage_indices should be expanded. This should be in the format of a lineage_indices.
 31. (and onwards) - speciation rates to apply after the simulation is complete.
 
-#### Config Files ####
+#### Config Files
+
 The program also accepts a config file, specified by running `./necsim -c /path/to/config.txt`. The format of the config file is
 ```
 rand_seed = i
@@ -140,14 +143,16 @@ speciationrate2 = d
 ```
 where `i` represents a positive integer, `d` is a decimal value between 0 and 1, and `f` is any positive number (float). Whilst this does help with readability of the code, the order of the arguments is essential at this stage (i.e. don't switch the order of the lines). Future versions may alter the system of reading such that the current_metacommunity_parameters are set according to their key. Any number of speciation rates (or 0) can be at the end of the file.
 
-#### Outputs ####
+#### Outputs
+
 Upon successful completion of a simulation, necsim will produce an SQLite database file in the output directory in an SQL\_data folder. This database contains several tables, which can be accessed using a program like [DB Browser for SQLite](http://sqlitebrowser.org/) or Microsoft Access. Alternatively, most programming languages have an SQLite interface ([RSQlite](https://cran.r-project.org/web/packages/RSQLite/index.html), [Python sqlite3](https://docs.python.org/2/library/sqlite3.html))
 
 * The main table within the database is the SPECIES\_LIST table, which is the location and inheritence of every lineage recorded. Several other important data structures (such as whether it is a "tip" of the phylogenetic tree of not) which are used  when re-constructing the species identity.
 * A secondary output from necsims is a SIMULATION\_PARAMETERS table for identifying the exact current_metacommunity_parameters with which the model is run.
 * SpeciationCounter also produces a SPECIES_ABUNDANCES table containing species abundances across the whole sample map, plus (optionally) a table of SPECIES\_LOCATIONS (containing the x,y location of every individual) and FRAGMENT\_ABUNDANCES (species abundances for each habitat fragment separately).
 
-## REQUIREMENTS ##
+## REQUIREMENTS
+
 * The SQLite library available [here](https://www.sqlite.org/download.html).
 * The Boost library available [here](http://www.boost.org).
 * The fast-cpp-csv-parser by Ben Strasser, available [here](https://github.com/ben-strasser/fast-cpp-csv-parser).
@@ -155,7 +160,7 @@ Upon successful completion of a simulation, necsim will produce an SQLite databa
 * Access to the relevant folders for Default simulations (see FAQS).
 
 
-## CLASS DESCRIPTIONS ##
+## CLASS DESCRIPTIONS
 
 
 A brief description of the important classes is given below. Some classes also contain customised exceptions for better tracing of error handling.
@@ -190,12 +195,14 @@ A brief description of the important classes is given below. Some classes also c
 * The `Community` class
 	 - Provides the routines for applying different speciation rates to a phylogenetic tree, to be used either immediately after simulation within necsim, or at a later time using SpeciationCounter.cpp
 	 
-## KNOWN BUGS ##
+## KNOWN BUGS
+
 * Simulations run until completion, rather than aiming for a desired number of species. This is an intentional change. Functions related to this functionality remain but are deprecated.
 * Only continuous rectangular fragments are properly calculated. Other shapes must be calculated by post-processing.
 * 3 fragments instead of 2 will be calculated for certain adjacent rectangular patches.
 
-## FAQS (WIP) ##
+## FAQS (WIP)
+
 * **How do I get started?**
 	- It is recommended to use the [pycoalescence](http://pycoalescence.readthedocs.io/) package which simplifies installation of necsim, setting up and running simulations. This provides a much easier way to get started with necsim.
 
@@ -207,7 +214,8 @@ A brief description of the important classes is given below. Some classes also c
 * **Every time the program runs I get error code XXX.**
 	- Check the ERROR_REF.txt file for descriptions of the files. Try running in debug mode by compiling with ```-DDEBUG``` to gain more information on the problem. Check the log output in /logs. It is most likely a problem with the set up of the map data (error checking is not yet properly implemented here).
   
-## CONTACTS##
+## CONTACTS
+
 Author: **Samuel Thompson**
 
 Contact: samuelthompson14@imperial.ac.uk - thompsonsed@gmail.com

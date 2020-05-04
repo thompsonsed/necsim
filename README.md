@@ -162,6 +162,7 @@ Upon successful completion of a simulation, necsim will produce an SQLite databa
 
 ## CLASS DESCRIPTIONS
 
+For full documentation of the **necsim** package, check out the relevant section in the [pycoalescence documentation](https://pycoalescence.readthedocs.io/en/develop/necsim/necsim_library.html#full-api).
 
 A brief description of the important classes is given below. Some classes also contain customised exceptions for better tracing of error handling.
 

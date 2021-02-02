@@ -11,9 +11,11 @@
  */
 
 #include "ProtractedTree.h"
+
 namespace necsim
 {
-    bool ProtractedTree::calcSpeciation(const long double &random_number, const long double &speciation_rate,
+    bool ProtractedTree::calcSpeciation(const long double &random_number,
+                                        const long double &speciation_rate,
                                         const unsigned long &no_generations)
     {
         if(generation < speciation_generation_min)
@@ -30,7 +32,8 @@ namespace necsim
     void ProtractedTree::speciateLineage(const unsigned long &data_position)
     {
         (*data)[data_position].setSpec(0.0);
-        if(speciation_generation_min >= (*data)[data_position].getGenerationRate() + (*data)[data_position].getGeneration())
+        if(speciation_generation_min
+           >= (*data)[data_position].getGenerationRate() + (*data)[data_position].getGeneration())
         {
             (*data)[data_position].setGenerationRate(static_cast<unsigned long>(floor(speciation_generation_min)) + 2);
         }
@@ -49,11 +52,6 @@ namespace necsim
         return true;
     }
 
-    void ProtractedTree::setParameters()
-    {
-        Tree::setParameters();
-        setProtractedVariables(sim_parameters->max_speciation_gen, sim_parameters->max_speciation_gen);
-    }
     void ProtractedTree::setProtractedVariables(double speciation_gen_min_in, double speciation_gen_max_in)
     {
         speciation_generation_min = speciation_gen_min_in;

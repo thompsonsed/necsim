@@ -131,6 +131,7 @@ namespace necsim
             spec = sim_parameters->spec;
             maxtime = sim_parameters->max_time;
             times_file = sim_parameters->times_file;
+            setProtractedVariables(sim_parameters->max_speciation_gen, sim_parameters->max_speciation_gen);
             has_imported_vars = true;
         }
         else

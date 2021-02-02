@@ -71,7 +71,7 @@ namespace necsim
          * @param speciation_gen_min the minimum number of generations to have passed before speciation is allowed
          * @param speciation_gen_max the maximum number of generations a lineage can exist for before it is speciated.
          */
-        void setProtractedVariables(double speciation_gen_min, double speciation_gen_max) override ;
+        void setProtractedVariables(double speciation_gen_min, double speciation_gen_max) final ;
 
         /**
          * @brief Gets the protracted variables and returns them as a single, newline separated string.

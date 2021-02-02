@@ -230,6 +230,14 @@ namespace necsim
         virtual void setParameters();
 
         /**
+         * @brief Sets the protracted variables
+         * @param speciation_gen_min the minimum number of generations to have passed before speciation is allowed
+         * @param speciation_gen_max the maximum number of generations a lineage can exist for before it is speciated.
+         */
+        virtual void setProtractedVariables(double speciation_gen_min, double speciation_gen_max);
+
+
+        /**
          * @brief Gets the has_paused variable for resuming sims.
          * @return if the simulation has paused
          */

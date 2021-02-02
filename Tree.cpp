@@ -139,6 +139,9 @@ namespace necsim
         }
     }
 
+    void Tree::setProtractedVariables(double speciation_gen_min, double speciation_gen_max)
+    { }
+
     bool Tree::hasPaused()
     {
         return has_paused;

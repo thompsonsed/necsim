@@ -762,7 +762,7 @@ namespace necsim
      * @param matrix2 the second matrix
      * @return the minimum number of columns between the two matrices
      */
-    template<typename T> const unsigned long findMinCols(const Matrix<T> &matrix1, const Matrix<T> &matrix2)
+    template<typename T> unsigned long findMinCols(const Matrix<T> &matrix1, const Matrix<T> &matrix2)
     {
         if(matrix1.getCols() < matrix2.getCols())
         {
@@ -778,7 +778,7 @@ namespace necsim
      * @param matrix2 the second matrix
      * @return the minimum number of rows between the two matrices
      */
-    template<typename T> const unsigned long findMinRows(const Matrix<T> &matrix1, const Matrix<T> &matrix2)
+    template<typename T> unsigned long findMinRows(const Matrix<T> &matrix1, const Matrix<T> &matrix2)
     {
         if(matrix1.getRows() < matrix2.getRows())
         {

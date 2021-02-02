@@ -657,6 +657,6 @@ namespace necsim
 #endif
 
     };
-};
+}
 
 #endif  // SPATIALTREE_H

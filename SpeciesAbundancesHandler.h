@@ -45,7 +45,7 @@ namespace necsim
         /**
          * @brief Default destructor
          */
-        virtual ~SpeciesAbundancesHandler() = default;;
+        virtual ~SpeciesAbundancesHandler() = default;
 
         /**
          * @brief Creates the SpeciesAbundancesHandler object

@@ -140,10 +140,6 @@ namespace necsim
         }
     }
 
-    void Tree::setProtractedVariables(double speciation_gen_min, double speciation_gen_max)
-    {
-    }
-
     bool Tree::hasPaused()
     {
         return has_paused;
@@ -846,7 +842,7 @@ namespace necsim
     shared_ptr<vector<unsigned long>> Tree::getSpeciesAbundances()
     {
         return community.getSpeciesAbundances();
-    };
+    }
 
     ProtractedSpeciationParameters Tree::setupCommunity()
     {
@@ -1566,8 +1562,11 @@ namespace necsim
 
     void Tree::addGillespie(const double &g_threshold)
     {
-        throw FatalException("The gillespie algorithm is not supported for non-spatial coalescence trees yet. "
-                             "Please contact the project maintainer if this is a feature you would like to see.");
+        stringstream ss;
+        ss << "The gillespie algorithm is not supported for non-spatial coalescence trees yet. "
+           << " Cannot run with Gillespie threshold of " << g_threshold << ". "
+           << "Please contact the project maintainer if this is a feature you would like to see.";
+        throw FatalException(ss.str());
     }
 
     bool Tree::runSimulationGillespie()

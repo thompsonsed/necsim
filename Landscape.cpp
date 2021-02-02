@@ -960,7 +960,7 @@ namespace necsim
             disp_comp = false;
         }
         return ret;
-    };
+    }
 
     double Landscape::distanceToNearestHabitat(const long &start_x,
                                                const long &start_y,

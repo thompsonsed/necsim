@@ -2832,4 +2832,4 @@ namespace necsim
     }
 
 #endif // DEBUG
-};
+}

@@ -24,6 +24,16 @@ namespace necsim
 {
     class ProtractedSpatialTree : public virtual SpatialTree, public virtual ProtractedTree
     {
+
+        /**
+         * @brief Sets the map object with the correct variables, taking the SimParameters structure defined elsewhere
+         * for the parameters.
+         *
+         * Requires that parameters have already been imported into the SimParameters
+         *
+         * This function can only be run once, otherwise a Main_Exception will be thrown
+         *	 */
+        void setParameters() override;
         //    /**
         //     * @brief Calculates the speciation probability from the random number, speciation rate and number of generations a
         //     * lineage has existed for.

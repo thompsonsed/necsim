@@ -49,6 +49,11 @@ namespace necsim
         return true;
     }
 
+    void ProtractedTree::setParameters()
+    {
+        Tree::setParameters();
+        setProtractedVariables(sim_parameters->max_speciation_gen, sim_parameters->max_speciation_gen);
+    }
     void ProtractedTree::setProtractedVariables(double speciation_gen_min_in, double speciation_gen_max_in)
     {
         speciation_generation_min = speciation_gen_min_in;

@@ -195,6 +195,14 @@ namespace necsim
         }
 
         /**
+         * @brief Wipes the protracted parameters
+         */
+        void wipeProtractedParameters()
+        {
+            protracted_parameters.clear();
+        }
+
+        /**
          * @brief Adds an additional time to the times vector.
          * @param time a time to calculate speciation rates at
          */

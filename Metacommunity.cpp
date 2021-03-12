@@ -159,6 +159,11 @@ namespace necsim
 #endif //DEBUG
     }
 
+    void Metacommunity::applyNoOutput(shared_ptr<SpecSimParameters> sp)
+    {
+        Community::applyNoOutput(sp);
+    }
+    
     void Metacommunity::applyNoOutput(shared_ptr<SpecSimParameters> sp, shared_ptr<vector<TreeNode>> tree_data)
     {
 #ifdef DEBUG

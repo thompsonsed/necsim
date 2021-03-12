@@ -625,7 +625,7 @@ namespace necsim
          * @brief Applies the given speciation parameters to the coalescence tree, but does not write the output.
          * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure
          */
-        void applyNoOutput(shared_ptr<SpecSimParameters> sp);
+        virtual void applyNoOutput(shared_ptr<SpecSimParameters> sp);
 
         /**
          * @brief Applies the given speciation parameters to the coalescence tree, but does not write the output.

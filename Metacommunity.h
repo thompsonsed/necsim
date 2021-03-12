@@ -87,6 +87,13 @@ namespace necsim
         /**
          * @brief Applies the speciation parameters to the completed simulation, including running the spatially implicit
          * for the metacommunity structure, but doesn't write the output
+         * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure.
+         */
+        void applyNoOutput(shared_ptr<SpecSimParameters> sp) override;
+
+        /**
+         * @brief Applies the speciation parameters to the completed simulation, including running the spatially implicit
+         * for the metacommunity structure, but doesn't write the output
           * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure.
           */
         void applyNoOutput(shared_ptr<SpecSimParameters> sp, shared_ptr<vector<TreeNode>> tree_data) override;

@@ -43,6 +43,7 @@ set(SOURCE_FILES
         ${SOURCE_DIR_NECSIM}/SimulationTemplates.h
         ${SOURCE_DIR_NECSIM}/SimParameters.h
         ${SOURCE_DIR_NECSIM}/GillespieCalculator.cpp
+        ${SOURCE_DIR_NECSIM}/GenericTree.h
         )
 
 find_package(Boost 1.5.7 COMPONENTS system filesystem REQUIRED)

@@ -28,7 +28,7 @@ namespace necsim
 {
     Metacommunity::Metacommunity() : seed(0), task(0), parameters_checked(false),
                                      species_abundances_handler(make_unique<SimulatedSpeciesAbundancesHandler>()),
-                                     random(make_shared<RNGController>()), metacommunity_tree(make_unique<Tree>())
+                                     random(make_shared<RNGController>()), metacommunity_tree(Tree())
     {
 
     }
@@ -131,15 +131,15 @@ namespace necsim
                                                     seed,
                                                     task);
         // Dispose of any previous Tree object and create a new one
-        metacommunity_tree = make_unique<Tree>();
-        metacommunity_tree->internalSetup(temp_parameters);
+        metacommunity_tree = Tree();
+        metacommunity_tree.internalSetup(temp_parameters);
         // Run our simulation and calculate the species abundance distribution (as this is all that needs to be stored).
-        if(!metacommunity_tree->runSimulation())
+        if(!metacommunity_tree.runSimulation())
         {
             throw FatalException("Completion of the non-spatial coalescence simulation "
                                  "to create the metacommunity did not finish in time.");
         }
-        metacommunity_tree->applySpecRateInternal(current_metacommunity_parameters->speciation_rate, 0.0);
+        metacommunity_tree.applySpecRateInternal(current_metacommunity_parameters->speciation_rate, 0.0);
         // species_abundances now contains the number of individuals per species
         // Make it cumulative to increase the speed of indexing using binary search.
         species_abundances_handler = make_unique<SimulatedSpeciesAbundancesHandler>();
@@ -147,7 +147,7 @@ namespace necsim
                                           current_metacommunity_parameters->metacommunity_size,
                                           current_metacommunity_parameters->speciation_rate,
                                           nodes->size());
-        auto tmp_species_abundances = metacommunity_tree->getSpeciesAbundances();
+        auto tmp_species_abundances = metacommunity_tree.getSpeciesAbundances();
         if(tmp_species_abundances->empty())
         {
             throw FatalException("Simulated species abundance list is empty. Please report this bug.");
@@ -163,7 +163,7 @@ namespace necsim
     {
         Community::applyNoOutput(sp);
     }
-    
+
     void Metacommunity::applyNoOutput(shared_ptr<SpecSimParameters> sp, shared_ptr<vector<TreeNode>> tree_data)
     {
 #ifdef DEBUG

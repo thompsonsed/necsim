@@ -43,7 +43,7 @@ namespace necsim
         bool parameters_checked;
         unique_ptr<SpeciesAbundancesHandler> species_abundances_handler;
         shared_ptr<RNGController> random;
-        unique_ptr<Tree> metacommunity_tree;
+        Tree metacommunity_tree;
     public:
 
         Metacommunity();

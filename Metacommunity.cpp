@@ -33,6 +33,16 @@ namespace necsim
 
     }
 
+    Metacommunity &Metacommunity::operator=(const Metacommunity &m)
+    {
+        seed = m.seed;
+        task = m.task;
+        parameters_checked = m.parameters_checked;
+        species_abundances_handler = make_unique<SpeciesAbundancesHandler>();
+        random = m.random;
+        metacommunity_tree = m.metacommunity_tree;
+    }
+
     void Metacommunity::setCommunityParameters(shared_ptr<MetacommunityParameters> metacommunity_parameters)
     {
         current_metacommunity_parameters = std::move(metacommunity_parameters);

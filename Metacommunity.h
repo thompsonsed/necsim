@@ -50,6 +50,8 @@ namespace necsim
 
         ~Metacommunity() override = default;
 
+
+        Metacommunity& operator=(const Metacommunity& m);
         /**
          * @brief Sets the parameters for the metacommunity
          * @param community_size_in the number of individuals in the metacommunity

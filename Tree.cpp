@@ -19,7 +19,7 @@
 
 namespace necsim
 {
-    void Tree::importSimulationVariables(const string &configfile)
+    void Tree::importSimulationVariables(string configfile)
     {
         sim_parameters->importParameters(configfile);
         runFileChecks();
@@ -30,6 +30,16 @@ namespace necsim
         sim_parameters->importParameters(config);
         runFileChecks();
     }
+
+    void Tree::importSimulationVariablesFromString(char* input)
+    {
+        stringstream ss;
+        ss << input;
+        istream &istream1 = ss;
+        ConfigParser config;
+        config.parseConfig(istream1);
+    }
+
 
     void Tree::runFileChecks()
     {

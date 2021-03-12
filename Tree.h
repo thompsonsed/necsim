@@ -164,7 +164,7 @@ namespace necsim
 
          * @param configfile the path to the config file containing parameters to parse.
          */
-        void importSimulationVariables(const string &configfile);
+        void importSimulationVariables(string configfile);
 
         /**
          * @brief Import the simulation variables from a ConfigOption.
@@ -176,6 +176,17 @@ namespace necsim
          * @param config the set of config parameters to import
          */
         void importSimulationVariables(ConfigParser config);
+
+        /**
+         * @brief Import the simulation variables from a string containing the config file data
+         *
+         * This function parses the simulation variables, imports them (from either the command line or a config file),
+         * checks that the input files exist and checks for any paused simulations. The flags are then set correctly,
+         * meaning that setup() and runSim() can be run immediately afterwards.
+
+         * @param config the set of config parameters to import as a string
+         */
+        void importSimulationVariablesFromString(char * input);
 
         /**
          * @brief Runs the basic file existence checks.

@@ -8,9 +8,8 @@
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 
-#ifndef MAP_H
-#define MAP_H
-#ifdef with_gdal
+#ifndef NECSIM_MAP_H
+#define NECSIM_MAP_H
 
 #include <string>
 #include <cstring>
@@ -797,6 +796,5 @@ namespace necsim
     }
 
 }
-#endif // with_gdal
 
-#endif //MAP_H
+#endif //NECSIM_MAP_H

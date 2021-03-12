@@ -38,7 +38,7 @@ namespace necsim
         seed = m.seed;
         task = m.task;
         parameters_checked = m.parameters_checked;
-        species_abundances_handler = make_unique<SpeciesAbundancesHandler>();
+        species_abundances_handler = make_unique<SimulatedSpeciesAbundancesHandler>();
         random = m.random;
         metacommunity_tree = m.metacommunity_tree;
     }

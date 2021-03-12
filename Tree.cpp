@@ -31,10 +31,10 @@ namespace necsim
         runFileChecks();
     }
 
-    void Tree::importSimulationVariablesFromString(char* input)
+    void Tree::importSimulationVariablesFromString(string config_string)
     {
         stringstream ss;
-        ss << input;
+        ss << config_string;
         istream &istream1 = ss;
         ConfigParser config;
         config.parseConfig(istream1);

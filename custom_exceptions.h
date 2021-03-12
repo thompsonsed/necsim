@@ -10,8 +10,8 @@
  * @copyright <a href="https://opensource.org/licenses/MIT"> MIT Licence.</a>
  */
 
-#ifndef CUSTOM_EXCEPTION_H
-#define CUSTOM_EXCEPTION_H
+#ifndef NECSIM_CUSTOM_EXCEPTION_H
+#define NECSIM_CUSTOM_EXCEPTION_H
 
 #include <stdexcept>
 #include <utility>
@@ -57,4 +57,4 @@ namespace necsim
         { }
     };
 }
-#endif // CUSTOM_EXCEPTION_H
+#endif // NECSIM_CUSTOM_EXCEPTION_H

@@ -184,9 +184,9 @@ namespace necsim
          * checks that the input files exist and checks for any paused simulations. The flags are then set correctly,
          * meaning that setup() and runSim() can be run immediately afterwards.
 
-         * @param config the set of config parameters to import as a string
+         * @param config_string the set of config parameters to import as a string
          */
-        void importSimulationVariablesFromString(char * input);
+        void importSimulationVariablesFromString(string config_string);
 
         /**
          * @brief Runs the basic file existence checks.

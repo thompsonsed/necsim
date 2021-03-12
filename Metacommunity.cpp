@@ -28,7 +28,7 @@ namespace necsim
 {
     Metacommunity::Metacommunity() : seed(0), task(0), parameters_checked(false),
                                      species_abundances_handler(make_unique<SimulatedSpeciesAbundancesHandler>()),
-                                     random(make_shared<RNGController>()), metacommunity_tree(Tree())
+                                     random(make_shared<RNGController>()), metacommunity_tree()
     {
 
     }

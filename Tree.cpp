@@ -38,6 +38,7 @@ namespace necsim
         istream &istream1 = ss;
         ConfigParser config;
         config.parseConfig(istream1);
+        sim_parameters->importParameters(config);
     }
 
 

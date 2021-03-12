@@ -41,6 +41,7 @@ namespace necsim
         species_abundances_handler = make_unique<SimulatedSpeciesAbundancesHandler>();
         random = m.random;
         metacommunity_tree = m.metacommunity_tree;
+        return *this;
     }
 
     void Metacommunity::setCommunityParameters(shared_ptr<MetacommunityParameters> metacommunity_parameters)

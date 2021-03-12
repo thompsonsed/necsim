@@ -105,9 +105,9 @@ namespace necsim
         /**
          * @brief Sets the pointer to the simulation parameters object
          * @param sim_parameters pointer to the simulation parameters to use
-         * @param print if true, writes the parameters out using writeInfo()
+         * @param p if true, writes the parameters out using writeInfo()
          */
-        void setSimulationParameters(shared_ptr<SimParameters> sim_parameters, bool print = true);
+        void setSimulationParameters(shared_ptr<SimParameters> sim_parameters, bool p = true);
 
         /**
          * @brief Import the maps from the simulation parameters.

@@ -26,9 +26,9 @@ namespace necsim
         is_sequential = bSequential;
     }
 
-    void SimulateDispersal::setSimulationParameters(shared_ptr<SimParameters> sim_parameters, bool print)
+    void SimulateDispersal::setSimulationParameters(shared_ptr<SimParameters> sim_parameters, bool p)
     {
-        if(print)
+        if(p)
         {
             writeInfo("********************************\nSetting simulation current_metacommunity_parameters...\n");
         }
@@ -37,7 +37,7 @@ namespace necsim
         {
             throw FatalException("Simulation parameters are nullptr. Please report this bug.");
         }
-        if(print)
+        if(p)
         {
             simParameters->printSpatialVars();
         }

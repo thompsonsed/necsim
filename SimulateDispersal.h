@@ -260,7 +260,7 @@ namespace necsim
          */
         void runSampleDistanceTravelled(const vector<Cell> &samples);
 
-        void runSampleDistanceTravelled(const vector<long> sample_x, const vector<long> sample_y);
+        void runSampleDistanceTravelled(const vector<long> &sample_x, const vector<long> &sample_y);
         /**
          * @brief Writes the information about this repeat to the logger.
          */

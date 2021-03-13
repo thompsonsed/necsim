@@ -536,6 +536,7 @@ namespace necsim
             coarse_map_y_offset = coarse_map_y_offset_in;
             coarse_map_scale = coarse_map_scale_in;
             deme = deme_in;
+            deme_sample = 1.0;
             landscape_type = landscape_type_in;
         }
 

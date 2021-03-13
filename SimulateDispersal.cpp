@@ -500,6 +500,21 @@ namespace necsim
         setNumberRepeats(old_num_repeats);
     }
 
+
+    void SimulateDispersal::runSampleDistanceTravelled(const vector<long> sample_x, const vector<long> sample_y)
+    {
+        vector<Cell> samples;
+        if(sample_x.size() != sample_y.size())
+        {
+            throw FatalException("Sample size x and y dimensions must be equal.");
+        }
+        samples.reserve(sample_x.size());
+        for(auto i = 0; i < sample_x.size(); i ++)
+        {
+            samples.emplace_back(sample_x[i], sample_y[i]);
+        }
+        runSampleDistanceTravelled(samples);
+    }
     void SimulateDispersal::writeRepeatInfo(unsigned long i)
     {
         stringstream os;

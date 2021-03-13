@@ -711,8 +711,6 @@ namespace necsim
             os << "Job Type: " << task << endl;
             os << "Max time: " << max_time << endl;
             printSpatialVars();
-            os << "Deme: " << deme << endl;
-            os << "Deme sample: " << deme_sample << endl;
             os << "Output directory: " << output_directory << endl;
             os << "Disp Rel Cost: " << dispersal_relative_cost << endl;
             os << "Times: ";
@@ -734,6 +732,7 @@ namespace necsim
             os << endl;
             writeInfo(os.str());
         }
+
 
         /**
          * @brief Prints the spatial variables.
@@ -762,6 +761,8 @@ namespace necsim
             os << "-dimensions: (" << sample_x_size << ", " << sample_y_size << ")" << endl;
             os << "-optimised area: (" << grid_x_size << ", " << grid_y_size << ")" << endl;
             os << "-optimised offsets: (" << sample_x_offset << ", " << sample_y_offset << ")" << endl;
+            os << "Deme: " << deme << endl;
+            os << "Deme sample: " << deme_sample << endl;
             writeInfo(os.str());
         }
 

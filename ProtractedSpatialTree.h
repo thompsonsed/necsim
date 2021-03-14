@@ -24,6 +24,7 @@ namespace necsim
 {
     class ProtractedSpatialTree : public virtual SpatialTree, public virtual ProtractedTree
     {
+    public:
         ProtractedSpatialTree() : SpatialTree(), ProtractedTree()
         {
 

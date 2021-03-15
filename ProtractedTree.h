@@ -24,7 +24,7 @@ namespace necsim
      */
     class ProtractedTree : public virtual Tree
     {
-    private:
+    protected:
         // Variables for the protracted speciation variables
         // The number of generations a lineage must exist before speciating.
         // Speciation is therefore not allowed before this time.

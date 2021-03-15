@@ -25,11 +25,11 @@ namespace necsim
     class ProtractedSpatialTree : public virtual SpatialTree, public virtual ProtractedTree
     {
     public:
-        ProtractedSpatialTree() : Tree(), SpatialTree(), ProtractedTree()
-        {
-
-        }
+        ProtractedSpatialTree();
+        ProtractedSpatialTree& operator=(ProtractedSpatialTree &other) noexcept;
     };
+
+
 
 }
 #endif //SPECIATIONCOUNTER_PROTRACTEDSPATIALTREE_H

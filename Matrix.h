@@ -61,12 +61,16 @@ namespace necsim
         vector<T> matrix;
     public:
 
+        Matrix(): num_cols(0), num_rows(0), matrix(0)
+        {
+
+        }
         /**
          * @brief The standard constructor
          * @param rows optionally provide the number of rows.
          * @param cols optionally provide the number of columns.
          */
-        explicit Matrix(unsigned long rows = 0, unsigned long cols = 0) : matrix(rows * cols, T())
+        explicit Matrix(unsigned long rows, unsigned long cols) : matrix(rows * cols, T())
         {
         }
 
@@ -290,13 +294,19 @@ namespace necsim
          */
         Matrix &operator=(const Matrix &m) noexcept
         {
-            this->matrix = m.matrix;
-            this->num_cols = m.num_cols;
-            this->num_rows = m.num_rows;
+            matrix = m.matrix;
+            num_cols = m.num_cols;
+            num_rows = m.num_rows;
             return *this;
         }
 
-        Matrix &operator=(Matrix &&m) noexcept = default;
+        Matrix &operator=(Matrix &&m) noexcept
+        {
+            matrix = std::move(m.matrix);
+            num_cols = m.num_cols;
+            num_rows = m.num_rows;
+            return *this;
+        }
 
         /**
          * @brief Overloading the + operator.

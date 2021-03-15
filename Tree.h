@@ -147,6 +147,8 @@ namespace necsim
 
         }
 
+        Tree(const Tree & other);
+
         virtual ~Tree()
         {
             if(database != nullptr)
@@ -154,10 +156,7 @@ namespace necsim
                 database->close();
             }
 #ifdef sql_ram
-            if(outdatabase != nullptr)
-            {
-                outdatabase.close();
-            }
+            outdatabase.close();
 #endif
         }
 

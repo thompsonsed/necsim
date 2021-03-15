@@ -16,9 +16,8 @@ namespace necsim
     private:
         T tree;
     public:
-        GenericTree<T>()
+        GenericTree<T>() : tree(T())
         {
-            tree = T();
         };
 
         GenericTree<T> &operator=(const GenericTree<T> &) noexcept = default;

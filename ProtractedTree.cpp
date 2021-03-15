@@ -14,6 +14,11 @@
 
 namespace necsim
 {
+    ProtractedTree::ProtractedTree(const necsim::ProtractedTree &other)
+    {
+        *this = other;
+    }
+
     ProtractedTree &ProtractedTree::operator=(const ProtractedTree &other) noexcept
     {
         static_cast<Tree &>(*this) = static_cast<const Tree &>(other);

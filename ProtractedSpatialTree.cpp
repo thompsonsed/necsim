@@ -10,6 +10,11 @@ namespace necsim
 
     }
 
+    ProtractedSpatialTree::ProtractedSpatialTree(const ProtractedSpatialTree &other)
+    {
+        *this = other;
+    }
+
     ProtractedSpatialTree &ProtractedSpatialTree::operator=(const ProtractedSpatialTree &other) noexcept
     {
         static_cast<SpatialTree &>(*this) = static_cast<const SpatialTree &>(other);

@@ -24,6 +24,11 @@
 
 namespace necsim
 {
+    SpatialTree::SpatialTree(const SpatialTree & other)
+    {
+        *this = other;
+    }
+
     SpatialTree &SpatialTree::operator=(const SpatialTree &other) noexcept
     {
         static_cast<Tree &>(*this) = static_cast<const Tree &>(other);
@@ -83,7 +88,7 @@ namespace necsim
         // particular location.
         landscape = std::move(other.landscape);
         // An indexing spatial positioning of the lineages
-        grid = std::move(other.grid);
+        grid = other.grid; // No idea why can't move this...
         desired_specnum = other.desired_specnum;
         // contains the DataMask for where we should start lineages from.
         samplegrid = std::move(other.samplegrid);

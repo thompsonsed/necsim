@@ -19,6 +19,11 @@
 
 namespace necsim
 {
+    Tree::Tree(const Tree &other)
+    {
+        *this = other;
+    }
+
     void Tree::importSimulationVariables(string configfile)
     {
         sim_parameters->importParameters(configfile);
@@ -41,7 +46,6 @@ namespace necsim
         sim_parameters->importParameters(config);
         runFileChecks();
     }
-
 
     void Tree::runFileChecks()
     {
@@ -1628,7 +1632,7 @@ namespace necsim
         writeInfo("Validating coalescence tree...");
         // Get the active lineages
         set<unsigned long> active_lineage_refs;
-        for(unsigned long i = 1; i < endactive + 1; i ++)
+        for(unsigned long i = 1; i < endactive + 1; i++)
         {
             active_lineage_refs.insert(active[i].getReference());
         }

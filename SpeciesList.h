@@ -50,7 +50,11 @@ namespace necsim
 
         SpeciesList(const SpeciesList &other)
         {
-            *this = other;
+            list_size = other.list_size;
+            max_size = other.max_size;
+            next_active = other.next_active;
+            lineage_indices = other.lineage_indices;
+            nwrap = other.nwrap;
         }
 
         /**

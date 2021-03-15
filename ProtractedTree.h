@@ -41,6 +41,8 @@ namespace necsim
             bIsProtracted = true;
         }
 
+        ProtractedTree(const ProtractedTree &other);
+
         ProtractedTree &operator=(const ProtractedTree &other) noexcept;
 
         ProtractedTree &operator=(ProtractedTree &&other) noexcept;

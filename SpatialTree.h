@@ -150,6 +150,8 @@ namespace necsim
 
         }
 
+        SpatialTree(const SpatialTree & other);
+
         ~SpatialTree() override = default;
 
         SpatialTree & operator=(const SpatialTree& other) noexcept;

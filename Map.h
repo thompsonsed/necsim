@@ -705,7 +705,7 @@ namespace necsim
          * @param m the Map object to copy from
          * @return the self Map object
          */
-        Map &operator=(const Map &m)
+        Map &operator=(const Map &m) noexcept
         {
             Matrix<T>::operator=(m);
             this->po_dataset = m.po_dataset;
@@ -714,6 +714,25 @@ namespace necsim
             this->block_y_size = m.block_y_size;
             this->no_data_value = m.no_data_value;
             this->file_name = m.file_name;
+            this->gdal_data_type = m.gdal_data_type;
+            this->cpl_error = m.cpl_error;
+            this->upper_left_x = m.upper_left_x;
+            this->upper_left_y = m.upper_left_y;
+            this->x_res = m.x_res;
+            this->y_res = m.y_res;
+            this->cpl_error_set = m.cpl_error_set;
+            return *this;
+        }
+
+        Map &operator=(Map &&m) noexcept
+        {
+            static_cast<Matrix<T> &>(*this) = std::move(static_cast<Matrix<T> &>(m));
+            this->po_dataset = std::move(m.po_dataset);
+            this->po_band = std::move(m.po_band);
+            this->block_x_size = m.block_x_size;
+            this->block_y_size = m.block_y_size;
+            this->no_data_value = m.no_data_value;
+            this->file_name = std::move(m.file_name);
             this->gdal_data_type = m.gdal_data_type;
             this->cpl_error = m.cpl_error;
             this->upper_left_x = m.upper_left_x;

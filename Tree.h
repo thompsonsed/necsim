@@ -155,6 +155,8 @@ namespace necsim
 #endif
         }
 
+        Tree &operator=(const Tree &other) = default;
+
         Tree &operator=(Tree &&other) = default;
 
         /**

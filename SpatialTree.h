@@ -152,7 +152,9 @@ namespace necsim
 
         ~SpatialTree() override = default;
 
-        SpatialTree &operator=(SpatialTree &&other) = default;
+        SpatialTree & operator=(const SpatialTree& other) noexcept;
+
+        SpatialTree &operator=(SpatialTree &&other) noexcept ;
 
         /**
          * @brief Runs the basic file existence checks.

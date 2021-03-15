@@ -41,7 +41,9 @@ namespace necsim
             bIsProtracted = true;
         }
 
-        ProtractedTree &operator=(ProtractedTree &&other) = default;
+        ProtractedTree &operator=(const ProtractedTree &other) noexcept;
+
+        ProtractedTree &operator=(ProtractedTree &&other) noexcept;
 
         /**
          * @brief Calculates the speciation probability from the random number, speciation rate and number of generations a

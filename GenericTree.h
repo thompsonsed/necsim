@@ -21,6 +21,9 @@ namespace necsim
             tree = T();
         };
 
+        GenericTree<T> &operator=(const GenericTree<T> &) noexcept = default;
+
+        GenericTree<T> &operator=(GenericTree<T> &&) noexcept = default;
 
         void wipeSimulationVariables()
         {
@@ -48,10 +51,10 @@ namespace necsim
         }
 
         void setResumeParameters(std::string pause_directory_str,
-                                                                std::string out_directory_str,
-                                                                long seed,
-                                                                long task,
-                                                                long max_time)
+                                 std::string out_directory_str,
+                                 long seed,
+                                 long task,
+                                 long max_time)
         {
             tree.setResumeParameters(pause_directory_str, out_directory_str, seed, task, max_time);
         }

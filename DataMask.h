@@ -60,9 +60,9 @@ namespace necsim
 
         ~DataMask() = default;
 
-        DataMask &operator=(const DataMask &other) noexcept = default;
+        DataMask &operator=(const DataMask &other) noexcept;
 
-        DataMask &operator=(DataMask &&other) noexcept = default;
+        DataMask &operator=(DataMask &&other) noexcept;
 
         /**
          * @brief Returns if the simulation is using the a null samplemask, and therefore does not need to store the full

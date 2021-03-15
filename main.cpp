@@ -39,7 +39,7 @@
 #endif
 
 #include "Logger.h"
-#include "SpatialTree.h"
+#include "ProtractedSpatialTree.h"
 #include "SimulationTemplates.h"
 // #define historical_mode // not required unless you experience problems.
 // This performs a more thorough check after each move operation.
@@ -70,9 +70,11 @@ int main(int argc, char* argv[])
 //        runMain<SpatialTree>(config_file);
 //        delete logger;
 //        return 0;
-    necsim::SpatialTree test2;
-    necsim::SpatialTree test = necsim::SpatialTree();
+    necsim::ProtractedSpatialTree test2, test3;
+    test3 = necsim::ProtractedSpatialTree();
+    necsim::ProtractedSpatialTree test = necsim::ProtractedSpatialTree();
+    test2 = test3;
     test2 = std::move(test);
-
+    test1 = test3;
     return 0;
 }

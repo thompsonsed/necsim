@@ -1,4 +1,3 @@
-
 /**
  * @author Samuel Thompson
  * @file DataMask.cpp
@@ -10,6 +9,7 @@
 #include "DataMask.h"
 #include "Landscape.h"
 #include "Logging.h"
+
 namespace necsim
 {
     DataMask::DataMask() : inputfile(""), isNullSample(true), isGridOffset(false), x_offset(0), y_offset(0), x_dim(0),
@@ -17,6 +17,50 @@ namespace necsim
                            sample_mask_exact()
     {
         getProportionfptr = &DataMask::getBoolProportion;
+    }
+
+    DataMask &DataMask::operator=(const DataMask &other) noexcept
+    {
+        sample_mask = other.sample_mask;
+        sample_mask_exact = other.sample_mask_exact;
+        inputfile = other.inputfile;
+        // True if the sample mask is true everywhere
+        isNullSample = other.isNullSample;
+        // True if the grid is smaller than the sample mask
+        isGridOffset = other.isGridOffset;
+        x_offset = other.x_offset;
+        y_offset = other.y_offset;
+        // Stores the size of the grid which is stored as a full species lineage_indices
+        x_dim = other.x_dim;
+        y_dim = other.y_dim;
+        // Stores the size of the samplemask from which spatially sampling is read
+        mask_x_dim = other.mask_x_dim;
+        mask_y_dim = other.mask_y_dim;
+
+        getProportionfptr = &DataMask::getBoolProportion;
+        return *this;
+    }
+
+    DataMask &DataMask::operator=(DataMask &&other) noexcept
+    {
+        sample_mask = std::move(other.sample_mask);
+        sample_mask_exact = std::move(other.sample_mask_exact);
+        inputfile = std::move(other.inputfile);
+        // True if the sample mask is true everywhere
+        isNullSample = other.isNullSample;
+        // True if the grid is smaller than the sample mask
+        isGridOffset = other.isGridOffset;
+        x_offset = other.x_offset;
+        y_offset = other.y_offset;
+        // Stores the size of the grid which is stored as a full species lineage_indices
+        x_dim = other.x_dim;
+        y_dim = other.y_dim;
+        // Stores the size of the samplemask from which spatially sampling is read
+        mask_x_dim = other.mask_x_dim;
+        mask_y_dim = other.mask_y_dim;
+
+        getProportionfptr = &DataMask::getBoolProportion;
+        return *this;
     }
 
     bool DataMask::isNull()
@@ -27,13 +71,15 @@ namespace necsim
     void DataMask::setup(const shared_ptr<SimParameters> sim_parameters)
     {
 #ifdef DEBUG
-        if((sim_parameters->grid_x_size > sim_parameters->sample_x_size ||
-            sim_parameters->grid_y_size > sim_parameters->sample_y_size) && !isNullSample)
+        if((sim_parameters->grid_x_size > sim_parameters->sample_x_size
+            || sim_parameters->grid_y_size > sim_parameters->sample_y_size) && !isNullSample)
         {
-            writeLog(50, "Grid size: " + to_string(sim_parameters->grid_x_size) + ", " +
-                         to_string(sim_parameters->grid_y_size));
-            writeLog(50, "Sample mask size: " + to_string(sim_parameters->sample_x_size) + ", " +
-                         to_string(sim_parameters->sample_y_size));
+            writeLog(50,
+                     "Grid size: " + to_string(sim_parameters->grid_x_size) + ", "
+                     + to_string(sim_parameters->grid_y_size));
+            writeLog(50,
+                     "Sample mask size: " + to_string(sim_parameters->sample_x_size) + ", "
+                     + to_string(sim_parameters->sample_y_size));
             throw FatalException("Datamask dimensions do not make sense");
         }
 #endif // DEBUG
@@ -76,8 +122,12 @@ namespace necsim
         return isNullSample;
     }
 
-    void DataMask::importBooleanMask(unsigned long xdim, unsigned long ydim, unsigned long mask_xdim,
-                                     unsigned long mask_ydim, unsigned long xoffset, unsigned long yoffset,
+    void DataMask::importBooleanMask(unsigned long xdim,
+                                     unsigned long ydim,
+                                     unsigned long mask_xdim,
+                                     unsigned long mask_ydim,
+                                     unsigned long xoffset,
+                                     unsigned long yoffset,
                                      string inputfile_in)
     {
         shared_ptr<SimParameters> tmp_sim_parameters = make_shared<SimParameters>();

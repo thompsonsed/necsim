@@ -44,12 +44,19 @@ set(SOURCE_FILES
         ${SOURCE_DIR_NECSIM}/SimParameters.h
         ${SOURCE_DIR_NECSIM}/GillespieCalculator.cpp
         ${SOURCE_DIR_NECSIM}/GenericTree.h
+        ${SOURCE_DIR_NECSIM}/MapLocation.h
+        ${SOURCE_DIR_NECSIM}/MapLocation.cpp
         )
 
 find_package(Boost 1.5.7 COMPONENTS system filesystem REQUIRED)
-find_library(gdal 2.1.0 REQUIRED)
+if (UNIX)
+    find_package(GDAL)
+else ()
+    find_package(GDAL 2.1.0 REQUIRED)
+endif ()
 find_library(SQL_DIR sqlite3)
 include_directories(${Boost_INCLUDE_DIR})
+include_directories(${GDAL_INCLUDE_DIR})
 include_directories(/usr/local/include)
 include_directories(../)
 link_directories(/usr/local/lib)

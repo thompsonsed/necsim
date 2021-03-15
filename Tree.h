@@ -130,7 +130,7 @@ namespace necsim
         bool using_gillespie;
 
     public:
-        Tree() : data(make_shared<vector<TreeNode>>()), enddata(0), sim_parameters(make_shared<SimParameters>()),
+        Tree() : data(make_shared < vector < TreeNode >> ()), enddata(0), sim_parameters(make_shared<SimParameters>()),
                  NR(make_shared<RNGController>()), speciation_rates(), seeded(false), seed(-1), task(-1),
                  times_file("null"), reference_times(), uses_temporal_sampling(false), start(0), sim_start(0),
                  sim_end(0), now(0), sim_finish(0), out_finish(0), time_taken(0), active(), endactive(0),
@@ -138,7 +138,7 @@ namespace necsim
                  deme_sample(0.0), spec(0.0), out_directory(""), database(make_shared<SQLiteHandler>()),
                  sim_complete(false), has_imported_vars(false),
 #ifdef sql_ram
-                 outdatabase(),
+                outdatabase(),
 #endif //sql_ram
                  this_step(), sql_output_database("null"), bFullMode(false), bResume(false), bConfig(true),
                  has_paused(false), has_imported_pause(false), bIsProtracted(false), pause_sim_directory("null"),
@@ -149,9 +149,15 @@ namespace necsim
 
         virtual ~Tree()
         {
-            database->close();
+            if(database != nullptr)
+            {
+                database->close();
+            }
 #ifdef sql_ram
-            outdatabase.close();
+            if(outdatabase != nullptr)
+            {
+                outdatabase.close();
+            }
 #endif
         }
 

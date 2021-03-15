@@ -15,6 +15,7 @@ namespace necsim
         static_cast<SpatialTree &>(*this) = static_cast<const SpatialTree &>(other);
         speciation_generation_min = other.speciation_generation_min;
         speciation_generation_max = other.speciation_generation_max;
+        return *this;
     }
 
     ProtractedSpatialTree &ProtractedSpatialTree::operator=(ProtractedSpatialTree &&other) noexcept
@@ -24,5 +25,6 @@ namespace necsim
         // Copy over other member variables
         speciation_generation_min = other.speciation_generation_min;
         speciation_generation_max = other.speciation_generation_max;
+        return *this;
     }
 }

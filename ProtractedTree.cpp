@@ -17,16 +17,16 @@ namespace necsim
     ProtractedTree &ProtractedTree::operator=(const ProtractedTree &other) noexcept
     {
         static_cast<Tree &>(*this) = static_cast<const Tree &>(other);
-        speciation_gen_min = other.speciation_generation_min;
-        speciation_gen_max = other.speciation_generation_max;
+        speciation_generation_min = other.speciation_generation_min;
+        speciation_generation_max = other.speciation_generation_max;
         return *this;
     }
 
     ProtractedTree &ProtractedTree::operator=(ProtractedTree &&other) noexcept
     {
         static_cast<Tree &>(*this) = std::move(static_cast<Tree &>(other));
-        speciation_gen_min = other.speciation_generation_min;
-        speciation_gen_max = other.speciation_generation_max;
+        speciation_generation_min = other.speciation_generation_min;
+        speciation_generation_max = other.speciation_generation_max;
         return *this;
 
     }

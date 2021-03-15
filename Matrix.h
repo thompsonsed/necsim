@@ -61,16 +61,18 @@ namespace necsim
         vector<T> matrix;
     public:
 
-        Matrix(): num_cols(0), num_rows(0), matrix(0)
+        Matrix() : num_cols(0), num_rows(0), matrix(0)
         {
 
         }
+
         /**
          * @brief The standard constructor
          * @param rows optionally provide the number of rows.
          * @param cols optionally provide the number of columns.
          */
-        explicit Matrix(unsigned long rows, unsigned long cols) : matrix(rows * cols, T())
+        explicit Matrix(unsigned long rows, unsigned long cols) : num_cols(cols), num_rows(rows),
+                                                                  matrix(rows * cols, T())
         {
         }
 
@@ -78,7 +80,7 @@ namespace necsim
          * @brief The copy constructor.
          * @param m a Matrix object to copy from.
          */
-        Matrix(const Matrix &m) : matrix()
+        Matrix(const Matrix &m) : num_cols(0), num_rows(0), matrix(0)
         {
             this = m;
         }
@@ -86,11 +88,7 @@ namespace necsim
         /**
         * @brief The destructor.
         */
-        virtual ~Matrix()
-        {
-
-        }
-
+        virtual ~Matrix() = default;
 
         /**
          * @brief Sets the matrix size.

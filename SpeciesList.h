@@ -53,6 +53,10 @@ namespace necsim
          */
         ~SpeciesList() = default;
 
+        SpeciesList &operator=(const SpeciesList &other) noexcept;
+
+        SpeciesList &operator=(SpeciesList &&other) noexcept;
+
         /**
          * @brief Initialises the list to the specified size.
          * @param maxsizein the maximum list size.

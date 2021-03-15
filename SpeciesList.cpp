@@ -9,11 +9,30 @@
  */
 #include <iostream>
 #include "SpeciesList.h"
+
 namespace necsim
 {
     SpeciesList::SpeciesList() : list_size(0), max_size(0), next_active(0), lineage_indices(), nwrap(0)
     {
 
+    }
+
+    SpeciesList &SpeciesList::operator=(const SpeciesList &other) noexcept
+    {
+        list_size = other.list_size;
+        max_size = other.max_size;
+        next_active = other.next_active;
+        lineage_indices = other.lineage_indices;
+        nwrap = other.nwrap;
+    }
+
+    SpeciesList &SpeciesList::operator=(SpeciesList &&other) noexcept
+    {
+        list_size = other.list_size;
+        max_size = other.max_size;
+        next_active = other.next_active;
+        lineage_indices = std::move(other.lineage_indices);
+        nwrap = other.nwrap;
     }
 
     void SpeciesList::initialise(unsigned long maxsizein)
@@ -188,12 +207,12 @@ namespace necsim
             auto i = static_cast<unsigned long>(floor(rand_index));
 
 #ifdef DEBUG
-            if(rand_index>max_size)
-                {
-                    stringstream ss;
-                    ss << "Random index is greater than the max size. Fatal error, please report this bug." << endl;
-                    throw runtime_error(ss.str());
-                }
+            if(rand_index > max_size)
+            {
+                stringstream ss;
+                ss << "Random index is greater than the max size. Fatal error, please report this bug." << endl;
+                throw runtime_error(ss.str());
+            }
 #endif // DEBUG
             return lineage_indices[i];
         }

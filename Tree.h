@@ -155,6 +155,8 @@ namespace necsim
 #endif
         }
 
+        Tree &operator=(Tree &&other) = default;
+
         /**
          * @brief Import the simulation variables from the command line structure.
          *
@@ -246,7 +248,6 @@ namespace necsim
          * @param speciation_gen_max the maximum number of generations a lineage can exist for before it is speciated.
          */
         virtual void setProtractedVariables(double speciation_gen_min, double speciation_gen_max);
-
 
         /**
          * @brief Gets the has_paused variable for resuming sims.

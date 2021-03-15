@@ -152,6 +152,8 @@ namespace necsim
 
         ~SpatialTree() override = default;
 
+        SpatialTree &operator=(SpatialTree &&other) = default;
+
         /**
          * @brief Runs the basic file existence checks.
          * Checks for paused simulations and file existence.

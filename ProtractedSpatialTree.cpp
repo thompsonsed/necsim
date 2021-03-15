@@ -10,7 +10,7 @@ namespace necsim
 
     }
 
-    ProtractedSpatialTree &ProtractedSpatialTree::operator=(ProtractedSpatialTree &other) noexcept
+    ProtractedSpatialTree &ProtractedSpatialTree::operator=(ProtractedSpatialTree &&other) noexcept
     {
         // Also move-assigns `Tree`
         static_cast<SpatialTree &>(*this) = std::move(static_cast<SpatialTree &>(other));

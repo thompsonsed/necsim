@@ -26,7 +26,7 @@ namespace necsim
     {
     public:
         ProtractedSpatialTree();
-        ProtractedSpatialTree& operator=(ProtractedSpatialTree &other) noexcept;
+        ProtractedSpatialTree& operator=(ProtractedSpatialTree &&other) noexcept;
     };
 
 

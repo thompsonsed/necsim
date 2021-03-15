@@ -38,15 +38,20 @@ namespace necsim
     class SpeciesList
     {
     private:
-        unsigned long list_size, max_size; // List size and maximum size of the cell (based on percentage cover).
-        unsigned long next_active; // For calculating the wrapping, using the next and last system.
+        unsigned long list_size{}, max_size{}; // List size and maximum size of the cell (based on percentage cover).
+        unsigned long next_active{}; // For calculating the wrapping, using the next and last system.
         vector<unsigned long> lineage_indices; // list of the active reference number, with zeros for empty cells.
-        unsigned long nwrap; // The number of wrapping (next and last possibilities) that there are.
+        unsigned long nwrap{}; // The number of wrapping (next and last possibilities) that there are.
     public:
         /**
          * @brief Default constructor
          */
         SpeciesList();
+
+        SpeciesList(const SpeciesList &other)
+        {
+            *this = other;
+        }
 
         /**
          * @brief Default destructor

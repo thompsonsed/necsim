@@ -110,12 +110,12 @@ namespace necsim
         shared_ptr<Landscape> landscape;
         // An indexing spatial positioning of the lineages
         Matrix<SpeciesList> grid;
-        unsigned long desired_specnum;
+        unsigned long desired_specnum{};
         // contains the DataMask for where we should start lineages from.
         DataMask samplegrid;
 
         // The gillespie variables
-        double gillespie_threshold;
+        double gillespie_threshold{};
         // Matrix of all the probabilities at every location in the map.
         Matrix<GillespieProbability> probabilities;
         // Vector used for holding the priority queue as a binary heap
@@ -126,9 +126,9 @@ namespace necsim
         Matrix<double> self_dispersal_probabilities;
 
         // Total number of individuals present in the simulated world
-        unsigned long global_individuals;
+        unsigned long global_individuals{};
         // Mean death rate across the simulated world
-        double summed_death_rate;
+        double summed_death_rate{};
 
         // Defines a cell that is unused
         static const unsigned long UNUSED = static_cast<unsigned long>(-1);

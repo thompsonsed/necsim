@@ -317,13 +317,15 @@ namespace necsim
             if(m.matrix.empty())
             {
                 matrix.clear();
+                num_cols = 0;
+                num_rows = 0;
             }
             else
             {
                 matrix = std::move(m.matrix);
+                num_cols = m.num_cols;
+                num_rows = m.num_rows;
             }
-            num_cols = m.num_cols;
-            num_rows = m.num_rows;
             return *this;
         }
 

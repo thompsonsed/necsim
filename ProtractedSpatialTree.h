@@ -32,6 +32,7 @@ namespace necsim
         ProtractedSpatialTree &operator=(const ProtractedSpatialTree &other) noexcept;
 
         ProtractedSpatialTree &operator=(ProtractedSpatialTree &&other) noexcept;
+        void writeGrid();
     };
 
 

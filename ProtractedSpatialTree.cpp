@@ -7,7 +7,6 @@ namespace necsim
 {
     ProtractedSpatialTree::ProtractedSpatialTree() : Tree(), SpatialTree(), ProtractedTree()
     {
-        grid = Matrix<SpeciesList>();
     }
 
     ProtractedSpatialTree::ProtractedSpatialTree(ProtractedSpatialTree &&other) noexcept

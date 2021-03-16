@@ -75,7 +75,7 @@ namespace necsim
         gillespie_threshold = other.gillespie_threshold;
         probabilities = std::move(other.probabilities);
         heap = std::move(other.heap);
-        cellToHeapPositions = other.cellToHeapPositions;
+        cellToHeapPositions = std::move(other.cellToHeapPositions);
         self_dispersal_probabilities = std::move(other.self_dispersal_probabilities);
         global_individuals = other.global_individuals;
         summed_death_rate = other.summed_death_rate;

@@ -51,7 +51,7 @@ namespace necsim
         // storing the coalescence tree itself
         shared_ptr<vector<TreeNode>> data;
         // a reference for the last written point in data.
-        unsigned long enddata;
+        unsigned long enddata{};
         // Stores the command line current_metacommunity_parameters and parses the required information.
         shared_ptr<SimParameters> sim_parameters;
         // random number generator
@@ -59,51 +59,51 @@ namespace necsim
         // Storing the speciation rates for later reference.
         vector<long double> speciation_rates;
         // flag for having set the simulation seed.
-        bool seeded;
+        bool seeded{};
         // random seed
-        long long seed;
+        long long seed{};
         // for file naming - good to know which task in a series is being executed here
-        long long task;
+        long long task{};
         // The map file containing the times that we want to expand the model and record all lineages again.
         // If this is null, uses_temporal_sampling will be false and the vector will be empty.
         string times_file;
         vector<double> reference_times;
         // Set to true if we are recording at times other than the present day.
-        bool uses_temporal_sampling;
+        bool uses_temporal_sampling{};
         // The time variables (for timing the simulation in real time)
-        time_t start, sim_start, sim_end, now, sim_finish, out_finish;
-        time_t time_taken;
+        time_t start{}, sim_start{}, sim_end{}, now{}, sim_finish{}, out_finish{};
+        time_t time_taken{};
         // Active lineages stored as a row of datapoints
         vector<DataPoint> active;
         // Stores the point of the end of the active vector. 0 is reserved as null
-        unsigned long endactive;
+        unsigned long endactive{};
         // the maximum size of endactive
-        unsigned long startendactive;
+        unsigned long startendactive{};
         // the maximum simulated number of individuals in the present day.
-        unsigned long maxsimsize;
+        unsigned long maxsimsize{};
         // for create the link to the speciationcounter object which handles everything.
         Community community;
         // This might need to be updated for simulations that have large changes in maximum population size over time.
         // number of simulation num_steps
-        long steps;
+        long steps{};
         // Maximum time to run for (in seconds)
-        unsigned long maxtime;
+        unsigned long maxtime{};
         // number of generations passed,
-        double generation;
+        double generation{};
         // The number of individuals per cell
-        double deme;
+        double deme{};
         // The proportion of individuals to sample
-        double deme_sample;
+        double deme_sample{};
         // the speciation rate
-        long double spec;
+        long double spec{};
         // Path to output directory
         string out_directory;
         // sqlite3 object that stores all the data
         shared_ptr<SQLiteHandler> database;
         // only set to true if the simulation has finished, otherwise will be false.
-        bool sim_complete;
+        bool sim_complete{};
         // set to true when variables are imported
-        bool has_imported_vars;
+        bool has_imported_vars{};
         // If sql database is written first to memory, then need another object to contain the in-memory database.
 #ifdef sql_ram
         SQLiteHandler outdatabase;
@@ -113,24 +113,24 @@ namespace necsim
         Step this_step;
         string sql_output_database;
         // If true, means the command-line imports were under the (deprecated) fullmode.
-        bool bFullMode;
+        bool bFullMode{};
         // If true, the simulation is to be resumed.
-        bool bResume;
+        bool bResume{};
         // If true, a config file contains the simulation variables.
-        bool bConfig;
+        bool bConfig{};
         // If true, simulation can be resumed.
-        bool has_paused, has_imported_pause;
+        bool has_paused{}, has_imported_pause{};
         // Should always be false in the base class
-        bool bIsProtracted;
+        bool bIsProtracted{};
         // variable for storing the paused sim location if files have been moved during paused/resumed simulations!
         string pause_sim_directory;
         // Set to true to use the gillespie method - this is currently only supported for spatial simulations using a
         // dispersal map and point speciation (i.e. the method is unsupported for non-spatial simulations,
         // spatial simulations not using a dispersal map and those that use protracted speciation).
-        bool using_gillespie;
+        bool using_gillespie{};
 
     public:
-        Tree() : data(make_shared < vector < TreeNode >> ()), enddata(0), sim_parameters(make_shared<SimParameters>()),
+        Tree() : data(make_shared<vector<TreeNode >>()), enddata(0), sim_parameters(make_shared<SimParameters>()),
                  NR(make_shared<RNGController>()), speciation_rates(), seeded(false), seed(-1), task(-1),
                  times_file("null"), reference_times(), uses_temporal_sampling(false), start(0), sim_start(0),
                  sim_end(0), now(0), sim_finish(0), out_finish(0), time_taken(0), active(), endactive(0),
@@ -138,7 +138,7 @@ namespace necsim
                  deme_sample(0.0), spec(0.0), out_directory(""), database(make_shared<SQLiteHandler>()),
                  sim_complete(false), has_imported_vars(false),
 #ifdef sql_ram
-                outdatabase(),
+                 outdatabase(),
 #endif //sql_ram
                  this_step(), sql_output_database("null"), bFullMode(false), bResume(false), bConfig(true),
                  has_paused(false), has_imported_pause(false), bIsProtracted(false), pause_sim_directory("null"),
@@ -147,7 +147,9 @@ namespace necsim
 
         }
 
-        Tree(const Tree & other);
+        Tree(Tree &&other) noexcept;
+
+        Tree(const Tree &other) noexcept;
 
         virtual ~Tree()
         {
@@ -160,9 +162,9 @@ namespace necsim
 #endif
         }
 
-        Tree &operator=(const Tree &other) = default;
+        Tree &operator=(const Tree &other);
 
-        Tree &operator=(Tree &&other) = default;
+        Tree &operator=(Tree &&other);
 
         /**
          * @brief Import the simulation variables from the command line structure.
@@ -803,6 +805,7 @@ namespace necsim
          * @param chosen the lineage to check for
          */
         void miniCheck(const unsigned long &chosen);
+
 #endif // DEBUG
     };
 }

@@ -147,16 +147,18 @@ namespace necsim
                         gillespie_threshold(0.0), probabilities(), heap(), cellToHeapPositions(),
                         self_dispersal_probabilities(), global_individuals(0), summed_death_rate(1.0)
         {
-
+            std::cout << "Creating spatial tree..." << std::endl; // TODO remove
         }
 
-        SpatialTree(const SpatialTree & other);
+        SpatialTree(SpatialTree &&other) noexcept;
+
+        SpatialTree(const SpatialTree &other) noexcept;
 
         ~SpatialTree() override = default;
 
-        SpatialTree & operator=(const SpatialTree& other) noexcept;
+        SpatialTree &operator=(const SpatialTree &other) noexcept;
 
-        SpatialTree &operator=(SpatialTree &&other) noexcept ;
+        SpatialTree &operator=(SpatialTree &&other) noexcept;
 
         /**
          * @brief Runs the basic file existence checks.
@@ -634,7 +636,6 @@ namespace necsim
          */
         void debugAddingLineage(unsigned long numstart, long x, long y);
 
-
         /**
          * @brief Run checks at the end of each cycle which make certain the move has been successful.
          * @param chosen the chosen lineage to check
@@ -660,6 +661,7 @@ namespace necsim
         unsigned long countSpeciationEvents() const;
 
         void checkNoSpeciation(const unsigned long &chosen) const;
+
 #endif
 
     };

@@ -78,17 +78,17 @@ int main(int argc, char* argv[])
 //    test2 = test3;
 //    test2 = std::move(test);
 //    test1 = test3;
-    necsim::GenericTree<necsim::ProtractedSpatialTree> tree, tree2;
+    necsim::GenericTree<necsim::ProtractedSpatialTree> tree, tree2, tree3;
     necsim::logger = new necsim::Logger();
     int __pyx_lineno = 0;
     const char *__pyx_filename = NULL;
     int __pyx_clineno = 0;
     std::cout << "Setting up tree" << std::endl;
-    tree = necsim::GenericTree<necsim::ProtractedSpatialTree>();
+//    tree = necsim::GenericTree<necsim::ProtractedSpatialTree>();
+    new((void*)&(tree)) necsim::GenericTree<necsim::ProtractedSpatialTree> ();
     std::cout << "Tree created" << std::endl;
     std::cout << "Second tree..." << std::endl;
-    tree2 = necsim::GenericTree<necsim::ProtractedSpatialTree>();
-    std::cout << "Copying" << std::endl;
-    tree = tree2;
+    std::cout << "Moving" << std::endl;
+    tree = std::move(tree2);
     return 0;
 }

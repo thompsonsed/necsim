@@ -24,123 +24,68 @@
 
 namespace necsim
 {
-    SpatialTree::SpatialTree(const SpatialTree & other)
-     : Tree(other) {
-        dispersal_coordinator = other.dispersal_coordinator;
-        // Death probability values across the landscape
-        death_map = other.death_map;
-        // Reproduction probability values across the landscape
-        reproduction_map = other.reproduction_map;
-        // A lineage_indices of new variables which will contain the relevant information for maps and grids.
-        //  strings containing the file names to be imported.
-        fine_map_input = other.fine_map_input;
-        coarse_map_input = other.coarse_map_input;
-        historical_fine_map_input = other.historical_fine_map_input;
-        historical_coarse_map_input = other.historical_coarse_map_input;
-        // Landscape object containing both the coarse and fine maps for checking whether or not there is habitat at a
-        // particular location.
-        landscape = other.landscape;
-        // An indexing spatial positioning of the lineages
-        grid = other.grid;
-        desired_specnum = other.desired_specnum;
-        // contains the DataMask for where we should start lineages from.
-        samplegrid = other.samplegrid;
+    SpatialTree::SpatialTree(SpatialTree &&other) noexcept: Tree(other)
+    {
+        std::cout << "Move constructing spatial tree..." << std::endl; // TODO remove
+        *this = std::move(other);
+    }
 
-        // The gillespie variables
-        gillespie_threshold = other.gillespie_threshold;
-        // Matrix of all the probabilities at every location in the map.
-        probabilities = other.probabilities;
-        // Vector used for holding the priority queue as a binary heap
-        heap = other.heap;
-        // Index to heap position, or UNUSED if cell is not used.
-        cellToHeapPositions = other.cellToHeapPositions;
-        // matrix of self-dispersal probabilities;
-        self_dispersal_probabilities = other.self_dispersal_probabilities;
-
-        // Total number of individuals present in the simulated world
-        global_individuals = other.global_individuals;
-        // Mean death rate across the simulated world
-        summed_death_rate = other.summed_death_rate;
+    SpatialTree::SpatialTree(const SpatialTree &other) noexcept: Tree(other)
+    {
+        std::cout << "Copy constructing spatial tree..." << std::endl; // TODO remove
+        *this = other;
     }
 
     SpatialTree &SpatialTree::operator=(const SpatialTree &other) noexcept
     {
+        std::cout << "Copy operator spatial tree..." << std::endl; // TODO remove
         static_cast<Tree &>(*this) = static_cast<const Tree &>(other);
         dispersal_coordinator = other.dispersal_coordinator;
-        // Death probability values across the landscape
         death_map = other.death_map;
-        // Reproduction probability values across the landscape
         reproduction_map = other.reproduction_map;
-        // A lineage_indices of new variables which will contain the relevant information for maps and grids.
-        //  strings containing the file names to be imported.
         fine_map_input = other.fine_map_input;
         coarse_map_input = other.coarse_map_input;
         historical_fine_map_input = other.historical_fine_map_input;
         historical_coarse_map_input = other.historical_coarse_map_input;
-        // Landscape object containing both the coarse and fine maps for checking whether or not there is habitat at a
-        // particular location.
         landscape = other.landscape;
-        // An indexing spatial positioning of the lineages
+        samplegrid = other.samplegrid;
         grid = other.grid;
         desired_specnum = other.desired_specnum;
-        // contains the DataMask for where we should start lineages from.
-        samplegrid = other.samplegrid;
-
-        // The gillespie variables
         gillespie_threshold = other.gillespie_threshold;
-        // Matrix of all the probabilities at every location in the map.
         probabilities = other.probabilities;
-        // Vector used for holding the priority queue as a binary heap
         heap = other.heap;
-        // Index to heap position, or UNUSED if cell is not used.
         cellToHeapPositions = other.cellToHeapPositions;
-        // matrix of self-dispersal probabilities;
         self_dispersal_probabilities = other.self_dispersal_probabilities;
-
-        // Total number of individuals present in the simulated world
         global_individuals = other.global_individuals;
-        // Mean death rate across the simulated world
         summed_death_rate = other.summed_death_rate;
         return *this;
     }
 
     SpatialTree &SpatialTree::operator=(SpatialTree &&other) noexcept
     {
-        static_cast<Tree &>(*this) = std::move(static_cast<Tree &>(other));
+        std::cout << "Move operator spatial tree..." << std::endl; // TODO remove
+        static_cast<Tree &>(*this) = std::move(static_cast<Tree &&>(other));
         dispersal_coordinator = std::move(other.dispersal_coordinator);
-        // Death probability values across the landscape
         death_map = std::move(other.death_map);
-        // Reproduction probability values across the landscape
         reproduction_map = std::move(other.reproduction_map);
-        // A lineage_indices of new variables which will contain the relevant information for maps and grids.
-        //  strings containing the file names to be imported.
-        fine_map_input = other.fine_map_input;
-        coarse_map_input = other.coarse_map_input;
-        historical_fine_map_input = other.historical_fine_map_input;
-        historical_coarse_map_input = other.historical_coarse_map_input;
-        // Landscape object containing both the coarse and fine maps for checking whether or not there is habitat at a
-        // particular location.
+        fine_map_input = std::move(other.fine_map_input);
+        coarse_map_input = std::move(other.coarse_map_input);
+        historical_fine_map_input = std::move(other.historical_fine_map_input);
+        historical_coarse_map_input = std::move(other.historical_coarse_map_input);
         landscape = std::move(other.landscape);
-        // An indexing spatial positioning of the lineages
+        samplegrid = std::move(other.samplegrid);
+        std::cout << "grid: " << grid << std::endl; // TODO remove
+        std::cout << "other grid: " << other.grid << std::endl; // TODO remove
+        std::cout << "Grid x, y" << grid.getCols() << ", " << grid.getRows() << std::endl; // TODO remove
+        std::cout << "other grid x, y" << other.grid.getCols() << ", " << other.grid.getRows() << std::endl; // TODO remove
         grid = std::move(other.grid);
         desired_specnum = other.desired_specnum;
-        // contains the DataMask for where we should start lineages from.
-        samplegrid = std::move(other.samplegrid);
-
-        // The gillespie variables
         gillespie_threshold = other.gillespie_threshold;
-        // Matrix of all the probabilities at every location in the map.
         probabilities = std::move(other.probabilities);
-        // Vector used for holding the priority queue as a binary heap
         heap = std::move(other.heap);
-        // Index to heap position, or UNUSED if cell is not used.
         cellToHeapPositions = other.cellToHeapPositions;
-        // matrix of self-dispersal probabilities;
         self_dispersal_probabilities = std::move(other.self_dispersal_probabilities);
-
-        // Total number of individuals present in the simulated world
         global_individuals = other.global_individuals;
-        // Mean death rate across the simulated world
         summed_death_rate = other.summed_death_rate;
         return *this;
     }

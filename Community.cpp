@@ -572,7 +572,10 @@ namespace necsim
 
     void Community::closeSQLConnection()
     {
-        database->close();
+        if(database != nullptr)
+        {
+            database->close();
+        }
         sql_connection_open = false;
         in_mem = false;
         database_set = false;

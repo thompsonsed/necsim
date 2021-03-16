@@ -14,8 +14,14 @@
 
 namespace necsim
 {
-    ProtractedTree::ProtractedTree(const necsim::ProtractedTree &other)
-     : Tree(other) {
+    ProtractedTree::ProtractedTree(necsim::ProtractedTree &&other) noexcept
+    {
+        *this = std::move(other);
+    }
+
+    ProtractedTree::ProtractedTree(const necsim::ProtractedTree &other) noexcept
+            : Tree(other)
+    {
         speciation_generation_min = other.speciation_generation_min;
         speciation_generation_max = other.speciation_generation_max;
     }

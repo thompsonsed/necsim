@@ -19,6 +19,7 @@ namespace necsim
 
     SpeciesList &SpeciesList::operator=(const SpeciesList &other) noexcept
     {
+        std::cout << "Copy operator species list..." << std::endl; // TODO remove
         list_size = other.list_size;
         max_size = other.max_size;
         next_active = other.next_active;
@@ -29,6 +30,7 @@ namespace necsim
 
     SpeciesList &SpeciesList::operator=(SpeciesList &&other) noexcept
     {
+        std::cout << "Move operator species list..." << std::endl; // TODO remove
         list_size = other.list_size;
         max_size = other.max_size;
         next_active = other.next_active;

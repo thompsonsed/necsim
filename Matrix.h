@@ -76,11 +76,16 @@ namespace necsim
         {
         }
 
+        Matrix(Matrix &&m) noexcept
+        {
+            *this = std::move(m);
+        }
+
         /**
          * @brief The copy constructor.
          * @param m a Matrix object to copy from.
          */
-        Matrix(const Matrix &m) : num_cols(0), num_rows(0), matrix(0)
+        Matrix(const Matrix &m) noexcept: num_cols(0), num_rows(0), matrix()
         {
             matrix = m.matrix;
             num_cols = m.num_cols;
@@ -294,6 +299,7 @@ namespace necsim
          */
         Matrix &operator=(const Matrix &m) noexcept
         {
+            std::cout << "Copy operator matrix..." << std::endl; // TODO remove
             matrix = m.matrix;
             num_cols = m.num_cols;
             num_rows = m.num_rows;
@@ -302,6 +308,7 @@ namespace necsim
 
         Matrix &operator=(Matrix &&m) noexcept
         {
+            std::cout << "Move operator matrix..." << std::endl; // TODO remove
             matrix = std::move(m.matrix);
             num_cols = m.num_cols;
             num_rows = m.num_rows;

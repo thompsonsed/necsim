@@ -195,8 +195,9 @@ namespace necsim
         {
         }
 
-        Community& operator=(const Community& other) = default;
-        Community &operator=(Community &&other) = default;
+//        Community &operator=(const Community &other) = default;
+
+//        Community &operator=(Community &&other) = default;
 
         /**
         * @brief Default destructor

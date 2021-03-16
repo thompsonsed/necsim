@@ -151,7 +151,7 @@ namespace necsim
 
         SpatialTree(SpatialTree &&other) noexcept;
 
-        SpatialTree(const SpatialTree &other) noexcept;
+        SpatialTree(const SpatialTree &other);
 
         ~SpatialTree() override = default;
 

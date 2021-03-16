@@ -58,9 +58,13 @@ namespace necsim
          */
         DataMask();
 
+        DataMask(DataMask &&other) noexcept = default;
+
+        DataMask(const DataMask &other) = default;
+
         ~DataMask() = default;
 
-        DataMask &operator=(const DataMask &other) noexcept;
+        DataMask &operator=(const DataMask &other);
 
         DataMask &operator=(DataMask &&other) noexcept;
 

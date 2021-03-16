@@ -147,9 +147,9 @@ namespace necsim
 
         }
 
-        Tree(Tree &&other) noexcept;
+        Tree(Tree &&other) = default;
 
-        Tree(const Tree &other) noexcept;
+        Tree(const Tree &other) = default;
 
         virtual ~Tree()
         {
@@ -163,9 +163,9 @@ namespace necsim
 #endif
         }
 
-        Tree &operator=(const Tree &other);
+        Tree &operator=(const Tree &other) = default;
 
-        Tree &operator=(Tree &&other);
+        Tree &operator=(Tree &&other) = default;
 
         /**
          * @brief Import the simulation variables from the command line structure.

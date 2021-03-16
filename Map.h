@@ -79,6 +79,10 @@ namespace necsim
             removeCPLErrorHandler();
         }
 
+        Map(Map &&m) noexcept = default;
+
+        Map(const Map &m) = default;
+
         ~Map() override
         {
             close();
@@ -206,7 +210,8 @@ namespace necsim
 #ifdef DEBUG
             if(po_dataset == nullptr)
             {
-                throw FatalException("po_dataset is nullptr. This is likely a problem with gdal. Please report this bug.");
+                throw FatalException(
+                        "po_dataset is nullptr. This is likely a problem with gdal. Please report this bug.");
             }
             if(po_band == nullptr)
             {

@@ -87,18 +87,7 @@ namespace necsim
          */
         Matrix(const Matrix &m) noexcept: num_cols(0), num_rows(0), matrix()
         {
-            if(m.matrix.empty())
-            {
-                matrix.clear();
-                num_rows = 0;
-                num_cols = 0;
-            }
-            else
-            {
-                matrix = m.matrix;
-                num_cols = m.num_cols;
-                num_rows = m.num_rows;
-            }
+            *this = m;
         }
 
         /**
@@ -320,7 +309,6 @@ namespace necsim
                 num_cols = m.num_cols;
                 num_rows = m.num_rows;
             }
-
             return *this;
         }
 

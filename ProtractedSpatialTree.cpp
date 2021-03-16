@@ -28,13 +28,13 @@ namespace necsim
         return *this;
     }
 
-//    ProtractedSpatialTree &ProtractedSpatialTree::operator=(ProtractedSpatialTree &&other) noexcept
-//    {
-//        // Also move-assigns `Tree`
-//        static_cast<SpatialTree &>(*this) = std::move(static_cast<SpatialTree &&>(other));
-//        // Copy over other member variables
-//        speciation_generation_min = other.speciation_generation_min;
-//        speciation_generation_max = other.speciation_generation_max;
-//        return *this;
-//    }
+    ProtractedSpatialTree &ProtractedSpatialTree::operator=(ProtractedSpatialTree &&other) noexcept
+    {
+        // Also move-assigns `Tree`
+        static_cast<SpatialTree &>(*this) = std::move(static_cast<SpatialTree &&>(other));
+        // Copy over other member variables
+        speciation_generation_min = other.speciation_generation_min;
+        speciation_generation_max = other.speciation_generation_max;
+        return *this;
+    }
 }

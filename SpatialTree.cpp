@@ -24,7 +24,7 @@
 
 namespace necsim
 {
-    SpatialTree::SpatialTree(SpatialTree &&other) noexcept: Tree(other)
+    SpatialTree::SpatialTree(SpatialTree &&other) noexcept: Tree(std::move(other))
     {
         *this = std::move(other);
     }

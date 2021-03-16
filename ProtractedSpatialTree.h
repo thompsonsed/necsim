@@ -31,7 +31,7 @@ namespace necsim
 
         ProtractedSpatialTree &operator=(const ProtractedSpatialTree &other) noexcept;
 
-        ProtractedSpatialTree &operator=(ProtractedSpatialTree &&other) noexcept = delete;
+        ProtractedSpatialTree &operator=(ProtractedSpatialTree &&other) noexcept;
     };
 
 

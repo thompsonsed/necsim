@@ -19,7 +19,7 @@
 
 namespace necsim
 {
-    Tree::Tree(Tree &&other) noexcept : Tree()
+    Tree::Tree(Tree &&other) noexcept
     {
         *this = std::move(other);
     }

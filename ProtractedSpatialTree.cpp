@@ -9,7 +9,7 @@ namespace necsim
     {
     }
 
-    ProtractedSpatialTree::ProtractedSpatialTree(ProtractedSpatialTree &&other) noexcept
+    ProtractedSpatialTree::ProtractedSpatialTree(ProtractedSpatialTree &&other) noexcept : ProtractedSpatialTree()
     {
         *this = std::move(other);
     }

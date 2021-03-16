@@ -145,6 +145,9 @@ namespace necsim
                         historical_fine_map_input("none"), historical_coarse_map_input("none"),
                         landscape(make_shared<Landscape>()), grid(), desired_specnum(1), samplegrid(),
                         gillespie_threshold(0.0), probabilities(), heap(), cellToHeapPositions(),
+#ifdef DEBUG
+                        gillespie_speciation_events(0), last_event(),
+#endif // DEBUG
                         self_dispersal_probabilities(), global_individuals(0), summed_death_rate(1.0)
         {
         }

@@ -7,6 +7,7 @@ namespace necsim
 {
     ProtractedSpatialTree::ProtractedSpatialTree() : Tree(), SpatialTree(), ProtractedTree()
     {
+        grid = Matrix<SpeciesList>();
     }
 
     ProtractedSpatialTree::ProtractedSpatialTree(ProtractedSpatialTree &&other) noexcept
@@ -14,8 +15,9 @@ namespace necsim
         *this = std::move(other);
     }
 
-    ProtractedSpatialTree::ProtractedSpatialTree(const ProtractedSpatialTree &other) noexcept : Tree(other), SpatialTree(other),
-                                                                                       ProtractedTree(other)
+    ProtractedSpatialTree::ProtractedSpatialTree(const ProtractedSpatialTree &other) noexcept : Tree(other),
+                                                                                                SpatialTree(other),
+                                                                                                ProtractedTree(other)
     {
     }
 

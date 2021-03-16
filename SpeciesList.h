@@ -48,22 +48,14 @@ namespace necsim
          */
         SpeciesList();
 
-        SpeciesList(const SpeciesList &other)
+        SpeciesList(const SpeciesList &other) noexcept
         {
-            list_size = other.list_size;
-            max_size = other.max_size;
-            next_active = other.next_active;
-            lineage_indices = other.lineage_indices;
-            nwrap = other.nwrap;
+            *this = other;
         }
 
         SpeciesList(SpeciesList &&other) noexcept
         {
-            list_size = other.list_size;
-            max_size = other.max_size;
-            next_active = other.next_active;
-            lineage_indices = std::move(other.lineage_indices);
-            nwrap = other.nwrap;
+            *this = std::move(other);
         }
 
         /**

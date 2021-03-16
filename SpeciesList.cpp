@@ -14,7 +14,6 @@ namespace necsim
 {
     SpeciesList::SpeciesList() : list_size(0), max_size(0), next_active(0), lineage_indices(), nwrap(0)
     {
-
     }
 
     SpeciesList &SpeciesList::operator=(const SpeciesList &other) noexcept
@@ -32,7 +31,14 @@ namespace necsim
         list_size = other.list_size;
         max_size = other.max_size;
         next_active = other.next_active;
-        lineage_indices = std::move(other.lineage_indices);
+        if(other.lineage_indices.empty())
+        {
+            lineage_indices.clear();
+        }
+        else
+        {
+            lineage_indices = std::move(other.lineage_indices);
+        }
         nwrap = other.nwrap;
         return *this;
     }

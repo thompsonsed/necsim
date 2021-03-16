@@ -22,7 +22,7 @@
 #define SPECIATIONCOUNTER_PROTRACTEDSPATIALTREE_H
 namespace necsim
 {
-    class ProtractedSpatialTree : public virtual SpatialTree, public virtual ProtractedTree
+    class ProtractedSpatialTree : public SpatialTree, public ProtractedTree
     {
     public:
         ProtractedSpatialTree();

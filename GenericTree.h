@@ -16,13 +16,13 @@ namespace necsim
     private:
         T tree;
     public:
-        GenericTree<T>() : tree(T())
+        GenericTree<T>() : tree()
         {
         };
 
-        GenericTree<T> &operator=(const GenericTree<T> &) noexcept = default;
+        GenericTree<T> &operator=(const GenericTree<T> &other) noexcept = default;
 
-        GenericTree<T> &operator=(GenericTree<T> &&) noexcept = default;
+        GenericTree<T> &operator=(GenericTree<T> &&other) noexcept = default;
 
         void wipeSimulationVariables()
         {

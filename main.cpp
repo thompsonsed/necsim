@@ -39,8 +39,10 @@
 #endif
 
 #include "Logger.h"
+#include "Logging.h"
 #include "ProtractedSpatialTree.h"
 #include "SimulationTemplates.h"
+#include "GenericTree.h"
 // #define historical_mode // not required unless you experience problems.
 // This performs a more thorough check after each move operation.
 // Currently, it will also check that the historical state value is greater than the returned value within every map cell.
@@ -70,11 +72,23 @@ int main(int argc, char* argv[])
 //        runMain<SpatialTree>(config_file);
 //        delete logger;
 //        return 0;
-    necsim::ProtractedSpatialTree test2, test3;
-    test3 = necsim::ProtractedSpatialTree();
-    necsim::ProtractedSpatialTree test = necsim::ProtractedSpatialTree();
-    test2 = test3;
-    test2 = std::move(test);
-    test1 = test3;
+//    necsim::ProtractedSpatialTree test2;
+//    test3 = necsim::ProtractedSpatialTree();
+//    necsim::ProtractedSpatialTree test = necsim::ProtractedSpatialTree();
+//    test2 = test3;
+//    test2 = std::move(test);
+//    test1 = test3;
+    necsim::GenericTree<necsim::ProtractedSpatialTree> tree, tree2;
+    necsim::logger = new necsim::Logger();
+    int __pyx_lineno = 0;
+    const char *__pyx_filename = NULL;
+    int __pyx_clineno = 0;
+    std::cout << "Setting up tree" << std::endl;
+    tree = necsim::GenericTree<necsim::ProtractedSpatialTree>();
+    std::cout << "Tree created" << std::endl;
+    std::cout << "Second tree..." << std::endl;
+    tree2 = necsim::GenericTree<necsim::ProtractedSpatialTree>();
+    std::cout << "Copying" << std::endl;
+    tree = tree2;
     return 0;
 }

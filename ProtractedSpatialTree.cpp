@@ -11,8 +11,9 @@ namespace necsim
     }
 
     ProtractedSpatialTree::ProtractedSpatialTree(const ProtractedSpatialTree &other)
-    {
-        *this = other;
+     : SpatialTree(other) {
+        speciation_generation_min = other.speciation_generation_min;
+        speciation_generation_max = other.speciation_generation_max;
     }
 
     ProtractedSpatialTree &ProtractedSpatialTree::operator=(const ProtractedSpatialTree &other) noexcept

@@ -61,7 +61,7 @@ namespace necsim
         vector<T> matrix;
     public:
 
-        Matrix() : num_cols(0), num_rows(0), matrix(0)
+        Matrix() : num_cols(0), num_rows(0), matrix()
         {
 
         }

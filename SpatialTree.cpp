@@ -25,8 +25,42 @@
 namespace necsim
 {
     SpatialTree::SpatialTree(const SpatialTree & other)
-    {
-        *this = other;
+     : Tree(other) {
+        dispersal_coordinator = other.dispersal_coordinator;
+        // Death probability values across the landscape
+        death_map = other.death_map;
+        // Reproduction probability values across the landscape
+        reproduction_map = other.reproduction_map;
+        // A lineage_indices of new variables which will contain the relevant information for maps and grids.
+        //  strings containing the file names to be imported.
+        fine_map_input = other.fine_map_input;
+        coarse_map_input = other.coarse_map_input;
+        historical_fine_map_input = other.historical_fine_map_input;
+        historical_coarse_map_input = other.historical_coarse_map_input;
+        // Landscape object containing both the coarse and fine maps for checking whether or not there is habitat at a
+        // particular location.
+        landscape = other.landscape;
+        // An indexing spatial positioning of the lineages
+        grid = other.grid;
+        desired_specnum = other.desired_specnum;
+        // contains the DataMask for where we should start lineages from.
+        samplegrid = other.samplegrid;
+
+        // The gillespie variables
+        gillespie_threshold = other.gillespie_threshold;
+        // Matrix of all the probabilities at every location in the map.
+        probabilities = other.probabilities;
+        // Vector used for holding the priority queue as a binary heap
+        heap = other.heap;
+        // Index to heap position, or UNUSED if cell is not used.
+        cellToHeapPositions = other.cellToHeapPositions;
+        // matrix of self-dispersal probabilities;
+        self_dispersal_probabilities = other.self_dispersal_probabilities;
+
+        // Total number of individuals present in the simulated world
+        global_individuals = other.global_individuals;
+        // Mean death rate across the simulated world
+        summed_death_rate = other.summed_death_rate;
     }
 
     SpatialTree &SpatialTree::operator=(const SpatialTree &other) noexcept
@@ -88,7 +122,7 @@ namespace necsim
         // particular location.
         landscape = std::move(other.landscape);
         // An indexing spatial positioning of the lineages
-        grid = other.grid; // No idea why can't move this...
+        grid = std::move(other.grid);
         desired_specnum = other.desired_specnum;
         // contains the DataMask for where we should start lineages from.
         samplegrid = std::move(other.samplegrid);
@@ -2034,13 +2068,6 @@ namespace necsim
         auto y = destination_cell.y;
         gillespieLocationRemainingCheck(origin);
         GillespieProbability &destination = probabilities.get(y, x);
-#ifdef DEBUG
-        const MapLocation dest_map_location = destination.getMapLocation();
-        if(original_map_location == dest_map_location)
-        {
-            throw FatalException("Dispersal occured to same cell!. Please report this bug.");
-        }
-#endif // DEBUG
         if(cellToHeapPositions.get(y, x) == SpatialTree::UNUSED)
         {
             fullSetupGillespieProbability(destination, destination.getMapLocation());

@@ -156,6 +156,7 @@ namespace necsim
             if(database != nullptr)
             {
                 database->close();
+                database = nullptr;
             }
 #ifdef sql_ram
             outdatabase.close();

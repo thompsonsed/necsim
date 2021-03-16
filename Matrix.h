@@ -299,19 +299,17 @@ namespace necsim
          */
         Matrix &operator=(const Matrix &m) noexcept
         {
-            std::cout << "Copy operator matrix..." << std::endl; // TODO remove
-            matrix = m.matrix;
             num_cols = m.num_cols;
             num_rows = m.num_rows;
+            matrix = m.matrix;
             return *this;
         }
 
         Matrix &operator=(Matrix &&m) noexcept
         {
-            std::cout << "Move operator matrix..." << std::endl; // TODO remove
-            matrix = std::move(m.matrix);
             num_cols = m.num_cols;
             num_rows = m.num_rows;
+            matrix = std::move(m.matrix);
             return *this;
         }
 

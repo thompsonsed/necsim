@@ -26,19 +26,16 @@ namespace necsim
 {
     SpatialTree::SpatialTree(SpatialTree &&other) noexcept: Tree(other)
     {
-        std::cout << "Move constructing spatial tree..." << std::endl; // TODO remove
         *this = std::move(other);
     }
 
     SpatialTree::SpatialTree(const SpatialTree &other) noexcept: Tree(other)
     {
-        std::cout << "Copy constructing spatial tree..." << std::endl; // TODO remove
         *this = other;
     }
 
     SpatialTree &SpatialTree::operator=(const SpatialTree &other) noexcept
     {
-        std::cout << "Copy operator spatial tree..." << std::endl; // TODO remove
         static_cast<Tree &>(*this) = static_cast<const Tree &>(other);
         dispersal_coordinator = other.dispersal_coordinator;
         death_map = other.death_map;
@@ -63,7 +60,6 @@ namespace necsim
 
     SpatialTree &SpatialTree::operator=(SpatialTree &&other) noexcept
     {
-        std::cout << "Move operator spatial tree..." << std::endl; // TODO remove
         static_cast<Tree &>(*this) = std::move(static_cast<Tree &&>(other));
         dispersal_coordinator = std::move(other.dispersal_coordinator);
         death_map = std::move(other.death_map);
@@ -74,10 +70,6 @@ namespace necsim
         historical_coarse_map_input = std::move(other.historical_coarse_map_input);
         landscape = std::move(other.landscape);
         samplegrid = std::move(other.samplegrid);
-        std::cout << "grid: " << grid << std::endl; // TODO remove
-        std::cout << "other grid: " << other.grid << std::endl; // TODO remove
-        std::cout << "Grid x, y" << grid.getCols() << ", " << grid.getRows() << std::endl; // TODO remove
-        std::cout << "other grid x, y" << other.grid.getCols() << ", " << other.grid.getRows() << std::endl; // TODO remove
         grid = std::move(other.grid);
         desired_specnum = other.desired_specnum;
         gillespie_threshold = other.gillespie_threshold;

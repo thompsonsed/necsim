@@ -147,7 +147,6 @@ namespace necsim
                         gillespie_threshold(0.0), probabilities(), heap(), cellToHeapPositions(),
                         self_dispersal_probabilities(), global_individuals(0), summed_death_rate(1.0)
         {
-            std::cout << "Creating spatial tree..." << std::endl; // TODO remove
         }
 
         SpatialTree(SpatialTree &&other) noexcept;

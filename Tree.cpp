@@ -26,13 +26,11 @@ namespace necsim
 
     Tree::Tree(const Tree &other) noexcept
     {
-        std::cout << "Copy constructor tree..." << std::endl; // TODO remove
         *this = other;
     }
 
     Tree &Tree::operator=(const Tree &other)
     {
-        std::cout << "Copy operator tree" << std::endl; // TODO remove
         data = other.data;
         enddata = other.enddata;
         sim_parameters = other.sim_parameters;
@@ -86,7 +84,6 @@ namespace necsim
 
     Tree& Tree::operator=(necsim::Tree &&other)
     {
-        std::cout << "Move operator tree" << std::endl; // TODO remove
         data = std::move(other.data);
         enddata = other.enddata;
         sim_parameters = std::move(other.sim_parameters);

@@ -39,7 +39,6 @@ namespace necsim
         ProtractedTree() : Tree(), speciation_generation_min(0.0), speciation_generation_max(0.0)
         {
             bIsProtracted = true;
-            std::cout << "Creating protracted tree..." << std::endl; // TODO remove
         }
 
         ProtractedTree(ProtractedTree &&other) noexcept;

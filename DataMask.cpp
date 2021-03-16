@@ -19,7 +19,7 @@ namespace necsim
         getProportionfptr = &DataMask::getBoolProportion;
     }
 
-    DataMask &DataMask::operator=(const DataMask &other) noexcept
+    DataMask &DataMask::operator=(const DataMask &other)
     {
         sample_mask = other.sample_mask;
         sample_mask_exact = other.sample_mask_exact;

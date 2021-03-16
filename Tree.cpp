@@ -128,7 +128,8 @@ namespace necsim
         has_paused = other.has_paused;
         has_imported_pause = other.has_imported_pause;
         bIsProtracted = other.bIsProtracted;
-        pause_sim_directory = std::move(other.pause_sim_directory);
+        pause_sim_directory = other.pause_sim_directory;
+        other.pause_sim_directory = nullptr;
         using_gillespie = other.using_gillespie;
         return *this;
     }

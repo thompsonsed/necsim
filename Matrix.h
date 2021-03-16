@@ -87,7 +87,7 @@ namespace necsim
          */
         Matrix(const Matrix &m) noexcept: num_cols(0), num_rows(0), matrix()
         {
-            if(m.matrix.empy())
+            if(m.matrix.empty())
             {
                 matrix.clear();
                 num_rows = 0;

@@ -134,7 +134,7 @@ namespace necsim
         static const unsigned long UNUSED = static_cast<unsigned long>(-1);
 #ifdef DEBUG
         unsigned long gillespie_speciation_events{0};
-        pair<EventType, CellEventType> last_event;
+        pair<EventType, CellEventType> last_event{};
 #endif // DEBUG
     public:
         /**

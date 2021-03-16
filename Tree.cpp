@@ -106,7 +106,7 @@ namespace necsim
         endactive = other.endactive;
         startendactive = other.startendactive;
         maxsimsize = other.maxsimsize;
-        community = std::move(other.community);
+        community = other.community;
         steps = other.steps;
         maxtime = other.maxtime;
         generation = other.generation;

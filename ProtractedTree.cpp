@@ -14,7 +14,7 @@
 
 namespace necsim
 {
-    ProtractedTree::ProtractedTree(necsim::ProtractedTree &&other) noexcept
+    ProtractedTree::ProtractedTree(necsim::ProtractedTree &&other) noexcept : Tree()
     {
         *this = std::move(other);
     }

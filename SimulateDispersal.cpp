@@ -26,9 +26,9 @@ namespace necsim
         is_sequential = bSequential;
     }
 
-    void SimulateDispersal::setSimulationParameters(shared_ptr<SimParameters> sim_parameters, bool print)
+    void SimulateDispersal::setSimulationParameters(shared_ptr<SimParameters> sim_parameters, bool p)
     {
-        if(print)
+        if(p)
         {
             writeInfo("********************************\nSetting simulation current_metacommunity_parameters...\n");
         }
@@ -37,7 +37,7 @@ namespace necsim
         {
             throw FatalException("Simulation parameters are nullptr. Please report this bug.");
         }
-        if(print)
+        if(p)
         {
             simParameters->printSpatialVars();
         }
@@ -218,14 +218,13 @@ namespace necsim
         writeInfo("Dispersal simulation complete.\n");
     }
 
-    template <bool chooseRandomCells>
-    void SimulateDispersal::runDistanceLoop(const unsigned long bidx,
-                                            const unsigned long eidx,
-                                            const unsigned long num_repeats,
-                                            std::mutex &mutex,
-                                            unsigned long &finished,
-                                            DispersalCoordinator &dispersal_coordinator,
-                                            double &generation)
+    template<bool chooseRandomCells> void SimulateDispersal::runDistanceLoop(const unsigned long bidx,
+                                                                             const unsigned long eidx,
+                                                                             const unsigned long num_repeats,
+                                                                             std::mutex &mutex,
+                                                                             unsigned long &finished,
+                                                                             DispersalCoordinator &dispersal_coordinator,
+                                                                             double &generation)
     {
         Cell this_cell{}, start_cell{};
 
@@ -243,10 +242,12 @@ namespace necsim
 
             std::fill(distance_accumulator.begin(), distance_accumulator.end(), 0.0);
 
-            if (chooseRandomCells)
+            if(chooseRandomCells)
             {
                 start_cell = getRandomCell();
-            } else {
+            }
+            else
+            {
                 start_cell = cells[i];
             }
 
@@ -288,13 +289,12 @@ namespace necsim
         }
     }
 
-    template <bool chooseRandomCells>
-    void SimulateDispersal::runDistanceWorker(const unsigned long seed,
-                                              const unsigned long bidx,
-                                              const unsigned long eidx,
-                                              const unsigned long num_repeats,
-                                              std::mutex &mutex,
-                                              unsigned long &finished)
+    template<bool chooseRandomCells> void SimulateDispersal::runDistanceWorker(const unsigned long seed,
+                                                                               const unsigned long bidx,
+                                                                               const unsigned long eidx,
+                                                                               const unsigned long num_repeats,
+                                                                               std::mutex &mutex,
+                                                                               unsigned long &finished)
     {
         mutex.lock();
 
@@ -312,7 +312,13 @@ namespace necsim
 
         mutex.unlock();
 
-        runDistanceLoop<chooseRandomCells>(bidx, eidx, num_repeats, mutex, finished, thread_dispersal_coordinator, thread_generation);
+        runDistanceLoop<chooseRandomCells>(bidx,
+                                           eidx,
+                                           num_repeats,
+                                           mutex,
+                                           finished,
+                                           thread_dispersal_coordinator,
+                                           thread_generation);
     }
 
     void SimulateDispersal::runMeanDistanceTravelled()
@@ -331,10 +337,12 @@ namespace necsim
             }
         }
         ss << ") generations ";
-        if (num_workers > 1)
+        if(num_workers > 1)
         {
             ss << "using " << num_workers << " threads.\n";
-        } else {
+        }
+        else
+        {
             ss << "sequentially.\n";
         }
         writeInfo(ss.str());
@@ -343,10 +351,18 @@ namespace necsim
         std::mutex mutex;
         unsigned long finished = 0;
 
-        if (num_workers <= 1)
+        if(num_workers <= 1)
         {
-            runDistanceLoop<true>(0, num_repeats, 1, std::ref(mutex), std::ref(finished), std::ref(dispersal_coordinator), std::ref(generation));
-        } else {
+            runDistanceLoop<true>(0,
+                                  num_repeats,
+                                  1,
+                                  std::ref(mutex),
+                                  std::ref(finished),
+                                  std::ref(dispersal_coordinator),
+                                  std::ref(generation));
+        }
+        else
+        {
             vector<std::thread> threads;
             threads.resize(num_workers);
 
@@ -394,10 +410,12 @@ namespace necsim
             writeInfo("Dispersal simulation complete.\n");
         }
         ss << ") generations ";
-        if (num_workers > 1)
+        if(num_workers > 1)
         {
             ss << "using " << num_workers << " threads.\n";
-        } else {
+        }
+        else
+        {
             ss << "sequentially.\n";
         }
         writeInfo(ss.str());
@@ -405,10 +423,18 @@ namespace necsim
         std::mutex mutex;
         unsigned long finished = 0;
 
-        if (num_workers <= 1)
+        if(num_workers <= 1)
         {
-            runDistanceLoop(0, num_repeats, old_num_repeats, std::ref(mutex), std::ref(finished), std::ref(dispersal_coordinator), std::ref(generation));
-        } else {
+            runDistanceLoop(0,
+                            num_repeats,
+                            old_num_repeats,
+                            std::ref(mutex),
+                            std::ref(finished),
+                            std::ref(dispersal_coordinator),
+                            std::ref(generation));
+        }
+        else
+        {
             vector<std::thread> threads;
             threads.resize(num_workers);
 
@@ -458,10 +484,12 @@ namespace necsim
             }
         }
         ss << ") generations ";
-        if (num_workers > 1)
+        if(num_workers > 1)
         {
             ss << "using " << num_workers << " threads.\n";
-        } else {
+        }
+        else
+        {
             ss << "sequentially.\n";
         }
         writeInfo(ss.str());
@@ -469,10 +497,18 @@ namespace necsim
         std::mutex mutex;
         unsigned long finished = 0;
 
-        if (num_workers <= 1)
+        if(num_workers <= 1)
         {
-            runDistanceLoop(0, num_repeats, old_num_repeats, std::ref(mutex), std::ref(finished), std::ref(dispersal_coordinator), std::ref(generation));
-        } else {
+            runDistanceLoop(0,
+                            num_repeats,
+                            old_num_repeats,
+                            std::ref(mutex),
+                            std::ref(finished),
+                            std::ref(dispersal_coordinator),
+                            std::ref(generation));
+        }
+        else
+        {
             vector<std::thread> threads;
             threads.resize(num_workers);
 
@@ -498,6 +534,21 @@ namespace necsim
         writeInfo("\nDispersal simulation complete.\n");
 
         setNumberRepeats(old_num_repeats);
+    }
+
+    void SimulateDispersal::runSampleDistanceTravelled(const vector<long> &sample_x, const vector<long> &sample_y)
+    {
+        vector<Cell> samples;
+        if(sample_x.size() != sample_y.size())
+        {
+            throw FatalException("Sample size x and y dimensions must be equal.");
+        }
+        samples.reserve(sample_x.size());
+        for(unsigned long i = 0; i < sample_x.size(); i++)
+        {
+            samples.emplace_back(sample_x[i], sample_y[i]);
+        }
+        runSampleDistanceTravelled(samples);
     }
 
     void SimulateDispersal::writeRepeatInfo(unsigned long i)

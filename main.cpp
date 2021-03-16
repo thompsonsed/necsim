@@ -39,38 +39,56 @@
 #endif
 
 #include "Logger.h"
-#include "SpatialTree.h"
+#include "Logging.h"
+#include "ProtractedSpatialTree.h"
 #include "SimulationTemplates.h"
-namespace necsim
+#include "GenericTree.h"
+// #define historical_mode // not required unless you experience problems.
+// This performs a more thorough check after each move operation.
+// Currently, it will also check that the historical state value is greater than the returned value within every map cell.
+// Note that this may cause problems if the historical state is not the state with the highest number of individuals.
+
+
+
+/************************************************************
+        MAIN ROUTINE AND COMMAND LINE ARG ROUTINES
+
+ ************************************************************/
+
+
+
+/**
+ * @brief Main function containing program structure
+ * @param argc the number of command-line arguments provided
+ * @param argv a pointer to the arguments
+ * @return a program exit code, 0 if successful, -1 (generally) indicates an error.
+ */
+int main(int argc, char* argv[])
 {
-    // #define historical_mode // not required unless you experience problems.
-    // This performs a more thorough check after each move operation.
-    // Currently, it will also check that the historical state value is greater than the returned value within every map cell.
-    // Note that this may cause problems if the historical state is not the state with the highest number of individuals.
-
-
-
-    /************************************************************
-            MAIN ROUTINE AND COMMAND LINE ARG ROUTINES
-
-     ************************************************************/
-
-
-
-    /**
-     * @brief Main function containing program structure
-     * @param argc the number of command-line arguments provided
-     * @param argv a pointer to the arguments
-     * @return a program exit code, 0 if successful, -1 (generally) indicates an error.
-     */
-    int main(int argc, char* argv[])
-    {
-        logger = new Logger();
-        vector<string> comargs;
-        importArgs(static_cast<const unsigned int &>(argc), argv, comargs);
-        const string &config_file = getConfigFileFromCmdArgs(comargs);
-        runMain<SpatialTree>(config_file);
-        delete logger;
-        return 0;
-    }
+//        logger = new Logger();
+//        vector<string> comargs;
+//        importArgs(static_cast<const unsigned int &>(argc), argv, comargs);
+//        const string &config_file = getConfigFileFromCmdArgs(comargs);
+//        runMain<SpatialTree>(config_file);
+//        delete logger;
+//        return 0;
+//    necsim::ProtractedSpatialTree test2;
+//    test3 = necsim::ProtractedSpatialTree();
+//    necsim::ProtractedSpatialTree test = necsim::ProtractedSpatialTree();
+//    test2 = test3;
+//    test2 = std::move(test);
+//    test1 = test3;
+    necsim::GenericTree<necsim::ProtractedSpatialTree> tree, tree2, tree3;
+    necsim::logger = new necsim::Logger();
+    int __pyx_lineno = 0;
+    const char *__pyx_filename = NULL;
+    int __pyx_clineno = 0;
+    std::cout << "Setting up tree" << std::endl;
+//    tree = necsim::GenericTree<necsim::ProtractedSpatialTree>();
+    new((void*)&(tree)) necsim::GenericTree<necsim::ProtractedSpatialTree> ();
+    std::cout << "Tree created" << std::endl;
+    std::cout << "Second tree..." << std::endl;
+    std::cout << "Moving" << std::endl;
+    tree = std::move(tree2);
+    return 0;
 }

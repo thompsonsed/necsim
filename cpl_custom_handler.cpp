@@ -10,7 +10,6 @@
 #include "cpl_custom_handler.h"
 #include "Logging.h"
 
-#ifdef with_gdal
 namespace necsim
 {
     void cplNecsimCustomErrorHandler(CPLErr eErrClass, int err_no, const char* msg)
@@ -48,4 +47,3 @@ namespace necsim
         }
     }
 }
-#endif //with_gdal

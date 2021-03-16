@@ -45,9 +45,9 @@ namespace necsim
         GillespieProbability() : GillespieProbability(MapLocation())
         { }
 
-        GillespieProbability(const MapLocation &c) : dispersal_outside_cell_probability(0.0),
-                                                     coalescence_probability(0.0), speciation_probability(0.0),
-                                                     random_number(0.0), location(c)
+        explicit GillespieProbability(const MapLocation &c) : dispersal_outside_cell_probability(0.0),
+                                                              coalescence_probability(0.0), speciation_probability(0.0),
+                                                              random_number(0.0), location(c)
         {
 
         }

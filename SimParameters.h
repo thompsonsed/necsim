@@ -280,8 +280,12 @@ namespace necsim
          * @param desired_specnum the desired number of species to aim towards (currently not functional)
          * @param times_file the file containing a list of temporal sampling points
          */
-        void setKeyParameters(const long long &task, const long long &seed, const string &output_directory,
-                              const unsigned long &max_time, unsigned long desired_specnum, const string &times_file)
+        void setKeyParameters(const long long &task,
+                              const long long &seed,
+                              const string &output_directory,
+                              const unsigned long &max_time,
+                              unsigned long desired_specnum,
+                              const string &times_file)
         {
             this->task = task;
             this->seed = seed;
@@ -299,8 +303,10 @@ namespace necsim
          * @param min_speciation_gen_in the minimum speciation generation for protracted simulations
          * @param max_speciation_gen_in the maximum speciation generation for protracted simulations
          */
-        void setSpeciationParameters(const long double &spec_in, bool is_protracted_in,
-                                     const double &min_speciation_gen_in, const double &max_speciation_gen_in)
+        void setSpeciationParameters(const long double &spec_in,
+                                     bool is_protracted_in,
+                                     const double &min_speciation_gen_in,
+                                     const double &max_speciation_gen_in)
         {
             spec = spec_in;
             is_protracted = is_protracted_in;
@@ -320,10 +326,15 @@ namespace necsim
          * @param landscape_type_in the landscape type (infinite, tiled or closed)
          * @param dispersal_file_in a map of dispersal probabilities
          */
-        void setDispersalParameters(const string &dispersal_method_in, const double &sigma_in, const double &tau_in,
-                                    const double &m_prob_in, const double &cutoff_in,
-                                    const double &dispersal_relative_cost_in, bool restrict_self_in,
-                                    const string &landscape_type_in, const string &dispersal_file_in)
+        void setDispersalParameters(const string &dispersal_method_in,
+                                    const double &sigma_in,
+                                    const double &tau_in,
+                                    const double &m_prob_in,
+                                    const double &cutoff_in,
+                                    const double &dispersal_relative_cost_in,
+                                    bool restrict_self_in,
+                                    const string &landscape_type_in,
+                                    const string &dispersal_file_in)
         {
             dispersal_method = dispersal_method_in;
             sigma = sigma_in;
@@ -358,7 +369,8 @@ namespace necsim
          */
         void setHistoricalMapParameters(const string &historical_fine_file_map_in,
                                         const string &historical_coarse_map_file_in,
-                                        const double &gen_since_historical_in, const double &habitat_change_rate_in)
+                                        const double &gen_since_historical_in,
+                                        const double &habitat_change_rate_in)
         {
             historical_fine_map_file = historical_fine_file_map_in;
             historical_coarse_map_file = historical_coarse_map_file_in;
@@ -366,9 +378,13 @@ namespace necsim
             habitat_change_rate = habitat_change_rate_in;
         }
 
-        void setHistoricalMapParameters(vector<string> path_fine, vector<unsigned long> number_fine,
-                                        vector<double> rate_fine, vector<double> time_fine, vector<string> path_coarse,
-                                        vector<unsigned long> number_coarse, vector<double> rate_coarse,
+        void setHistoricalMapParameters(vector<string> path_fine,
+                                        vector<unsigned long> number_fine,
+                                        vector<double> rate_fine,
+                                        vector<double> time_fine,
+                                        vector<string> path_coarse,
+                                        vector<unsigned long> number_coarse,
+                                        vector<double> rate_coarse,
                                         vector<double> time_coarse)
         {
             habitat_change_rate = 0.0;
@@ -441,16 +457,27 @@ namespace necsim
          * @param deme_sample_in the proportion of individuals to sample from each cell
          * @param uses_spatial_sampling_in if the sample mask denotes differing spatial sampling proportions
          */
-        void setMapParameters(const string &fine_map_file_in, const string &coarse_map_file_in,
-                              const string &sample_mask_file_in, const unsigned long &grid_x_size_in,
-                              const unsigned long &grid_y_size_in, const unsigned long &sample_x_size_in,
-                              const unsigned long &sample_y_size_in, const unsigned long &sample_x_offset_in,
-                              const unsigned long &sample_y_offset_in, const unsigned long &fine_map_x_size_in,
-                              const unsigned long &fine_map_y_size_in, const unsigned long &fine_map_x_offset_in,
-                              const unsigned long &fine_map_y_offset_in, const unsigned long &coarse_map_x_size_in,
-                              const unsigned long &coarse_map_y_size_in, const unsigned long &coarse_map_x_offset_in,
-                              const unsigned long &coarse_map_y_offset_in, const unsigned long &coarse_map_scale_in,
-                              const double &deme_in, const double &deme_sample_in, bool uses_spatial_sampling_in)
+        void setMapParameters(const string &fine_map_file_in,
+                              const string &coarse_map_file_in,
+                              const string &sample_mask_file_in,
+                              const unsigned long &grid_x_size_in,
+                              const unsigned long &grid_y_size_in,
+                              const unsigned long &sample_x_size_in,
+                              const unsigned long &sample_y_size_in,
+                              const unsigned long &sample_x_offset_in,
+                              const unsigned long &sample_y_offset_in,
+                              const unsigned long &fine_map_x_size_in,
+                              const unsigned long &fine_map_y_size_in,
+                              const unsigned long &fine_map_x_offset_in,
+                              const unsigned long &fine_map_y_offset_in,
+                              const unsigned long &coarse_map_x_size_in,
+                              const unsigned long &coarse_map_y_size_in,
+                              const unsigned long &coarse_map_x_offset_in,
+                              const unsigned long &coarse_map_y_offset_in,
+                              const unsigned long &coarse_map_scale_in,
+                              const double &deme_in,
+                              const double &deme_sample_in,
+                              bool uses_spatial_sampling_in)
         {
             fine_map_file = fine_map_file_in;
             coarse_map_file = coarse_map_file_in;
@@ -473,6 +500,44 @@ namespace necsim
             deme = deme_in;
             deme_sample = deme_sample_in;
             uses_spatial_sampling = uses_spatial_sampling_in;
+        }
+
+        void setMapParameters(const string &fine_map_file_in,
+                              const string &coarse_map_file_in,
+                              const unsigned long &sample_x_size_in,
+                              const unsigned long &sample_y_size_in,
+                              const unsigned long &fine_map_x_size_in,
+                              const unsigned long &fine_map_y_size_in,
+                              const unsigned long &fine_map_x_offset_in,
+                              const unsigned long &fine_map_y_offset_in,
+                              const unsigned long &coarse_map_x_size_in,
+                              const unsigned long &coarse_map_y_size_in,
+                              const unsigned long &coarse_map_x_offset_in,
+                              const unsigned long &coarse_map_y_offset_in,
+                              const unsigned long &coarse_map_scale_in,
+                              const double &deme_in,
+                              const string &landscape_type_in)
+        {
+            fine_map_file = fine_map_file_in;
+            coarse_map_file = coarse_map_file_in;
+            grid_x_size = sample_x_size_in;
+            grid_y_size = sample_y_size_in;
+            sample_x_size = sample_x_size_in;
+            sample_y_size = sample_y_size_in;
+            sample_x_offset = 0;
+            sample_y_offset = 0;
+            fine_map_x_size = fine_map_x_size_in;
+            fine_map_y_size = fine_map_y_size_in;
+            fine_map_x_offset = fine_map_x_offset_in;
+            fine_map_y_offset = fine_map_y_offset_in;
+            coarse_map_x_size = coarse_map_x_size_in;
+            coarse_map_y_size = coarse_map_y_size_in;
+            coarse_map_x_offset = coarse_map_x_offset_in;
+            coarse_map_y_offset = coarse_map_y_offset_in;
+            coarse_map_scale = coarse_map_scale_in;
+            deme = deme_in;
+            deme_sample = 1.0;
+            landscape_type = landscape_type_in;
         }
 
         /**
@@ -550,9 +615,9 @@ namespace necsim
                             auto r = stod(configs[i].getOption("rate"));
                             auto g = stod(configs[i].getOption("time"));
                             HistoricalMapParameters &mapParameters = tmp_map_parameters[number];
-                            if(!doubleCompare(mapParameters.habitat_change_rate, r,  0.00000001)
-                               || !(doubleCompare(mapParameters.generation, g, 0.00000001) ||
-                               doubleCompare(mapParameters.generation, g, g*0.01)))
+                            if(!doubleCompare(mapParameters.habitat_change_rate, r, 0.00000001)
+                               || !(doubleCompare(mapParameters.generation, g, 0.00000001)
+                                    || doubleCompare(mapParameters.generation, g, g * 0.01)))
                             {
                                 stringstream ss;
                                 ss << "Rates and times differ between fine and coarse map for historical map number "
@@ -584,9 +649,9 @@ namespace necsim
                             auto r = stod(configs[i].getOption("rate"));
                             auto g = stod(configs[i].getOption("time"));
                             HistoricalMapParameters &mapParameters = tmp_map_parameters[number];
-                            if(!doubleCompare(mapParameters.habitat_change_rate, r,  0.00000001)
-                               || !(doubleCompare(mapParameters.generation, g, 0.00000001) ||
-                                    doubleCompare(mapParameters.generation, g, g*0.01)))
+                            if(!doubleCompare(mapParameters.habitat_change_rate, r, 0.00000001)
+                               || !(doubleCompare(mapParameters.generation, g, 0.00000001)
+                                    || doubleCompare(mapParameters.generation, g, g * 0.01)))
                             {
                                 stringstream ss;
                                 ss << "Rates and times differ between fine and coarse map for historical map number "
@@ -646,8 +711,6 @@ namespace necsim
             os << "Job Type: " << task << endl;
             os << "Max time: " << max_time << endl;
             printSpatialVars();
-            os << "Deme: " << deme << endl;
-            os << "Deme sample: " << deme_sample << endl;
             os << "Output directory: " << output_directory << endl;
             os << "Disp Rel Cost: " << dispersal_relative_cost << endl;
             os << "Times: ";
@@ -669,6 +732,7 @@ namespace necsim
             os << endl;
             writeInfo(os.str());
         }
+
 
         /**
          * @brief Prints the spatial variables.
@@ -697,6 +761,8 @@ namespace necsim
             os << "-dimensions: (" << sample_x_size << ", " << sample_y_size << ")" << endl;
             os << "-optimised area: (" << grid_x_size << ", " << grid_y_size << ")" << endl;
             os << "-optimised offsets: (" << sample_x_offset << ", " << sample_y_offset << ")" << endl;
+            os << "Deme: " << deme << endl;
+            os << "Deme sample: " << deme_sample << endl;
             writeInfo(os.str());
         }
 
@@ -707,8 +773,10 @@ namespace necsim
          * @param seed the seed for the simulation
          * @param task the job referencing number
          */
-        void setMetacommunityParameters(const unsigned long &metacommunity_size, const long double &speciation_rate,
-                                        const unsigned long &seed, const unsigned long &task)
+        void setMetacommunityParameters(const unsigned long &metacommunity_size,
+                                        const long double &speciation_rate,
+                                        const unsigned long &seed,
+                                        const unsigned long &task)
         {
             output_directory = "Default";
             // randomise the seed slightly so that we get a different starting number to the initial simulation

@@ -61,31 +61,41 @@ namespace necsim
         vector<T> matrix;
     public:
 
+        Matrix() : num_cols(0), num_rows(0), matrix()
+        {
+
+        }
+
         /**
          * @brief The standard constructor
          * @param rows optionally provide the number of rows.
          * @param cols optionally provide the number of columns.
          */
-        explicit Matrix(unsigned long rows = 0, unsigned long cols = 0) : matrix(rows * cols, T())
+        explicit Matrix(unsigned long rows, unsigned long cols) : num_cols(cols), num_rows(rows),
+                                                                  matrix(rows * cols, T())
         {
+        }
+
+        Matrix(Matrix &&m) noexcept
+        {
+            *this = std::move(m);
         }
 
         /**
          * @brief The copy constructor.
          * @param m a Matrix object to copy from.
          */
-        Matrix(const Matrix &m) : matrix()
+        Matrix(const Matrix &m) noexcept: num_cols(0), num_rows(0), matrix()
         {
-            this = m;
+            matrix = m.matrix;
+            num_cols = m.num_cols;
+            num_rows = m.num_rows;
         }
 
         /**
         * @brief The destructor.
         */
-        virtual ~Matrix()
-        {
-
-        }
+        virtual ~Matrix() = default;
 
         /**
          * @brief Sets the matrix size.
@@ -219,7 +229,7 @@ namespace necsim
          * @brief Returns iterators for range-based for loops.
          * @return iterator to the start of the vector
          */
-        typename  vector<T>::iterator begin()
+        typename vector<T>::iterator begin()
         {
             return matrix.begin();
         }
@@ -237,7 +247,7 @@ namespace necsim
          * @brief Returns iterators for range-based for loops.
          * @return iterator to the start of the vector
          */
-        typename  vector<T>::const_iterator begin() const
+        typename vector<T>::const_iterator begin() const
         {
             return matrix.begin();
         }
@@ -251,7 +261,6 @@ namespace necsim
             return matrix.end();
         }
 
-
         /**
          * @brief Gets the arithmetic mean of the Matrix
          * @return the mean value in the matrix
@@ -263,7 +272,7 @@ namespace necsim
                 return 0.0;
             }
             T total = sum();
-            return double(total)/matrix.size();
+            return double(total) / matrix.size();
 
         }
 
@@ -288,11 +297,19 @@ namespace necsim
          * @brief Overloading the = operator.
          * @param m the matrix to copy from.
          */
-        Matrix &operator=(const Matrix &m)
+        Matrix &operator=(const Matrix &m) noexcept
         {
-            this->matrix = m.matrix;
-            this->num_cols = m.num_cols;
-            this->num_rows = m.num_rows;
+            num_cols = m.num_cols;
+            num_rows = m.num_rows;
+            matrix = m.matrix;
+            return *this;
+        }
+
+        Matrix &operator=(Matrix &&m) noexcept
+        {
+            num_cols = m.num_cols;
+            num_rows = m.num_rows;
+            matrix = std::move(m.matrix);
             return *this;
         }
 

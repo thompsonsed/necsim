@@ -43,13 +43,15 @@ namespace necsim
         bool parameters_checked;
         unique_ptr<SpeciesAbundancesHandler> species_abundances_handler;
         shared_ptr<RNGController> random;
-        unique_ptr<Tree> metacommunity_tree;
+        Tree metacommunity_tree;
     public:
 
         Metacommunity();
 
         ~Metacommunity() override = default;
 
+
+        Metacommunity& operator=(const Metacommunity& m);
         /**
          * @brief Sets the parameters for the metacommunity
          * @param community_size_in the number of individuals in the metacommunity
@@ -83,6 +85,13 @@ namespace necsim
          * Tree class
          */
         void createMetacommunityNSENeutralModel();
+
+        /**
+         * @brief Applies the speciation parameters to the completed simulation, including running the spatially implicit
+         * for the metacommunity structure, but doesn't write the output
+         * @param sp speciation parameters to apply, including speciation rate, times and spatial sampling procedure.
+         */
+        void applyNoOutput(shared_ptr<SpecSimParameters> sp) override;
 
         /**
          * @brief Applies the speciation parameters to the completed simulation, including running the spatially implicit

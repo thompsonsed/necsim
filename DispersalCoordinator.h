@@ -87,6 +87,9 @@ namespace necsim
 
         ~DispersalCoordinator();
 
+        DispersalCoordinator& operator=(const DispersalCoordinator &other) = default;
+        DispersalCoordinator& operator=(DispersalCoordinator &&other) = default;
+
         /**
          * @brief Sets the random number pointer to an NRrand instance.
          * @param NR_ptr the random number object to set to

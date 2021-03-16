@@ -5,7 +5,7 @@
 
 namespace necsim
 {
-    ProtractedSpatialTree::ProtractedSpatialTree() : SpatialTree(), ProtractedTree()
+    ProtractedSpatialTree::ProtractedSpatialTree() : Tree(), SpatialTree(), ProtractedTree()
     {
     }
 

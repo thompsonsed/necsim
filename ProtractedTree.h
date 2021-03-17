@@ -59,7 +59,7 @@ namespace necsim
             return *this;
         }
 
-        void swap(Tree &other) noexcept
+        void swap(ProtractedTree &other) noexcept
         {
             if(this != &other)
             {

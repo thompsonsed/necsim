@@ -55,7 +55,24 @@
 
  ************************************************************/
 
+class A
+{
+protected:
+    std::string test{};
 
+public:
+    A() : test(){};
+    virtual ~A() = default;
+
+};
+
+class B: public virtual A
+{
+protected:
+    std::string another_test{};
+public:
+    B() : A(), another_test(){}
+};
 
 /**
  * @brief Main function containing program structure
@@ -78,13 +95,13 @@ int main(int argc, char* argv[])
 //    test2 = test3;
 //    test2 = std::move(test);
 //    test1 = test3;
-    necsim::GenericTree<necsim::Tree> tree;
+    B tree;
     necsim::logger = new necsim::Logger();
     int __pyx_lineno = 0;
     const char *__pyx_filename = NULL;
     int __pyx_clineno = 0;
     try{
-        tree = necsim::GenericTree<necsim::Tree>();
+        tree = B();
     }
     catch(...){
         return 1;

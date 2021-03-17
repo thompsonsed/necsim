@@ -30,6 +30,7 @@ namespace necsim
             std::cout << "Other: " << &other << std::endl;
             if(tree == nullptr)
             {
+                tree = std::make_shared<T>();
                 tree = other.tree;
             }
             else

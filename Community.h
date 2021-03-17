@@ -132,36 +132,36 @@ namespace necsim
     class Community
     {
     protected:
-        bool in_mem; // boolean for whether the database is in memory or not.
-        bool database_set; // boolean for whether the database has been set already.
-        shared_ptr<SQLiteHandler> database; // stores the in-memory database connection.
-        bool sql_connection_open; // true if the data connection has been established.
-        shared_ptr<vector<TreeNode>> nodes; // in older versions this was called lineage_indices.
-        shared_ptr<vector<unsigned long>> species_abundances;
-        unsigned long species_index;
-        bool has_imported_samplemask; // checks whether the samplemask has already been imported.
-        bool has_imported_data; // checks whether the main sim data has been imported.
-        Samplematrix samplemask; // the samplemask object for defining the areas we want to sample from.
-        vector<Fragment> fragments; // a vector of fragments for storing each fragment's coordinates.
-        shared_ptr<CommunityParameters> current_community_parameters;
-        shared_ptr<MetacommunityParameters> current_metacommunity_parameters;
+        bool in_mem{}; // boolean for whether the database is in memory or not.
+        bool database_set{}; // boolean for whether the database has been set already.
+        shared_ptr<SQLiteHandler> database{}; // stores the in-memory database connection.
+        bool sql_connection_open{}; // true if the data connection has been established.
+        shared_ptr<vector<TreeNode>> nodes{}; // in older versions this was called lineage_indices.
+        shared_ptr<vector<unsigned long>> species_abundances{};
+        unsigned long species_index{};
+        bool has_imported_samplemask{}; // checks whether the samplemask has already been imported.
+        bool has_imported_data{}; // checks whether the main sim data has been imported.
+        Samplematrix samplemask{}; // the samplemask object for defining the areas we want to sample from.
+        vector<Fragment> fragments{}; // a vector of fragments for storing each fragment's coordinates.
+        shared_ptr<CommunityParameters> current_community_parameters{};
+        shared_ptr<MetacommunityParameters> current_metacommunity_parameters{};
         // the minimum speciation rate the original simulation was run with
         // this is read from the database SIMULATION_PARAMETERS table
-        long double min_spec_rate;
+        long double min_spec_rate{};
         // The dimensions of the sample grid size.
-        unsigned long grid_x_size, grid_y_size;
+        unsigned long grid_x_size{};, grid_y_size{};
         // The dimensions of the original sample map file
-        unsigned long samplemask_x_size, samplemask_y_size, samplemask_x_offset, samplemask_y_offset, seed;
+        unsigned long samplemask_x_size{};, samplemask_y_size{};, samplemask_x_offset{};, samplemask_y_offset{};, seed{};
         // Vector containing past speciation rates
-        CommunitiesArray past_communities;
-        MetacommunitiesArray past_metacommunities;
+        CommunitiesArray past_communities{};
+        MetacommunitiesArray past_metacommunities{};
         // Protracted speciation current_metacommunity_parameters
-        bool protracted;
-        ProtractedSpeciationParameters minimum_protracted_parameters;
-        ProtractedSpeciationParameters applied_protracted_parameters;
-        unsigned long max_species_id, max_fragment_id, max_locations_id;
+        bool protracted{};
+        ProtractedSpeciationParameters minimum_protracted_parameters{};
+        ProtractedSpeciationParameters applied_protracted_parameters{};
+        unsigned long max_species_id{};, max_fragment_id{};, max_locations_id{};
         // Does not need to be stored during simulation pause
-        shared_ptr<SpecSimParameters> spec_sim_parameters;
+        shared_ptr<SpecSimParameters> spec_sim_parameters{};
     public:
 
         /**

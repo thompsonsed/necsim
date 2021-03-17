@@ -269,14 +269,14 @@ int main(int argc, char* argv[])
 //    test2 = test3;
 //    test2 = std::move(test);
 //    test1 = test3;
-    necsim::GenericTree<necsim::ProtractedSpatialTree> tree;
+    necsim::Community tree;
     necsim::logger = new necsim::Logger();
     int __pyx_lineno = 0;
     const char* __pyx_filename = NULL;
     int __pyx_clineno = 0;
     try
     {
-        tree = necsim::GenericTree<necsim::ProtractedSpatialTree>();
+        tree = necsim::Community();
     }
     catch(...)
     {

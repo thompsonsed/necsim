@@ -94,7 +94,22 @@ namespace necsim
 
         SimulateDispersal(const SimulateDispersal &other) : SimulateDispersal()
         {
-            *this = other;
+            density_landscape = other.density_landscape;
+            data_mask = other.data_mask;
+            dispersal_coordinator = other.dispersal_coordinator;
+            simParameters = other.simParameters;
+            random = other.random;
+            seed = other.seed;
+            database = other.database;
+            distances = other.distances;
+            parameter_references = other.parameter_references;
+            cells = other.cells;
+            num_repeats = other.num_repeats;
+            num_steps = other.num_steps;
+            num_workers = other.num_workers;
+            generation = other.generation;
+            is_sequential = other.is_sequential;
+            max_parameter_reference = other.max_parameter_reference;
         };
 
         SimulateDispersal &operator=(SimulateDispersal other) noexcept

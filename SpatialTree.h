@@ -162,6 +162,7 @@ namespace necsim
 
         SpatialTree(const SpatialTree &other) : SpatialTree()
         {
+            // Not sure this is correct
             *this = other;
         };
 

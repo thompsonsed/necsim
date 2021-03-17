@@ -43,6 +43,7 @@
 #include "ProtractedSpatialTree.h"
 #include "SimulationTemplates.h"
 #include "GenericTree.h"
+#include "GenericCommunity.h"
 // #define historical_mode // not required unless you experience problems.
 // This performs a more thorough check after each move operation.
 // Currently, it will also check that the historical state value is greater than the returned value within every map cell.
@@ -269,14 +270,25 @@ int main(int argc, char* argv[])
 //    test2 = test3;
 //    test2 = std::move(test);
 //    test1 = test3;
-    necsim::Community tree;
+    necsim::GenericTree<necsim::SpatialTree> tree;
     necsim::logger = new necsim::Logger();
     int __pyx_lineno = 0;
     const char* __pyx_filename = NULL;
     int __pyx_clineno = 0;
     try
     {
-        tree = necsim::Community();
+        tree = necsim::GenericTree<necsim::SpatialTree>();
+    }
+    catch(...)
+    {
+        return 1;
+    }
+
+    necsim::GenericCommunity<necsim::Community> community;
+
+    try
+    {
+        community = necsim::GenericCommunity<necsim::Community>();
     }
     catch(...)
     {

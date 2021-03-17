@@ -15,7 +15,7 @@ namespace necsim
     class GenericTree
     {
     private:
-        std::unique_ptr<T> tree;
+        std::unique_ptr<T> tree{nullptr};
     public:
 
         GenericTree<T>() : tree(std::make_unique<T>())

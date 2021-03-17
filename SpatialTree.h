@@ -152,15 +152,52 @@ namespace necsim
         {
         }
 
-        SpatialTree(SpatialTree &&other) noexcept;
-
-        SpatialTree(const SpatialTree &other);
 
         ~SpatialTree() override = default;
 
-        SpatialTree &operator=(const SpatialTree &other) noexcept;
+        SpatialTree(SpatialTree &&other) noexcept : SpatialTree()
+        {
+            *this = std::move(other);
+        }
 
-        SpatialTree &operator=(SpatialTree &&other) noexcept;
+        SpatialTree(const SpatialTree &other) : SpatialTree()
+        {
+            *this = other;
+        };
+
+        SpatialTree &operator=(SpatialTree other) noexcept
+        {
+            other.swap(*this);
+            return *this;
+        }
+
+
+        void swap(SpatialTree &other) noexcept
+        {
+            if(this != &other)
+            {
+                Tree::swap(other);
+                std::swap(dispersal_coordinator, other.dispersal_coordinator);
+                std::swap(death_map, other.death_map);
+                std::swap(reproduction_map, other.reproduction_map);
+                std::swap(fine_map_input, other.fine_map_input);
+                std::swap(coarse_map_input, other.coarse_map_input);
+                std::swap(historical_fine_map_input, other.historical_fine_map_input);
+                std::swap(historical_coarse_map_input, other.historical_coarse_map_input);
+                std::swap(landscape, other.landscape);
+                std::swap(samplegrid, other.samplegrid);
+                std::swap(grid, other.grid);
+                std::swap(desired_specnum, other.desired_specnum);
+                std::swap(gillespie_threshold, other.gillespie_threshold);
+                std::swap(probabilities, other.probabilities);
+                std::swap(heap, other.heap);
+                std::swap(cellToHeapPositions, other.cellToHeapPositions);
+                std::swap(self_dispersal_probabilities, other.self_dispersal_probabilities);
+                std::swap(global_individuals, other.global_individuals);
+                std::swap(summed_death_rate, other.summed_death_rate);
+
+            }
+        }
 
         /**
          * @brief Runs the basic file existence checks.

@@ -171,7 +171,7 @@ namespace necsim
         };
 
 
-        Tree &operator=(necsim::Tree other) noexcept
+        Tree &operator=(Tree other) noexcept
         {
             other.swap(*this);
             return *this;

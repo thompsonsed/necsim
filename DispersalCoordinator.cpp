@@ -16,16 +16,7 @@
 
 namespace necsim
 {
-    DispersalCoordinator::DispersalCoordinator() : dispersal_prob_map(), raw_dispersal_prob_map(), NR(nullptr),
-                                                   landscape(make_shared<Landscape>()),
-                                                   reproduction_map(make_shared<ActivityMap>()), generation(nullptr),
-                                                   doDispersal(nullptr), checkEndPointFptr(nullptr), xdim(0), ydim(0),
-                                                   full_dispersal_map(false)
-    {
 
-    }
-
-    DispersalCoordinator::~DispersalCoordinator() = default;
 
     void DispersalCoordinator::setRandomNumber(shared_ptr<RNGController> NR_ptr)
     {

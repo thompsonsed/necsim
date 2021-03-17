@@ -58,7 +58,7 @@ namespace necsim
         // Pointer to the reproduction map object for obtaining reproduction probabilities
         shared_ptr<ActivityMap> reproduction_map;
         // Pointer to the generation counter for the simulation
-        double *generation;
+        double* generation;
 
         // function ptr for our getDispersal function
         typedef void (DispersalCoordinator::*dispersal_fptr)(Step &this_step);
@@ -83,12 +83,48 @@ namespace necsim
         bool full_dispersal_map;
 
     public:
-        DispersalCoordinator();
+        DispersalCoordinator() : dispersal_prob_map(), raw_dispersal_prob_map(), NR(nullptr),
+                                 landscape(make_shared<Landscape>()), reproduction_map(make_shared<ActivityMap>()),
+                                 generation(nullptr), doDispersal(nullptr), checkEndPointFptr(nullptr), xdim(0),
+                                 ydim(0), full_dispersal_map(false)
+        {
 
-        ~DispersalCoordinator();
+        }
 
-        DispersalCoordinator& operator=(const DispersalCoordinator &other) = default;
-        DispersalCoordinator& operator=(DispersalCoordinator &&other) = default;
+        ~DispersalCoordinator() = default;
+
+        DispersalCoordinator(DispersalCoordinator &&other) noexcept : DispersalCoordinator()
+        {
+            *this = std::move(other);
+        }
+
+        DispersalCoordinator(const DispersalCoordinator &other) : DispersalCoordinator()
+        {
+            *this = other;
+        };
+
+        DispersalCoordinator &operator=(DispersalCoordinator other) noexcept
+        {
+            other.swap(*this);
+            return *this;
+        }
+        void swap(DispersalCoordinator &other)
+        {
+            if(this != &other)
+            {
+                std::swap(dispersal_prob_map, other.dispersal_prob_map);
+                std::swap(raw_dispersal_prob_map, other.raw_dispersal_prob_map);
+                std::swap(NR, other.NR);
+                std::swap(landscape, other.landscape);
+                std::swap(reproduction_map, other.reproduction_map);
+                std::swap(generation, other.generation);
+                std::swap(doDispersal, other.doDispersal);
+                std::swap(checkEndPointFptr, other.checkEndPointFptr);
+                std::swap(xdim, other.xdim);
+                std::swap(ydim, other.ydim);
+                std::swap(full_dispersal_map, other.full_dispersal_map);
+            }
+        }
 
         /**
          * @brief Sets the random number pointer to an NRrand instance.
@@ -121,7 +157,7 @@ namespace necsim
          * @brief Sets the generation pointer to the provided double
          * @param generation_ptr pointer to the generation double
          */
-        void setGenerationPtr(double *generation_ptr);
+        void setGenerationPtr(double* generation_ptr);
 
         /**
          * @brief Sets the dispersal method and parameters
@@ -212,6 +248,7 @@ namespace necsim
         void updateDispersalMap();
 
 #ifdef DEBUG
+
         /**
          * @brief Asserts that the cell reference is correct for the provided coordinates.
          * @param expected the expected cell reference.
@@ -222,8 +259,8 @@ namespace necsim
          * @brief Checks that there is no self-dispersal in the dispersal map.
          */
         void validateNoSelfDispersalInDispersalMap();
-#endif // DEBUG
 
+#endif // DEBUG
 
         /**
          * @brief Picks a random cell from the whole map and stores the value in the step object

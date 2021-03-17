@@ -177,27 +177,19 @@ namespace necsim
             if(this != &other)
             {
                 Tree::swap(other);
-                std::cout << "Swapping dispersal coordinator.." << std::endl; // TODO remove
                 other.dispersal_coordinator.swap(dispersal_coordinator);
-                std::cout << "Swapping death map.." << std::endl; // TODO remove
                 std::swap(death_map, other.death_map);
-                std::cout << "Swapping rep map.." << std::endl; // TODO remove
                 std::swap(reproduction_map, other.reproduction_map);
                 std::swap(fine_map_input, other.fine_map_input);
                 std::swap(coarse_map_input, other.coarse_map_input);
                 std::swap(historical_fine_map_input, other.historical_fine_map_input);
                 std::swap(historical_coarse_map_input, other.historical_coarse_map_input);
-                std::cout << "Swapping landscape.." << std::endl; // TODO remove
                 std::swap(landscape, other.landscape);
-                std::cout << "Swapping sample grid.." << std::endl; // TODO remove
                 std::swap(samplegrid, other.samplegrid);
-                std::cout << "Swapping grid.." << std::endl; // TODO remove
                 std::swap(grid, other.grid);
                 std::swap(desired_specnum, other.desired_specnum);
                 std::swap(gillespie_threshold, other.gillespie_threshold);
-                std::cout << "Swapping probs.." << std::endl; // TODO remove
                 std::swap(probabilities, other.probabilities);
-                std::cout << "Swapping heap.." << std::endl; // TODO remove
                 std::swap(heap, other.heap);
                 std::swap(cellToHeapPositions, other.cellToHeapPositions);
                 std::swap(self_dispersal_probabilities, other.self_dispersal_probabilities);

@@ -25,14 +25,41 @@ namespace necsim
     class ProtractedSpatialTree : public SpatialTree, public ProtractedTree
     {
     public:
-        ProtractedSpatialTree();
-        ~ProtractedSpatialTree() override = default;
-        ProtractedSpatialTree(ProtractedSpatialTree &&other) noexcept;
-        ProtractedSpatialTree(const ProtractedSpatialTree &other) noexcept ;
+        ProtractedSpatialTree() : Tree(), SpatialTree(), ProtractedTree()
+        {
+        }
 
-        ProtractedSpatialTree &operator=(const ProtractedSpatialTree &other) noexcept;
+        ProtractedSpatialTree(ProtractedSpatialTree &&other) noexcept : ProtractedSpatialTree()
+        {
+            *this = std::move(other);
+        }
 
-        ProtractedSpatialTree &operator=(ProtractedSpatialTree &&other) noexcept;
+
+        ~ProtractedSpatialTree() override= default;
+
+
+
+        ProtractedSpatialTree(const ProtractedSpatialTree &other) : ProtractedSpatialTree()
+        {
+            *this = other;
+        };
+
+        ProtractedSpatialTree &operator=(ProtractedSpatialTree other) noexcept
+        {
+            other.swap(*this);
+            return *this;
+        }
+
+        void swap(ProtractedSpatialTree &other) noexcept
+        {
+            if(this != &other)
+            {
+                SpatialTree::swap(other);
+                std::swap(speciation_generation_min, other.speciation_generation_min);
+                std::swap(speciation_generation_max, other.speciation_generation_max);
+
+            }
+        }
     };
 
 

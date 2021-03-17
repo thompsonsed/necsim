@@ -21,10 +21,6 @@ namespace necsim
 {
     Tree::Tree(Tree &&other) noexcept : Tree()
     {
-        std::cout << "this: " << this << std::endl; // TODO remove
-        std::cout << "other: " << &other << std::endl;
-        std::cout << "this output: " << this->sql_output_database << std::endl;
-        std::cout <<"other output: " << other.sql_output_database << std::endl;
         *this = std::move(other);
     }
 
@@ -39,6 +35,10 @@ namespace necsim
     {
         if(this != &other)
         {
+            std::cout << "this: " << this << std::endl; // TODO remove
+            std::cout << "other: " << &other << std::endl;
+            std::cout << "this output: " << this->sql_output_database << std::endl;
+            std::cout <<"other output: " << other.sql_output_database << std::endl;
             data = std::move(other.data);
             enddata = other.enddata;
             sim_parameters = std::move(other.sim_parameters);

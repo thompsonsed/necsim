@@ -20,9 +20,6 @@
 
 #ifdef WIN_INSTALL
 #include <windows.h>
-//#define sleep Sleep
-//#else
-//#include <unistd.h>
 #endif // WIN_INSTALL
 
 

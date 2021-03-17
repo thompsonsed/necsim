@@ -16,7 +16,6 @@ set(SOURCE_FILES
         ${SOURCE_DIR_NECSIM}/main.cpp
         ${SOURCE_DIR_NECSIM}/Landscape.cpp
         ${SOURCE_DIR_NECSIM}/ProtractedTree.cpp
-        ${SOURCE_DIR_NECSIM}/ProtractedSpatialTree.cpp
         ${SOURCE_DIR_NECSIM}/setup.cpp
         ${SOURCE_DIR_NECSIM}/Community.cpp
         ${SOURCE_DIR_NECSIM}/ActivityMap.cpp

@@ -109,7 +109,7 @@ namespace necsim
             {
                 std::swap(density_landscape, other.density_landscape);
                 std::swap(data_mask, other.data_mask);
-                dispersal_coordinator.swap(other.dispersal_coordinator);
+                other.dispersal_coordinator.swap(dispersal_coordinator);
                 std::swap(simParameters, other.simParameters);
                 std::swap(random, other.random);
                 std::swap(seed, other.seed);

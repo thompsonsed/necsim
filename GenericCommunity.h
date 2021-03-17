@@ -16,10 +16,10 @@ namespace necsim
     class GenericCommunity
     {
     private:
-        std::shared_ptr<T> community{nullptr};
+        std::shared_ptr<T> community_ptr{nullptr};
     public:
 
-        GenericCommunity<T>() : community(std::make_shared<T>())
+        explicit GenericCommunity() noexcept : community_ptr(std::make_shared<T>())
         { }
 
         ~GenericCommunity() = default;
@@ -29,9 +29,9 @@ namespace necsim
             *this = std::move(other);
         }
 
-        GenericCommunity(const GenericCommunity &other) : GenericCommunity()
+        GenericCommunity(const GenericCommunity &other) noexcept : GenericCommunity()
         {
-            *this = other;
+            this->community_ptr = other.community_ptr;
         };
 
         GenericCommunity &operator=(GenericCommunity other) noexcept
@@ -44,24 +44,24 @@ namespace necsim
         {
             if(this != &other)
             {
-                community.swap(other.community);
+                this->community_ptr.swap(other.community_ptr);
 
             }
         }
 
         void applyNoOutput(std::shared_ptr<SpecSimParameters> sp)
         {
-            community->applyNoOutput(sp);
+            community_ptr->applyNoOutput(sp);
         }
 
         void output()
         {
-            community->output();
+            community_ptr->output();
         }
 
         void speciateRemainingLineages(const string &filename)
         {
-            community->speciateRemainingLineages(filename);
+            community_ptr->speciateRemainingLineages(filename);
         }
 
     };

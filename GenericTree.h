@@ -21,7 +21,7 @@ namespace necsim
 
         explicit GenericTree() noexcept : tree_ptr(std::make_shared<T>())
         {
-            
+
         }
 
         virtual ~GenericTree() = default;

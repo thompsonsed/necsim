@@ -18,7 +18,7 @@ namespace necsim
         std::unique_ptr<T> tree;
     public:
 
-        GenericTree() : tree(std::make_unique<T>())
+        GenericTree<T>() : tree(std::make_unique<T>())
         { }
 
 //        GenericTree<T> &operator=(const GenericTree<T> &other) noexcept = default;

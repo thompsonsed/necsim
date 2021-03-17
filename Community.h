@@ -149,9 +149,9 @@ namespace necsim
         // this is read from the database SIMULATION_PARAMETERS table
         long double min_spec_rate{};
         // The dimensions of the sample grid size.
-        unsigned long grid_x_size{};, grid_y_size{};
+        unsigned long grid_x_size{}, grid_y_size{};
         // The dimensions of the original sample map file
-        unsigned long samplemask_x_size{};, samplemask_y_size{};, samplemask_x_offset{};, samplemask_y_offset{};, seed{};
+        unsigned long samplemask_x_size{}, samplemask_y_size{}, samplemask_x_offset{}, samplemask_y_offset{}, seed{};
         // Vector containing past speciation rates
         CommunitiesArray past_communities{};
         MetacommunitiesArray past_metacommunities{};
@@ -159,7 +159,7 @@ namespace necsim
         bool protracted{};
         ProtractedSpeciationParameters minimum_protracted_parameters{};
         ProtractedSpeciationParameters applied_protracted_parameters{};
-        unsigned long max_species_id{};, max_fragment_id{};, max_locations_id{};
+        unsigned long max_species_id{}, max_fragment_id{}, max_locations_id{};
         // Does not need to be stored during simulation pause
         shared_ptr<SpecSimParameters> spec_sim_parameters{};
     public:

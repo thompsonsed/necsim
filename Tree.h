@@ -190,7 +190,7 @@ namespace necsim
                 std::swap(endactive, other.endactive);
                 std::swap(startendactive, other.startendactive);
                 std::swap(maxsimsize, other.maxsimsize);
-                std::swap(community, other.community);
+                community.swap(other.community);
                 std::swap(steps, other.steps);
                 std::swap(maxtime, other.maxtime);
                 std::swap(generation, other.generation);

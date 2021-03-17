@@ -44,7 +44,7 @@ namespace necsim
         {
             if(this != &other)
             {
-                std::swap(tree, other.tree);
+                tree.swap(other.tree);
 
             }
         }

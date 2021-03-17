@@ -21,6 +21,10 @@ namespace necsim
 {
     Tree::Tree(Tree &&other) noexcept : Tree()
     {
+        std::cout << "this: " << this << std::endl; // TODO remove
+        std::cout << "other: " << &other << std::endl;
+        std::cout << "this output: " << this->sql_output_database << std::endl;
+        std::cout <<"other output: " << other.sql_output_database << std::endl;
         *this = std::move(other);
     }
 
@@ -80,7 +84,7 @@ namespace necsim
             has_paused = other.has_paused;
             has_imported_pause = other.has_imported_pause;
             bIsProtracted = other.bIsProtracted;
-            pause_sim_directory = other.pause_sim_directory;
+            pause_sim_directory = std::move(other.pause_sim_directory);
             using_gillespie = other.using_gillespie;
         }
         return *this;

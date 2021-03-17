@@ -41,7 +41,7 @@ namespace necsim
             bIsProtracted = true;
         }
 
-        virtual ~ProtractedTree() = default;
+        ~ProtractedTree() override = default;
 
         ProtractedTree(ProtractedTree &&other) noexcept : ProtractedTree()
         {

@@ -14,35 +14,6 @@
 
 namespace necsim
 {
-    ProtractedTree::ProtractedTree(necsim::ProtractedTree &&other) noexcept : Tree()
-    {
-        *this = std::move(other);
-    }
-
-    ProtractedTree::ProtractedTree(const necsim::ProtractedTree &other) noexcept
-            : Tree(other)
-    {
-        speciation_generation_min = other.speciation_generation_min;
-        speciation_generation_max = other.speciation_generation_max;
-    }
-
-    ProtractedTree &ProtractedTree::operator=(const ProtractedTree &other) noexcept
-    {
-        static_cast<Tree &>(*this) = static_cast<const Tree &>(other);
-        speciation_generation_min = other.speciation_generation_min;
-        speciation_generation_max = other.speciation_generation_max;
-        return *this;
-    }
-
-    ProtractedTree &ProtractedTree::operator=(ProtractedTree &&other) noexcept
-    {
-        static_cast<Tree &>(*this) = std::move(static_cast<Tree &>(other));
-        speciation_generation_min = other.speciation_generation_min;
-        speciation_generation_max = other.speciation_generation_max;
-        return *this;
-
-    }
-
     bool ProtractedTree::calcSpeciation(const long double &random_number,
                                         const long double &speciation_rate,
                                         const unsigned long &no_generations)

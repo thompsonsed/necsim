@@ -163,9 +163,11 @@ namespace necsim
 #endif
         }
 
-        Tree &operator=(const Tree &other);
+//        Tree &operator=(const Tree &other);
 
-        Tree &operator=(Tree &&other) noexcept;
+        Tree &operator=(Tree other) noexcept;
+
+        void swap(Tree &other) noexcept;
 
         /**
          * @brief Import the simulation variables from the command line structure.

@@ -29,66 +29,123 @@ namespace necsim
         *this = other;
     }
 
-    Tree &Tree::operator=(const Tree &other) = default;
+//    Tree &Tree::operator=(const Tree &other) = default;
 
-    Tree &Tree::operator=(necsim::Tree &&other) noexcept
+    Tree &Tree::operator=(necsim::Tree other) noexcept
+    {
+            other.swap(*this);
+            return *this;
+//        if(this != &other)
+//        {
+
+
+
+            // Clean up
+//            other.data = nullptr;
+//            other.enddata = 0;
+//            other.sim_parameters = nullptr;
+//            other.NR = nullptr;
+//            other.speciation_rates = {};
+//            other.seeded = false;
+//            other.seed = 0;
+//            other.task = 0;
+//            other.times_file = {};
+//            other.reference_times = {};
+//            other.uses_temporal_sampling = false;
+//            other.start = {};
+//            other.sim_start = {};
+//            other.sim_end = {};
+//            other.now = {};
+//            other.sim_finish = {};
+//            other.out_finish = {};
+//            other.time_taken = 0;
+//            other.active = {};
+//            other.endactive =0;
+//            other.startendactive = 0;
+//            other.maxsimsize = 0;
+//            other.community = Community();
+//            other.steps = 0;
+//            other.maxtime = 0;
+//            other.generation = 0.0;
+//            other.deme = 0;
+//            other.deme_sample = 0.0;
+//            other.spec = 0.0;
+//            other.out_directory = {};
+//            other.database = nullptr;
+//            other.sim_complete = false;
+//            other.has_imported_vars = false;
+//#ifdef sql_ram
+//            other.outdatabase = SQLiteHandler();
+//#endif
+//            other.this_step = {};
+//            other.sql_output_database = {};
+//            other.bFullMode = false;
+//            other.bResume = false;
+//            other.bConfig = false;
+//            other.has_paused = false;
+//            other.has_imported_pause = false;
+//            other.bIsProtracted = false;
+//            other.pause_sim_directory = {};
+//            other.using_gillespie = false;
+//        }
+//        return *this;
+    }
+
+    void Tree::swap(Tree &other) noexcept
     {
         if(this != &other)
         {
-            *this = Tree();
             std::cout << "this: " << this << std::endl; // TODO remove
             std::cout << "other: " << &other << std::endl;
             std::cout << "this output: " << this->sql_output_database << std::endl;
-            std::cout <<"other output: " << other.sql_output_database << std::endl;
-            data = std::move(other.data);
-            enddata = other.enddata;
-            sim_parameters = std::move(other.sim_parameters);
-            NR = std::move(other.NR);
-            speciation_rates = std::move(other.speciation_rates);
-            seeded = other.seeded;
-            // random seed
-            seed = other.seed;
-            task = other.task;
-            times_file = std::move(other.times_file);
-            reference_times = std::move(other.reference_times);
-            uses_temporal_sampling = other.uses_temporal_sampling;
-            start = other.start;
-            sim_start = other.sim_start;
-            sim_end = other.sim_end;
-            now = other.now;
-            sim_finish = other.sim_finish;
-            out_finish = other.out_finish;
-            time_taken = other.time_taken;
-            active = other.active;
-            endactive = other.endactive;
-            startendactive = other.startendactive;
-            maxsimsize = other.maxsimsize;
-            community = other.community;
-            steps = other.steps;
-            maxtime = other.maxtime;
-            generation = other.generation;
-            deme = other.deme;
-            deme_sample = other.deme_sample;
-            spec = other.spec;
-            out_directory = std::move(other.out_directory);
-            database = std::move(other.database);
-            sim_complete = other.sim_complete;
-            has_imported_vars = other.has_imported_vars;
+            std::cout << "other output: " << other.sql_output_database << std::endl;
+            std::swap(data, other.data);
+            std::swap(enddata, other.enddata);
+            std::swap(sim_parameters, other.sim_parameters);
+            std::swap(NR, other.NR);
+            std::swap(speciation_rates, other.speciation_rates);
+            std::swap(seeded, other.seeded);
+            std::swap(seed, other.seed);
+            std::swap(task, other.task);
+            std::swap(times_file, other.times_file);
+            std::swap(reference_times, other.reference_times);
+            std::swap(uses_temporal_sampling, other.uses_temporal_sampling);
+            std::swap(start, other.start);
+            std::swap(sim_start, other.sim_start);
+            std::swap(sim_end, other.sim_end);
+            std::swap(now, other.now);
+            std::swap(sim_finish, other.sim_finish);
+            std::swap(out_finish, other.out_finish);
+            std::swap(time_taken, other.time_taken);
+            std::swap(active, other.active);
+            std::swap(endactive, other.endactive);
+            std::swap(startendactive, other.startendactive);
+            std::swap(maxsimsize, other.maxsimsize);
+            std::swap(community, other.community);
+            std::swap(steps, other.steps);
+            std::swap(maxtime, other.maxtime);
+            std::swap(generation, other.generation);
+            std::swap(deme, other.deme);
+            std::swap(deme_sample, other.deme_sample);
+            std::swap(spec, other.spec);
+            std::swap(out_directory, other.out_directory);
+            std::swap(database, other.database);
+            std::swap(sim_complete, other.sim_complete);
+            std::swap(has_imported_vars, other.has_imported_vars);
 #ifdef sql_ram
-            outdatabase = other.outdatabase;
+            std::swap(outdatabase, other.outdatabase);
 #endif
-            this_step = other.this_step;
-            sql_output_database = std::move(other.sql_output_database);
-            bFullMode = other.bFullMode;
-            bResume = other.bResume;
-            bConfig = other.bConfig;
-            has_paused = other.has_paused;
-            has_imported_pause = other.has_imported_pause;
-            bIsProtracted = other.bIsProtracted;
-            pause_sim_directory = std::move(other.pause_sim_directory);
-            using_gillespie = other.using_gillespie;
+            std::swap(this_step, other.this_step);
+            std::swap(sql_output_database, other.sql_output_database);
+            std::swap(bFullMode, other.bFullMode);
+            std::swap(bResume, other.bResume);
+            std::swap(bConfig, other.bConfig);
+            std::swap(has_paused, other.has_paused);
+            std::swap(has_imported_pause, other.has_imported_pause);
+            std::swap(bIsProtracted, other.bIsProtracted);
+            std::swap(pause_sim_directory, other.pause_sim_directory);
+            std::swap(using_gillespie, other.using_gillespie);
         }
-        return *this;
     }
 
     void Tree::importSimulationVariables(string configfile)

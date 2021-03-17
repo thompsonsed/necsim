@@ -27,9 +27,8 @@ namespace necsim
     Tree::Tree(const Tree &other) : Tree()
     {
         *this = other;
-    }
+    };
 
-//    Tree &Tree::operator=(const Tree &other) = default;
 
     Tree &Tree::operator=(necsim::Tree other) noexcept
     {
@@ -97,6 +96,8 @@ namespace necsim
         {
             std::cout << "this: " << this << std::endl; // TODO remove
             std::cout << "other: " << &other << std::endl;
+            std::cout << "this output: " << this->sql_output_database << std::endl;
+            std::cout << "other output: " << other.sql_output_database << std::endl;
             std::swap(data, other.data);
             std::swap(enddata, other.enddata);
             std::swap(sim_parameters, other.sim_parameters);

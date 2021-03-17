@@ -144,7 +144,7 @@ namespace necsim
                  has_paused(false), has_imported_pause(false), bIsProtracted(false), pause_sim_directory("null"),
                  using_gillespie(false)
         {
-
+            sql_output_database = "null";
         }
 
         Tree(Tree &&other) noexcept;
@@ -163,7 +163,7 @@ namespace necsim
 #endif
         }
 
-//        Tree &operator=(const Tree &other);
+//        Tree &operator=(const Tree &other); // TODO remove
 
         Tree &operator=(Tree other) noexcept;
 

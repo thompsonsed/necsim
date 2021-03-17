@@ -26,6 +26,7 @@
 #include "RNGController.h"
 #include "SpecSimParameters.h"
 #include "SpeciesAbundancesHandler.h"
+#include "SimulatedSpeciesAbundancesHandler.h"
 
 using namespace std;
 namespace necsim
@@ -46,12 +47,50 @@ namespace necsim
         Tree metacommunity_tree;
     public:
 
-        Metacommunity();
+
+
+
+
+        /**
+         * @brief Default constructor
+         */
+        Metacommunity() : seed(0), task(0), parameters_checked(false),
+                          species_abundances_handler(make_unique<SimulatedSpeciesAbundancesHandler>()),
+                          random(make_shared<RNGController>()), metacommunity_tree()
+        {
+        }
 
         ~Metacommunity() override = default;
 
+        Metacommunity(Metacommunity &&other) noexcept : Metacommunity()
+        {
+            *this = std::move(other);
+        }
 
-        Metacommunity& operator=(const Metacommunity& m);
+        Metacommunity(const Metacommunity &other) : Metacommunity()
+        {
+            *this = other;
+        };
+
+        Metacommunity &operator=(Metacommunity other) noexcept
+        {
+            other.swap(*this);
+            return *this;
+        }
+
+        void swap(Metacommunity &other) noexcept
+        {
+            if(this != &other)
+            {
+                Community::swap(other);
+                std::swap(seed, other.seed);
+                std::swap(task, other.task);
+                std::swap(parameters_checked, other.parameters_checked);
+                std::swap(species_abundances_handler, other.species_abundances_handler);
+                std::swap(random, other.random);
+                std::swap(metacommunity_tree, other.metacommunity_tree);
+            }
+        }
         /**
          * @brief Sets the parameters for the metacommunity
          * @param community_size_in the number of individuals in the metacommunity

@@ -26,23 +26,6 @@
 namespace na = neutral_analytical;
 namespace necsim
 {
-    Metacommunity::Metacommunity() : seed(0), task(0), parameters_checked(false),
-                                     species_abundances_handler(make_unique<SimulatedSpeciesAbundancesHandler>()),
-                                     random(make_shared<RNGController>()), metacommunity_tree()
-    {
-
-    }
-
-    Metacommunity &Metacommunity::operator=(const Metacommunity &m)
-    {
-        seed = m.seed;
-        task = m.task;
-        parameters_checked = m.parameters_checked;
-        species_abundances_handler = make_unique<SimulatedSpeciesAbundancesHandler>();
-        random = m.random;
-        metacommunity_tree = m.metacommunity_tree;
-        return *this;
-    }
 
     void Metacommunity::setCommunityParameters(shared_ptr<MetacommunityParameters> metacommunity_parameters)
     {

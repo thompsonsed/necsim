@@ -195,18 +195,59 @@ namespace necsim
         {
         }
 
-        Community &operator=(const Community &other) = default;
+        virtual ~Community() = default;
 
-        /**
-        * @brief Default destructor
-        */
-        virtual ~Community()
+        Community(Community &&other) noexcept : Community()
         {
-            if(nodes)
+            *this = std::move(other);
+        }
+
+        Community(const Community &other) : Community()
+        {
+            *this = other;
+        };
+
+        Community &operator=(Community other) noexcept
+        {
+            other.swap(*this);
+            return *this;
+        }
+
+        void swap(Community &other) noexcept
+        {
+            if(this != &other)
             {
-                nodes.reset();
+                std::swap(in_mem, other.in_mem);
+                std::swap(database_set, other.database_set);
+                std::swap(database, other.database);
+                std::swap(sql_connection_open, other.sql_connection_open);
+                std::swap(nodes, other.nodes);
+                std::swap(species_abundances, other.species_abundances);
+                std::swap(species_index, other.species_index);
+                std::swap(has_imported_samplemask, other.has_imported_samplemask);
+                std::swap(has_imported_data, other.has_imported_data);
+                std::swap(samplemask, other.samplemask);
+                std::swap(fragments, other.fragments);
+                std::swap(current_community_parameters, other.current_community_parameters);
+                std::swap(current_metacommunity_parameters, other.current_metacommunity_parameters);
+                std::swap(min_spec_rate, other.min_spec_rate);
+                std::swap(grid_x_size, other.grid_x_size);
+                std::swap(grid_y_size, other.grid_y_size);
+                std::swap(samplemask_x_size, other.samplemask_x_size);
+                std::swap(samplemask_y_size, other.samplemask_y_size);
+                std::swap(samplemask_x_offset, other.samplemask_x_offset);
+                std::swap(samplemask_y_offset, other.samplemask_y_offset);
+                std::swap(seed, other.seed);
+                std::swap(past_communities, other.past_communities);
+                std::swap(past_metacommunities, other.past_metacommunities);
+                std::swap(protracted, other.protracted);
+                std::swap(minimum_protracted_parameters, other.minimum_protracted_parameters);
+                std::swap(applied_protracted_parameters, other.applied_protracted_parameters);
+                std::swap(max_species_id, other.max_species_id);
+                std::swap(max_fragment_id, other.max_fragment_id);
+                std::swap(max_locations_id, other.max_locations_id);
+                std::swap(spec_sim_parameters, other.spec_sim_parameters);
             }
-            closeSQLConnection();
         }
 
         /**

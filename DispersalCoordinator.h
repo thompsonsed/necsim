@@ -100,7 +100,17 @@ namespace necsim
 
         DispersalCoordinator(const DispersalCoordinator &other) : DispersalCoordinator()
         {
-            *this = other;
+            dispersal_prob_map = other.dispersal_prob_map;
+            raw_dispersal_prob_map = other.raw_dispersal_prob_map;
+            NR = other.NR;
+            landscape = other.landscape;
+            reproduction_map = other.reproduction_map;
+            generation = other.generation;
+            doDispersal = other.doDispersal;
+            checkEndPointFptr = other.checkEndPointFptr;
+            xdim = other.xdim;
+            ydim = other.ydim;
+            full_dispersal_map = other.full_dispersal_map;
         };
 
         DispersalCoordinator &operator=(DispersalCoordinator other) noexcept
@@ -108,6 +118,7 @@ namespace necsim
             other.swap(*this);
             return *this;
         }
+
         void swap(DispersalCoordinator &other)
         {
             if(this != &other)

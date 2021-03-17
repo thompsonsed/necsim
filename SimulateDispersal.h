@@ -79,19 +79,51 @@ namespace necsim
 
         SimulateDispersal() : density_landscape(make_shared<Landscape>()), data_mask(), dispersal_coordinator(),
                               simParameters(make_shared<SimParameters>()), random(make_shared<RNGController>()),
-                              database(), distances(), parameter_references(), cells(), num_steps()
+                              seed(0), database(), distances(), parameter_references(), cells(), num_repeats(0),
+                              num_steps(), num_workers(), generation(0.0), is_sequential(false),
+                              max_parameter_reference()
         {
-            num_repeats = 0;
-            seed = 0;
-            is_sequential = false;
-            max_parameter_reference = 0;
-            generation = 0.0;
         }
 
-        ~
+        ~SimulateDispersal() = default;
 
-        SimulateDispersal()
+        SimulateDispersal(SimulateDispersal &&other) noexcept : SimulateDispersal()
         {
+            *this = std::move(other);
+        }
+
+        SimulateDispersal(const SimulateDispersal &other) : SimulateDispersal()
+        {
+            *this = other;
+        };
+
+        SimulateDispersal &operator=(SimulateDispersal other) noexcept
+        {
+            other.swap(*this);
+            return *this;
+        }
+
+        void swap(SimulateDispersal &other) noexcept
+        {
+            if(this != &other)
+            {
+                std::swap(density_landscape, other.density_landscape);
+                std::swap(data_mask, other.data_mask);
+                dispersal_coordinator.swap(other.dispersal_coordinator);
+                std::swap(simParameters, other.simParameters);
+                std::swap(random, other.random);
+                std::swap(seed, other.seed);
+                std::swap(database, other.database);
+                std::swap(distances, other.distances);
+                std::swap(parameter_references, other.parameter_references);
+                std::swap(cells, other.cells);
+                std::swap(num_repeats, other.num_repeats);
+                std::swap(num_steps, other.num_steps);
+                std::swap(num_workers, other.num_workers);
+                std::swap(generation, other.generation);
+                std::swap(is_sequential, other.is_sequential);
+                std::swap(max_parameter_reference, other.max_parameter_reference);
+            }
         }
 
         /**
@@ -208,14 +240,13 @@ namespace necsim
          * @param dispersal_coordinator Reference to the dispersal corrdinator to use
          * @param generation Reference to the generation variable used byt the dispersal coordinator
          */
-        template <bool chooseRandomCells = true>
-        void runDistanceLoop(const unsigned long bidx,
-                             const unsigned long eidx,
-                             const unsigned long num_repeats,
-                             std::mutex &mutex,
-                             unsigned long &finished,
-                             DispersalCoordinator &dispersal_coordinator,
-                             double &generation);
+        template<bool chooseRandomCells = true> void runDistanceLoop(const unsigned long bidx,
+                                                                     const unsigned long eidx,
+                                                                     const unsigned long num_repeats,
+                                                                     std::mutex &mutex,
+                                                                     unsigned long &finished,
+                                                                     DispersalCoordinator &dispersal_coordinator,
+                                                                     double &generation);
 
         /**
          * @brief Runs the distance simulation eidx-bidx times on a separate worker and reports the progress
@@ -229,13 +260,12 @@ namespace necsim
          * @param mutex The mutex to synchronise progress feedback to the user
          * @param finished The total number of cells simulated across all workers
          */
-        template <bool chooseRandomCells = true>
-        void runDistanceWorker(const unsigned long seed,
-                               const unsigned long bidx,
-                               const unsigned long eidx,
-                               const unsigned long num_repeats,
-                               std::mutex &mutex,
-                               unsigned long &finished);
+        template<bool chooseRandomCells = true> void runDistanceWorker(const unsigned long seed,
+                                                                       const unsigned long bidx,
+                                                                       const unsigned long eidx,
+                                                                       const unsigned long num_repeats,
+                                                                       std::mutex &mutex,
+                                                                       unsigned long &finished);
 
         /**
          * @brief Simulates the dispersal kernel for the set parameters, storing the mean dispersal distance
@@ -260,6 +290,7 @@ namespace necsim
         void runSampleDistanceTravelled(const vector<Cell> &samples);
 
         void runSampleDistanceTravelled(const vector<long> &sample_x, const vector<long> &sample_y);
+
         /**
          * @brief Writes the information about this repeat to the logger.
          */

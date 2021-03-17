@@ -36,49 +36,56 @@ namespace necsim
 
     SpatialTree &SpatialTree::operator=(const SpatialTree &other) noexcept
     {
-        static_cast<Tree &>(*this) = static_cast<const Tree &>(other);
-        dispersal_coordinator = other.dispersal_coordinator;
-        death_map = other.death_map;
-        reproduction_map = other.reproduction_map;
-        fine_map_input = other.fine_map_input;
-        coarse_map_input = other.coarse_map_input;
-        historical_fine_map_input = other.historical_fine_map_input;
-        historical_coarse_map_input = other.historical_coarse_map_input;
-        landscape = other.landscape;
-        samplegrid = other.samplegrid;
-        grid = other.grid;
-        desired_specnum = other.desired_specnum;
-        gillespie_threshold = other.gillespie_threshold;
-        probabilities = other.probabilities;
-        heap = other.heap;
-        cellToHeapPositions = other.cellToHeapPositions;
-        self_dispersal_probabilities = other.self_dispersal_probabilities;
-        global_individuals = other.global_individuals;
-        summed_death_rate = other.summed_death_rate;
+        if(this != &other)
+        {
+            static_cast<Tree &>(*this) = static_cast<const Tree &>(other);
+            dispersal_coordinator = other.dispersal_coordinator;
+            death_map = other.death_map;
+            reproduction_map = other.reproduction_map;
+            fine_map_input = other.fine_map_input;
+            coarse_map_input = other.coarse_map_input;
+            historical_fine_map_input = other.historical_fine_map_input;
+            historical_coarse_map_input = other.historical_coarse_map_input;
+            landscape = other.landscape;
+            samplegrid = other.samplegrid;
+            grid = other.grid;
+            desired_specnum = other.desired_specnum;
+            gillespie_threshold = other.gillespie_threshold;
+            probabilities = other.probabilities;
+            heap = other.heap;
+            cellToHeapPositions = other.cellToHeapPositions;
+            self_dispersal_probabilities = other.self_dispersal_probabilities;
+            global_individuals = other.global_individuals;
+            summed_death_rate = other.summed_death_rate;
+        }
         return *this;
     }
 
     SpatialTree &SpatialTree::operator=(SpatialTree &&other) noexcept
     {
-        static_cast<Tree &>(*this) = std::move(static_cast<Tree &&>(other));
-        dispersal_coordinator = std::move(other.dispersal_coordinator);
-        death_map = std::move(other.death_map);
-        reproduction_map = std::move(other.reproduction_map);
-        fine_map_input = std::move(other.fine_map_input);
-        coarse_map_input = std::move(other.coarse_map_input);
-        historical_fine_map_input = std::move(other.historical_fine_map_input);
-        historical_coarse_map_input = std::move(other.historical_coarse_map_input);
-        landscape = std::move(other.landscape);
-        samplegrid = std::move(other.samplegrid);
-        grid = std::move(other.grid);
-        desired_specnum = other.desired_specnum;
-        gillespie_threshold = other.gillespie_threshold;
-        probabilities = std::move(other.probabilities);
-        heap = std::move(other.heap);
-        cellToHeapPositions = std::move(other.cellToHeapPositions);
-        self_dispersal_probabilities = std::move(other.self_dispersal_probabilities);
-        global_individuals = other.global_individuals;
-        summed_death_rate = other.summed_death_rate;
+        if(this != &other)
+        {
+            static_cast<Tree &>(*this) = std::move(static_cast<Tree &&>(other));
+            dispersal_coordinator = std::move(other.dispersal_coordinator);
+            death_map = std::move(other.death_map);
+            reproduction_map = std::move(other.reproduction_map);
+            fine_map_input = std::move(other.fine_map_input);
+            coarse_map_input = std::move(other.coarse_map_input);
+            historical_fine_map_input = std::move(other.historical_fine_map_input);
+            historical_coarse_map_input = std::move(other.historical_coarse_map_input);
+            landscape = std::move(other.landscape);
+            samplegrid = std::move(other.samplegrid);
+            grid = std::move(other.grid);
+            desired_specnum = other.desired_specnum;
+            gillespie_threshold = other.gillespie_threshold;
+            probabilities = std::move(other.probabilities);
+            heap = std::move(other.heap);
+            cellToHeapPositions = std::move(other.cellToHeapPositions);
+            self_dispersal_probabilities = std::move(other.self_dispersal_probabilities);
+            global_individuals = other.global_individuals;
+            summed_death_rate = other.summed_death_rate;
+            other = SpatialTree(); // Not sure this is needed
+        }
         return *this;
     }
 

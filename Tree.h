@@ -152,18 +152,7 @@ namespace necsim
 
         Tree(const Tree &other);
 
-        virtual ~Tree()
-        {
-            std::cout << "Destroying tree at " << this << std::endl; // TODO remove
-            if(database != nullptr)
-            {
-                database->close();
-                database = nullptr;
-            }
-#ifdef sql_ram
-            outdatabase.close();
-#endif
-        }
+        virtual ~Tree() = default;
 
 //        Tree &operator=(const Tree &other); // TODO remove
 

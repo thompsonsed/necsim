@@ -41,13 +41,33 @@ namespace necsim
             bIsProtracted = true;
         }
 
-        ProtractedTree(ProtractedTree &&other) noexcept;
+        virtual ~ProtractedTree() = default;
 
-        ProtractedTree(const ProtractedTree &other) noexcept;
+        ProtractedTree(ProtractedTree &&other) noexcept : ProtractedTree()
+        {
+            *this = std::move(other);
+        }
 
-        ProtractedTree &operator=(const ProtractedTree &other) noexcept;
+        ProtractedTree(const ProtractedTree &other) : ProtractedTree()
+        {
+            *this = other;
+        };
 
-        ProtractedTree &operator=(ProtractedTree &&other) noexcept;
+        ProtractedTree &operator=(ProtractedTree other) noexcept
+        {
+            other.swap(*this);
+            return *this;
+        }
+
+        void swap(Tree &other) noexcept
+        {
+            if(this != &other)
+            {
+                Tree::swap(other);
+                std::swap(speciation_generation_min, other.speciation_generation_min);
+                std::swap(speciation_generation_max, other.speciation_generation_max);
+            }
+        }
 
         /**
          * @brief Calculates the speciation probability from the random number, speciation rate and number of generations a

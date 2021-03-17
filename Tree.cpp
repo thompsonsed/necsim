@@ -35,6 +35,7 @@ namespace necsim
     {
         if(this != &other)
         {
+            *this = Tree();
             std::cout << "this: " << this << std::endl; // TODO remove
             std::cout << "other: " << &other << std::endl;
             std::cout << "this output: " << this->sql_output_database << std::endl;

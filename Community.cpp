@@ -1169,17 +1169,11 @@ namespace necsim
                         {
                             y++;
                             // Make sure both extremes of the rectangle are still within patch.
-                            if(samplemask.sample_mask.getCopy(y, i) && samplemask.sample_mask.getCopy(y, i - 1))
-                            {
-                                y_continue = true;
-                            }
-                            else
-                            {
-                                y_continue = false;
-                            }
+                            y_continue =
+                                    samplemask.sample_mask.getCopy(y, i) && samplemask.sample_mask.getCopy(y, i - 1);
                         }
                         // Create the fragment to add.
-                        Fragment to_add;
+                        Fragment to_add{};
                         to_add.name = to_string((long long) fragment_number);
                         to_add.x_west = i;
                         to_add.x_east = x - 1;

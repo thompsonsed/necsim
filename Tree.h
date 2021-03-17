@@ -53,11 +53,11 @@ namespace necsim
         // a reference for the last written point in data.
         unsigned long enddata{};
         // Stores the command line current_metacommunity_parameters and parses the required information.
-        shared_ptr<SimParameters> sim_parameters;
+        shared_ptr<SimParameters> sim_parameters{};
         // random number generator
-        shared_ptr<RNGController> NR;
+        shared_ptr<RNGController> NR{};
         // Storing the speciation rates for later reference.
-        vector<long double> speciation_rates;
+        vector<long double> speciation_rates{};
         // flag for having set the simulation seed.
         bool seeded{};
         // random seed
@@ -66,15 +66,15 @@ namespace necsim
         long long task{};
         // The map file containing the times that we want to expand the model and record all lineages again.
         // If this is null, uses_temporal_sampling will be false and the vector will be empty.
-        string times_file;
-        vector<double> reference_times;
+        string times_file{};
+        vector<double> reference_times{};
         // Set to true if we are recording at times other than the present day.
         bool uses_temporal_sampling{};
         // The time variables (for timing the simulation in real time)
         time_t start{}, sim_start{}, sim_end{}, now{}, sim_finish{}, out_finish{};
         time_t time_taken{};
         // Active lineages stored as a row of datapoints
-        vector<DataPoint> active;
+        vector<DataPoint> active{};
         // Stores the point of the end of the active vector. 0 is reserved as null
         unsigned long endactive{};
         // the maximum size of endactive
@@ -82,7 +82,7 @@ namespace necsim
         // the maximum simulated number of individuals in the present day.
         unsigned long maxsimsize{};
         // for create the link to the speciationcounter object which handles everything.
-        Community community;
+        Community community{};
         // This might need to be updated for simulations that have large changes in maximum population size over time.
         // number of simulation num_steps
         long steps{};
@@ -97,21 +97,21 @@ namespace necsim
         // the speciation rate
         long double spec{};
         // Path to output directory
-        string out_directory;
+        string out_directory{};
         // sqlite3 object that stores all the data
-        shared_ptr<SQLiteHandler> database;
+        shared_ptr<SQLiteHandler> database{};
         // only set to true if the simulation has finished, otherwise will be false.
         bool sim_complete{};
         // set to true when variables are imported
         bool has_imported_vars{};
         // If sql database is written first to memory, then need another object to contain the in-memory database.
 #ifdef sql_ram
-        SQLiteHandler outdatabase;
+        SQLiteHandler outdatabase{};
 #endif
         // Create the step object that will be retained for the whole simulation.
         // Does not need saving on simulation pause.
-        Step this_step;
-        string sql_output_database;
+        Step this_step{};
+        string sql_output_database{};
         // If true, means the command-line imports were under the (deprecated) fullmode.
         bool bFullMode{};
         // If true, the simulation is to be resumed.
@@ -123,7 +123,7 @@ namespace necsim
         // Should always be false in the base class
         bool bIsProtracted{};
         // variable for storing the paused sim location if files have been moved during paused/resumed simulations!
-        string pause_sim_directory;
+        string pause_sim_directory{};
         // Set to true to use the gillespie method - this is currently only supported for spatial simulations using a
         // dispersal map and point speciation (i.e. the method is unsupported for non-spatial simulations,
         // spatial simulations not using a dispersal map and those that use protracted speciation).

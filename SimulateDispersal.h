@@ -92,7 +92,6 @@ namespace necsim
 
         SimulateDispersal()
         {
-            database.close();
         }
 
         /**

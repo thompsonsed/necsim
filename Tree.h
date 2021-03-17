@@ -144,21 +144,9 @@ namespace necsim
                  has_paused(false), has_imported_pause(false), bIsProtracted(false), pause_sim_directory("null"),
                  using_gillespie(false)
         {
-            sql_output_database = "null"; // TODO remove?
-            std::cout << "Making tree at " << this << std::endl;
         }
 
-//        Tree(Tree &&other) noexcept;
-//
-//        Tree(const Tree &other);
-//
         virtual ~Tree() = default;
-//
-////        Tree &operator=(const Tree &other); // TODO remove
-//
-//        Tree &operator=(Tree other) noexcept;
-//
-//        void swap(Tree &other) noexcept;
 
         Tree(Tree &&other) noexcept : Tree()
         {
@@ -169,7 +157,6 @@ namespace necsim
         {
             *this = other;
         };
-
 
         Tree &operator=(Tree other) noexcept
         {

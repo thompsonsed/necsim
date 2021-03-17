@@ -22,25 +22,33 @@ namespace necsim
         GenericTree<T>() : tree(std::make_shared<T>())
         { }
 
-//        GenericTree<T> &operator=(const GenericTree<T> &other) noexcept = default;
-//
-        GenericTree<T> &operator=(GenericTree<T> &&other) noexcept {
-            std::cout << "Copy operator generic tree " << std::endl; // TODO remove
-            std::cout << "This: " << this << std::endl;
-            std::cout << "Other: " << &other << std::endl;
-            if(tree == nullptr)
-            {
-                tree = std::make_shared<T>();
-                tree = other.tree;
-            }
-            else
-            {
-                tree = std::move(other.tree);
-            }
-            other.tree = nullptr;
-            return *this;
+        ~GenericTree() = default;
+
+        GenericTree(GenericTree &&other) noexcept : GenericTree()
+        {
+            *this = std::move(other);
+        }
+
+        GenericTree(const GenericTree &other) : GenericTree()
+        {
+            *this = other;
         };
-//
+
+        GenericTree &operator=(GenericTree other) noexcept
+        {
+            other.swap(*this);
+            return *this;
+        }
+
+        void swap(GenericTree &other) noexcept
+        {
+            if(this != &other)
+            {
+                std::swap(tree, other.tree);
+
+            }
+        }
+
         void wipeSimulationVariables()
         {
             tree->wipeSimulationVariables();

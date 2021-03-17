@@ -136,6 +136,9 @@ protected:
     // dispersal map and point speciation (i.e. the method is unsupported for non-spatial simulations,
     // spatial simulations not using a dispersal map and those that use protracted speciation).
     bool using_gillespie{};
+#ifdef sql_ram
+        SQLiteHandler outdatabase{};
+#endif
 
 public:
     A() : data(make_shared<vector<TreeNode >>()), enddata(0), sim_parameters(make_shared<SimParameters>()),
@@ -145,6 +148,9 @@ public:
           steps(0), maxtime(0), generation(0.0), deme(0.0), deme_sample(0.0), spec(0.0), out_directory(""),
           database(make_shared<SQLiteHandler>()), sim_complete(false), has_imported_vars(false), this_step(),
           sql_output_database("null"), bFullMode(false), bResume(false), bConfig(true), has_paused(false),
+#ifdef sql_ram
+          outdatabase(),
+#endif
           has_imported_pause(false), bIsProtracted(false), pause_sim_directory("null"), using_gillespie(false)
     {
         sql_output_database = "null"; // TODO remove?
@@ -197,6 +203,9 @@ public:
             std::swap(maxsimsize, other.maxsimsize);
             std::swap(community, other.community);
             std::swap(steps, other.steps);
+#ifdef sql_ram
+            std::swap(outdatabase, other.outdatabase);
+#endif
             std::swap(maxtime, other.maxtime);
             std::swap(generation, other.generation);
             std::swap(deme, other.deme);

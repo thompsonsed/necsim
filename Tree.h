@@ -144,7 +144,8 @@ namespace necsim
                  has_paused(false), has_imported_pause(false), bIsProtracted(false), pause_sim_directory("null"),
                  using_gillespie(false)
         {
-            sql_output_database = "null";
+            sql_output_database = "null"; // TODO remove?
+            std::cout << "Making tree at " << this << std::endl;
         }
 
         Tree(Tree &&other) noexcept;
@@ -153,6 +154,7 @@ namespace necsim
 
         virtual ~Tree()
         {
+            std::cout << "Destroying tree at " << this << std::endl; // TODO remove
             if(database != nullptr)
             {
                 database->close();

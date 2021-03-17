@@ -16,10 +16,10 @@ namespace necsim
     class GenericTree
     {
     private:
-        std::unique_ptr<T> tree{nullptr};
+        std::shared_ptr<T> tree{nullptr};
     public:
 
-        GenericTree<T>() : tree(std::make_unique<T>())
+        GenericTree<T>() : tree(std::make_shared<T>())
         { }
 
 //        GenericTree<T> &operator=(const GenericTree<T> &other) noexcept = default;
@@ -37,6 +37,7 @@ namespace necsim
                 tree = std::move(other.tree);
             }
             other.tree = nullptr;
+            return *this;
         };
 //
         void wipeSimulationVariables()

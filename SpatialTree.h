@@ -178,7 +178,7 @@ namespace necsim
             {
                 Tree::swap(other);
                 std::cout << "Swapping dispersal coordinator.." << std::endl; // TODO remove
-                std::swap(dispersal_coordinator, other.dispersal_coordinator);
+                other.dispersal_coordinator.swap(dispersal_coordinator);
                 std::cout << "Swapping death map.." << std::endl; // TODO remove
                 std::swap(death_map, other.death_map);
                 std::cout << "Swapping rep map.." << std::endl; // TODO remove

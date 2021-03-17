@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <memory>
+#include <iostream>
 
 #ifndef NECSIM_GENERICTREE_H
 #define NECSIM_GENERICTREE_H
@@ -23,7 +24,20 @@ namespace necsim
 
 //        GenericTree<T> &operator=(const GenericTree<T> &other) noexcept = default;
 //
-//        GenericTree<T> &operator=(GenericTree<T> &&other) noexcept = default;
+        GenericTree<T> &operator=(GenericTree<T> &&other) noexcept {
+            std::cout << "Copy operator generic tree " << std::endl; // TODO remove
+            std::cout << "This: " << this << std::endl;
+            std::cout << "Other: " << &other << std::endl;
+            if(tree == nullptr)
+            {
+                tree = other.tree;
+            }
+            else
+            {
+                tree = std::move(other.tree);
+            }
+            other.tree = nullptr;
+        };
 //
         void wipeSimulationVariables()
         {

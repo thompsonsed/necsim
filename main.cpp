@@ -64,6 +64,20 @@ public:
     A() : test(){};
     virtual ~A() = default;
 
+    A(A &&other) noexcept = default;
+
+    A(const A &other) = default;
+
+    A &operator=(A other) noexcept
+    {
+        other.swap(*this);
+        return *this;
+    };
+    void swap(A &other) noexcept
+    {
+        std::swap(test, other.test);
+    }
+
 };
 
 class B: public virtual A

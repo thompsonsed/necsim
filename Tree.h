@@ -148,17 +148,93 @@ namespace necsim
             std::cout << "Making tree at " << this << std::endl;
         }
 
-        Tree(Tree &&other) noexcept;
-
-        Tree(const Tree &other);
-
+//        Tree(Tree &&other) noexcept;
+//
+//        Tree(const Tree &other);
+//
         virtual ~Tree() = default;
+//
+////        Tree &operator=(const Tree &other); // TODO remove
+//
+//        Tree &operator=(Tree other) noexcept;
+//
+//        void swap(Tree &other) noexcept;
 
-//        Tree &operator=(const Tree &other); // TODO remove
+        Tree(Tree &&other) noexcept : Tree()
+        {
+            *this = std::move(other);
+        }
 
-        Tree &operator=(Tree other) noexcept;
+        Tree(const Tree &other) : Tree()
+        {
+            *this = other;
+        };
 
-        void swap(Tree &other) noexcept;
+
+        Tree &operator=(necsim::Tree other) noexcept
+        {
+            other.swap(*this);
+            return *this;
+        }
+
+        void swap(Tree &other) noexcept
+        {
+            if(this != &other)
+            {
+                std::cout << "this: " << this << std::endl; // TODO remove
+                std::cout << "other: " << &other << std::endl;
+                sql_output_database = "test";
+                std::cout << "this output: " << this->sql_output_database << std::endl;
+                std::cout << "other output: " << other.sql_output_database << std::endl;
+
+                std::swap(data, other.data);
+                std::swap(enddata, other.enddata);
+                std::swap(sim_parameters, other.sim_parameters);
+                std::swap(NR, other.NR);
+                std::swap(speciation_rates, other.speciation_rates);
+                std::swap(seeded, other.seeded);
+                std::swap(seed, other.seed);
+                std::swap(task, other.task);
+                std::swap(times_file, other.times_file);
+                std::swap(reference_times, other.reference_times);
+                std::swap(uses_temporal_sampling, other.uses_temporal_sampling);
+                std::swap(start, other.start);
+                std::swap(sim_start, other.sim_start);
+                std::swap(sim_end, other.sim_end);
+                std::swap(now, other.now);
+                std::swap(sim_finish, other.sim_finish);
+                std::swap(out_finish, other.out_finish);
+                std::swap(time_taken, other.time_taken);
+                std::swap(active, other.active);
+                std::swap(endactive, other.endactive);
+                std::swap(startendactive, other.startendactive);
+                std::swap(maxsimsize, other.maxsimsize);
+                std::swap(community, other.community);
+                std::swap(steps, other.steps);
+                std::swap(maxtime, other.maxtime);
+                std::swap(generation, other.generation);
+                std::swap(deme, other.deme);
+                std::swap(deme_sample, other.deme_sample);
+                std::swap(spec, other.spec);
+                std::swap(out_directory, other.out_directory);
+                std::swap(database, other.database);
+                std::swap(sim_complete, other.sim_complete);
+                std::swap(has_imported_vars, other.has_imported_vars);
+#ifdef sql_ram
+                std::swap(outdatabase, other.outdatabase);
+#endif
+                std::swap(this_step, other.this_step);
+                std::swap(sql_output_database, other.sql_output_database);
+                std::swap(bFullMode, other.bFullMode);
+                std::swap(bResume, other.bResume);
+                std::swap(bConfig, other.bConfig);
+                std::swap(has_paused, other.has_paused);
+                std::swap(has_imported_pause, other.has_imported_pause);
+                std::swap(bIsProtracted, other.bIsProtracted);
+                std::swap(pause_sim_directory, other.pause_sim_directory);
+                std::swap(using_gillespie, other.using_gillespie);
+            }
+        }
 
         /**
          * @brief Import the simulation variables from the command line structure.

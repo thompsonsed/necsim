@@ -22,6 +22,7 @@
 
 
 #ifdef WIN_INSTALL
+#define NOMINMAX
 #include <windows.h>
 //#define sleep Sleep
 #endif

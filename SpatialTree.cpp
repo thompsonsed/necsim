@@ -15,6 +15,7 @@
 #include "SpatialTree.h"
 
 #ifdef WIN_INSTALL
+#define NOMINMAX
 #include <windows.h>
 #include <io.h>
 #define dup2 _dup2

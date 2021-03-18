@@ -19,6 +19,7 @@
 #include <chrono>
 
 #ifdef WIN_INSTALL
+#define NOMINMAX
 #include <windows.h>
 #endif // WIN_INSTALL
 

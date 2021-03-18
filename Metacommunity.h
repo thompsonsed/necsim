@@ -28,7 +28,10 @@
 #include "SpeciesAbundancesHandler.h"
 #include "SimulatedSpeciesAbundancesHandler.h"
 
-using namespace std;
+using std::unique_ptr;
+using std::make_shared;
+using std::shared_ptr;
+using std::make_unique;
 namespace necsim
 {
     /**
@@ -46,10 +49,6 @@ namespace necsim
         shared_ptr<RNGController> random;
         Tree metacommunity_tree;
     public:
-
-
-
-
 
         /**
          * @brief Default constructor
@@ -91,6 +90,7 @@ namespace necsim
                 std::swap(metacommunity_tree, other.metacommunity_tree);
             }
         }
+
         /**
          * @brief Sets the parameters for the metacommunity
          * @param community_size_in the number of individuals in the metacommunity
@@ -117,7 +117,7 @@ namespace necsim
          * @param tree_node pointer to the TreeNode object for this lineage
          * @param species_list the set of all species ids.
          */
-        void addSpecies(unsigned long &species_count, TreeNode* tree_node, set<unsigned long> &species_list) override;
+        void addSpecies(unsigned long &species_count, TreeNode* tree_node, std::set<unsigned long> &species_list) override;
 
         /**
          * @brief Creates the metacommunity in memory using a non-spatially_explicit neutral model, which is run using the

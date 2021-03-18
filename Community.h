@@ -32,7 +32,7 @@
 #include "SpecSimParameters.h"
 #include "SQLiteHandler.h"
 
-using namespace std;
+
 using std::string;
 namespace necsim
 {
@@ -321,7 +321,7 @@ namespace necsim
          * @param treenode pointer to the TreeNode object for this lineage
          * @param species_list the set of all species ids.
          */
-        virtual void addSpecies(unsigned long &species_count, TreeNode* treenode, set<unsigned long> &species_list);
+        virtual void addSpecies(unsigned long &species_count, TreeNode* treenode, std::set<unsigned long> &species_list);
 
         /**
          * @brief Calculates the species abundance of the dataset.
@@ -695,8 +695,8 @@ namespace necsim
             if(sp->use_fragments)
             {
                 calcFragments(sp->fragment_config_file);
-                stringstream os;
-                os << "Total fragments: " << fragments.size() << endl;
+                std::stringstream os;
+                os << "Total fragments: " << fragments.size() << std::endl;
                 writeInfo(os.str());
             }
             if(spec_sim_parameters->metacommunity_parameters.empty())
@@ -751,7 +751,7 @@ namespace necsim
          * @param community_reference the reference of the desired community
          * @return a map of species ids to species abundances
          */
-        shared_ptr<map<unsigned long, unsigned long>> getSpeciesAbundances(const unsigned long &community_reference);
+        shared_ptr<std::map<unsigned long, unsigned long>> getSpeciesAbundances(const unsigned long &community_reference);
 
         /**
          * @brief Gets the species abundance from the species_abundances internal object

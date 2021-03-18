@@ -55,7 +55,7 @@ namespace necsim
             }
             // Now do the same for times
 
-            exception err;
+            std::exception err;
 
             for(auto &i: vector<string>{"task", "job_type"})
             {
@@ -71,7 +71,7 @@ namespace necsim
                     parameters_checked = true;
                     break;
                 }
-                catch(exception &e)
+                catch(std::exception &e)
                 {
                     err = e;
                 }
@@ -84,7 +84,7 @@ namespace necsim
         }
     }
 
-    void Metacommunity::addSpecies(unsigned long &species_count, TreeNode* tree_node, set<unsigned long> &species_list)
+    void Metacommunity::addSpecies(unsigned long &species_count, TreeNode* tree_node, std::set<unsigned long> &species_list)
     {
 
         auto species_id = species_abundances_handler->getRandomSpeciesID();
@@ -211,7 +211,7 @@ namespace necsim
     {
         Community external_metacommunity;
         external_metacommunity.openSQLConnection(current_metacommunity_parameters->option);
-        shared_ptr<map<unsigned long, unsigned long>> sad = external_metacommunity.getSpeciesAbundances(
+        shared_ptr<std::map<unsigned long, unsigned long>> sad = external_metacommunity.getSpeciesAbundances(
                 current_metacommunity_parameters->external_reference);
         species_abundances_handler.reset();
         species_abundances_handler = make_unique<SimulatedSpeciesAbundancesHandler>();
@@ -224,12 +224,12 @@ namespace necsim
 
     void Metacommunity::printMetacommunityParameters()
     {
-        stringstream ss;
-        ss << "Metacommunity current_metacommunity_parameters:" << endl;
-        ss << "Metacommunity size: " << current_metacommunity_parameters->metacommunity_size << endl;
-        ss << "Speciation rate: " << current_metacommunity_parameters->speciation_rate << endl;
-        ss << "Option: " << current_metacommunity_parameters->option << endl;
-        ss << "External reference: " << current_metacommunity_parameters->external_reference << endl;
+        std::stringstream ss;
+        ss << "Metacommunity current_metacommunity_parameters:" << std::endl;
+        ss << "Metacommunity size: " << current_metacommunity_parameters->metacommunity_size << std::endl;
+        ss << "Speciation rate: " << current_metacommunity_parameters->speciation_rate << std::endl;
+        ss << "Option: " << current_metacommunity_parameters->option << std::endl;
+        ss << "External reference: " << current_metacommunity_parameters->external_reference << std::endl;
         writeInfo(ss.str());
     }
 

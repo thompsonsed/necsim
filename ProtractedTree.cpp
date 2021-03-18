@@ -60,7 +60,7 @@ namespace necsim
 
     string ProtractedTree::getProtractedVariables()
     {
-        stringstream ss;
+        std::stringstream ss;
         ss << speciation_generation_min << "\n" << speciation_generation_max << "\n";
         return ss.str();
     }
@@ -77,7 +77,7 @@ namespace necsim
 
     string ProtractedTree::protractedVarsToString()
     {
-        string tmp = "1 , " + to_string(speciation_generation_min) + ", " + to_string(speciation_generation_max);
+        string tmp = "1 , " + std::to_string(speciation_generation_min) + ", " + std::to_string(speciation_generation_max);
         return tmp;
     }
 }

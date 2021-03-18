@@ -22,8 +22,10 @@
 #include "Matrix.h"
 #include "RNGController.h"
 
-using namespace std;
+
 using namespace random_numbers;
+using std::shared_ptr;
+
 namespace necsim
 {
     /**
@@ -215,7 +217,7 @@ namespace necsim
          * @param r the SpeciesList object to output.
          * @return the output stream.
          */
-        friend ostream &operator<<(ostream &os, const SpeciesList &r);
+        friend std::ostream &operator<<(std::ostream &os, const SpeciesList &r);
 
         /**
          * @brief Inputs the SpeciesList object from an input stream.
@@ -223,7 +225,7 @@ namespace necsim
          * @param is the input stream.
          * @param r the SpeciesList object to input to.
          */
-        friend istream &operator>>(istream &is, SpeciesList &r);
+        friend std::istream &operator>>(std::istream &is, SpeciesList &r);
     };
 }
 #endif

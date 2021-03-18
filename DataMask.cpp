@@ -75,11 +75,11 @@ namespace necsim
             || sim_parameters->grid_y_size > sim_parameters->sample_y_size) && !isNullSample)
         {
             writeLog(50,
-                     "Grid size: " + to_string(sim_parameters->grid_x_size) + ", "
-                     + to_string(sim_parameters->grid_y_size));
+                     "Grid size: " + std::to_string(sim_parameters->grid_x_size) + ", "
+                     + std::to_string(sim_parameters->grid_y_size));
             writeLog(50,
-                     "Sample mask size: " + to_string(sim_parameters->sample_x_size) + ", "
-                     + to_string(sim_parameters->sample_y_size));
+                     "Sample mask size: " + std::to_string(sim_parameters->sample_x_size) + ", "
+                     + std::to_string(sim_parameters->sample_y_size));
             throw FatalException("Datamask dimensions do not make sense");
         }
 #endif // DEBUG
@@ -187,7 +187,7 @@ namespace necsim
             {
 #ifdef DEBUG
                 writeLog(10, "Using spatial sampling.");
-                writeLog(10, "Mask dimensions: " + to_string(mask_x_dim) + ", " + to_string(mask_y_dim));
+                writeLog(10, "Mask dimensions: " + std::to_string(mask_x_dim) + ", " + std::to_string(mask_y_dim));
 #endif // DEBUG
                 sample_mask_exact.setSize(mask_y_dim, mask_x_dim);
                 sample_mask_exact.import(inputfile);
@@ -224,16 +224,16 @@ namespace necsim
 #ifdef DEBUG
         if(xval < 0 || xval >= (long) mask_x_dim || yval < 0 || yval >= (long) mask_y_dim)
         {
-            stringstream ss;
-            ss << "Get value on samplemask requested for non index." << endl;
-            ss << "x, y: " << x << ", " << y << endl;
-            ss << "dimensions x,y: " << mask_x_dim << ", " << mask_y_dim << endl;
-            ss << "x, y wrap: " << xwrap << ", " << ywrap << endl;
-            ss << "xval, yval: " << xval << ", " << yval << endl;
-            ss << "offsets x, y: " << x_offset << ", " << y_offset << endl;
+            std::stringstream ss;
+            ss << "Get value on samplemask requested for non index." << std::endl;
+            ss << "x, y: " << x << ", " << y << std::endl;
+            ss << "dimensions x,y: " << mask_x_dim << ", " << mask_y_dim << std::endl;
+            ss << "x, y wrap: " << xwrap << ", " << ywrap << std::endl;
+            ss << "xval, yval: " << xval << ", " << yval << std::endl;
+            ss << "offsets x, y: " << x_offset << ", " << y_offset << std::endl;
             writeLog(50, ss);
             ss.str("Get value on samplemask requested for non index.");
-            throw out_of_range(ss.str());
+            throw std::out_of_range (ss.str());
         }
 #endif
         return sample_mask.getCopy(yval, xval);
@@ -262,7 +262,7 @@ namespace necsim
 #ifdef DEBUG
         if(isNullSample || sample_mask_exact.getCols() == 0)
         {
-            throw out_of_range("Cannot get the exact value from a samplemask if we are using a null mask, or the "
+            throw std::out_of_range ("Cannot get the exact value from a samplemask if we are using a null mask, or the "
                                "exact samplemask has not been properly imported.");
         }
 #endif // DEBUG

@@ -25,6 +25,8 @@
 
 #include "file_system.h"
 #include "custom_exceptions.h"
+using std::shared_ptr;
+using std::make_shared;
 namespace necsim
 {
     /**

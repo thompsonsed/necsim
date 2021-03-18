@@ -10,7 +10,7 @@
 #include <sstream>
 #include "Logging.h"
 
-using namespace std;
+
 namespace necsim
 {
     Logger* logger;
@@ -21,7 +21,7 @@ namespace necsim
         writeLog(20, message);
 #endif // DEBUG
 #ifdef verbose
-        cout << message << flush;
+        cout << message << std::flush;
 #endif // verbose
     }
 
@@ -31,7 +31,7 @@ namespace necsim
         writeLog(30, message);
 #endif // DEBUG
 #ifdef verbose
-        cerr << message << flush;
+        cerr << message << std::flush;
 #endif // verbose
     }
 
@@ -41,7 +41,7 @@ namespace necsim
         writeLog(40, message);
 #endif // DEBUG
 #ifdef verbose
-        cerr << message << flush;
+        cerr << message << std::flush;
 #endif // verbose
     }
 
@@ -51,7 +51,7 @@ namespace necsim
         writeLog(50, message);
 #endif // DEBUG
 #ifdef verbose
-        cerr << message << flush;
+        cerr << message << std::flush;
 #endif // verbose
     }
 
@@ -61,7 +61,7 @@ namespace necsim
         logfile.write(level, message);
     }
 
-    void Logger::writeLog(const int &level, stringstream &message)
+    void Logger::writeLog(const int &level, std::stringstream &message)
     {
         writeLog(level, message.str());
     }

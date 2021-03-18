@@ -27,7 +27,7 @@
 #include "file_system.h"
 #include "double_comparison.h"
 
-using namespace std;
+
 
 namespace necsim
 {
@@ -401,35 +401,35 @@ namespace necsim
             if(time_fine.size() != rate_fine.size() || rate_fine.size() != number_fine.size()
                || number_fine.size() != path_fine.size())
             {
-                stringstream ss;
+                std::stringstream ss;
                 ss << "Lengths of historical fine map variables lists must be the same: " << time_fine.size() << "!=";
-                ss << rate_fine.size() << "!=" << number_fine.size() << "!=" << path_fine.size() << endl;
+                ss << rate_fine.size() << "!=" << number_fine.size() << "!=" << path_fine.size() << std::endl;
                 throw FatalException(ss.str());
             }
             if(time_coarse.size() != rate_coarse.size() || rate_coarse.size() != number_coarse.size()
                || number_coarse.size() != path_coarse.size())
             {
-                stringstream ss;
+                std::stringstream ss;
                 ss << "Lengths of historical coarse map variables lists must be the same: " << time_coarse.size()
                    << "!=";
-                ss << rate_coarse.size() << "!=" << number_coarse.size() << "!=" << path_coarse.size() << endl;
+                ss << rate_coarse.size() << "!=" << number_coarse.size() << "!=" << path_coarse.size() << std::endl;
                 throw FatalException(ss.str());
             }
             for(unsigned long i = 0; i < time_fine.size(); i++)
             {
-                string tmp = "historical_fine" + to_string(number_fine[i]);
+                string tmp = "historical_fine" + std::to_string(number_fine[i]);
                 configs.setSectionOption(tmp, "path", path_fine[i]);
-                configs.setSectionOption(tmp, "number", to_string(number_fine[i]));
-                configs.setSectionOption(tmp, "time", to_string(time_fine[i]));
-                configs.setSectionOption(tmp, "rate", to_string(rate_fine[i]));
+                configs.setSectionOption(tmp, "number", std::to_string(number_fine[i]));
+                configs.setSectionOption(tmp, "time", std::to_string(time_fine[i]));
+                configs.setSectionOption(tmp, "rate", std::to_string(rate_fine[i]));
             }
             for(unsigned long i = 0; i < time_coarse.size(); i++)
             {
-                string tmp = "historical_coarse" + to_string(number_fine[i]);
+                string tmp = "historical_coarse" + std::to_string(number_fine[i]);
                 configs.setSectionOption(tmp, "path", path_coarse[i]);
-                configs.setSectionOption(tmp, "number", to_string(number_coarse[i]));
-                configs.setSectionOption(tmp, "time", to_string(time_coarse[i]));
-                configs.setSectionOption(tmp, "rate", to_string(rate_coarse[i]));
+                configs.setSectionOption(tmp, "number", std::to_string(number_coarse[i]));
+                configs.setSectionOption(tmp, "time", std::to_string(time_coarse[i]));
+                configs.setSectionOption(tmp, "rate", std::to_string(rate_coarse[i]));
             }
         }
 
@@ -595,7 +595,7 @@ namespace necsim
         {
             if(!has_parsed_historical)
             {
-                map<unsigned long, HistoricalMapParameters> tmp_map_parameters;
+                std::map<unsigned long, HistoricalMapParameters> tmp_map_parameters;
                 for(unsigned long i = 0; i < configs.getSectionOptionsSize(); i++)
                 {
                     if(configs[i].section.find("historical_fine") == 0)
@@ -619,14 +619,14 @@ namespace necsim
                                || !(doubleCompare(mapParameters.generation, g, 0.00000001)
                                     || doubleCompare(mapParameters.generation, g, g * 0.01)))
                             {
-                                stringstream ss;
+                                std::stringstream ss;
                                 ss << "Rates and times differ between fine and coarse map for historical map number "
-                                   << number << endl;
+                                   << number << std::endl;
                                 ss << "Files: " << mapParameters.fine_map_file << ", " << configs[i].getOption("path")
-                                   << endl;
+                                   << std::endl;
                                 ss << "Original parameters: " << mapParameters.habitat_change_rate << ", "
-                                   << mapParameters.generation << endl;
-                                ss << "New parameters: " << r << ", " << g << endl;
+                                   << mapParameters.generation << std::endl;
+                                ss << "New parameters: " << r << ", " << g << std::endl;
                                 throw FatalException(ss.str());
                             }
                             mapParameters.fine_map_file = configs[i].getOption("path");
@@ -653,14 +653,14 @@ namespace necsim
                                || !(doubleCompare(mapParameters.generation, g, 0.00000001)
                                     || doubleCompare(mapParameters.generation, g, g * 0.01)))
                             {
-                                stringstream ss;
+                                std::stringstream ss;
                                 ss << "Rates and times differ between fine and coarse map for historical map number "
-                                   << number << endl;
+                                   << number << std::endl;
                                 ss << "Files: " << mapParameters.fine_map_file << ", " << configs[i].getOption("path")
-                                   << endl;
+                                   << std::endl;
                                 ss << "Original parameters: " << mapParameters.habitat_change_rate << ", "
-                                   << mapParameters.generation << endl;
-                                ss << "New parameters: " << r << ", " << g << endl;
+                                   << mapParameters.generation << std::endl;
+                                ss << "New parameters: " << r << ", " << g << std::endl;
                                 throw FatalException(ss.str());
                             }
                             mapParameters.coarse_map_file = configs[i].getOption("path");
@@ -701,18 +701,18 @@ namespace necsim
          */
         void printVars()
         {
-            stringstream os;
-            os << "Seed: " << seed << endl;
-            os << "Speciation rate: " << spec << endl;
+            std::stringstream os;
+            os << "Seed: " << seed << std::endl;
+            os << "Speciation rate: " << spec << std::endl;
             if(is_protracted)
             {
-                os << "Protracted variables: " << min_speciation_gen << ", " << max_speciation_gen << endl;
+                os << "Protracted variables: " << min_speciation_gen << ", " << max_speciation_gen << std::endl;
             }
-            os << "Job Type: " << task << endl;
-            os << "Max time: " << max_time << endl;
+            os << "Job Type: " << task << std::endl;
+            os << "Max time: " << max_time << std::endl;
             printSpatialVars();
-            os << "Output directory: " << output_directory << endl;
-            os << "Disp Rel Cost: " << dispersal_relative_cost << endl;
+            os << "Output directory: " << output_directory << std::endl;
+            os << "Disp Rel Cost: " << dispersal_relative_cost << std::endl;
             os << "Times: ";
             if(times_file == "set")
             {
@@ -729,7 +729,7 @@ namespace necsim
             {
                 os << " 0.0";
             }
-            os << endl;
+            os << std::endl;
             writeInfo(os.str());
         }
 
@@ -739,30 +739,30 @@ namespace necsim
          */
         void printSpatialVars()
         {
-            stringstream os;
-            os << "Dispersal (tau, sigma): " << tau << ", " << sigma << endl;
-            os << "Dispersal method: " << dispersal_method << endl;
+            std::stringstream os;
+            os << "Dispersal (tau, sigma): " << tau << ", " << sigma << std::endl;
+            os << "Dispersal method: " << dispersal_method << std::endl;
             if(dispersal_method == "norm-uniform")
             {
-                os << "Dispersal (m, cutoff): " << m_prob << ", " << cutoff << endl;
+                os << "Dispersal (m, cutoff): " << m_prob << ", " << cutoff << std::endl;
             }
-            os << "Fine map\n-file: " << fine_map_file << endl;
-            os << "-dimensions: (" << fine_map_x_size << ", " << fine_map_y_size << ")" << endl;
-            os << "-offset: (" << fine_map_x_offset << ", " << fine_map_y_offset << ")" << endl;
-            os << "Coarse map\n-file: " << coarse_map_file << endl;
-            os << "-dimensions: (" << coarse_map_x_size << ", " << coarse_map_y_size << ")" << endl;
-            os << "-offset: (" << coarse_map_x_offset << ", " << coarse_map_y_offset << ")" << endl;
-            os << "-scale: " << coarse_map_scale << endl;
-            os << "Sample grid" << endl;
+            os << "Fine map\n-file: " << fine_map_file << std::endl;
+            os << "-dimensions: (" << fine_map_x_size << ", " << fine_map_y_size << ")" << std::endl;
+            os << "-offset: (" << fine_map_x_offset << ", " << fine_map_y_offset << ")" << std::endl;
+            os << "Coarse map\n-file: " << coarse_map_file << std::endl;
+            os << "-dimensions: (" << coarse_map_x_size << ", " << coarse_map_y_size << ")" << std::endl;
+            os << "-offset: (" << coarse_map_x_offset << ", " << coarse_map_y_offset << ")" << std::endl;
+            os << "-scale: " << coarse_map_scale << std::endl;
+            os << "Sample grid" << std::endl;
             if(sample_mask_file != "none" && sample_mask_file != "null")
             {
-                os << "-file: " << sample_mask_file << endl;
+                os << "-file: " << sample_mask_file << std::endl;
             }
-            os << "-dimensions: (" << sample_x_size << ", " << sample_y_size << ")" << endl;
-            os << "-optimised area: (" << grid_x_size << ", " << grid_y_size << ")" << endl;
-            os << "-optimised offsets: (" << sample_x_offset << ", " << sample_y_offset << ")" << endl;
-            os << "Deme: " << deme << endl;
-            os << "Deme sample: " << deme_sample << endl;
+            os << "-dimensions: (" << sample_x_size << ", " << sample_y_size << ")" << std::endl;
+            os << "-optimised area: (" << grid_x_size << ", " << grid_y_size << ")" << std::endl;
+            os << "-optimised offsets: (" << sample_x_offset << ", " << sample_y_offset << ")" << std::endl;
+            os << "Deme: " << deme << std::endl;
+            os << "Deme sample: " << deme_sample << std::endl;
             writeInfo(os.str());
         }
 
@@ -798,7 +798,7 @@ namespace necsim
          * @param m the SimParameters object.
          * @return os the output stream.
          */
-        friend ostream &operator<<(ostream &os, const SimParameters &m)
+        friend std::ostream &operator<<(std::ostream &os, const SimParameters &m)
         {
             os << m.fine_map_file << "\n" << m.coarse_map_file << "\n" << m.historical_fine_map_file << "\n";
             os << m.historical_coarse_map_file << "\n" << m.sample_mask_file << "\n";
@@ -831,7 +831,7 @@ namespace necsim
          * @param m the mapvars object
          * @return is the input stream
          */
-        friend istream &operator>>(istream &is, SimParameters &m)
+        friend std::istream &operator>>(std::istream &is, SimParameters &m)
         {
             getline(is, m.fine_map_file);
             getline(is, m.coarse_map_file);

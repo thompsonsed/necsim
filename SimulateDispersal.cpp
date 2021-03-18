@@ -75,7 +75,7 @@ namespace necsim
         }
         for(const auto &item : num_steps)
         {
-            parameter_references.insert(make_pair(item, i));
+            parameter_references.insert(std::make_pair(item, i));
             i++;
         }
         distances.clear();
@@ -118,7 +118,7 @@ namespace necsim
 
     void SimulateDispersal::setNumberWorkers(unsigned long n)
     {
-        num_workers = max(n, 1UL);
+        num_workers = std::max(n, 1UL);
     }
 
     unsigned long SimulateDispersal::getMaxNumberSteps()
@@ -151,7 +151,7 @@ namespace necsim
                 }
             }
         }
-        writeInfo("Choosing from " + to_string(cell_total) + " cells of " + to_string(total) + " individuals.\n");
+        writeInfo("Choosing from " + std::to_string(cell_total) + " cells of " + std::to_string(total) + " individuals.\n");
         cells.resize(total);
         unsigned long ref = 0;
         for(unsigned long i = 0; i < simParameters->sample_y_size; i++)
@@ -194,7 +194,7 @@ namespace necsim
 
     void SimulateDispersal::runMeanDispersalDistance()
     {
-        writeInfo("Simulating dispersal " + to_string(num_repeats) + " times.\n");
+        writeInfo("Simulating dispersal " + std::to_string(num_repeats) + " times.\n");
         storeCellList();
         Cell this_cell{};
         this_cell = getRandomCell();
@@ -213,7 +213,7 @@ namespace necsim
             // Check the end point
             getEndPoint(this_cell);
             // Now store the output location
-            distances[i] = make_tuple(1, start_cell, distanceBetweenCells(this_cell, start_cell));
+            distances[i] = std::make_tuple(1, start_cell, distanceBetweenCells(this_cell, start_cell));
         }
         writeInfo("Dispersal simulation complete.\n");
     }
@@ -279,7 +279,7 @@ namespace necsim
 
             for(auto step_iterator = num_steps.begin(); step_iterator != num_steps.end(); step_iterator++)
             {
-                distances[i * num_steps.size() + step_index] = make_tuple(*step_iterator,
+                distances[i * num_steps.size() + step_index] = std::make_tuple(*step_iterator,
                                                                           start_cell,
                                                                           distance_accumulator[step_index]
                                                                           / static_cast<double>(num_repeats));
@@ -323,7 +323,7 @@ namespace necsim
 
     void SimulateDispersal::runMeanDistanceTravelled()
     {
-        stringstream ss;
+        std::stringstream ss;
         ss << "Simulating dispersal in " << num_repeats << " random habitable cells once for (";
         // The maximum number of steps
         setSizes();
@@ -395,7 +395,7 @@ namespace necsim
         storeCellList();
         setNumberRepeats(cells.size());
 
-        stringstream ss;
+        std::stringstream ss;
         ss << "Simulating dispersal in all " << num_repeats << " habitable cells " << old_num_repeats << " times for (";
         // The maximum number of steps
         setSizes();
@@ -469,7 +469,7 @@ namespace necsim
         unsigned long old_num_repeats = this->num_repeats;
         setNumberRepeats(cells.size());
 
-        stringstream ss;
+        std::stringstream ss;
         ss << "Simulating dispersal in " << num_repeats << " sampled habitable cells " << old_num_repeats
            << " times for (";
         // The maximum number of steps
@@ -553,7 +553,7 @@ namespace necsim
 
     void SimulateDispersal::writeRepeatInfo(unsigned long i)
     {
-        stringstream os;
+        std::stringstream os;
         os << "\rSimulating dispersal " << i << "/" << num_repeats;
         writeInfo(os.str());
     }
@@ -585,7 +585,7 @@ namespace necsim
             for(unsigned long i = 0; i < distances.size(); i++)
             {
                 sqlite3_bind_int(stmt->stmt, 1, static_cast<int>(max_id + i));
-                auto iter = parameter_references.find(get<0>(distances[i]));
+                auto iter = parameter_references.find(std::get<0>(distances[i]));
 
 #ifdef DEBUG
                 if(iter == parameter_references.end())
@@ -598,15 +598,15 @@ namespace necsim
                 {
                     max_parameter_reference = reference;
                 }
-                sqlite3_bind_int(stmt->stmt, 2, get<1>(distances[i]).x);
-                sqlite3_bind_int(stmt->stmt, 3, get<1>(distances[i]).y);
-                sqlite3_bind_double(stmt->stmt, 4, get<2>(distances[i]));
+                sqlite3_bind_int(stmt->stmt, 2, std::get<1>(distances[i]).x);
+                sqlite3_bind_int(stmt->stmt, 3, std::get<1>(distances[i]).y);
+                sqlite3_bind_double(stmt->stmt, 4, std::get<2>(distances[i]));
                 sqlite3_bind_int(stmt->stmt, 5, static_cast<int>(reference));
                 int step = stmt->step();
                 if(step != SQLITE_DONE)
                 {
-                    stringstream ss;
-                    ss << "Could not insert into database." << endl;
+                    std::stringstream ss;
+                    ss << "Could not insert into database." << std::endl;
                     ss << database.getErrorMsg(step);
                     throw FatalException(ss.str());
                 }
@@ -633,16 +633,16 @@ namespace necsim
         database.execute(create_table);
         for(const auto &item : parameter_references)
         {
-            string insert_table = "INSERT INTO PARAMETERS VALUES(" + to_string(item.second) + ", '" + table_name + "',";
-            insert_table += to_string((long double) simParameters->sigma) + ",";
+            string insert_table = "INSERT INTO PARAMETERS VALUES(" + std::to_string(item.second) + ", '" + table_name + "',";
+            insert_table += std::to_string((long double) simParameters->sigma) + ",";
             insert_table +=
-                    to_string((long double) simParameters->tau) + ", " + to_string((long double) simParameters->m_prob);
+                    std::to_string((long double) simParameters->tau) + ", " + std::to_string((long double) simParameters->m_prob);
             insert_table +=
-                    ", " + to_string((long double) simParameters->cutoff) + ", '" + simParameters->dispersal_method
+                    ", " + std::to_string((long double) simParameters->cutoff) + ", '" + simParameters->dispersal_method
                     + "','";
             insert_table +=
-                    simParameters->fine_map_file + "', " + to_string(seed) + ", " + to_string(item.first) + ", ";
-            insert_table += to_string(num_repeats) + ");";
+                    simParameters->fine_map_file + "', " + std::to_string(seed) + ", " + std::to_string(item.first) + ", ";
+            insert_table += std::to_string(num_repeats) + ");";
             database.execute(insert_table);
         }
     }

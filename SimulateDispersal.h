@@ -57,15 +57,15 @@ namespace necsim
         // The sqlite3 database object for storing outputs
         SQLiteHandler database;
         // Vector for storing pairs of dispersal distances to parameter references
-        vector<tuple<unsigned long, Cell, double>> distances;
+        vector<std::tuple<unsigned long, Cell, double>> distances;
         // Maps distances to parameter references
-        map<unsigned long, unsigned long> parameter_references;
+        std::map<unsigned long, unsigned long> parameter_references;
         // Vector for storing the cells (for randomly choosing from)
         vector<Cell> cells;
         // The number of repeats to run the dispersal loop for
         unsigned long num_repeats;
         // The number of num_steps within each dispersal loop for the average distance travelled, which should be
-        set<unsigned long> num_steps;
+        std::set<unsigned long> num_steps;
         // The number of threads launched to parallelise the distance simulation
         unsigned long num_workers;
         // generation counter

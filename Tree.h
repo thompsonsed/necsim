@@ -593,7 +593,7 @@ namespace necsim
          * @param community_reference the community reference
          * @return the species abundances
          */
-        shared_ptr<map<unsigned long, unsigned long>> getSpeciesAbundances(const unsigned long &community_reference);
+        shared_ptr<std::map<unsigned long, unsigned long>> getSpeciesAbundances(const unsigned long &community_reference);
 
         /**
          * @brief Gets the species abundances from the internal tree.
@@ -735,31 +735,31 @@ namespace necsim
          * @brief Checks the output folder exists and initiates the pause.
          * @return the output file stream to save objects to
          */
-        shared_ptr<ofstream> initiatePause();
+        shared_ptr<std::ofstream> initiatePause();
 
         /**
          * @brief Saves the main simulation variables to file.
          * @param out the output file stream to save the object to
          */
-        void dumpMain(shared_ptr<ofstream> out);
+        void dumpMain(shared_ptr<std::ofstream> out);
 
         /**
          * @brief Saves the active object to file.
          * @param out the output file stream to save the object to
          */
-        void dumpActive(shared_ptr<ofstream> out);
+        void dumpActive(shared_ptr<std::ofstream> out);
 
         /**
          * @brief Saves the data object to file.
          * @param out the output file stream to save the object to
          */
-        void dumpData(shared_ptr<ofstream> out);
+        void dumpData(shared_ptr<std::ofstream> out);
 
         /**
          * @brief Completes the pause routine and outputs the sql dump.
          * @param out the output stream to close up
          */
-        void completePause(shared_ptr<ofstream> out);
+        void completePause(shared_ptr<std::ofstream> out);
 
         /**
          * @brief Sets the resume variables so that the simulation can be resumed.
@@ -783,22 +783,22 @@ namespace necsim
          */
         void setResumeParameters();
 
-        shared_ptr<ifstream> openSaveFile();
+        shared_ptr<std::ifstream> openSaveFile();
 
         /**
          * @brief Loads the main simulation parameters from the save file into memory.
          */
-        virtual void loadMainSave(shared_ptr<ifstream> in1);
+        virtual void loadMainSave(shared_ptr<std::ifstream> in1);
 
         /**
          * @brief Loads the data object from the save file into memory.
          */
-        void loadDataSave(shared_ptr<ifstream> in1);
+        void loadDataSave(shared_ptr<std::ifstream> in1);
 
         /**
          * @brief Loads the active object from the save file into memory.
          */
-        void loadActiveSave(shared_ptr<ifstream> in1);
+        void loadActiveSave(shared_ptr<std::ifstream> in1);
 
         /**
          * @brief Checks for resuming and prints to the terminal

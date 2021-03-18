@@ -82,7 +82,7 @@
 #include "Logging.h"
 #include "GillespieCalculator.h"
 
-using namespace std;
+
 
 namespace necsim
 {
@@ -134,7 +134,7 @@ namespace necsim
         static const unsigned long UNUSED = static_cast<unsigned long>(-1);
 #ifdef DEBUG
         unsigned long gillespie_speciation_events{0};
-        pair<EventType, CellEventType> last_event{};
+        std::pair<EventType, CellEventType> last_event{};
 #endif // DEBUG
     public:
         /**
@@ -401,13 +401,13 @@ namespace necsim
          * @brief Saves the map object to file.
          * @param out the output file stream to save the object to
          */
-        void dumpMap(shared_ptr<ofstream> out);
+        void dumpMap(shared_ptr<std::ofstream> out);
 
         /**
          * @brief Saves the grid object to file
          * @param out the output file stream to save the object to
          */
-        void dumpGrid(shared_ptr<ofstream> out);
+        void dumpGrid(shared_ptr<std::ofstream> out);
 
         /**
          * @brief Resumes the simulation from a previous state.
@@ -421,14 +421,14 @@ namespace necsim
          *
          * @note Requires that both the simulation parameters and the maps have already been loaded.
          */
-        void loadGridSave(shared_ptr<ifstream> in1);
+        void loadGridSave(shared_ptr<std::ifstream> in1);
 
         /**
          * @brief Loads the map from the save file into memory.
          *
          * @note Requires that the simulation parameters have already been loaded.
          */
-        void loadMapSave(shared_ptr<ifstream> in1);
+        void loadMapSave(shared_ptr<std::ifstream> in1);
 
         /**
          * @brief Checks that the reproduction map makes sense with the fine density map.
@@ -632,7 +632,7 @@ namespace necsim
 
         unsigned long selectRandomLineage(const MapLocation &location) const;
 
-        pair<unsigned long, unsigned long> selectTwoRandomLineages(const MapLocation &location) const;
+        std::pair<unsigned long, unsigned long> selectTwoRandomLineages(const MapLocation &location) const;
 
         vector<unsigned long> detectLineages(const MapLocation &location) const;
 

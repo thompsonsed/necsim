@@ -43,7 +43,7 @@ namespace necsim
         logger->writeLog(level, message);
     }
 
-    void writeLog(const int &level, stringstream &message)
+    void writeLog(const int &level, std::stringstream &message)
     {
         logger->writeLog(level, message.str());
     }

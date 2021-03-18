@@ -17,14 +17,13 @@
 #include <utility>
 #include "Logging.h"
 
-using namespace std;
 namespace necsim
 {
     /*!
      * @struct FatalException
      * @brief  This is called any time a fatal exception is called and the program is unwound and ended.
      */
-    struct FatalException : public runtime_error
+    struct FatalException : public std::runtime_error
     {
         FatalException() : runtime_error("Fatal exception thrown at run time, quitting program. ")
         { }

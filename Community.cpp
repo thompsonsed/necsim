@@ -1132,8 +1132,7 @@ namespace necsim
         {
             TreeNode* this_node = &(*nodes)[i];
             //			os << nodes[i].exists() << std::endl;
-            if(this_node->hasSpeciated() && this_node->exists()
-               && this_node->getSpeciesID() != 0)
+            if(this_node->hasSpeciated() && this_node->exists() && this_node->getSpeciesID() != 0)
             {
                 long double species_age = this_node->getGeneration() - current_community_parameters->time;
                 sqlite3_bind_int64(stmt->stmt, 1, max_ages_id++);

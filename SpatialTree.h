@@ -204,7 +204,7 @@ namespace necsim
          * @brief Runs the basic file existence checks.
          * Checks for paused simulations and file existence.
          */
-        void runFileChecks() override;
+        void runFileChecks() final;
 
         /**
          * @brief Checks that the folders exist and the files required for the simulation also exist.
@@ -219,7 +219,7 @@ namespace necsim
          *
          * This function can only be run once, otherwise a Main_Exception will be thrown
          *	 */
-        void setParameters() override;
+        void setParameters() final;
 
 
         // Imports the maps using the variables stored in the class. This function must be run after the set_mapvars() in
@@ -241,7 +241,7 @@ namespace necsim
          * @brief Counts the number of individuals that exist on the spatial grid.
          * @return the number of individuals that will be initially simulated
          */
-        unsigned long getInitialCount() override;
+        unsigned long getInitialCount() final;
 
         /**
          * @brief Sets up the dispersal coordinator by linking to the correct functions and choosing the appropriate dispersal
@@ -260,14 +260,14 @@ namespace necsim
          * but this has so far only been deemed necessary for the speciation rate (which is intrinsically very small).
          *
          */
-        void setup() override;
+        void setup() final;
 
         /**
          * @brief Fill the active, data and grid objects with the starting lineages.
          * @param initial_count the number of individuals expected to exist
          * @return the number of lineages added (for validation purposes)
          */
-        unsigned long fillObjects(const unsigned long &initial_count) override;
+        unsigned long fillObjects(const unsigned long &initial_count) final;
 
         /**
          * @brief Gets the number of individuals to be sampled at the particular point and time.
@@ -296,7 +296,7 @@ namespace necsim
          *
          * @param chosen the desired active reference to remove from the grid.
          */
-        void removeOldPosition(const unsigned long &chosen) override;
+        void removeOldPosition(const unsigned long &chosen) final;
 
         /**
          * @brief Calculate the move, given a start x,y coordinates and wrapping.
@@ -334,12 +334,12 @@ namespace necsim
          * @brief Switches the chosen position with the endactive position.
          * @param chosen the chosen lineage to switch with endactive.
          */
-        void switchPositions(const unsigned long &chosen) override;
+        void switchPositions(const unsigned long &chosen) final;
 
         /**
          * @brief Calculates the next step for the simulation.
          */
-        void calcNextStep() override;
+        void calcNextStep() final;
 
         /**
          * @brief Estimates the species number from the second largest minimum speciation rate remaining in active.
@@ -363,12 +363,12 @@ namespace necsim
          * @brief Increments the generation counter and step references, then updates the map for any changes to habitat
          * cover.
          */
-        void incrementGeneration() override;
+        void incrementGeneration() final;
 
         /**
          * @brief Updates the coalescence variables in the step object.
          */
-        void updateStepCoalescenceVariables() override;
+        void updateStepCoalescenceVariables() final;
 
         /**
          * @brief Zeroes out the coalescence information and stores the origin location.
@@ -384,18 +384,18 @@ namespace necsim
          *
          * @param generation_in the generation that the expansion is occuring at. This is used in recording the new tips
          */
-        void addLineages(double generation_in) override;
+        void addLineages(double generation_in) final;
 
         /**
          * @brief Creates a string containing the SQL insertion statement for the simulation parameters.
          * @return string containing the SQL insertion statement
          */
-        string simulationParametersSqlInsertion() override;
+        string simulationParametersSqlInsertion() final;
 
         /**
          * @brief Pause the simulation and dump data from memory.
          */
-        void simPause() override;
+        void simPause() final;
 
         /**
          * @brief Saves the map object to file.
@@ -414,7 +414,7 @@ namespace necsim
          *
          * Reads in the parameters and objects from file and re-starts the simulation.
          */
-        void simResume() override;
+        void simResume() final;
 
         /**
          * @brief Loads the grid from the save file into memory.
@@ -483,9 +483,9 @@ namespace necsim
                         vector<TreeNode> &data_added,
                         vector<DataPoint> &active_added);
 
-        void addGillespie(const double &g_threshold) override;
+        void addGillespie(const double &g_threshold) final;
 
-        bool runSimulationGillespie() override;
+        bool runSimulationGillespie() final;
 
         void runGillespieLoop();
 

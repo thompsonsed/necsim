@@ -22,7 +22,7 @@
 #define SPECIATIONCOUNTER_PROTRACTEDSPATIALTREE_H
 namespace necsim
 {
-    class ProtractedSpatialTree : public SpatialTree, public ProtractedTree
+    class ProtractedSpatialTree : public virtual ProtractedTree, public virtual SpatialTree
     {
     public:
         ProtractedSpatialTree() : Tree(), SpatialTree(), ProtractedTree()
@@ -34,10 +34,7 @@ namespace necsim
             *this = std::move(other);
         }
 
-
-        ~ProtractedSpatialTree() override= default;
-
-
+        ~ProtractedSpatialTree() override = default;
 
         ProtractedSpatialTree(const ProtractedSpatialTree &other) : ProtractedSpatialTree()
         {
@@ -52,16 +49,33 @@ namespace necsim
 
         void swap(ProtractedSpatialTree &other) noexcept
         {
-            if(this != &other)
+            if (this != &other)
             {
                 SpatialTree::swap(other);
                 std::swap(speciation_generation_min, other.speciation_generation_min);
                 std::swap(speciation_generation_max, other.speciation_generation_max);
-
             }
         }
-    };
+        
+        //
+        // using ProtractedTree::calcSpeciation;
 
+        // using ProtractedTree::speciateLineage;
+
+        // using ProtractedTree::getProtracted;
+
+        // using ProtractedTree::setProtractedVariables;
+
+        // using ProtractedTree::getProtractedVariables;
+
+        // using ProtractedTree::getProtractedGenerationMin;
+
+        // using ProtractedTree::getProtractedGenerationMax;
+
+        // using ProtractedTree::protractedVarsToString;
+
+        // using ProtractedTree::applySpecRate;
+    };
 
 }
 #endif //SPECIATIONCOUNTER_PROTRACTEDSPATIALTREE_H
